@@ -27,6 +27,7 @@ import MaterialsTab from '@/features/materials/components/MaterialsTab'
 import AssignmentsTab from '@/features/assignments/components/AssignmentsTab'
 import CTTab from '@/features/ct/components/CTTab'
 import PresentationsTab from '@/features/presentations/components/PresentationsTab'
+import MarksTab from '@/features/marks/components/MarksTab'
 
 
 function AttendanceTab({ courseId }: { courseId: string }) {
@@ -125,7 +126,7 @@ export default function CourseDetailPage() {
             case COURSE_TABS.PRESENTATIONS:
                 return <PresentationsTab courseId={courseId!} />
             case COURSE_TABS.MARKS:
-                return <PlaceholderTab label="📊 Marks & Grading" phase="F-10" />
+                return <MarksTab courseId={courseId!} />
             case COURSE_TABS.MEMBERS:
                 return teacher ? (
                     <div className="space-y-6">
