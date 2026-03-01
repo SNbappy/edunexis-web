@@ -25,14 +25,20 @@ export function useMaterials(courseId: string) {
         qc.invalidateQueries({ queryKey: ['materials', courseId] })
 
     const createFolderMutation = useMutation({
-        mutationFn: (data: Omit<CreateMaterialRequest, 'type'>) =>
-            materialService.createFolder({ ...data, type: 'Folder', parentFolderId: currentFolderId }),
+        mutationFn: (data: { title: string; description?: string }) =>
+            materialService.createFolder({
+                ...data,
+                type: 'Folder',
+                courseId,
+                parentFolderId: currentFolderId,
+            }),
         onSuccess: (res) => {
             if (res.success) { invalidate(); toast.success('Folder created!') }
             else toast.error(res.message)
         },
         onError: () => toast.error('Failed to create folder.'),
     })
+
 
     const uploadMutation = useMutation({
         mutationFn: (payload: { file: File; title?: string; description?: string; onProgress?: (n: number) => void }) =>
@@ -48,14 +54,20 @@ export function useMaterials(courseId: string) {
     })
 
     const addLinkMutation = useMutation({
-        mutationFn: (data: Omit<CreateMaterialRequest, 'type' | 'courseId'>) =>
-            materialService.addLink({ ...data, type: 'Link', courseId, parentFolderId: currentFolderId }),
+        mutationFn: (data: { title: string; linkUrl: string; description?: string }) =>
+            materialService.addLink({
+                ...data,
+                type: 'Link',
+                courseId,
+                parentFolderId: currentFolderId,
+            }),
         onSuccess: (res) => {
             if (res.success) { invalidate(); toast.success('Link added!') }
             else toast.error(res.message)
         },
         onError: () => toast.error('Failed to add link.'),
     })
+
 
     const deleteMutation = useMutation({
         mutationFn: (id: string) => materialService.deleteMaterial(courseId, id),

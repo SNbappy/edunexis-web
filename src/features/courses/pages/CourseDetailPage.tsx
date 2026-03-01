@@ -23,6 +23,7 @@ import StudentAttendanceView from '@/features/attendance/components/StudentAtten
 import { useAttendance } from '@/features/attendance/hooks/useAttendance'
 import { useAttendanceStats } from '@/features/attendance/hooks/useAttendanceStats'
 import { Users } from 'lucide-react'
+import MaterialsTab from '@/features/materials/components/MaterialsTab'
 
 function AttendanceTab({ courseId }: { courseId: string }) {
     const { user } = useAuthStore()
@@ -112,7 +113,7 @@ export default function CourseDetailPage() {
             case COURSE_TABS.ATTENDANCE:
                 return <AttendanceTab courseId={courseId!} />
             case COURSE_TABS.MATERIALS:
-                return <PlaceholderTab label="📂 Materials" phase="F-6" />
+                return <MaterialsTab courseId={courseId!} />
             case COURSE_TABS.ASSIGNMENTS:
                 return <PlaceholderTab label="📝 Assignments" phase="F-7" />
             case COURSE_TABS.CT:
