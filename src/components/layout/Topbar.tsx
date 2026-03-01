@@ -1,9 +1,13 @@
-import { Bell, Search, Menu } from 'lucide-react'
+import { useState } from 'react'
+import { Search, Menu } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { useAuthStore } from '@/store/authStore'
-import { useNotificationStore } from '@/store/notificationStore'
+import { useNotifications } from '@/features/notifications/hooks/useNotifications'
+import NotificationsPanel from '@/features/notifications/components/NotificationsPanel'
 import ThemeToggle from '@/components/ui/ThemeToggle'
 import Avatar from '@/components/ui/Avatar'
+import { Bell } from 'lucide-react'
 import { ROUTES } from '@/config/constants'
 
 interface TopbarProps {
@@ -12,10 +16,11 @@ interface TopbarProps {
 
 export default function Topbar({ onMenuClick }: TopbarProps) {
     const { user } = useAuthStore()
-    const { unreadCount } = useNotificationStore()
+    const { unreadCount } = useNotifications()
+    const [notifOpen, setNotifOpen] = useState(false)
 
     return (
-        <header className="h-16 bg-[rgb(var(--topbar-bg))] border-b border-border flex items-center gap-4 px-4 lg:px-6">
+        <header className="h-16 bg-[rgb(var(--topbar-bg))] border-b border-border flex items-center gap-4 px-4 lg:px-6 relative z-30">
             {/* Mobile menu button */}
             <button
                 onClick={onMenuClick}
@@ -34,24 +39,40 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
                 {/* Theme toggle */}
                 <ThemeToggle compact />
 
-                {/* Notifications */}
-                <Link
-                    to="/notifications"
-                    className="relative p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
-                >
-                    <Bell className="w-5 h-5" />
-                    {unreadCount > 0 && (
-                        <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-destructive text-white text-xs flex items-center justify-center font-bold">
-                            {unreadCount > 9 ? '9+' : unreadCount}
-                        </span>
-                    )}
-                </Link>
+                {/* Notifications dropdown */}
+                <div className="relative">
+                    <button
+                        onClick={() => setNotifOpen((o) => !o)}
+                        className="relative p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+                    >
+                        <Bell className="w-5 h-5" />
+                        {unreadCount > 0 && (
+                            <motion.span
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-destructive text-white text-xs flex items-center justify-center font-bold leading-none"
+                            >
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                            </motion.span>
+                        )}
+                    </button>
+                    <NotificationsPanel
+                        isOpen={notifOpen}
+                        onClose={() => setNotifOpen(false)}
+                    />
+                </div>
 
                 {/* Profile */}
                 <Link to={ROUTES.PROFILE} className="flex items-center gap-2 pl-2">
-                    <Avatar src={user?.profile?.profilePhotoUrl} name={user?.profile?.fullName} size="sm" />
+                    <Avatar
+                        src={user?.profile?.profilePhotoUrl}
+                        name={user?.profile?.fullName}
+                        size="sm"
+                    />
                     <div className="hidden md:block text-left">
-                        <p className="text-sm font-medium text-foreground leading-tight">{user?.profile?.fullName ?? 'User'}</p>
+                        <p className="text-sm font-medium text-foreground leading-tight">
+                            {user?.profile?.fullName ?? 'User'}
+                        </p>
                         <p className="text-xs text-muted-foreground">{user?.role}</p>
                     </div>
                 </Link>
