@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { FolderPlus, Upload, Search } from 'lucide-react'
 import Button from '@/components/ui/Button'
@@ -14,6 +14,12 @@ import { isTeacher } from '@/utils/roleGuard'
 
 interface Props { courseId: string }
 
+const SORT_OPTIONS = [
+    { label: 'All', value: 'all' },
+    { label: 'Folders', value: 'Folder' },
+    { label: 'Files', value: 'File' },
+] as const
+
 export default function MaterialsTab({ courseId }: Props) {
     const { user } = useAuthStore()
     const teacher = isTeacher(user?.role ?? 'Student')
@@ -22,9 +28,8 @@ export default function MaterialsTab({ courseId }: Props) {
         materials, isLoading, breadcrumb, openFolder, navigateTo,
         createFolder, isCreatingFolder,
         uploadFile, isUploading,
-        addLink, isAddingLink,
         deleteMaterial, isDeleting,
-        toggleVisibility,
+        sortMode, setSortMode,
     } = useMaterials(courseId)
 
     const [uploadOpen, setUploadOpen] = useState(false)
@@ -50,21 +55,38 @@ export default function MaterialsTab({ courseId }: Props) {
                         </Button>
                         <Button size="sm" leftIcon={<Upload className="w-4 h-4" />}
                             onClick={() => setUploadOpen(true)}>
-                            Add Material
+                            Upload File
                         </Button>
                     </div>
                 )}
             </motion.div>
 
-            {/* Search */}
-            <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search materials..."
-                    className="w-full h-10 pl-9 pr-4 rounded-xl border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                />
+            {/* Search + Sort */}
+            <div className="flex items-center gap-3">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Search materials..."
+                        className="w-full h-10 pl-9 pr-4 rounded-xl border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                    />
+                </div>
+                <div className="flex items-center gap-1 bg-muted rounded-xl p-1">
+                    {SORT_OPTIONS.map((opt) => (
+                        <button
+                            key={opt.value}
+                            onClick={() => setSortMode(opt.value as any)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                                sortMode === opt.value
+                                    ? 'bg-card text-foreground shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* List */}
@@ -77,7 +99,6 @@ export default function MaterialsTab({ courseId }: Props) {
                     materials={filtered}
                     courseId={courseId}
                     onDelete={teacher ? (id) => setDeleteId(id) : undefined}
-                    onToggleVisibility={teacher ? toggleVisibility : undefined}
                     onOpenFolder={openFolder}
                 />
             )}
@@ -87,9 +108,7 @@ export default function MaterialsTab({ courseId }: Props) {
                 isOpen={uploadOpen}
                 onClose={() => setUploadOpen(false)}
                 onUploadFile={(payload) => uploadFile(payload, { onSuccess: () => setUploadOpen(false) })}
-                onAddLink={(data) => addLink(data, { onSuccess: () => setUploadOpen(false) })}
                 isUploading={isUploading}
-                isAddingLink={isAddingLink}
             />
 
             <CreateFolderModal
@@ -104,7 +123,7 @@ export default function MaterialsTab({ courseId }: Props) {
                 onClose={() => setDeleteId(null)}
                 onConfirm={() => { if (deleteId) deleteMaterial(deleteId, { onSuccess: () => setDeleteId(null) }) }}
                 title="Delete Material"
-                description="This will permanently delete the file or folder and all its contents."
+                description="This will permanently delete this item."
                 confirmLabel="Delete"
                 isLoading={isDeleting}
             />

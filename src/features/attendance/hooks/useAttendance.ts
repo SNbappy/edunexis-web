@@ -33,10 +33,24 @@ export function useAttendance(courseId: string) {
             if (res.success) {
                 qc.invalidateQueries({ queryKey: key })
                 qc.invalidateQueries({ queryKey: ['attendance-stats', courseId] })
+                qc.invalidateQueries({ queryKey: ['attendance-stats-computed', courseId] })
                 toast.success('Attendance saved successfully!')
             } else toast.error(res.message)
         },
         onError: () => toast.error('Failed to save attendance.'),
+    })
+
+    const editMutation = useMutation({
+        mutationFn: ({ sessionId, data }: { sessionId: string; data: { topic?: string; entries: { studentId: string; status: string }[] } }) =>
+            attendanceService.updateSession(courseId, sessionId, data),
+        onSuccess: (res) => {
+            if (res.success) {
+                qc.invalidateQueries({ queryKey: key })
+                qc.invalidateQueries({ queryKey: ['attendance-stats-computed', courseId] })
+                toast.success('Attendance updated!')
+            } else toast.error(res.message)
+        },
+        onError: () => toast.error('Failed to update attendance.'),
     })
 
     const deleteMutation = useMutation({
@@ -56,6 +70,12 @@ export function useAttendance(courseId: string) {
         isMembersLoading: membersQuery.isLoading,
         takeAttendance: takeMutation.mutate,
         isTaking: takeMutation.isPending,
+        editAttendance: editMutation.mutate,
+        isEditing: editMutation.isPending,
         deleteSession: deleteMutation.mutate,
     }
 }
+
+
+
+

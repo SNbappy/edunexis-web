@@ -20,25 +20,14 @@ export interface CourseDto {
     createdAt: string
 }
 
-export interface CourseSummaryDto {
-    id: string
-    title: string
-    courseCode: string
-    department: string
-    academicSession: string
-    coverImageUrl: string
-    teacherName: string
-    isArchived: boolean
-}
-
 export interface CourseMemberDto {
     userId: string
     fullName: string
     email: string
     studentId: string | null
     profilePhotoUrl: string | null
-    enrolledAt: string
-    isCR?: boolean
+    joinedAt: string
+    isCR: boolean
 }
 
 export interface CreateCourseRequest {

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { CheckCircle2, XCircle, Clock } from 'lucide-react'
+import { CheckCircle2, XCircle } from 'lucide-react'
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
@@ -36,9 +36,10 @@ export default function JoinRequestsPanel({ courseId }: Props) {
                     transition={{ delay: i * 0.04 }}
                     className="flex items-center gap-3 p-3 rounded-xl border border-amber-500/30 bg-amber-500/5"
                 >
-                    <Avatar src={req.studentPhoto} name={req.studentName} size="sm" />
+                    <Avatar src={req.profilePhotoUrl} name={req.studentName} size="sm" />
                     <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{req.studentName}</p>
+                        <p className="text-xs text-muted-foreground">{req.studentEmail}</p>
                         <p className="text-xs text-muted-foreground">{formatRelative(req.requestedAt)}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">

@@ -1,4 +1,4 @@
-export type MaterialType = 'File' | 'Folder' | 'Link'
+﻿export type MaterialType = 'File' | 'Folder' | 'Link' | 'YouTube' | 'GoogleDrive'
 
 export interface MaterialDto {
     id: string
@@ -11,7 +11,7 @@ export interface MaterialDto {
     fileName?: string
     fileSizeBytes?: number
     mimeType?: string
-    linkUrl?: string
+    embedUrl?: string
     uploadedById: string
     uploadedByName: string
     uploadedAt: string
@@ -26,7 +26,7 @@ export interface CreateMaterialRequest {
     title: string
     description?: string
     type: MaterialType
-    linkUrl?: string
+    embedUrl?: string
 }
 
 export interface UploadMaterialRequest {

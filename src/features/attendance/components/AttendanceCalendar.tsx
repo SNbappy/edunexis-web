@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import {
     format, startOfMonth, endOfMonth, eachDayOfInterval,
-    isSameDay, isToday, parseISO, getDay, addMonths, subMonths
+    isToday, getDay, addMonths, subMonths
 } from 'date-fns'
 import { cn } from '@/utils/cn'
 import type { AttendanceSessionDto } from '@/types/attendance.types'
@@ -13,12 +13,19 @@ interface Props {
     onSelectDate?: (date: string) => void
 }
 
+function getSessionPct(session: AttendanceSessionDto) {
+    const total = session.records.length
+    if (total === 0) return 0
+    const present = session.records.filter((r) => r.status === 'Present').length
+    return Math.round((present / total) * 100)
+}
+
 export default function AttendanceCalendar({ sessions, onSelectDate }: Props) {
     const [current, setCurrent] = useState(new Date())
     const monthStart = startOfMonth(current)
     const monthEnd = endOfMonth(current)
     const days = eachDayOfInterval({ start: monthStart, end: monthEnd })
-    const startPad = getDay(monthStart) // 0=Sun
+    const startPad = getDay(monthStart)
 
     const sessionMap = new Map<string, AttendanceSessionDto>()
     sessions.forEach((s) => sessionMap.set(s.date.split('T')[0], s))
@@ -27,7 +34,6 @@ export default function AttendanceCalendar({ sessions, onSelectDate }: Props) {
 
     return (
         <div className="glass-card rounded-2xl p-5">
-            {/* Header */}
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-foreground">{format(current, 'MMMM yyyy')}</h3>
                 <div className="flex gap-1">
@@ -46,20 +52,18 @@ export default function AttendanceCalendar({ sessions, onSelectDate }: Props) {
                 </div>
             </div>
 
-            {/* Day headers */}
             <div className="grid grid-cols-7 mb-2">
                 {DAYS.map((d) => (
                     <div key={d} className="text-center text-xs font-medium text-muted-foreground py-1">{d}</div>
                 ))}
             </div>
 
-            {/* Days grid */}
             <div className="grid grid-cols-7 gap-1">
                 {Array.from({ length: startPad }).map((_, i) => <div key={`pad-${i}`} />)}
                 {days.map((day) => {
                     const iso = format(day, 'yyyy-MM-dd')
                     const session = sessionMap.get(iso)
-                    const pct = session?.attendancePercent ?? 0
+                    const pct = session ? getSessionPct(session) : 0
                     const hasSession = !!session
 
                     const dotColor = hasSession
@@ -80,7 +84,7 @@ export default function AttendanceCalendar({ sessions, onSelectDate }: Props) {
                                 hasSession ? 'cursor-pointer hover:bg-muted' : 'cursor-default',
                                 isToday(day) ? 'bg-primary/10 text-primary' : 'text-foreground'
                             )}
-                            title={hasSession ? `${session!.topic || 'Class'} — ${pct.toFixed(0)}% attendance` : undefined}
+                            title={hasSession ? `${session!.topic || 'Class'} � ${pct}% attendance` : undefined}
                         >
                             {day.getDate()}
                             {hasSession && (
@@ -91,13 +95,12 @@ export default function AttendanceCalendar({ sessions, onSelectDate }: Props) {
                 })}
             </div>
 
-            {/* Legend */}
             <div className="flex items-center gap-4 mt-4 pt-3 border-t border-border flex-wrap">
                 {[
-                    { color: 'bg-emerald-500', label: '≥90%' },
-                    { color: 'bg-blue-500', label: '≥75%' },
-                    { color: 'bg-amber-500', label: '≥60%' },
-                    { color: 'bg-rose-500', label: '<60%' },
+                    { color: 'bg-emerald-500', label: '=90%' },
+                    { color: 'bg-blue-500',    label: '=75%' },
+                    { color: 'bg-amber-500',   label: '=60%' },
+                    { color: 'bg-rose-500',    label: '<60%' },
                 ].map((l) => (
                     <div key={l.label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <span className={cn('w-2.5 h-2.5 rounded-full', l.color)} />

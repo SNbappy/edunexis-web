@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { notificationService } from '../services/notificationService'
-import { useEffect } from 'react'
 
 export function useNotifications() {
     const qc = useQueryClient()
@@ -11,9 +10,9 @@ export function useNotifications() {
         queryFn: async () => {
             const res = await notificationService.getAll()
             if (!res.success) throw new Error(res.message)
-            return res.data
+            return res.data ?? []
         },
-        refetchInterval: 30_000, // Poll every 30s
+        refetchInterval: 30_000,
         staleTime: 15_000,
     })
 

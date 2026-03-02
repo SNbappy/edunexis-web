@@ -10,7 +10,7 @@ export function useCourseMembers(courseId: string) {
         queryFn: async () => {
             const res = await courseService.getMembers(courseId)
             if (!res.success) throw new Error(res.message)
-            return res.data
+            return res.data ?? []
         },
         enabled: !!courseId,
     })
@@ -20,14 +20,14 @@ export function useCourseMembers(courseId: string) {
         queryFn: async () => {
             const res = await courseService.getJoinRequests(courseId)
             if (!res.success) throw new Error(res.message)
-            return res.data
+            return res.data ?? []
         },
         enabled: !!courseId,
     })
 
     const reviewMutation = useMutation({
         mutationFn: ({ requestId, status }: { requestId: string; status: 'Approved' | 'Rejected' }) =>
-            courseService.reviewJoinRequest(courseId, requestId, status),
+            courseService.reviewJoinRequest(courseId, requestId, status === 'Approved'),
         onSuccess: (res, { status }) => {
             if (res.success) {
                 qc.invalidateQueries({ queryKey: ['join-requests', courseId] })
@@ -38,6 +38,17 @@ export function useCourseMembers(courseId: string) {
         onError: () => toast.error('Failed to review request.'),
     })
 
+    const removeMemberMutation = useMutation({
+        mutationFn: (studentId: string) => courseService.removeMember(courseId, studentId),
+        onSuccess: (res) => {
+            if (res.success) {
+                qc.invalidateQueries({ queryKey: ['course-members', courseId] })
+                toast.success('Student removed from course.')
+            } else toast.error(res.message)
+        },
+        onError: () => toast.error('Failed to remove student.'),
+    })
+
     return {
         members: membersQuery.data ?? [],
         joinRequests: joinRequestsQuery.data ?? [],
@@ -45,5 +56,7 @@ export function useCourseMembers(courseId: string) {
         isRequestsLoading: joinRequestsQuery.isLoading,
         reviewRequest: reviewMutation.mutate,
         isReviewing: reviewMutation.isPending,
+        removeMember: removeMemberMutation.mutate,
+        isRemoving: removeMemberMutation.isPending,
     }
 }

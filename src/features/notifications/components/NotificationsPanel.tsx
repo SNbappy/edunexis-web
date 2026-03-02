@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, BellOff, Check, Loader2 } from 'lucide-react'
 import Button from '@/components/ui/Button'
@@ -12,14 +13,19 @@ interface Props {
 export default function NotificationsPanel({ isOpen, onClose }: Props) {
     const { notifications, unreadCount, isLoading, markRead, markAllRead, deleteNotification } = useNotifications()
 
+    // Auto mark all as read after 2s of viewing
+    useEffect(() => {
+        if (!isOpen || unreadCount === 0) return
+        const timer = setTimeout(() => markAllRead(), 2000)
+        return () => clearTimeout(timer)
+    }, [isOpen])
+
     return (
         <AnimatePresence>
             {isOpen && (
                 <>
-                    {/* Backdrop */}
                     <div className="fixed inset-0 z-40" onClick={onClose} />
 
-                    {/* Panel */}
                     <motion.div
                         initial={{ opacity: 0, y: -8, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}

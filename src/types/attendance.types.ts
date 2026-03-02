@@ -1,58 +1,38 @@
-export type AttendanceStatus = 'Present' | 'Absent' | 'Late' | 'Excused'
+export type AttendanceStatus = 'Present' | 'Absent' | 'Unmarked'
+
+export interface AttendanceRecordDto {
+    studentId: string
+    studentName: string
+    status: string
+}
 
 export interface AttendanceSessionDto {
     id: string
     courseId: string
     date: string
     topic?: string
-    totalStudents: number
-    presentCount: number
-    absentCount: number
-    lateCount: number
-    attendancePercent: number
-    takenBy: string
-    createdAt: string
+    records: AttendanceRecordDto[]
 }
 
-export interface AttendanceRecordDto {
+export interface AttendanceSummaryDto {
     studentId: string
     studentName: string
-    studentEmail: string
-    studentPhoto?: string
-    rollNumber?: string
-    status: AttendanceStatus
-    remarks?: string
+    totalSessions: number
+    presentCount: number
+    absentCount: number
+    unmarkedCount: number
+    attendancePercent: number
 }
 
 export interface TakeAttendanceRequest {
     courseId: string
     date: string
     topic?: string
-    records: { studentId: string; status: AttendanceStatus; remarks?: string }[]
+    records: { studentId: string; status: AttendanceStatus }[]
 }
 
-export interface StudentAttendanceSummaryDto {
-    studentId: string
-    studentName: string
-    totalClasses: number
-    presentCount: number
-    absentCount: number
-    lateCount: number
-    attendancePercent: number
-    lastPresent?: string
-}
-
-export interface AttendanceStatsDto {
-    totalSessions: number
-    averageAttendance: number
-    lastSessionDate?: string
-    studentSummaries: StudentAttendanceSummaryDto[]
-}
-
-export interface MyAttendanceDto {
-    sessionId: string
+export interface CreateAttendanceSessionRequest {
     date: string
     topic?: string
-    status: AttendanceStatus
-    courseId: string
+    entries: { studentId: string; status: AttendanceStatus }[]
 }

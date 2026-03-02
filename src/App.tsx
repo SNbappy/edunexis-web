@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import AuthGuard from '@/components/guards/AuthGuard'
 import GuestGuard from '@/components/guards/GuestGuard'
 import ProfileGuard from '@/components/guards/ProfileGuard'
+import EnrollmentGuard from '@/components/guards/EnrollmentGuard'
 
 // Layout
 import DashboardLayout from '@/components/layout/DashboardLayout'
@@ -18,6 +19,7 @@ import DashboardPage from '@/features/dashboard/pages/DashboardPage'
 // Courses
 import CoursesListPage from '@/features/courses/pages/CoursesListPage'
 import CourseDetailPage from '@/features/courses/pages/CourseDetailPage'
+import JoinCoursePage from '@/features/courses/pages/JoinCoursePage'
 
 // Profile
 import CompleteProfilePage from '@/features/profile/pages/CompleteProfilePage'
@@ -52,8 +54,23 @@ export default function App() {
           <Route element={<DashboardLayout />}>
             <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
             <Route path={ROUTES.COURSES} element={<CoursesListPage />} />
+
+            {/* Join page — auth protected but NOT enrollment gated */}
+            <Route path="/courses/:courseId/join" element={<JoinCoursePage />} />
+
+            {/* Redirect bare courseId to stream tab */}
             <Route path="/courses/:courseId" element={<Navigate to="stream" replace />} />
-            <Route path="/courses/:courseId/:tab" element={<CourseDetailPage />} />
+
+            {/* Course detail — enrollment gated */}
+            <Route
+              path="/courses/:courseId/:tab"
+              element={
+                <EnrollmentGuard>
+                  <CourseDetailPage />
+                </EnrollmentGuard>
+              }
+            />
+
             <Route path={ROUTES.PROFILE} element={<EditProfilePage />} />
             <Route path={ROUTES.PROFILE_EDIT} element={<EditProfilePage />} />
           </Route>

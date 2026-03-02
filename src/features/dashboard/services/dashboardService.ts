@@ -1,23 +1,15 @@
 import api from '@/lib/axios'
 import type { ApiResponse } from '@/types/api.types'
+import type { CourseDto } from '@/types/course.types'
+import type { NotificationDto } from '@/types/notification.types'
 
 export interface DashboardStatsDto {
     totalCourses: number
     totalStudents?: number
-    pendingAssignments?: number
-    pendingJoinRequests?: number
-    averageAttendance?: number
     upcomingEvents: number
-}
-
-export interface UpcomingEventDto {
-    id: string
-    type: 'assignment' | 'ct' | 'presentation'
-    title: string
-    courseName: string
-    courseId: string
-    dueDate: string
-    totalMarks?: number
+    pendingAssignments?: number
+    averageAttendance?: number
+    pendingJoinRequests?: number
 }
 
 export interface RecentActivityDto {
@@ -31,13 +23,38 @@ export interface RecentActivityDto {
     link?: string
 }
 
-export interface DashboardDto {
-    stats: DashboardStatsDto
-    upcomingEvents: UpcomingEventDto[]
-    recentActivity: RecentActivityDto[]
+const notificationTypeMap: Record<string, string> = {
+    NewAnnouncement:            'announcement',
+    NewAssignment:              'assignment',
+    AssignmentDeadlineReminder: 'assignment',
+    MarksPublished:             'course',
+    JoinRequestReceived:        'member',
+    CourseJoinApproved:         'member',
+    CourseJoinRejected:         'member',
+    NewMaterial:                'material',
+    GradeComplaint:             'course',
+    General:                    'course',
+}
+
+export function mapNotificationToActivity(n: NotificationDto): RecentActivityDto {
+    return {
+        id: n.id,
+        type: notificationTypeMap[n.type] ?? 'course',
+        title: n.title,
+        description: n.body,
+        courseName: '',
+        courseId: '',
+        createdAt: n.createdAt,
+        link: n.redirectUrl ?? undefined,
+    }
 }
 
 export const dashboardService = {
-    getDashboard: () =>
-        api.get<ApiResponse<DashboardDto>>('/dashboard').then((r) => r.data),
+    getCourses: (role: 'Teacher' | 'Student', userId: string) => {
+        const param = role === 'Teacher' ? `teacherId=${userId}` : `studentId=${userId}`
+        return api.get<ApiResponse<CourseDto[]>>(`/Courses?${param}`).then((r) => r.data)
+    },
+
+    getNotifications: () =>
+        api.get<ApiResponse<NotificationDto[]>>('/Notifications').then((r) => r.data),
 }

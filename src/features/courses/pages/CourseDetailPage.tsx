@@ -19,6 +19,7 @@ import AttendanceRecordsList from '@/features/attendance/components/AttendanceRe
 import AttendanceCalendar from '@/features/attendance/components/AttendanceCalendar'
 import AttendanceStatsCard from '@/features/attendance/components/AttendanceStatsCard'
 import TakeAttendanceSheet from '@/features/attendance/components/TakeAttendanceSheet'
+import AttendanceExportButton from '@/features/attendance/components/AttendanceExportButton'
 import StudentAttendanceView from '@/features/attendance/components/StudentAttendanceView'
 import { useAttendance } from '@/features/attendance/hooks/useAttendance'
 import { useAttendanceStats } from '@/features/attendance/hooks/useAttendanceStats'
@@ -30,12 +31,13 @@ import PresentationsTab from '@/features/presentations/components/PresentationsT
 import MarksTab from '@/features/marks/components/MarksTab'
 
 
-function AttendanceTab({ courseId }: { courseId: string }) {
+function AttendanceTab({ courseId, courseName }: { courseId: string; courseName?: string }) {
     const { user } = useAuthStore()
     const teacher = isTeacher(user?.role ?? 'Student')
     const [takeOpen, setTakeOpen] = useState(false)
+    const [editSession, setEditSession] = useState<import('@/types/attendance.types').AttendanceSessionDto | null>(null)
     const [view, setView] = useState<'list' | 'calendar'>('list')
-    const { sessions, members, isSessionsLoading, takeAttendance, isTaking, deleteSession } = useAttendance(courseId)
+    const { sessions, members, isSessionsLoading, takeAttendance, isTaking, editAttendance, isEditing, deleteSession } = useAttendance(courseId)
     const { data: stats } = useAttendanceStats(courseId)
 
     if (!teacher) return <StudentAttendanceView courseId={courseId} />
@@ -52,6 +54,7 @@ function AttendanceTab({ courseId }: { courseId: string }) {
                         active={view}
                         onChange={(k) => setView(k as 'list' | 'calendar')}
                     />
+                    <AttendanceExportButton courseId={courseId} courseName={courseName} />
                     <Button size="sm" leftIcon={<Plus className="w-4 h-4" />} onClick={() => setTakeOpen(true)}>
                         Take Attendance
                     </Button>
@@ -76,12 +79,36 @@ function AttendanceTab({ courseId }: { courseId: string }) {
             ) : view === 'list' ? (
                 <AttendanceRecordsList
                     sessions={sessions}
+                    onEdit={(id) => setEditSession(sessions.find((s) => s.id === id) ?? null)}
                     onDelete={deleteSession}
                 />
             ) : (
                 <AttendanceCalendar sessions={sessions} />
             )}
 
+            {/* Edit Sheet */}
+            {editSession && (
+                <TakeAttendanceSheet
+                    isOpen={!!editSession}
+                    onClose={() => setEditSession(null)}
+                    members={members}
+                    courseId={courseId}
+                    initialDate={editSession.date}
+                    initialTopic={editSession.topic}
+                    initialStatuses={Object.fromEntries(editSession.records.map((r) => [r.studentId, r.status as import('@/types/attendance.types').AttendanceStatus]))}
+                    onSubmit={(data) => {
+                        editAttendance({
+                            sessionId: editSession.id,
+                            data: {
+                                topic: data.topic,
+                                entries: data.records.map((r) => ({ studentId: r.studentId, status: r.status })),
+                            },
+                        })
+                        setEditSession(null)
+                    }}
+                    isLoading={isEditing}
+                />
+            )}
             <TakeAttendanceSheet
                 isOpen={takeOpen}
                 onClose={() => setTakeOpen(false)}
@@ -116,7 +143,7 @@ export default function CourseDetailPage() {
             case COURSE_TABS.STREAM:
                 return <AnnouncementFeed courseId={courseId!} />
             case COURSE_TABS.ATTENDANCE:
-                return <AttendanceTab courseId={courseId!} />
+                return <AttendanceTab courseId={courseId!} courseName={course?.title} />
             case COURSE_TABS.MATERIALS:
                 return <MaterialsTab courseId={courseId!} />
             case COURSE_TABS.ASSIGNMENTS:
@@ -201,3 +228,7 @@ function PlaceholderTab({ label, phase }: { label: string; phase: string }) {
         </div>
     )
 }
+
+
+
+

@@ -12,7 +12,7 @@ export function useAnnouncements(courseId: string) {
         queryFn: async () => {
             const res = await announcementService.getAll(courseId)
             if (!res.success) throw new Error(res.message)
-            return res.data
+            return res.data ?? []
         },
         enabled: !!courseId,
     })
@@ -20,10 +20,8 @@ export function useAnnouncements(courseId: string) {
     const createMutation = useMutation({
         mutationFn: (data: CreateAnnouncementRequest) => announcementService.create(data),
         onSuccess: (res) => {
-            if (res.success) {
-                qc.invalidateQueries({ queryKey: key })
-                toast.success('Announcement posted!')
-            } else toast.error(res.message)
+            if (res.success) { qc.invalidateQueries({ queryKey: key }); toast.success('Announcement posted!') }
+            else toast.error(res.message)
         },
         onError: () => toast.error('Failed to post announcement.'),
     })
@@ -31,16 +29,19 @@ export function useAnnouncements(courseId: string) {
     const deleteMutation = useMutation({
         mutationFn: (announcementId: string) => announcementService.delete(courseId, announcementId),
         onSuccess: (res) => {
-            if (res.success) {
-                qc.invalidateQueries({ queryKey: key })
-                toast.success('Announcement deleted.')
-            } else toast.error(res.message)
+            if (res.success) { qc.invalidateQueries({ queryKey: key }); toast.success('Announcement deleted.') }
+            else toast.error(res.message)
         },
+        onError: () => toast.error('Failed to delete announcement.'),
     })
 
     const pinMutation = useMutation({
-        mutationFn: (announcementId: string) => announcementService.pin(courseId, announcementId),
-        onSuccess: () => qc.invalidateQueries({ queryKey: key }),
+        mutationFn: (announcementId: string) => announcementService.togglePin(courseId, announcementId),
+        onSuccess: (res) => {
+            if (res.success) { qc.invalidateQueries({ queryKey: key }); toast.success(res.message) }
+            else toast.error(res.message)
+        },
+        onError: () => toast.error('Failed to update pin.'),
     })
 
     return {
@@ -50,6 +51,7 @@ export function useAnnouncements(courseId: string) {
         isCreating: createMutation.isPending,
         deleteAnnouncement: deleteMutation.mutate,
         isDeleting: deleteMutation.isPending,
-        pinAnnouncement: pinMutation.mutate,
+        togglePin: pinMutation.mutate,
+        isPinning: pinMutation.isPending,
     }
 }

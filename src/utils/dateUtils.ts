@@ -1,9 +1,16 @@
 import { format, formatDistanceToNow, parseISO, isValid } from 'date-fns'
 
+// Force UTC by appending Z if not present
+function parseUTC(date: string | Date): Date {
+    if (date instanceof Date) return date
+    const s = date.endsWith('Z') || date.includes('+') ? date : date + 'Z'
+    return parseISO(s)
+}
+
 export function formatDate(date: string | Date | null | undefined, fmt = 'dd MMM yyyy'): string {
-    if (!date) return '—'
-    const d = typeof date === 'string' ? parseISO(date) : date
-    return isValid(d) ? format(d, fmt) : '—'
+    if (!date) return '-'
+    const d = parseUTC(date)
+    return isValid(d) ? format(d, fmt) : '-'
 }
 
 export function formatDateTime(date: string | Date | null | undefined): string {
@@ -11,9 +18,9 @@ export function formatDateTime(date: string | Date | null | undefined): string {
 }
 
 export function formatRelative(date: string | Date | null | undefined): string {
-    if (!date) return '—'
-    const d = typeof date === 'string' ? parseISO(date) : date
-    return isValid(d) ? formatDistanceToNow(d, { addSuffix: true }) : '—'
+    if (!date) return '-'
+    const d = parseUTC(date)
+    return isValid(d) ? formatDistanceToNow(d, { addSuffix: true }) : '-'
 }
 
 export function formatShortDate(date: string | Date | null | undefined): string {
@@ -33,6 +40,6 @@ export function formatInputDate(date: string | Date | null | undefined): string 
 }
 
 export function getDayName(date: string | Date): string {
-    const d = typeof date === 'string' ? parseISO(date) : date
+    const d = parseUTC(date)
     return format(d, 'EEEE')
 }
