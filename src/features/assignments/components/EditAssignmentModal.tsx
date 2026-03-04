@@ -4,13 +4,12 @@ import { z } from 'zod'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
-import { addDays } from 'date-fns'
-import type { CreateAssignmentRequest } from '@/types/assignment.types'
+import type { AssignmentDto, UpdateAssignmentRequest } from '@/types/assignment.types'
 
 const schema = z.object({
     title: z.string().min(3, 'Title must be at least 3 characters'),
     instructions: z.string().optional(),
-    deadline: z.string().min(1, 'Due date is required'),
+    deadline: z.string().min(1, 'Deadline is required'),
     maxMarks: z.coerce.number().min(1, 'Must be at least 1').max(1000),
     allowLateSubmission: z.boolean(),
     rubricNotes: z.string().optional(),
@@ -20,27 +19,30 @@ type FormData = z.infer<typeof schema>
 interface Props {
     isOpen: boolean
     onClose: () => void
-    onSubmit: (data: CreateAssignmentRequest) => void
+    assignment: AssignmentDto
+    onSubmit: (data: UpdateAssignmentRequest) => void
     isLoading?: boolean
 }
 
-function toLocalDateTimeString(date: Date): string {
+function toLocalDateTimeString(iso: string): string {
+    const d = new Date(iso)
     const pad = (n: number) => String(n).padStart(2, '0')
-    return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) +
-        'T' + pad(date.getHours()) + ':' + pad(date.getMinutes())
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+        'T' + pad(d.getHours()) + ':' + pad(d.getMinutes())
 }
 
-export default function CreateAssignmentModal({ isOpen, onClose, onSubmit, isLoading }: Props) {
-    const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
+export default function EditAssignmentModal({ isOpen, onClose, assignment, onSubmit, isLoading }: Props) {
+    const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
         resolver: zodResolver(schema),
         defaultValues: {
-            maxMarks: 100,
-            allowLateSubmission: false,
-            deadline: toLocalDateTimeString(addDays(new Date(), 7)),
+            title: assignment.title,
+            instructions: assignment.instructions ?? '',
+            deadline: toLocalDateTimeString(assignment.deadline),
+            maxMarks: assignment.maxMarks,
+            allowLateSubmission: assignment.allowLateSubmission,
+            rubricNotes: assignment.rubricNotes ?? '',
         },
     })
-
-    const handleClose = () => { reset(); onClose() }
 
     const submit = (data: FormData) => {
         onSubmit({
@@ -50,12 +52,12 @@ export default function CreateAssignmentModal({ isOpen, onClose, onSubmit, isLoa
     }
 
     return (
-        <Modal isOpen={isOpen} onClose={handleClose} title="Create Assignment" size="xl">
+        <Modal isOpen={isOpen} onClose={onClose} title="Edit Assignment" size="xl">
             <form onSubmit={handleSubmit(submit)} className="space-y-4">
                 <Input
                     {...register('title')}
                     label="Title"
-                    placeholder="e.g. Assignment 1 - Linked Lists"
+                    placeholder="Assignment title"
                     error={errors.title?.message}
                 />
 
@@ -96,18 +98,18 @@ export default function CreateAssignmentModal({ isOpen, onClose, onSubmit, isLoa
                 <div className="flex items-center gap-3">
                     <input
                         type="checkbox"
-                        id="allowLate"
+                        id="allowLateEdit"
                         {...register('allowLateSubmission')}
                         className="w-4 h-4 rounded accent-primary"
                     />
-                    <label htmlFor="allowLate" className="text-sm text-foreground cursor-pointer">
+                    <label htmlFor="allowLateEdit" className="text-sm text-foreground cursor-pointer">
                         Allow late submission
                     </label>
                 </div>
 
                 <div className="flex gap-3 pt-2">
-                    <Button type="button" variant="secondary" className="flex-1" onClick={handleClose}>Cancel</Button>
-                    <Button type="submit" className="flex-1" loading={isLoading}>Create Assignment</Button>
+                    <Button type="button" variant="secondary" className="flex-1" onClick={onClose}>Cancel</Button>
+                    <Button type="submit" className="flex-1" loading={isLoading}>Save Changes</Button>
                 </div>
             </form>
         </Modal>

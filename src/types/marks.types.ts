@@ -1,3 +1,42 @@
+﻿export type FormulaComponentType = 'CT' | 'Assignment' | 'Presentation' | 'Attendance'
+export type SelectionRule = 'Best1' | 'Best2' | 'Best3' | 'All'
+
+export interface FormulaComponentRequest {
+    componentType: FormulaComponentType
+    selectionRule: SelectionRule
+    weightPercent: number
+    maxMarks: number
+}
+
+export interface GradingFormulaRequest {
+    totalMarks: number
+    components: FormulaComponentRequest[]
+}
+
+export interface GradingFormulaComponentDto {
+    componentType: FormulaComponentType
+    selectionRule: SelectionRule
+    weightPercent: number
+    maxMarks: number
+}
+
+export interface GradingFormulaDto {
+    id: string
+    totalMarks: number
+    components: GradingFormulaComponentDto[]
+}
+
+export interface FinalMarkDto {
+    studentId: string
+    studentName: string
+    breakdownJson: string
+    finalMark: number
+    isPublished: boolean
+}
+
+export type MarksDto = FinalMarkDto[]
+
+// Legacy gradebook types (kept for existing components)
 export interface GradebookRowDto {
     studentId: string
     studentName: string

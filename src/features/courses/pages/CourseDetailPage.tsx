@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useParams, Navigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Settings, Plus } from 'lucide-react'
@@ -153,7 +153,7 @@ export default function CourseDetailPage() {
             case COURSE_TABS.PRESENTATIONS:
                 return <PresentationsTab courseId={courseId!} />
             case COURSE_TABS.MARKS:
-                return <MarksTab courseId={courseId!} />
+                return <MarksTab courseId={courseId!} courseTitle={course?.title} />
             case COURSE_TABS.MEMBERS:
                 return teacher ? (
                     <div className="space-y-6">
@@ -168,7 +168,7 @@ export default function CourseDetailPage() {
                             <CourseMembersList courseId={courseId!} />
                         </div>
                     </div>
-                ) : <PlaceholderTab label="👥 Members" phase="visible" />
+                ) : <PlaceholderTab label="ðŸ‘¥ Members" phase="visible" />
             default:
                 return <Navigate to={`/courses/${courseId}/${COURSE_TABS.STREAM}`} replace />
         }
@@ -180,7 +180,7 @@ export default function CourseDetailPage() {
                 <div className="flex items-center justify-between gap-4 px-6 py-4">
                     <div className="min-w-0">
                         <h1 className="text-xl font-bold text-foreground truncate">{course.title}</h1>
-                        <p className="text-sm text-muted-foreground">{course.courseCode} · {course.department} · {course.semester}</p>
+                        <p className="text-sm text-muted-foreground">{course.courseCode} Â· {course.department} Â· {course.semester}</p>
                     </div>
                     {teacher && course.teacherId === user?.id && (
                         <Button size="sm" variant="secondary" leftIcon={<Settings className="w-4 h-4" />} onClick={() => setEditOpen(true)}>
@@ -228,6 +228,7 @@ function PlaceholderTab({ label, phase }: { label: string; phase: string }) {
         </div>
     )
 }
+
 
 
 

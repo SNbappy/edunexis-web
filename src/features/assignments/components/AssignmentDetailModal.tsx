@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import {
-    Clock, Users, FileText, CheckCircle2,
-    Send, AlertCircle, BookOpen, Star,
+    Clock, Users, FileText, BookOpen,
+    Send, AlertCircle,
 } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
@@ -15,7 +15,7 @@ import { useAuthStore } from '@/store/authStore'
 import { isTeacher } from '@/utils/roleGuard'
 import { isPast, parseISO } from 'date-fns'
 import { useState } from 'react'
-import type { AssignmentDto } from '@/types/assignment.types'
+import type { AssignmentDto, SubmitAssignmentRequest } from '@/types/assignment.types'
 import { cn } from '@/utils/cn'
 
 interface Props {
@@ -38,12 +38,10 @@ export default function AssignmentDetailModal({ isOpen, onClose, assignment, cou
 
     if (!assignment) return null
 
-    const isPastDue = isPast(parseISO(assignment.dueDate))
-    const canSubmit = assignment.status === 'Published' &&
+    const isPastDue = isPast(parseISO(assignment.deadline))
+    const canSubmit = assignment.isOpen &&
         (!isPastDue || assignment.allowLateSubmission) &&
         !teacher
-
-    const submission = assignment.mySubmission
 
     return (
         <>
@@ -58,14 +56,14 @@ export default function AssignmentDetailModal({ isOpen, onClose, assignment, cou
                     <div className="flex items-center gap-3 flex-wrap">
                         <span className={cn(
                             'flex items-center gap-1.5 text-xs font-medium',
-                            isPastDue && assignment.status !== 'Closed' ? 'text-destructive' : 'text-muted-foreground'
+                            isPastDue ? 'text-destructive' : 'text-muted-foreground'
                         )}>
                             <Clock className="w-3.5 h-3.5" />
-                            Due: {formatDateTime(assignment.dueDate)}
+                            Due: {formatDateTime(assignment.deadline)}
                         </span>
                         <span className="text-xs text-muted-foreground flex items-center gap-1.5">
                             <BookOpen className="w-3.5 h-3.5" />
-                            {assignment.totalMarks} marks
+                            {assignment.maxMarks} marks
                         </span>
                         {assignment.allowLateSubmission && (
                             <Badge variant="muted">Late submission allowed</Badge>
@@ -77,42 +75,6 @@ export default function AssignmentDetailModal({ isOpen, onClose, assignment, cou
                             </span>
                         )}
                     </div>
-
-                    {/* Student submission status */}
-                    {!teacher && submission && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className={cn(
-                                'p-4 rounded-xl border space-y-2',
-                                submission.status === 'Graded'
-                                    ? 'bg-emerald-500/5 border-emerald-500/30'
-                                    : 'bg-blue-500/5 border-blue-500/30'
-                            )}
-                        >
-                            <div className="flex items-center gap-2">
-                                {submission.status === 'Graded'
-                                    ? <Star className="w-4 h-4 text-emerald-500" />
-                                    : <CheckCircle2 className="w-4 h-4 text-blue-500" />}
-                                <span className={cn(
-                                    'text-sm font-semibold',
-                                    submission.status === 'Graded' ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'
-                                )}>
-                                    {submission.status === 'Graded'
-                                        ? `Graded: ${submission.obtainedMarks}/${assignment.totalMarks} marks`
-                                        : 'Submitted — awaiting grade'}
-                                </span>
-                            </div>
-                            {submission.feedback && (
-                                <p className="text-xs text-muted-foreground border-t border-border/50 pt-2">
-                                    💬 {submission.feedback}
-                                </p>
-                            )}
-                            <p className="text-xs text-muted-foreground">
-                                Submitted {formatRelative(submission.submittedAt)}
-                            </p>
-                        </motion.div>
-                    )}
 
                     {/* Teacher tabs */}
                     {teacher && (
@@ -130,17 +92,19 @@ export default function AssignmentDetailModal({ isOpen, onClose, assignment, cou
                     {/* Details panel */}
                     {(activeTab === 'details' || !teacher) && (
                         <div className="space-y-4">
-                            {assignment.description && (
-                                <div>
-                                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Description</p>
-                                    <p className="text-sm text-foreground">{assignment.description}</p>
-                                </div>
-                            )}
                             {assignment.instructions && (
                                 <div>
                                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Instructions</p>
                                     <div className="p-4 rounded-xl bg-muted/50 border border-border">
                                         <p className="text-sm text-foreground whitespace-pre-wrap">{assignment.instructions}</p>
+                                    </div>
+                                </div>
+                            )}
+                            {assignment.rubricNotes && (
+                                <div>
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Rubric Notes</p>
+                                    <div className="p-4 rounded-xl bg-muted/50 border border-border">
+                                        <p className="text-sm text-foreground whitespace-pre-wrap">{assignment.rubricNotes}</p>
                                     </div>
                                 </div>
                             )}
@@ -152,7 +116,7 @@ export default function AssignmentDetailModal({ isOpen, onClose, assignment, cou
                         <SubmissionsPanel
                             courseId={courseId}
                             assignmentId={assignment.id}
-                            totalMarks={assignment.totalMarks}
+                            maxMarks={assignment.maxMarks}
                         />
                     )}
 
@@ -164,12 +128,12 @@ export default function AssignmentDetailModal({ isOpen, onClose, assignment, cou
                                 leftIcon={<Send className="w-4 h-4" />}
                                 onClick={() => setSubmitOpen(true)}
                             >
-                                {submission ? 'Resubmit Assignment' : 'Submit Assignment'}
+                                Submit Assignment
                             </Button>
                         </div>
                     )}
 
-                    {!teacher && isPastDue && !assignment.allowLateSubmission && !submission && (
+                    {!teacher && isPastDue && !assignment.allowLateSubmission && (
                         <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-sm text-destructive">
                             <AlertCircle className="w-4 h-4 shrink-0" />
                             Submission deadline has passed.
@@ -178,14 +142,13 @@ export default function AssignmentDetailModal({ isOpen, onClose, assignment, cou
                 </div>
             </Modal>
 
-            {/* Submit modal */}
             <SubmitAssignmentModal
                 isOpen={submitOpen}
                 onClose={() => setSubmitOpen(false)}
                 assignment={assignment}
-                onSubmit={(data) =>
+                onSubmit={(data: SubmitAssignmentRequest) =>
                     submitAssignment(
-                        { ...data, assignmentId: assignment.id, courseId },
+                        { assignmentId: assignment.id, data },
                         { onSuccess: () => { setSubmitOpen(false); onClose() } }
                     )
                 }

@@ -1,4 +1,4 @@
-export type PresentationStatus = 'Scheduled' | 'Ongoing' | 'Completed' | 'Cancelled'
+﻿export type PresentationStatus = 'Scheduled' | 'Ongoing' | 'Completed' | 'Cancelled'
 export type PresentationFormat = 'Individual' | 'Group'
 
 export interface PresentationDto {
@@ -6,13 +6,13 @@ export interface PresentationDto {
     courseId: string
     title: string
     description?: string
-    scheduledDate: string
+    scheduledDate?: string | null
     totalMarks: number
     format: PresentationFormat
-    durationPerGroupMinutes?: number
-    venue?: string
+    durationPerGroupMinutes?: number | null
+    venue?: string | null
     status: PresentationStatus
-    topicsAllowed?: boolean
+    topicsAllowed: boolean
     createdAt: string
     myResult?: PresentationResultDto | null
     submittedCount?: number
@@ -23,25 +23,25 @@ export interface PresentationResultDto {
     studentId: string
     studentName: string
     studentEmail: string
-    studentPhoto?: string
-    rollNumber?: string
-    topic?: string
+    studentPhoto?: string | null
+    rollNumber?: string | null
+    topic?: string | null
     obtainedMarks: number | null
     isAbsent: boolean
-    feedback?: string
-    gradedAt?: string
+    feedback?: string | null
+    gradedAt?: string | null
 }
 
 export interface CreatePresentationRequest {
     courseId: string
     title: string
     description?: string
-    scheduledDate: string
+    scheduledDate?: string | null
     totalMarks: number
     format: PresentationFormat
-    durationPerGroupMinutes?: number
-    venue?: string
-    topicsAllowed?: boolean
+    durationPerGroupMinutes?: number | null
+    venue?: string | null
+    topicsAllowed: boolean
 }
 
 export interface PresentationMarkEntry {
@@ -54,4 +54,14 @@ export interface PresentationMarkEntry {
 
 export interface SavePresentationMarksRequest {
     entries: PresentationMarkEntry[]
+}
+
+export interface GradePresentationRequest {
+    studentId: string
+    marks: number
+    feedback?: string
+}
+
+export interface UpdatePresentationStatusRequest {
+    status: PresentationStatus
 }

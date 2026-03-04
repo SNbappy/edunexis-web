@@ -10,9 +10,9 @@ export function useSubmissions(courseId: string, assignmentId: string) {
     const query = useQuery({
         queryKey: key,
         queryFn: async () => {
-            const res = await assignmentService.getSubmissions(courseId, assignmentId)
+            const res = await assignmentService.getSubmissions(assignmentId)
             if (!res.success) throw new Error(res.message)
-            return res.data
+            return res.data ?? []
         },
         enabled: !!courseId && !!assignmentId,
     })
@@ -23,7 +23,8 @@ export function useSubmissions(courseId: string, assignmentId: string) {
     }
 
     const submitMutation = useMutation({
-        mutationFn: (data: SubmitAssignmentRequest) => assignmentService.submit(data),
+        mutationFn: ({ assignmentId, data }: { assignmentId: string; data: SubmitAssignmentRequest }) =>
+            assignmentService.submit(assignmentId, data),
         onSuccess: (res) => {
             if (res.success) { invalidate(); toast.success('Assignment submitted!') }
             else toast.error(res.message)
@@ -33,7 +34,7 @@ export function useSubmissions(courseId: string, assignmentId: string) {
 
     const gradeMutation = useMutation({
         mutationFn: ({ submissionId, data }: { submissionId: string; data: GradeSubmissionRequest }) =>
-            assignmentService.grade(courseId, assignmentId, submissionId, data),
+            assignmentService.grade(submissionId, data),
         onSuccess: (res) => {
             if (res.success) { invalidate(); toast.success('Graded successfully!') }
             else toast.error(res.message)

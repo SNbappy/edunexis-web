@@ -1,37 +1,35 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { motion } from 'framer-motion'
-import {
-    Calendar, Clock, MapPin, BookOpen, Users,
-    MoreVertical, Trash2, CheckSquare,
-    PlayCircle, XCircle, Star, Mic,
-} from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Calendar, BookOpen, MapPin, Clock, Users, Star, Mic, MoreVertical, Trash2, CheckSquare, PlayCircle, XCircle } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
-import { formatDate, formatDateTime } from '@/utils/dateUtils'
+import { formatDate } from '@/utils/dateUtils'
 import { useAuthStore } from '@/store/authStore'
 import { isTeacher } from '@/utils/roleGuard'
-import { cn } from '@/utils/cn'
 import type { PresentationDto } from '@/types/presentation.types'
 
 interface Props {
     presentation: PresentationDto
     index?: number
-    onView: (p: PresentationDto) => void
     onDelete?: (id: string) => void
     onUpdateStatus?: (id: string, status: string) => void
 }
 
 const statusConfig = {
-    Scheduled: { variant: 'default' as const, dot: true },
-    Ongoing: { variant: 'warning' as const, dot: true },
-    Completed: { variant: 'success' as const, dot: false },
-    Cancelled: { variant: 'danger' as const, dot: false },
+    Scheduled: { variant: 'default'  as const, dot: true  },
+    Ongoing:   { variant: 'warning'  as const, dot: true  },
+    Completed: { variant: 'success'  as const, dot: false },
+    Cancelled: { variant: 'danger'   as const, dot: false },
 }
 
-export default function PresentationCard({ presentation: p, index = 0, onView, onDelete, onUpdateStatus }: Props) {
-    const { user } = useAuthStore()
-    const teacher = isTeacher(user?.role ?? 'Student')
+export default function PresentationCard({ presentation: p, index = 0, onDelete, onUpdateStatus }: Props) {
+    const { user }    = useAuthStore()
+    const teacher     = isTeacher(user?.role ?? 'Student')
+    const navigate    = useNavigate()
+    const sc          = statusConfig[p.status]
     const [menuOpen, setMenuOpen] = useState(false)
-    const sc = statusConfig[p.status]
+
+    const handleClick = () => navigate(`/courses/${p.courseId}/presentations/${p.id}`)
 
     return (
         <motion.div
@@ -39,15 +37,22 @@ export default function PresentationCard({ presentation: p, index = 0, onView, o
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
             whileHover={{ y: -2, transition: { duration: 0.15 } }}
+            style={{ position: 'relative', zIndex: menuOpen ? 50 : 0 }}
             className="group glass-card rounded-2xl p-5 hover:border-primary/20 hover:shadow-card-hover transition-all cursor-pointer"
-            onClick={() => onView(p)}
+            onClick={handleClick}
         >
             <div className="flex items-start gap-4">
                 {/* Date block */}
                 <div className="shrink-0 text-center bg-violet-500/10 rounded-xl px-3 py-2 w-16">
-                    <p className="text-xs text-violet-500 font-medium">{formatDate(p.scheduledDate, 'MMM')}</p>
-                    <p className="text-2xl font-bold text-violet-500 leading-tight">{formatDate(p.scheduledDate, 'dd')}</p>
-                    <p className="text-xs text-muted-foreground">{formatDate(p.scheduledDate, 'EEE')}</p>
+                    <p className="text-xs text-violet-500 font-medium">
+                        {p.scheduledDate ? formatDate(p.scheduledDate, 'MMM') : '—'}
+                    </p>
+                    <p className="text-2xl font-bold text-violet-500 leading-tight">
+                        {p.scheduledDate ? formatDate(p.scheduledDate, 'dd') : '—'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                        {p.scheduledDate ? formatDate(p.scheduledDate, 'EEE') : ''}
+                    </p>
                 </div>
 
                 {/* Content */}
@@ -59,45 +64,48 @@ export default function PresentationCard({ presentation: p, index = 0, onView, o
                         <div className="flex items-center gap-2 shrink-0">
                             <Badge variant={sc.variant} dot={sc.dot}>{p.status}</Badge>
                             <Badge variant="muted">{p.format}</Badge>
+
                             {teacher && (
-                                <div className="relative" onClick={(e) => e.stopPropagation()}>
-                                    <button
-                                        onClick={() => setMenuOpen((o) => !o)}
-                                        className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all opacity-0 group-hover:opacity-100"
-                                    >
+                                <div className="relative" onClick={e => e.stopPropagation()}>
+                                    <button onClick={() => setMenuOpen(o => !o)}
+                                        className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all opacity-0 group-hover:opacity-100">
                                         <MoreVertical className="w-4 h-4" />
                                     </button>
                                     {menuOpen && (
-                                        <motion.div
-                                            initial={{ opacity: 0, scale: 0.9, y: -4 }}
-                                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                                            className="absolute right-0 top-full mt-1 w-48 glass-card rounded-xl shadow-xl border border-border z-20 overflow-hidden"
-                                        >
-                                            {p.status === 'Scheduled' && onUpdateStatus && (
-                                                <button onClick={() => { onUpdateStatus(p.id, 'Ongoing'); setMenuOpen(false) }}
-                                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors">
-                                                    <PlayCircle className="w-4 h-4 text-amber-500" /> Mark Ongoing
-                                                </button>
-                                            )}
-                                            {p.status === 'Ongoing' && onUpdateStatus && (
-                                                <button onClick={() => { onUpdateStatus(p.id, 'Completed'); setMenuOpen(false) }}
-                                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors">
-                                                    <CheckSquare className="w-4 h-4 text-emerald-500" /> Mark Completed
-                                                </button>
-                                            )}
-                                            {p.status !== 'Completed' && p.status !== 'Cancelled' && onUpdateStatus && (
-                                                <button onClick={() => { onUpdateStatus(p.id, 'Cancelled'); setMenuOpen(false) }}
-                                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-amber-500 hover:bg-amber-500/10 transition-colors">
-                                                    <XCircle className="w-4 h-4" /> Cancel
-                                                </button>
-                                            )}
-                                            {onDelete && (
-                                                <button onClick={() => { onDelete(p.id); setMenuOpen(false) }}
-                                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors">
-                                                    <Trash2 className="w-4 h-4" /> Delete
-                                                </button>
-                                            )}
-                                        </motion.div>
+                                        <>
+                                            <div className="fixed inset-0" style={{ zIndex: 40 }} onClick={() => setMenuOpen(false)} />
+                                            <motion.div
+                                                initial={{ opacity: 0, scale: 0.9, y: -4 }}
+                                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                style={{ zIndex: 51 }}
+                                                className="absolute right-0 top-full mt-1 w-48 glass-card rounded-xl shadow-xl border border-border overflow-hidden"
+                                            >
+                                                {p.status === 'Scheduled' && onUpdateStatus && (
+                                                    <button onClick={() => { onUpdateStatus(p.id, 'Ongoing'); setMenuOpen(false) }}
+                                                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors">
+                                                        <PlayCircle className="w-4 h-4 text-amber-500" /> Mark Ongoing
+                                                    </button>
+                                                )}
+                                                {p.status === 'Ongoing' && onUpdateStatus && (
+                                                    <button onClick={() => { onUpdateStatus(p.id, 'Completed'); setMenuOpen(false) }}
+                                                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors">
+                                                        <CheckSquare className="w-4 h-4 text-emerald-500" /> Mark Completed
+                                                    </button>
+                                                )}
+                                                {p.status !== 'Completed' && p.status !== 'Cancelled' && onUpdateStatus && (
+                                                    <button onClick={() => { onUpdateStatus(p.id, 'Cancelled'); setMenuOpen(false) }}
+                                                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-amber-500 hover:bg-amber-500/10 transition-colors">
+                                                        <XCircle className="w-4 h-4" /> Cancel
+                                                    </button>
+                                                )}
+                                                {onDelete && (
+                                                    <button onClick={() => { onDelete(p.id); setMenuOpen(false) }}
+                                                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors">
+                                                        <Trash2 className="w-4 h-4" /> Delete
+                                                    </button>
+                                                )}
+                                            </motion.div>
+                                        </>
                                     )}
                                 </div>
                             )}
@@ -117,7 +125,7 @@ export default function PresentationCard({ presentation: p, index = 0, onView, o
                         {teacher && p.submittedCount !== undefined && (
                             <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {p.submittedCount} graded</span>
                         )}
-                        {!teacher && p.myResult?.obtainedMarks !== null && p.myResult?.obtainedMarks !== undefined && (
+                        {!teacher && p.myResult?.obtainedMarks != null && (
                             <span className="flex items-center gap-1 text-emerald-500 font-semibold">
                                 <Star className="w-3 h-3" /> {p.myResult.obtainedMarks}/{p.totalMarks}
                             </span>

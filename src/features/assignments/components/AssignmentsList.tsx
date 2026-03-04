@@ -6,15 +6,14 @@ import type { AssignmentDto } from '@/types/assignment.types'
 interface Props {
     assignments: AssignmentDto[]
     onView: (a: AssignmentDto) => void
+    onEdit?: (a: AssignmentDto) => void
     onDelete?: (id: string) => void
-    onPublish?: (id: string) => void
-    onClose?: (id: string) => void
     emptyTitle?: string
     emptyDescription?: string
     emptyAction?: React.ReactNode
 }
 
-export default function AssignmentsList({ assignments, onView, onDelete, onPublish, onClose, emptyTitle, emptyDescription, emptyAction }: Props) {
+export default function AssignmentsList({ assignments, onView, onEdit, onDelete, emptyTitle, emptyDescription, emptyAction }: Props) {
     if (assignments.length === 0) {
         return (
             <EmptyState
@@ -34,9 +33,8 @@ export default function AssignmentsList({ assignments, onView, onDelete, onPubli
                     assignment={a}
                     index={i}
                     onView={onView}
+                    onEdit={onEdit}
                     onDelete={onDelete}
-                    onPublish={onPublish}
-                    onClose={onClose}
                 />
             ))}
         </div>

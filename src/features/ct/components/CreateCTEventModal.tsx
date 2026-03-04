@@ -4,18 +4,12 @@ import { z } from 'zod'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
-import Select from '@/components/ui/Select'
-import { formatInputDate } from '@/utils/dateUtils'
-import { addDays } from 'date-fns'
+import type { CreateCTEventRequest } from '@/types/ct.types'
 
 const schema = z.object({
-    title: z.string().min(3, 'Title must be at least 3 characters'),
-    description: z.string().optional(),
-    scheduledDate: z.string().min(1, 'Scheduled date is required'),
-    durationMinutes: z.coerce.number().min(10).max(240),
-    totalMarks: z.coerce.number().min(1).max(500),
-    syllabus: z.string().optional(),
-    venue: z.string().optional(),
+    title:    z.string().min(3, 'Title must be at least 3 characters').max(100),
+    maxMarks: z.coerce.number().min(1, 'Marks must be at least 1').max(500),
+    heldOn:   z.string().optional().nullable(),
 })
 type FormData = z.infer<typeof schema>
 
@@ -23,96 +17,68 @@ interface Props {
     isOpen: boolean
     onClose: () => void
     courseId: string
-    onSubmit: (data: FormData & { courseId: string }) => void
+    onSubmit: (data: CreateCTEventRequest) => void
     isLoading?: boolean
 }
 
-const DURATION_OPTIONS = [
-    { value: 20, label: '20 minutes' },
-    { value: 30, label: '30 minutes' },
-    { value: 40, label: '40 minutes' },
-    { value: 45, label: '45 minutes' },
-    { value: 60, label: '60 minutes' },
-    { value: 90, label: '90 minutes' },
-    { value: 120, label: '2 hours' },
-]
-
-export default function CreateCTEventModal({ isOpen, onClose, courseId, onSubmit, isLoading }: Props) {
+export default function CreateCTEventModal({ isOpen, onClose, onSubmit, isLoading }: Props) {
     const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
         resolver: zodResolver(schema),
-        defaultValues: {
-            totalMarks: 20,
-            durationMinutes: 30,
-            scheduledDate: formatInputDate(addDays(new Date(), 7)),
-        },
+        defaultValues: { maxMarks: 20, heldOn: null },
     })
 
     const handleClose = () => { reset(); onClose() }
-    const submit = (data: FormData) => onSubmit({ ...data, courseId })
+
+    const submit = (data: FormData) =>
+        onSubmit({
+            title:    data.title,
+            maxMarks: data.maxMarks,
+            heldOn:   data.heldOn || null,
+        })
 
     return (
-        <Modal isOpen={isOpen} onClose={handleClose} title="Schedule CT Event" description="Set up a new class test for your students" size="xl">
+        <Modal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title="Create New CT"
+            description="CT number will be assigned automatically"
+            size="md"
+        >
             <form onSubmit={handleSubmit(submit)} className="space-y-4">
                 <Input
                     {...register('title')}
                     label="CT Title"
-                    placeholder="e.g. CT-1 â€” Arrays & Linked Lists"
+                    placeholder='e.g. "Chapter 3 — Linked Lists"'
                     error={errors.title?.message}
                 />
 
                 <div className="grid grid-cols-2 gap-4">
                     <Input
-                        {...register('scheduledDate')}
-                        type="datetime-local"
-                        label="Scheduled Date & Time"
-                        error={errors.scheduledDate?.message}
-                    />
-                    <Select
-                        {...register('durationMinutes')}
-                        label="Duration"
-                        options={DURATION_OPTIONS}
-                        error={errors.durationMinutes?.message}
-                    />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <Input
-                        {...register('totalMarks')}
+                        {...register('maxMarks')}
                         type="number"
                         label="Total Marks"
                         placeholder="20"
-                        error={errors.totalMarks?.message}
+                        error={errors.maxMarks?.message}
                     />
                     <Input
-                        {...register('venue')}
-                        label="Venue (optional)"
-                        placeholder="e.g. Lab 301, Main Hall"
+                        {...register('heldOn')}
+                        type="date"
+                        label="Date Held (optional)"
+                        error={errors.heldOn?.message}
                     />
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-foreground mb-1.5">Syllabus (optional)</label>
-                    <textarea
-                        {...register('syllabus')}
-                        rows={3}
-                        placeholder="Topics covered in this CT..."
-                        className="w-full rounded-xl border border-border bg-card text-foreground text-sm px-4 py-3 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all resize-none"
-                    />
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-foreground mb-1.5">Description (optional)</label>
-                    <textarea
-                        {...register('description')}
-                        rows={2}
-                        placeholder="Additional details..."
-                        className="w-full rounded-xl border border-border bg-card text-foreground text-sm px-4 py-3 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all resize-none"
-                    />
-                </div>
+                <p className="text-xs text-muted-foreground bg-muted/50 rounded-xl px-4 py-3 border border-border">
+                    ?? After creating, upload the <strong>Best</strong>, <strong>Worst</strong>, and <strong>Average</strong> khata scripts before entering marks.
+                </p>
 
                 <div className="flex gap-3 pt-2">
-                    <Button type="button" variant="secondary" className="flex-1" onClick={handleClose}>Cancel</Button>
-                    <Button type="submit" className="flex-1" loading={isLoading}>Schedule CT</Button>
+                    <Button type="button" variant="secondary" className="flex-1" onClick={handleClose}>
+                        Cancel
+                    </Button>
+                    <Button type="submit" className="flex-1" loading={isLoading}>
+                        Create CT
+                    </Button>
                 </div>
             </form>
         </Modal>

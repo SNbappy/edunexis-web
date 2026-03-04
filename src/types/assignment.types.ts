@@ -1,59 +1,58 @@
-export type AssignmentStatus = 'Draft' | 'Published' | 'Closed'
-export type SubmissionStatus = 'Submitted' | 'Late' | 'Graded' | 'Returned'
-
 export interface AssignmentDto {
     id: string
     courseId: string
     title: string
-    description?: string
     instructions?: string
-    dueDate: string
-    totalMarks: number
-    status: AssignmentStatus
+    deadline: string
     allowLateSubmission: boolean
-    attachmentUrl?: string
-    attachmentName?: string
+    maxMarks: number
+    rubricNotes?: string
+    referenceFileUrl?: string
+    isOpen: boolean
+    submissionCount: number
     createdAt: string
-    submissionCount?: number
-    mySubmission?: SubmissionSummaryDto | null
 }
 
-export interface SubmissionSummaryDto {
+export interface SubmissionDto {
     id: string
-    submittedAt: string
-    status: SubmissionStatus
-    obtainedMarks?: number | null
-    feedback?: string | null
-    fileUrl?: string
-    fileName?: string
-    textContent?: string
-}
-
-export interface SubmissionDto extends SubmissionSummaryDto {
     assignmentId: string
     studentId: string
     studentName: string
-    studentEmail: string
-    studentPhoto?: string
-    studentId2?: string
+    submissionType: string
+    textContent?: string
+    fileUrl?: string
+    linkUrl?: string
+    submittedAt: string
+    isLate: boolean
+    marks?: number | null
+    feedback?: string | null
+    isGraded: boolean
 }
 
 export interface CreateAssignmentRequest {
-    courseId: string
     title: string
-    description?: string
     instructions?: string
-    dueDate: string
-    totalMarks: number
+    deadline: string
     allowLateSubmission: boolean
-    status: AssignmentStatus
+    maxMarks: number
+    rubricNotes?: string
+    referenceFile?: File
+}
+
+export interface UpdateAssignmentRequest {
+    title: string
+    instructions?: string
+    deadline: string
+    allowLateSubmission: boolean
+    maxMarks: number
+    rubricNotes?: string
 }
 
 export interface SubmitAssignmentRequest {
-    assignmentId: string
-    courseId: string
+    submissionType: 'Text' | 'File' | 'Link'
     textContent?: string
     file?: File
+    linkUrl?: string
 }
 
 export interface GradeSubmissionRequest {

@@ -28,6 +28,7 @@ export const ROUTES = {
     COMPLETE_PROFILE: '/profile/complete',
     NOTIFICATIONS: '/notifications',
     UNAUTHORIZED: '/unauthorized',
+    ASSIGNMENT_DETAIL: '/courses/:courseId/assignments/:assignmentId',
 }
 
 // ─── Course ────────────────────────────────────────────────────────────────

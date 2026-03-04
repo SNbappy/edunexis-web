@@ -13,8 +13,10 @@ const toForm = (data: Record<string, unknown>): FormData => {
 }
 
 export const materialService = {
-    getAll: (courseId: string, parentFolderId?: string | null) => {
-        const params = parentFolderId ? { parentFolderId } : {}
+    getAll: (courseId: string, parentFolderId?: string | null, flatten = false) => {
+        const params: Record<string, unknown> = {}
+        if (parentFolderId) params.parentFolderId = parentFolderId
+        if (flatten) params.flatten = true
         return api
             .get<ApiResponse<MaterialDto[]>>(base(courseId), { params })
             .then((r) => r.data)
@@ -64,10 +66,5 @@ export const materialService = {
     deleteMaterial: (courseId: string, id: string) =>
         api
             .delete<ApiResponse<null>>(`${base(courseId)}/${id}`)
-            .then((r) => r.data),
-
-    toggleVisibility: (courseId: string, id: string) =>
-        api
-            .patch<ApiResponse<MaterialDto>>(`${base(courseId)}/${id}/visibility`)
             .then((r) => r.data),
 }

@@ -1,5 +1,5 @@
-﻿import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { FolderPlus, Upload, Search } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import { SkeletonCard } from '@/components/ui/Skeleton'
@@ -9,6 +9,7 @@ import UploadMaterialModal from './UploadMaterialModal'
 import CreateFolderModal from './CreateFolderModal'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { useMaterials } from '../hooks/useMaterials'
+import type { FileTypeFilter } from '../hooks/useMaterials'
 import { useAuthStore } from '@/store/authStore'
 import { isTeacher } from '@/utils/roleGuard'
 
@@ -20,6 +21,16 @@ const SORT_OPTIONS = [
     { label: 'Files', value: 'File' },
 ] as const
 
+const FILE_TYPE_OPTIONS: { label: string; value: FileTypeFilter }[] = [
+    { label: 'All Files', value: 'all' },
+    { label: 'PDF', value: 'pdf' },
+    { label: 'Presentation', value: 'presentation' },
+    { label: 'Document', value: 'document' },
+    { label: 'Image', value: 'image' },
+    { label: 'Links', value: 'link' },
+    { label: 'Other', value: 'other' },
+]
+
 export default function MaterialsTab({ courseId }: Props) {
     const { user } = useAuthStore()
     const teacher = isTeacher(user?.role ?? 'Student')
@@ -30,6 +41,7 @@ export default function MaterialsTab({ courseId }: Props) {
         uploadFile, isUploading,
         deleteMaterial, isDeleting,
         sortMode, setSortMode,
+        isFlattenMode, fileTypeFilter, setFileTypeFilter,
     } = useMaterials(courseId)
 
     const [uploadOpen, setUploadOpen] = useState(false)
@@ -46,7 +58,10 @@ export default function MaterialsTab({ courseId }: Props) {
             {/* Header */}
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
                 className="flex items-center justify-between gap-3 flex-wrap">
-                <MaterialsBreadcrumb items={breadcrumb} onNavigate={navigateTo} />
+                {isFlattenMode
+                    ? <p className="text-sm font-semibold text-muted-foreground">Showing all files across all folders</p>
+                    : <MaterialsBreadcrumb items={breadcrumb} onNavigate={navigateTo} />
+                }
                 {teacher && (
                     <div className="flex items-center gap-2 ml-auto">
                         <Button size="sm" variant="secondary" leftIcon={<FolderPlus className="w-4 h-4" />}
@@ -55,7 +70,7 @@ export default function MaterialsTab({ courseId }: Props) {
                         </Button>
                         <Button size="sm" leftIcon={<Upload className="w-4 h-4" />}
                             onClick={() => setUploadOpen(true)}>
-                            Upload File
+                            Upload
                         </Button>
                     </div>
                 )}
@@ -77,17 +92,46 @@ export default function MaterialsTab({ courseId }: Props) {
                         <button
                             key={opt.value}
                             onClick={() => setSortMode(opt.value as any)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                            className={'px-3 py-1.5 rounded-lg text-xs font-medium transition-all ' + (
                                 sortMode === opt.value
                                     ? 'bg-card text-foreground shadow-sm'
                                     : 'text-muted-foreground hover:text-foreground'
-                            }`}
+                            )}
                         >
                             {opt.label}
                         </button>
                     ))}
                 </div>
             </div>
+
+            {/* Sub-filter (only in Files mode) */}
+            <AnimatePresence>
+                {isFlattenMode && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                    >
+                        <div className="flex items-center gap-2 flex-wrap pb-1">
+                            {FILE_TYPE_OPTIONS.map((opt) => (
+                                <button
+                                    key={opt.value}
+                                    onClick={() => setFileTypeFilter(opt.value)}
+                                    className={'px-3 py-1.5 rounded-full text-xs font-medium border transition-all ' + (
+                                        fileTypeFilter === opt.value
+                                            ? 'bg-primary text-primary-foreground border-primary'
+                                            : 'bg-card text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'
+                                    )}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* List */}
             {isLoading ? (
@@ -98,6 +142,7 @@ export default function MaterialsTab({ courseId }: Props) {
                 <MaterialsList
                     materials={filtered}
                     courseId={courseId}
+                    isFlattenMode={isFlattenMode}
                     onDelete={teacher ? (id) => setDeleteId(id) : undefined}
                     onOpenFolder={openFolder}
                 />

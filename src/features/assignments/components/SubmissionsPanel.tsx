@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { CheckCircle2, Clock, AlertCircle, Star, ChevronDown } from 'lucide-react'
+import { CheckCircle2, AlertCircle, Star } from 'lucide-react'
 import Avatar from '@/components/ui/Avatar'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
@@ -13,26 +13,29 @@ import { cn } from '@/utils/cn'
 interface Props {
     courseId: string
     assignmentId: string
-    totalMarks: number
+    maxMarks: number
 }
 
-const statusConfig = {
-    Submitted: { icon: <CheckCircle2 className="w-3.5 h-3.5" />, variant: 'default' as const, color: 'text-blue-500' },
-    Late: { icon: <AlertCircle className="w-3.5 h-3.5" />, variant: 'warning' as const, color: 'text-amber-500' },
-    Graded: { icon: <Star className="w-3.5 h-3.5" />, variant: 'success' as const, color: 'text-emerald-500' },
-    Returned: { icon: <Clock className="w-3.5 h-3.5" />, variant: 'muted' as const, color: 'text-muted-foreground' },
+function getStatus(sub: SubmissionDto): 'Graded' | 'Late' | 'Submitted' {
+    if (sub.isGraded) return 'Graded'
+    if (sub.isLate) return 'Late'
+    return 'Submitted'
 }
 
-export default function SubmissionsPanel({ courseId, assignmentId, totalMarks }: Props) {
+export default function SubmissionsPanel({ courseId, assignmentId, maxMarks }: Props) {
     const { submissions, isLoading, gradeSubmission, isGrading } = useSubmissions(courseId, assignmentId)
     const [grading, setGrading] = useState<SubmissionDto | null>(null)
 
     if (isLoading) {
-        return <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="h-16 rounded-xl bg-muted animate-pulse" />)}</div>
+        return (
+            <div className="space-y-2">
+                {[1, 2, 3].map((i) => <div key={i} className="h-16 rounded-xl bg-muted animate-pulse" />)}
+            </div>
+        )
     }
 
-    const graded = submissions.filter((s) => s.status === 'Graded').length
-    const pending = submissions.filter((s) => s.status !== 'Graded').length
+    const graded = submissions.filter((s) => s.isGraded).length
+    const pending = submissions.filter((s) => !s.isGraded).length
 
     return (
         <div className="space-y-4">
@@ -47,7 +50,7 @@ export default function SubmissionsPanel({ courseId, assignmentId, totalMarks }:
                 <div className="text-center py-10 text-muted-foreground text-sm">No submissions yet</div>
             ) : (
                 submissions.map((sub, i) => {
-                    const sc = statusConfig[sub.status]
+                    const status = getStatus(sub)
                     return (
                         <motion.div
                             key={sub.id}
@@ -56,22 +59,34 @@ export default function SubmissionsPanel({ courseId, assignmentId, totalMarks }:
                             transition={{ delay: i * 0.04 }}
                             className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card hover:border-primary/20 transition-all"
                         >
-                            <Avatar src={sub.studentPhoto} name={sub.studentName} size="sm" />
+                            <Avatar name={sub.studentName} size="sm" />
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-foreground truncate">{sub.studentName}</p>
                                 <p className="text-xs text-muted-foreground">{formatRelative(sub.submittedAt)}</p>
                             </div>
                             <div className="flex items-center gap-3 shrink-0">
-                                {sub.status === 'Graded' && sub.obtainedMarks !== null && (
-                                    <span className="text-sm font-bold text-emerald-500">{sub.obtainedMarks}/{totalMarks}</span>
+                                {sub.isGraded && sub.marks != null && (
+                                    <span className="text-sm font-bold text-emerald-500">
+                                        {sub.marks}/{maxMarks}
+                                    </span>
                                 )}
-                                <Badge variant={sc.variant}>{sub.status}</Badge>
+                                <Badge variant={
+                                    status === 'Graded' ? 'success' :
+                                    status === 'Late' ? 'warning' : 'default'
+                                }>
+                                    {status === 'Graded'
+                                        ? <><Star className="w-3 h-3 inline mr-1" />Graded</>
+                                        : status === 'Late'
+                                            ? <><AlertCircle className="w-3 h-3 inline mr-1" />Late</>
+                                            : <><CheckCircle2 className="w-3 h-3 inline mr-1" />Submitted</>
+                                    }
+                                </Badge>
                                 <Button
                                     size="sm"
-                                    variant={sub.status === 'Graded' ? 'secondary' : 'primary'}
+                                    variant={sub.isGraded ? 'secondary' : 'primary'}
                                     onClick={() => setGrading(sub)}
                                 >
-                                    {sub.status === 'Graded' ? 'Edit Grade' : 'Grade'}
+                                    {sub.isGraded ? 'Edit Grade' : 'Grade'}
                                 </Button>
                             </div>
                         </motion.div>
@@ -83,7 +98,7 @@ export default function SubmissionsPanel({ courseId, assignmentId, totalMarks }:
                 isOpen={!!grading}
                 onClose={() => setGrading(null)}
                 submission={grading}
-                totalMarks={totalMarks}
+                maxMarks={maxMarks}
                 onGrade={(data) => gradeSubmission(
                     { submissionId: grading!.id, data },
                     { onSuccess: () => setGrading(null) }

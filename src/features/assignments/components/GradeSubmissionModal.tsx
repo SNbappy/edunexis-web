@@ -1,40 +1,41 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Download, FileText, Star, ExternalLink } from 'lucide-react'
+import { FileText, Star, ExternalLink } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import Avatar from '@/components/ui/Avatar'
 import ProgressBar from '@/components/ui/ProgressBar'
 import { formatDateTime } from '@/utils/dateUtils'
-import type { SubmissionDto } from '@/types/assignment.types'
+import type { SubmissionDto, GradeSubmissionRequest } from '@/types/assignment.types'
 
 interface Props {
     isOpen: boolean
     onClose: () => void
     submission: SubmissionDto | null
-    totalMarks: number
-    onGrade: (data: { obtainedMarks: number; feedback?: string }) => void
+    maxMarks: number
+    onGrade: (data: GradeSubmissionRequest) => void
     isLoading?: boolean
 }
 
-export default function GradeSubmissionModal({ isOpen, onClose, submission, totalMarks, onGrade, isLoading }: Props) {
+export default function GradeSubmissionModal({ isOpen, onClose, submission, maxMarks, onGrade, isLoading }: Props) {
     const [marks, setMarks] = useState('')
     const [feedback, setFeedback] = useState('')
 
     useEffect(() => {
         if (submission) {
-            setMarks(submission.obtainedMarks?.toString() ?? '')
+            setMarks(submission.marks?.toString() ?? '')
             setFeedback(submission.feedback ?? '')
         }
     }, [submission])
 
     if (!submission) return null
-    const pct = marks ? (parseFloat(marks) / totalMarks) * 100 : 0
+
+    const pct = marks ? (parseFloat(marks) / maxMarks) * 100 : 0
 
     const handleSubmit = () => {
         const n = parseFloat(marks)
-        if (isNaN(n) || n < 0 || n > totalMarks) return
+        if (isNaN(n) || n < 0 || n > maxMarks) return
         onGrade({ obtainedMarks: n, feedback: feedback || undefined })
     }
 
@@ -43,14 +44,17 @@ export default function GradeSubmissionModal({ isOpen, onClose, submission, tota
             <div className="space-y-5">
                 {/* Student info */}
                 <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/50 border border-border">
-                    <Avatar src={submission.studentPhoto} name={submission.studentName} size="md" />
+                    <Avatar name={submission.studentName} size="md" />
                     <div>
                         <p className="font-semibold text-foreground">{submission.studentName}</p>
-                        <p className="text-xs text-muted-foreground">{submission.studentEmail}</p>
-                        <p className="text-xs text-muted-foreground">Submitted: {formatDateTime(submission.submittedAt)}</p>
+                        <p className="text-xs text-muted-foreground">
+                            Submitted: {formatDateTime(submission.submittedAt)}
+                        </p>
                     </div>
-                    {submission.status === 'Late' && (
-                        <span className="ml-auto text-xs font-semibold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-lg">Late</span>
+                    {submission.isLate && (
+                        <span className="ml-auto text-xs font-semibold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-lg">
+                            Late
+                        </span>
                     )}
                 </div>
 
@@ -69,7 +73,7 @@ export default function GradeSubmissionModal({ isOpen, onClose, submission, tota
                 {submission.fileUrl && (
                     <div className="flex items-center gap-3 p-3 rounded-xl border border-border">
                         <FileText className="w-5 h-5 text-primary shrink-0" />
-                        <span className="text-sm text-foreground flex-1 truncate">{submission.fileName ?? 'Submitted file'}</span>
+                        <span className="text-sm text-foreground flex-1 truncate">Submitted file</span>
                         <a href={submission.fileUrl} target="_blank" rel="noopener noreferrer">
                             <Button size="sm" variant="secondary" leftIcon={<ExternalLink className="w-3.5 h-3.5" />}>
                                 View
@@ -78,17 +82,27 @@ export default function GradeSubmissionModal({ isOpen, onClose, submission, tota
                     </div>
                 )}
 
+                {submission.linkUrl && (
+                    <div className="flex items-center gap-3 p-3 rounded-xl border border-border">
+                        <ExternalLink className="w-5 h-5 text-primary shrink-0" />
+                        <span className="text-sm text-foreground flex-1 truncate">{submission.linkUrl}</span>
+                        <a href={submission.linkUrl} target="_blank" rel="noopener noreferrer">
+                            <Button size="sm" variant="secondary">Open</Button>
+                        </a>
+                    </div>
+                )}
+
                 {/* Grade input */}
                 <div className="space-y-3 pt-2 border-t border-border">
                     <div className="flex items-center gap-4">
                         <Input
-                            label={`Marks (out of ${totalMarks})`}
+                            label={'Marks (out of ' + maxMarks + ')'}
                             type="number"
                             value={marks}
                             onChange={(e) => setMarks(e.target.value)}
                             placeholder="0"
                             min={0}
-                            max={totalMarks}
+                            max={maxMarks}
                             className="w-36"
                         />
                         {marks && !isNaN(pct) && (

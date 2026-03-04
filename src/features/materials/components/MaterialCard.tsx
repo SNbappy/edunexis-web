@@ -1,6 +1,6 @@
-﻿import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { MoreVertical, Download, Trash2, ExternalLink, ChevronRight } from 'lucide-react'
+import { MoreVertical, Download, Trash2, ExternalLink, ChevronRight, Loader2 } from 'lucide-react'
 import FileIcon from './FileIcon'
 import Badge from '@/components/ui/Badge'
 import { formatRelative } from '@/utils/dateUtils'
@@ -24,8 +24,10 @@ export default function MaterialCard({
     const { user } = useAuthStore()
     const teacher = isTeacher(user?.role ?? 'Student')
     const [menuOpen, setMenuOpen] = useState(false)
+    const [downloading, setDownloading] = useState(false)
     const menuRef = useRef<HTMLDivElement>(null)
     const isFolder = material.type === 'Folder'
+    const isLink = material.type === 'Link' || material.type === 'YouTube' || material.type === 'GoogleDrive'
 
     useEffect(() => {
         const h = (e: MouseEvent) => {
@@ -35,20 +37,34 @@ export default function MaterialCard({
         return () => document.removeEventListener('mousedown', h)
     }, [])
 
-    const handlePrimaryAction = () => {
-        if (isFolder) {
-            onOpenFolder?.(material.id, material.title)
-        } else if (material.type === 'Link' || material.type === 'YouTube' || material.type === 'GoogleDrive') {
-            if (material.embedUrl) window.open(material.embedUrl, '_blank')
-        } else {
-            if (!material.fileUrl) return
+    const handleDownload = async () => {
+        if (!material.fileUrl) return
+        setDownloading(true)
+        try {
+            const response = await fetch(material.fileUrl)
+            const blob = await response.blob()
+            const blobUrl = window.URL.createObjectURL(blob)
             const a = document.createElement('a')
-            a.href = material.fileUrl
+            a.href = blobUrl
             a.download = material.fileName ?? material.title
-            a.target = '_blank'
             document.body.appendChild(a)
             a.click()
             document.body.removeChild(a)
+            window.URL.revokeObjectURL(blobUrl)
+        } catch {
+            window.open(material.fileUrl, '_blank')
+        } finally {
+            setDownloading(false)
+        }
+    }
+
+    const handlePrimaryAction = () => {
+        if (isFolder) {
+            onOpenFolder?.(material.id, material.title)
+        } else if (isLink) {
+            if (material.embedUrl) window.open(material.embedUrl, '_blank')
+        } else {
+            handleDownload()
         }
     }
 
@@ -105,12 +121,15 @@ export default function MaterialCard({
                     {!isFolder && (
                         <button
                             onClick={handlePrimaryAction}
-                            className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all opacity-0 group-hover:opacity-100"
-                            title={material.type === 'Link' ? 'Open link' : 'Download'}
+                            disabled={downloading}
+                            className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                            title={isLink ? 'Open link' : 'Download'}
                         >
-                            {material.type === 'Link'
-                                ? <ExternalLink className="w-4 h-4" />
-                                : <Download className="w-4 h-4" />}
+                            {downloading
+                                ? <Loader2 className="w-4 h-4 animate-spin" />
+                                : isLink
+                                    ? <ExternalLink className="w-4 h-4" />
+                                    : <Download className="w-4 h-4" />}
                         </button>
                     )}
                     {isFolder && (

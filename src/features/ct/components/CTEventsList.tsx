@@ -1,29 +1,33 @@
-import CTEventCard from './CTEventCard'
-import EmptyState from '@/components/ui/EmptyState'
-import { ClipboardCheck } from 'lucide-react'
+﻿import CTEventCard from './CTEventCard'
 import type { CTEventDto } from '@/types/ct.types'
+import { ReactNode } from 'react'
 
 interface Props {
     ctEvents: CTEventDto[]
     onView: (ct: CTEventDto) => void
-    onDelete?: (id: string) => void
-    onUpdateStatus?: (ctId: string, status: string) => void
+    onDelete?: (ct: CTEventDto) => void
+    onPublish?: (id: string) => void
+    onUnpublish?: (id: string) => void
+    onUploadKhata?: (ct: CTEventDto) => void
+    onEnterMarks?: (ct: CTEventDto) => void
     emptyTitle?: string
     emptyDescription?: string
-    emptyAction?: React.ReactNode
+    emptyAction?: ReactNode
 }
 
-export default function CTEventsList({ ctEvents, onView, onDelete, onUpdateStatus, emptyTitle, emptyDescription, emptyAction }: Props) {
-    if (ctEvents.length === 0) {
-        return (
-            <EmptyState
-                icon={<ClipboardCheck className="w-8 h-8" />}
-                title={emptyTitle ?? 'No CT events scheduled'}
-                description={emptyDescription}
-                action={emptyAction}
-            />
-        )
-    }
+export default function CTEventsList({
+    ctEvents, onView, onDelete, onPublish, onUnpublish,
+    onUploadKhata, onEnterMarks,
+    emptyTitle = 'No CT events', emptyDescription = '', emptyAction
+}: Props) {
+    if (ctEvents.length === 0) return (
+        <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
+            <p className="text-base font-semibold text-foreground">{emptyTitle}</p>
+            {emptyDescription && <p className="text-sm text-muted-foreground">{emptyDescription}</p>}
+            {emptyAction}
+        </div>
+    )
+
     return (
         <div className="space-y-3">
             {ctEvents.map((ct, i) => (
@@ -33,7 +37,10 @@ export default function CTEventsList({ ctEvents, onView, onDelete, onUpdateStatu
                     index={i}
                     onView={onView}
                     onDelete={onDelete}
-                    onUpdateStatus={onUpdateStatus}
+                    onPublish={onPublish}
+                    onUnpublish={onUnpublish}
+                    onUploadKhata={onUploadKhata}
+                    onEnterMarks={onEnterMarks}
                 />
             ))}
         </div>

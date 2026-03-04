@@ -1,63 +1,57 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Plus, Filter } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Tabs from '@/components/ui/Tabs'
 import { SkeletonCard } from '@/components/ui/Skeleton'
 import AssignmentsList from './AssignmentsList'
 import CreateAssignmentModal from './CreateAssignmentModal'
-import AssignmentDetailModal from './AssignmentDetailModal'
+import EditAssignmentModal from './EditAssignmentModal'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { useAssignments } from '../hooks/useAssignments'
 import { useAuthStore } from '@/store/authStore'
 import { isTeacher } from '@/utils/roleGuard'
-import type { AssignmentDto } from '@/types/assignment.types'
+import type { AssignmentDto, CreateAssignmentRequest, UpdateAssignmentRequest } from '@/types/assignment.types'
 
 interface Props { courseId: string }
-
-type FilterTab = 'all' | 'active' | 'draft' | 'closed'
+type FilterTab = 'all' | 'active' | 'closed'
 
 export default function AssignmentsTab({ courseId }: Props) {
+    const navigate = useNavigate()
     const { user } = useAuthStore()
     const teacher = isTeacher(user?.role ?? 'Student')
 
     const {
         assignments, isLoading,
         createAssignment, isCreating,
+        updateAssignment, isUpdating,
         deleteAssignment, isDeleting,
-        publishAssignment, closeAssignment,
     } = useAssignments(courseId)
 
     const [createOpen, setCreateOpen] = useState(false)
-    const [selected, setSelected] = useState<AssignmentDto | null>(null)
+    const [editing, setEditing] = useState<AssignmentDto | null>(null)
     const [deleteId, setDeleteId] = useState<string | null>(null)
     const [filter, setFilter] = useState<FilterTab>('all')
 
-    const filterTabs = teacher
-        ? [
-            { key: 'all', label: 'All' },
-            { key: 'active', label: 'Published' },
-            { key: 'draft', label: 'Drafts' },
-            { key: 'closed', label: 'Closed' },
-        ]
-        : [
-            { key: 'all', label: 'All' },
-            { key: 'active', label: 'Active' },
-            { key: 'closed', label: 'Closed' },
-        ]
+    const filterTabs = [
+        { key: 'all',    label: 'All' },
+        { key: 'active', label: 'Active' },
+        { key: 'closed', label: 'Closed' },
+    ]
 
     const filtered = assignments.filter((a) => {
-        if (filter === 'all') return true
-        if (filter === 'active') return a.status === 'Published'
-        if (filter === 'draft') return a.status === 'Draft'
-        if (filter === 'closed') return a.status === 'Closed'
+        if (filter === 'all')    return true
+        if (filter === 'active') return a.isOpen
+        if (filter === 'closed') return !a.isOpen
         return true
     })
 
-    // For students: pending (not submitted) + submitted + graded counts
-    const pendingCount = !teacher
-        ? assignments.filter((a) => a.status === 'Published' && !a.mySubmission).length
-        : 0
+    const activeCount = assignments.filter((a) => a.isOpen).length
+
+    const handleView = (a: AssignmentDto) => {
+        navigate(`/courses/${courseId}/assignments/${a.id}`)
+    }
 
     return (
         <div className="space-y-5 max-w-3xl mx-auto">
@@ -66,8 +60,10 @@ export default function AssignmentsTab({ courseId }: Props) {
                 className="flex items-center justify-between gap-3">
                 <div>
                     <h2 className="text-lg font-semibold text-foreground">Assignments</h2>
-                    {!teacher && pendingCount > 0 && (
-                        <p className="text-xs text-amber-500 font-medium mt-0.5">{pendingCount} pending submission{pendingCount > 1 ? 's' : ''}</p>
+                    {!teacher && activeCount > 0 && (
+                        <p className="text-xs text-amber-500 font-medium mt-0.5">
+                            {activeCount} active assignment{activeCount > 1 ? 's' : ''}
+                        </p>
                     )}
                 </div>
                 {teacher && (
@@ -82,7 +78,7 @@ export default function AssignmentsTab({ courseId }: Props) {
                 variant="boxed"
                 tabs={filterTabs.map((t) => ({
                     ...t,
-                    badge: t.key === 'active' && !teacher ? pendingCount : undefined,
+                    badge: t.key === 'active' ? activeCount : undefined,
                 }))}
                 active={filter}
                 onChange={(k) => setFilter(k as FilterTab)}
@@ -96,11 +92,10 @@ export default function AssignmentsTab({ courseId }: Props) {
             ) : (
                 <AssignmentsList
                     assignments={filtered}
-                    onView={setSelected}
+                    onView={handleView}
+                    onEdit={teacher ? (a) => setEditing(a) : undefined}
                     onDelete={teacher ? (id) => setDeleteId(id) : undefined}
-                    onPublish={teacher ? publishAssignment : undefined}
-                    onClose={teacher ? closeAssignment : undefined}
-                    emptyTitle={filter === 'all' ? 'No assignments yet' : `No ${filter} assignments`}
+                    emptyTitle={filter === 'all' ? 'No assignments yet' : 'No ' + filter + ' assignments'}
                     emptyDescription={
                         teacher
                             ? 'Create your first assignment to get started'
@@ -116,22 +111,33 @@ export default function AssignmentsTab({ courseId }: Props) {
                 />
             )}
 
-            {/* Modals */}
+            {/* Create Modal */}
             <CreateAssignmentModal
                 isOpen={createOpen}
                 onClose={() => setCreateOpen(false)}
-                courseId={courseId}
-                onSubmit={(data) => createAssignment(data, { onSuccess: () => setCreateOpen(false) })}
+                onSubmit={(data: CreateAssignmentRequest) =>
+                    createAssignment(data, { onSuccess: () => setCreateOpen(false) })
+                }
                 isLoading={isCreating}
             />
 
-            <AssignmentDetailModal
-                isOpen={!!selected}
-                onClose={() => setSelected(null)}
-                assignment={selected}
-                courseId={courseId}
-            />
+            {/* Edit Modal */}
+            {editing && (
+                <EditAssignmentModal
+                    isOpen={!!editing}
+                    onClose={() => setEditing(null)}
+                    assignment={editing}
+                    onSubmit={(data: UpdateAssignmentRequest) =>
+                        updateAssignment(
+                            { assignmentId: editing.id, data },
+                            { onSuccess: () => setEditing(null) }
+                        )
+                    }
+                    isLoading={isUpdating}
+                />
+            )}
 
+            {/* Delete Confirm */}
             <ConfirmDialog
                 isOpen={!!deleteId}
                 onClose={() => setDeleteId(null)}
@@ -146,3 +152,4 @@ export default function AssignmentsTab({ courseId }: Props) {
         </div>
     )
 }
+

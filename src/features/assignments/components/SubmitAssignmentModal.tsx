@@ -1,23 +1,22 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
 import { Send, FileText, Paperclip } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
 import FileDropzone from '@/components/ui/FileDropzone'
 import Tabs from '@/components/ui/Tabs'
 import { formatDateTime } from '@/utils/dateUtils'
-import type { AssignmentDto } from '@/types/assignment.types'
+import type { AssignmentDto, SubmitAssignmentRequest } from '@/types/assignment.types'
 
 interface Props {
     isOpen: boolean
     onClose: () => void
     assignment: AssignmentDto
-    onSubmit: (data: { textContent?: string; file?: File }) => void
+    onSubmit: (data: SubmitAssignmentRequest) => void
     isLoading?: boolean
 }
 
 export default function SubmitAssignmentModal({ isOpen, onClose, assignment, onSubmit, isLoading }: Props) {
-    const [tab, setTab] = useState<'text' | 'file'>('file')
+    const [tab, setTab] = useState<'file' | 'text'>('file')
     const [textContent, setTextContent] = useState('')
     const [files, setFiles] = useState<File[]>([])
 
@@ -28,13 +27,13 @@ export default function SubmitAssignmentModal({ isOpen, onClose, assignment, onS
     }
 
     const handleSubmit = () => {
-        onSubmit({
-            textContent: tab === 'text' ? textContent : undefined,
-            file: tab === 'file' ? files[0] : undefined,
-        })
+        if (tab === 'file') {
+            onSubmit({ submissionType: 'File', file: files[0] })
+        } else {
+            onSubmit({ submissionType: 'Text', textContent })
+        }
     }
 
-    const alreadySubmitted = !!assignment.mySubmission
     const canSubmit = tab === 'text' ? textContent.trim().length > 0 : files.length > 0
 
     return (
@@ -44,8 +43,8 @@ export default function SubmitAssignmentModal({ isOpen, onClose, assignment, onS
                 <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-2">
                     <p className="text-sm font-semibold text-foreground">{assignment.title}</p>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
-                        <span>📅 Due: {formatDateTime(assignment.dueDate)}</span>
-                        <span>📊 {assignment.totalMarks} marks</span>
+                        <span>Due: {formatDateTime(assignment.deadline)}</span>
+                        <span>{assignment.maxMarks} marks</span>
                     </div>
                     {assignment.instructions && (
                         <p className="text-xs text-muted-foreground border-t border-primary/20 pt-2 mt-2">
@@ -53,18 +52,6 @@ export default function SubmitAssignmentModal({ isOpen, onClose, assignment, onS
                         </p>
                     )}
                 </div>
-
-                {/* Already submitted banner */}
-                {alreadySubmitted && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-2"
-                    >
-                        <Send className="w-4 h-4 shrink-0" />
-                        Already submitted on {formatDateTime(assignment.mySubmission!.submittedAt)}. Re-submitting will replace your previous submission.
-                    </motion.div>
-                )}
 
                 {/* Submission type tabs */}
                 <Tabs
@@ -106,7 +93,7 @@ export default function SubmitAssignmentModal({ isOpen, onClose, assignment, onS
                         leftIcon={!isLoading ? <Send className="w-4 h-4" /> : undefined}
                         onClick={handleSubmit}
                     >
-                        {alreadySubmitted ? 'Resubmit' : 'Submit Assignment'}
+                        Submit Assignment
                     </Button>
                 </div>
             </div>

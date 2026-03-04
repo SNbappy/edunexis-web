@@ -1,9 +1,21 @@
-﻿import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { materialService } from '../services/materialService'
 import toast from 'react-hot-toast'
+import type { MaterialDto } from '@/types/material.types'
 
 export type SortMode = 'all' | 'File' | 'Folder'
+export type FileTypeFilter = 'all' | 'pdf' | 'presentation' | 'document' | 'image' | 'link' | 'other'
+
+function getFileCategory(material: MaterialDto): FileTypeFilter {
+    if (['Link', 'YouTube', 'GoogleDrive'].includes(material.type)) return 'link'
+    const ext = (material.fileName ?? '').split('.').pop()?.toLowerCase() ?? ''
+    if (ext === 'pdf') return 'pdf'
+    if (['ppt', 'pptx'].includes(ext)) return 'presentation'
+    if (['doc', 'docx'].includes(ext)) return 'document'
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) return 'image'
+    return 'other'
+}
 
 export function useMaterials(courseId: string) {
     const qc = useQueryClient()
@@ -11,18 +23,29 @@ export function useMaterials(courseId: string) {
     const [breadcrumb, setBreadcrumb] = useState<{ id: string | null; label: string }[]>([
         { id: null, label: 'Materials' },
     ])
-    const [sortMode, setSortMode] = useState<SortMode>('all')
+    const [sortMode, setSortModeState] = useState<SortMode>('all')
+    const [fileTypeFilter, setFileTypeFilter] = useState<FileTypeFilter>('all')
+
+    const isFlattenMode = sortMode === 'File'
 
     const query = useQuery({
-        queryKey: ['materials', courseId, currentFolderId],
-        queryFn: () => materialService.getAll(courseId, currentFolderId).then((r) => {
-            if (!r.success) throw new Error(r.message)
-            return r.data
-        }),
+        queryKey: ['materials', courseId, isFlattenMode ? '__flatten__' : currentFolderId],
+        queryFn: () =>
+            materialService
+                .getAll(courseId, isFlattenMode ? undefined : currentFolderId, isFlattenMode)
+                .then((r) => {
+                    if (!r.success) throw new Error(r.message)
+                    return r.data ?? []
+                }),
         enabled: !!courseId,
     })
 
     const invalidate = () => qc.invalidateQueries({ queryKey: ['materials', courseId] })
+
+    const setSortMode = (mode: SortMode) => {
+        setSortModeState(mode)
+        if (mode !== 'File') setFileTypeFilter('all')
+    }
 
     const createFolderMutation = useMutation({
         mutationFn: (data: { title: string; description?: string }) =>
@@ -56,7 +79,14 @@ export function useMaterials(courseId: string) {
     }
 
     const allMaterials = query.data ?? []
-    const materials = sortMode === 'all' ? allMaterials : allMaterials.filter((m) => m.type === sortMode)
+
+    const materials = useMemo(() => {
+        let items = allMaterials
+        if (sortMode === 'Folder') items = items.filter((m) => m.type === 'Folder')
+        if (sortMode === 'File' && fileTypeFilter !== 'all')
+            items = items.filter((m) => getFileCategory(m) === fileTypeFilter)
+        return items
+    }, [allMaterials, sortMode, fileTypeFilter])
 
     return {
         materials,
@@ -66,6 +96,9 @@ export function useMaterials(courseId: string) {
         breadcrumb,
         sortMode,
         setSortMode,
+        isFlattenMode,
+        fileTypeFilter,
+        setFileTypeFilter,
         openFolder,
         navigateTo,
         createFolder: createFolderMutation.mutate,

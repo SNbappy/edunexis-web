@@ -1,43 +1,57 @@
-export type CTStatus = 'Scheduled' | 'Ongoing' | 'Completed' | 'Cancelled'
+export type CTStatus = 'Draft' | 'Published'
 
 export interface CTEventDto {
     id: string
     courseId: string
+    ctNumber: number
     title: string
-    description?: string
-    scheduledDate: string
-    durationMinutes: number
-    totalMarks: number
-    syllabus?: string
-    venue?: string
+    maxMarks: number
+    heldOn: string | null
     status: CTStatus
+    khataUploaded: boolean
+    bestScriptUrl: string | null
+    bestStudentId: string | null
+    worstScriptUrl: string | null
+    worstStudentId: string | null
+    averageScriptUrl: string | null
+    averageStudentId: string | null
     createdAt: string
-    myResult?: CTResultDto | null
-    submittedCount?: number
 }
 
-export interface CTResultDto {
-    id: string
+export interface CTMarksResultDto {
+    ctEventId: string
+    ctNumber: number
+    title: string
+    maxMarks: number
+    status: CTStatus
+    bestScriptUrl: string | null
+    worstScriptUrl: string | null
+    averageScriptUrl: string | null
+    marks: CTMarkDto[]
+    classAverage: number | null
+    highest: number | null
+    lowest: number | null
+}
+
+export interface CTMarkDto {
     studentId: string
-    studentName: string
     studentEmail: string
-    studentPhoto?: string
-    rollNumber?: string
     obtainedMarks: number | null
     isAbsent: boolean
-    remarks?: string
-    gradedAt?: string
+    remarks: string | null
+    markedAt: string | null
 }
 
 export interface CreateCTEventRequest {
-    courseId: string
     title: string
-    description?: string
-    scheduledDate: string
-    durationMinutes: number
-    totalMarks: number
-    syllabus?: string
-    venue?: string
+    maxMarks: number
+    heldOn?: string | null
+}
+
+export interface UpdateCTEventRequest {
+    title: string
+    maxMarks: number
+    heldOn?: string | null
 }
 
 export interface CTMarkEntry {
@@ -47,6 +61,7 @@ export interface CTMarkEntry {
     remarks?: string
 }
 
-export interface SaveCTMarksRequest {
-    entries: CTMarkEntry[]
+export interface GradeCTRequest {
+    marks: CTMarkEntry[]
 }
+
