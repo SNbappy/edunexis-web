@@ -1,95 +1,76 @@
-import { motion } from 'framer-motion'
-import { CheckCircle2, XCircle, Clock, FileCheck, TrendingUp } from 'lucide-react'
-import { formatDate } from '@/utils/dateUtils'
-import EmptyState from '@/components/ui/EmptyState'
-import { cn } from '@/utils/cn'
-import type { MyAttendanceDto } from '@/types/attendance.types'
+﻿import { motion } from 'framer-motion'
+import { CheckCircle2, XCircle, Clock, TrendingUp } from 'lucide-react'
 import { useMyAttendance } from '../hooks/useAttendanceStats'
+import { cn } from '@/utils/cn'
 
 interface Props { courseId: string }
 
-const STATUS_ICONS = {
-    Present: { icon: <CheckCircle2 className="w-4 h-4" />, color: 'text-emerald-500' },
-    Absent: { icon: <XCircle className="w-4 h-4" />, color: 'text-destructive' },
-    Late: { icon: <Clock className="w-4 h-4" />, color: 'text-amber-500' },
-    Excused: { icon: <FileCheck className="w-4 h-4" />, color: 'text-blue-500' },
-}
-
 export default function StudentAttendanceView({ courseId }: Props) {
-    const { data: records = [], isLoading } = useMyAttendance(courseId)
-
-    const present = records.filter((r) => r.status === 'Present' || r.status === 'Late').length
-    const pct = records.length > 0 ? ((present / records.length) * 100).toFixed(1) : '0'
-    const pctNum = parseFloat(pct)
+    const { data: summary, isLoading } = useMyAttendance(courseId)
 
     if (isLoading) {
-        return <div className="space-y-3">{[1, 2, 3].map((i) => <div key={i} className="h-14 rounded-xl bg-muted animate-pulse" />)}</div>
+        return (
+            <div className="space-y-3">
+                {[1, 2, 3].map(i => <div key={i} className="h-14 rounded-xl bg-muted animate-pulse" />)}
+            </div>
+        )
     }
 
+    if (!summary) {
+        return (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+                <Clock className="w-10 h-10 text-muted-foreground mb-3 opacity-40" />
+                <p className="text-sm text-muted-foreground">No attendance records yet.</p>
+            </div>
+        )
+    }
+
+    const pct = summary.attendancePercent
+    const pctColor = pct >= 75 ? 'text-emerald-500' : pct >= 50 ? 'text-amber-500' : 'text-destructive'
+    const barColor = pct >= 75 ? 'bg-emerald-500' : pct >= 50 ? 'bg-amber-500' : 'bg-destructive'
+
+    const stats = [
+        { label: 'Present',   value: summary.presentCount,   icon: <CheckCircle2 className="w-4 h-4" />, color: 'text-emerald-500' },
+        { label: 'Absent',    value: summary.absentCount,    icon: <XCircle className="w-4 h-4" />,      color: 'text-destructive'  },
+        { label: 'Unmarked',  value: summary.unmarkedCount,  icon: <Clock className="w-4 h-4" />,        color: 'text-amber-500'    },
+        { label: 'Total',     value: summary.totalSessions,  icon: <TrendingUp className="w-4 h-4" />,   color: 'text-foreground'   },
+    ]
+
     return (
-        <div className="space-y-5">
-            {/* My summary */}
-            <div className="glass-card rounded-2xl p-5 flex items-center gap-5">
-                <div className="relative w-20 h-20 shrink-0">
-                    <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="currentColor" strokeWidth="3" className="text-muted" />
-                        <circle
-                            cx="18" cy="18" r="15.9" fill="none" stroke="currentColor" strokeWidth="3"
-                            strokeDasharray={`${pctNum} ${100 - pctNum}`}
-                            strokeLinecap="round"
-                            className={pctNum >= 75 ? 'text-emerald-500' : pctNum >= 60 ? 'text-amber-500' : 'text-rose-500'}
-                        />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <span className={cn('text-lg font-bold', pctNum >= 75 ? 'text-emerald-500' : pctNum >= 60 ? 'text-amber-500' : 'text-rose-500')}>
-                            {pct}%
-                        </span>
-                    </div>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
+
+            {/* Percentage Bar */}
+            <div className="p-5 rounded-2xl bg-card border border-border space-y-3">
+                <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-foreground">Attendance Rate</p>
+                    <p className={cn('text-2xl font-bold', pctColor)}>{pct}%</p>
                 </div>
-                <div className="space-y-1">
-                    <p className="font-semibold text-foreground">My Attendance</p>
-                    <p className="text-sm text-muted-foreground">{present} of {records.length} classes attended</p>
-                    <div className="flex items-center gap-2 text-xs flex-wrap">
-                        {(['Present', 'Absent', 'Late', 'Excused'] as const).map((s) => {
-                            const count = records.filter((r) => r.status === s).length
-                            if (count === 0) return null
-                            return (
-                                <span key={s} className={cn('flex items-center gap-1', STATUS_ICONS[s].color)}>
-                                    {STATUS_ICONS[s].icon} {count} {s}
-                                </span>
-                            )
-                        })}
-                    </div>
+                <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+                    <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ duration: 0.6, ease: 'easeOut' }}
+                        className={cn('h-full rounded-full', barColor)}
+                    />
                 </div>
+                <p className="text-xs text-muted-foreground">
+                    {pct >= 75 ? '✅ Good standing' : pct >= 50 ? '⚠️ At risk — attendance below 75%' : '🚨 Critical — attendance below 50%'}
+                </p>
             </div>
 
-            {/* Records list */}
-            {records.length === 0 ? (
-                <EmptyState icon={<TrendingUp className="w-8 h-8" />} title="No attendance records yet" description="Your attendance will appear here once your teacher takes attendance" />
-            ) : (
-                <div className="space-y-2">
-                    {[...records].reverse().map((r, i) => {
-                        const s = STATUS_ICONS[r.status]
-                        return (
-                            <motion.div
-                                key={r.sessionId}
-                                initial={{ opacity: 0, y: 8 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.03 }}
-                                className="flex items-center justify-between p-3 rounded-xl border border-border bg-card"
-                            >
-                                <div>
-                                    <p className="text-sm font-medium text-foreground">{r.topic || formatDate(r.date)}</p>
-                                    {r.topic && <p className="text-xs text-muted-foreground">{formatDate(r.date)}</p>}
-                                </div>
-                                <div className={cn('flex items-center gap-1.5 text-sm font-semibold', s.color)}>
-                                    {s.icon} {r.status}
-                                </div>
-                            </motion.div>
-                        )
-                    })}
-                </div>
-            )}
-        </div>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 gap-3">
+                {stats.map(s => (
+                    <div key={s.label} className="p-4 rounded-2xl bg-card border border-border space-y-1">
+                        <div className={cn('flex items-center gap-1.5 text-xs', s.color)}>
+                            {s.icon}
+                            <span className="font-medium">{s.label}</span>
+                        </div>
+                        <p className="text-2xl font-bold text-foreground">{s.value}</p>
+                    </div>
+                ))}
+            </div>
+
+        </motion.div>
     )
 }

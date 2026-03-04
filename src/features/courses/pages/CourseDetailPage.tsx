@@ -155,20 +155,22 @@ export default function CourseDetailPage() {
             case COURSE_TABS.MARKS:
                 return <MarksTab courseId={courseId!} courseTitle={course?.title} />
             case COURSE_TABS.MEMBERS:
-                return teacher ? (
+                return (
                     <div className="space-y-6">
-                        <div>
-                            <h3 className="text-base font-semibold text-foreground mb-3 flex items-center gap-2">
-                                <Users className="w-4 h-4" /> Pending Join Requests
-                            </h3>
-                            <JoinRequestsPanel courseId={courseId!} />
-                        </div>
+                        {teacher && (
+                            <div>
+                                <h3 className="text-base font-semibold text-foreground mb-3 flex items-center gap-2">
+                                    <Users className="w-4 h-4" /> Pending Join Requests
+                                </h3>
+                                <JoinRequestsPanel courseId={courseId!} />
+                            </div>
+                        )}
                         <div>
                             <h3 className="text-base font-semibold text-foreground mb-3">Course Members</h3>
-                            <CourseMembersList courseId={courseId!} />
+                            <CourseMembersList courseId={courseId!} course={course} />
                         </div>
                     </div>
-                ) : <PlaceholderTab label="ðŸ‘¥ Members" phase="visible" />
+                )
             default:
                 return <Navigate to={`/courses/${courseId}/${COURSE_TABS.STREAM}`} replace />
         }
@@ -228,6 +230,9 @@ function PlaceholderTab({ label, phase }: { label: string; phase: string }) {
         </div>
     )
 }
+
+
+
 
 
 

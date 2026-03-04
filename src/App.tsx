@@ -21,6 +21,8 @@ import PresentationEventPage from '@/features/presentations/pages/PresentationEv
 
 import CompleteProfilePage from '@/features/profile/pages/CompleteProfilePage'
 import EditProfilePage from '@/features/profile/pages/EditProfilePage'
+import NotificationsPage from '@/features/notifications/pages/NotificationsPage'
+import UserProfilePage from '@/features/profile/pages/UserProfilePage'
 
 import NotFoundPage from '@/pages/NotFoundPage'
 import UnauthorizedPage from '@/pages/UnauthorizedPage'
@@ -88,6 +90,8 @@ export default function App() {
 
             <Route path={ROUTES.PROFILE}      element={<EditProfilePage />} />
             <Route path={ROUTES.PROFILE_EDIT} element={<EditProfilePage />} />
+            <Route path={ROUTES.NOTIFICATIONS} element={<NotificationsPage />} />
+            <Route path="/users/:userId" element={<UserProfilePage />} />
           </Route>
         </Route>
       </Route>
@@ -97,3 +101,6 @@ export default function App() {
     </Routes>
   )
 }
+
+
+

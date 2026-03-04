@@ -1,8 +1,12 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useAuthStore } from '@/store/authStore'
+import { isTeacher } from '@/utils/roleGuard'
 import { courseService } from '../services/courseService'
 import toast from 'react-hot-toast'
 
 export function useCourseMembers(courseId: string) {
+    const { user } = useAuthStore()
+    const teacher = isTeacher(user?.role ?? 'Student')
     const qc = useQueryClient()
 
     const membersQuery = useQuery({
@@ -22,7 +26,7 @@ export function useCourseMembers(courseId: string) {
             if (!res.success) throw new Error(res.message)
             return res.data ?? []
         },
-        enabled: !!courseId,
+        enabled: !!courseId && teacher,
     })
 
     const reviewMutation = useMutation({
@@ -60,3 +64,4 @@ export function useCourseMembers(courseId: string) {
         isRemoving: removeMemberMutation.isPending,
     }
 }
+
