@@ -4,7 +4,7 @@ import type { CreatePresentationRequest, SavePresentationMarksRequest } from '@/
 import toast from 'react-hot-toast'
 
 export function usePresentations(courseId: string) {
-    const qc = useQueryClient()
+    const qc  = useQueryClient()
     const key = ['presentations', courseId]
     const invalidate = () => qc.invalidateQueries({ queryKey: key })
 
@@ -30,10 +30,10 @@ export function usePresentations(courseId: string) {
     const deleteMutation = useMutation({
         mutationFn: (id: string) => presentationService.delete(id),
         onSuccess: (res) => {
-            if (res.success) { invalidate(); toast.success('Deleted.') }
+            if (res.success) { invalidate(); toast.success('Presentation deleted.') }
             else toast.error(res.message)
         },
-        onError: () => toast.error('Failed to delete.'),
+        onError: () => toast.error('Failed to delete presentation.'),
     })
 
     const updateStatusMutation = useMutation({
@@ -54,11 +54,12 @@ export function usePresentations(courseId: string) {
         deletePresentation: deleteMutation.mutate,
         isDeleting:         deleteMutation.isPending,
         updateStatus:       updateStatusMutation.mutate,
+        isUpdatingStatus:   updateStatusMutation.isPending,
     }
 }
 
 export function usePresentationResults(courseId: string, presentationId: string) {
-    const qc = useQueryClient()
+    const qc  = useQueryClient()
     const key = ['presentation-results', courseId, presentationId]
 
     const query = useQuery({

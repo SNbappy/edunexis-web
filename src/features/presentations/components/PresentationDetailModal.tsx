@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion'
-import { Calendar, Clock, MapPin, BookOpen, Users, Star, Mic, XCircle } from 'lucide-react'
+﻿import { motion } from 'framer-motion'
+import { Calendar, Clock, MapPin, BookOpen, ClipboardList, Send, Star, XCircle, Mic } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
@@ -13,35 +13,50 @@ interface Props {
     onClose: () => void
     presentation: PresentationDto | null
     onEnterMarks?: (p: PresentationDto) => void
+    onUpdateStatus?: (id: string, status: string) => void
 }
 
-export default function PresentationDetailModal({ isOpen, onClose, presentation: p, onEnterMarks }: Props) {
+export default function PresentationDetailModal({
+    isOpen, onClose, presentation: p, onEnterMarks, onUpdateStatus,
+}: Props) {
     const { user } = useAuthStore()
     const teacher = isTeacher(user?.role ?? 'Student')
     if (!p) return null
-    const result = p.myResult
+
+    const isScheduled = p.status === 'Scheduled'
+    const isOngoing   = p.status === 'Ongoing'
+    const isCompleted = p.status === 'Completed'
+    const isCancelled = p.status === 'Cancelled'
+    const result      = p.myResult
+
+    const statusVariant =
+        isCompleted ? 'success' :
+        isOngoing   ? 'warning' :
+        isCancelled ? 'danger'  : 'default'
+
+    const infoCards = [
+        { icon: <Calendar className="w-3.5 h-3.5" />, label: 'Date & Time',    value: p.scheduledDate ? formatDateTime(p.scheduledDate) : 'Not set' },
+        { icon: <BookOpen  className="w-3.5 h-3.5" />, label: 'Total Marks',   value: `${p.totalMarks} marks` },
+        ...(p.venue                   ? [{ icon: <MapPin className="w-3.5 h-3.5" />, label: 'Venue',          value: p.venue }] : []),
+        ...(p.durationPerGroupMinutes ? [{ icon: <Clock  className="w-3.5 h-3.5" />, label: 'Duration/Group', value: `${p.durationPerGroupMinutes} min` }] : []),
+    ]
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={p.title} size="lg">
             <div className="space-y-5">
                 <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant={p.status === 'Completed' ? 'success' : p.status === 'Ongoing' ? 'warning' : p.status === 'Cancelled' ? 'danger' : 'default'} dot={p.status === 'Scheduled' || p.status === 'Ongoing'}>
-                        {p.status}
-                    </Badge>
-                    <Badge variant="muted">{p.format}</Badge>
+                    <Badge variant={statusVariant} dot={isScheduled || isOngoing}>{p.status}</Badge>
+                    {p.format && <Badge variant="muted">{p.format}</Badge>}
                     {p.topicsAllowed && <Badge variant="muted"><Mic className="w-3 h-3 mr-1 inline" />Topics enabled</Badge>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                    {[
-                        { icon: <Calendar className="w-4 h-4" />, label: 'Date & Time', value: formatDateTime(p.scheduledDate) },
-                        { icon: <BookOpen className="w-4 h-4" />, label: 'Total Marks', value: `${p.totalMarks} marks` },
-                        ...(p.venue ? [{ icon: <MapPin className="w-4 h-4" />, label: 'Venue', value: p.venue }] : []),
-                        ...(p.durationPerGroupMinutes ? [{ icon: <Clock className="w-4 h-4" />, label: 'Duration/Group', value: `${p.durationPerGroupMinutes} min` }] : []),
-                    ].map((item) => (
-                        <div key={item.label} className="p-3 rounded-xl bg-muted/50 border border-border space-y-1">
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">{item.icon} {item.label}</div>
-                            <p className="text-sm font-semibold text-foreground">{item.value}</p>
+                    {infoCards.map((card) => (
+                        <div key={card.label} className="p-3 rounded-xl bg-muted/50 border border-border space-y-1">
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                {card.icon} {card.label}
+                            </div>
+                            <p className="text-sm font-semibold text-foreground">{card.value}</p>
                         </div>
                     ))}
                 </div>
@@ -55,34 +70,73 @@ export default function PresentationDetailModal({ isOpen, onClose, presentation:
                     </div>
                 )}
 
-                {/* Student result */}
-                {!teacher && p.status === 'Completed' && (
+                {!teacher && isCompleted && (
                     <motion.div
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className={`p-4 rounded-xl border space-y-2 ${result?.isAbsent ? 'bg-destructive/5 border-destructive/20' : 'bg-emerald-500/5 border-emerald-500/20'}`}
+                        className={`p-4 rounded-xl border space-y-2 ${
+                            result?.isAbsent
+                                ? 'bg-destructive/5 border-destructive/20'
+                                : 'bg-emerald-500/5 border-emerald-500/20'
+                        }`}
                     >
                         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Your Result</p>
                         {result?.isAbsent ? (
-                            <div className="flex items-center gap-2 text-destructive"><XCircle className="w-5 h-5" /><span className="font-semibold">Absent</span></div>
-                        ) : result?.obtainedMarks !== null && result?.obtainedMarks !== undefined ? (
+                            <div className="flex items-center gap-2 text-destructive">
+                                <XCircle className="w-5 h-5" /><span className="font-semibold">Absent</span>
+                            </div>
+                        ) : result?.obtainedMarks != null ? (
                             <div className="flex items-center gap-2 text-emerald-500">
                                 <Star className="w-5 h-5" />
                                 <span className="text-2xl font-bold">{result.obtainedMarks}</span>
-                                <span className="text-muted-foreground">/ {p.totalMarks}</span>
+                                <span className="text-muted-foreground text-sm">/ {p.totalMarks}</span>
                             </div>
                         ) : (
-                            <p className="text-sm text-muted-foreground">Marks not entered yet</p>
+                            <p className="text-sm text-muted-foreground">Marks not entered yet.</p>
                         )}
-                        {result?.topic && <p className="text-xs text-violet-500 flex items-center gap-1"><Mic className="w-3.5 h-3.5" /> {result.topic}</p>}
+                        {result?.topic    && <p className="text-xs text-violet-500 flex items-center gap-1"><Mic className="w-3.5 h-3.5" /> {result.topic}</p>}
                         {result?.feedback && <p className="text-xs text-muted-foreground">Feedback: {result.feedback}</p>}
                     </motion.div>
                 )}
 
-                {teacher && p.status === 'Completed' && onEnterMarks && (
-                    <Button className="w-full" onClick={() => { onClose(); onEnterMarks(p) }}>
-                        Enter / Edit Marks
-                    </Button>
+                {!teacher && !isCompleted && (
+                    <div className="p-4 rounded-xl bg-muted/50 border border-border text-sm text-muted-foreground text-center">
+                        Results will be visible once the presentation is completed.
+                    </div>
+                )}
+
+                {teacher && (
+                    <div className="space-y-2 pt-1">
+                        {(isCompleted || isOngoing) && onEnterMarks && (
+                            <Button
+                                variant={isCompleted ? 'primary' : 'secondary'}
+                                className="w-full"
+                                leftIcon={<ClipboardList className="w-4 h-4" />}
+                                onClick={() => { onClose(); onEnterMarks(p) }}
+                            >
+                                {isCompleted ? 'Enter / Edit Marks' : 'Enter Marks'}
+                            </Button>
+                        )}
+                        {isScheduled && onUpdateStatus && (
+                            <Button variant="secondary" className="w-full"
+                                leftIcon={<Send className="w-4 h-4" />}
+                                onClick={() => { onClose(); onUpdateStatus(p.id, 'Ongoing') }}>
+                                Start — Mark as Ongoing
+                            </Button>
+                        )}
+                        {isOngoing && onUpdateStatus && (
+                            <Button className="w-full"
+                                leftIcon={<Send className="w-4 h-4" />}
+                                onClick={() => { onClose(); onUpdateStatus(p.id, 'Completed') }}>
+                                Complete — Mark as Completed
+                            </Button>
+                        )}
+                        {isCompleted && (
+                            <div className="p-3 rounded-xl bg-muted/50 border border-border text-xs text-muted-foreground text-center">
+                                Presentation completed. Students can view their results.
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
         </Modal>

@@ -1,25 +1,42 @@
 ﻿import PresentationCard from './PresentationCard'
-import EmptyState from '@/components/ui/EmptyState'
-import { Mic } from 'lucide-react'
 import type { PresentationDto } from '@/types/presentation.types'
+import { ReactNode } from 'react'
 
 interface Props {
     presentations: PresentationDto[]
-    onDelete?: (id: string) => void
+    onView: (p: PresentationDto) => void
+    onDelete?: (p: PresentationDto) => void
     onUpdateStatus?: (id: string, status: string) => void
+    onEnterMarks?: (p: PresentationDto) => void
     emptyTitle?: string
     emptyDescription?: string
-    emptyAction?: React.ReactNode
+    emptyAction?: ReactNode
 }
 
-export default function PresentationsList({ presentations, onDelete, onUpdateStatus, emptyTitle, emptyDescription, emptyAction }: Props) {
-    if (presentations.length === 0) {
-        return <EmptyState icon={<Mic className="w-8 h-8" />} title={emptyTitle ?? 'No presentations scheduled'} description={emptyDescription} action={emptyAction} />
-    }
+export default function PresentationsList({
+    presentations, onView, onDelete, onUpdateStatus, onEnterMarks,
+    emptyTitle = 'No presentations scheduled', emptyDescription = '', emptyAction,
+}: Props) {
+    if (presentations.length === 0) return (
+        <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
+            <p className="text-base font-semibold text-foreground">{emptyTitle}</p>
+            {emptyDescription && <p className="text-sm text-muted-foreground">{emptyDescription}</p>}
+            {emptyAction}
+        </div>
+    )
+
     return (
         <div className="space-y-3">
             {presentations.map((p, i) => (
-                <PresentationCard key={p.id} presentation={p} index={i} onDelete={onDelete} onUpdateStatus={onUpdateStatus} />
+                <PresentationCard
+                    key={p.id}
+                    presentation={p}
+                    index={i}
+                    onView={onView}
+                    onDelete={onDelete}
+                    onUpdateStatus={onUpdateStatus}
+                    onEnterMarks={onEnterMarks}
+                />
             ))}
         </div>
     )

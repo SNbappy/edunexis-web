@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect } from 'react'
-import { CheckCircle2, RefreshCw, Send } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { CheckCircle2, RefreshCw, Send, BarChart3 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
@@ -88,169 +89,251 @@ export default function MarksTab({ courseId, courseTitle }: Props) {
         setConfig(prev => ({ ...prev, [key]: { ...prev[key], ...patch } }))
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 max-w-3xl mx-auto">
 
-            {/* Formula Builder */}
-            <div className="p-5 rounded-2xl bg-card border border-border space-y-4">
-                <div className="flex items-center justify-between">
+            {/* ── Premium Toolbar ── */}
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-between gap-3 p-4 rounded-2xl flex-wrap"
+                style={{ background: 'rgba(10,22,40,0.7)', border: '1px solid rgba(99,102,241,0.15)' }}>
+                <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                        style={{ background: 'linear-gradient(135deg,rgba(79,70,229,0.3),rgba(6,182,212,0.2))', border: '1px solid rgba(99,102,241,0.3)' }}>
+                        <BarChart3 className="w-4 h-4" style={{ color: '#818cf8' }} />
+                    </div>
                     <div>
-                        <h2 className="font-semibold text-foreground">Grading Formula</h2>
-                        <p className="text-xs text-muted-foreground mt-0.5">
+                        <h2 className="text-[15px] font-extrabold" style={{ color: '#e2e8f0' }}>Marks & Grading</h2>
+                        <p className="text-[11px]" style={{ color: '#475569' }}>
+                            {isPublished
+                                ? <span style={{ color: '#34d399' }}>Results published · {marks.length} students</span>
+                                : formula
+                                    ? <span>Formula saved · {hasMarks ? `${marks.length} calculated` : 'not calculated'}</span>
+                                    : <span>No formula set</span>
+                            }
+                        </p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                    {formula && (
+                        <motion.button
+                            whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                            onClick={() => calculate()}
+                            disabled={isCalculating}
+                            className="flex items-center gap-2 px-3 py-2 rounded-xl text-[12px] font-bold"
+                            style={{ background: 'rgba(6,13,31,0.6)', border: '1px solid rgba(99,102,241,0.25)', color: '#818cf8' }}>
+                            <RefreshCw className={`w-3.5 h-3.5 ${isCalculating ? 'animate-spin' : ''}`} />
+                            {hasMarks ? 'Recalculate' : 'Calculate'}
+                        </motion.button>
+                    )}
+                    {hasMarks && !isPublished && (
+                        <motion.button
+                            whileHover={{ scale: 1.04, boxShadow: '0 6px 24px rgba(99,102,241,0.45)' }}
+                            whileTap={{ scale: 0.96 }}
+                            onClick={() => publish()}
+                            disabled={isPublishing}
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-bold"
+                            style={{ background: 'linear-gradient(135deg,#4f46e5,#06b6d4)', color: '#fff', boxShadow: '0 4px 16px rgba(79,70,229,0.4)' }}>
+                            <Send className="w-3.5 h-3.5" /> Publish Results
+                        </motion.button>
+                    )}
+                    {isPublished && (
+                        <ExportFinalMarksButton marks={marks} formula={formula!} courseTitle={courseTitle} />
+                    )}
+                </div>
+            </motion.div>
+
+            {/* ── Formula Builder ── */}
+            <div className="rounded-2xl overflow-hidden"
+                style={{ background: 'rgba(10,22,40,0.5)', border: '1px solid rgba(99,102,241,0.12)' }}>
+                <div className="flex items-center justify-between px-5 py-4 border-b"
+                    style={{ borderColor: 'rgba(99,102,241,0.12)' }}>
+                    <div>
+                        <h3 className="text-sm font-bold" style={{ color: '#e2e8f0' }}>Grading Formula</h3>
+                        <p className="text-[11px] mt-0.5" style={{ color: '#475569' }}>
                             {formula ? 'Saved — edit and re-save to update' : 'Define how final marks are calculated'}
                         </p>
                     </div>
-                    {formula && !isFormulaLoading && <Badge variant="success">Saved</Badge>}
+                    <div className="flex items-center gap-2">
+                        {formula && !isFormulaLoading && (
+                            <span className="text-[11px] font-bold px-2 py-1 rounded-lg"
+                                style={{ background: 'rgba(52,211,153,0.15)', color: '#34d399', border: '1px solid rgba(52,211,153,0.3)' }}>
+                                ✓ Saved
+                            </span>
+                        )}
+                        {totalMarks > 0 && (
+                            <span className="text-[11px] font-bold px-2 py-1 rounded-lg"
+                                style={{ background: 'rgba(129,140,248,0.15)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)' }}>
+                                {totalMarks} total marks
+                            </span>
+                        )}
+                    </div>
                 </div>
 
-                <div className="space-y-2">
-                    {COMPONENTS.map(comp => {
+                <div className="p-4 space-y-2">
+                    {COMPONENTS.map((comp, i) => {
                         const cfg = config[comp.key]
                         return (
-                            <div key={comp.key}
-                                className={`rounded-xl border transition-all ${cfg.enabled ? 'border-primary/30 bg-primary/5' : 'border-border bg-muted/20'}`}>
-                                <div className="flex items-center justify-between p-3">
+                            <motion.div key={comp.key}
+                                initial={{ opacity: 0, x: -8 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: i * 0.04 }}
+                                className="rounded-xl overflow-hidden transition-all"
+                                style={{
+                                    background: cfg.enabled ? 'rgba(79,70,229,0.1)' : 'rgba(6,13,31,0.4)',
+                                    border: cfg.enabled ? '1px solid rgba(99,102,241,0.35)' : '1px solid rgba(99,102,241,0.1)',
+                                }}>
+                                <div className="flex items-center justify-between px-4 py-3">
                                     <div className="flex items-center gap-2.5">
                                         <span>{comp.icon}</span>
-                                        <span className="text-sm font-medium text-foreground">{comp.label}</span>
+                                        <span className="text-sm font-semibold" style={{ color: cfg.enabled ? '#e2e8f0' : '#475569' }}>
+                                            {comp.label}
+                                        </span>
                                         {cfg.enabled && (
-                                            <span className="text-xs text-primary font-semibold">
+                                            <span className="text-xs font-bold px-1.5 py-0.5 rounded-md"
+                                                style={{ background: 'rgba(129,140,248,0.2)', color: '#818cf8' }}>
                                                 {parseFloat(cfg.maxMarks) || 0} marks
                                             </span>
                                         )}
                                     </div>
                                     <button
                                         onClick={() => setComp(comp.key, { enabled: !cfg.enabled })}
-                                        className={`relative w-9 h-5 rounded-full transition-colors ${cfg.enabled ? 'bg-primary' : 'bg-muted-foreground/30'}`}
-                                    >
+                                        className="relative w-9 h-5 rounded-full transition-all shrink-0"
+                                        style={{ background: cfg.enabled ? 'linear-gradient(135deg,#4f46e5,#06b6d4)' : 'rgba(71,85,105,0.4)' }}>
                                         <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${cfg.enabled ? 'left-[18px]' : 'left-0.5'}`} />
                                     </button>
                                 </div>
 
                                 {cfg.enabled && (
-                                    <div className="px-3 pb-3 flex items-center gap-4 flex-wrap">
+                                    <div className="px-4 pb-3 flex items-center gap-4 flex-wrap border-t"
+                                        style={{ borderColor: 'rgba(99,102,241,0.15)' }}>
                                         {comp.showRule && (
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="text-xs text-muted-foreground">Count:</span>
+                                            <div className="flex items-center gap-1.5 pt-2.5">
+                                                <span className="text-xs" style={{ color: '#475569' }}>Count:</span>
                                                 <select value={cfg.selectionRule}
                                                     onChange={e => setComp(comp.key, { selectionRule: e.target.value as SelectionRule })}
-                                                    className="h-7 rounded-lg border border-border bg-background text-xs px-2 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                                    className="h-7 rounded-lg text-xs px-2 focus:outline-none transition-all"
+                                                    style={{ background: 'rgba(6,13,31,0.8)', border: '1px solid rgba(99,102,241,0.25)', color: '#e2e8f0' }}>
                                                     {RULES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                                                 </select>
                                             </div>
                                         )}
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="text-xs text-muted-foreground">Worth:</span>
+                                        <div className="flex items-center gap-1.5 pt-2.5">
+                                            <span className="text-xs" style={{ color: '#475569' }}>Worth:</span>
                                             <input type="number" min="1" value={cfg.maxMarks}
                                                 onChange={e => setComp(comp.key, { maxMarks: e.target.value })}
-                                                className="w-16 h-7 rounded-lg border border-border bg-background text-xs px-2 text-center focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                                            <span className="text-xs text-muted-foreground">marks</span>
+                                                className="w-16 h-7 rounded-lg text-xs px-2 text-center focus:outline-none transition-all"
+                                                style={{ background: 'rgba(6,13,31,0.8)', border: '1px solid rgba(99,102,241,0.25)', color: '#e2e8f0' }} />
+                                            <span className="text-xs" style={{ color: '#475569' }}>marks</span>
                                         </div>
                                     </div>
                                 )}
-                            </div>
+                            </motion.div>
                         )
                     })}
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-border">
-                    <p className="text-sm">
-                        <span className="text-muted-foreground">Total: </span>
-                        <span className="font-bold text-foreground">{totalMarks > 0 ? `${totalMarks} marks` : '—'}</span>
-                    </p>
-                    <Button leftIcon={<CheckCircle2 className="w-4 h-4" />} loading={isSaving}
-                        onClick={handleSave} disabled={enabled.length === 0}>
-                        Save Formula
-                    </Button>
+                <div className="flex items-center justify-end px-5 py-3 border-t gap-3"
+                    style={{ borderColor: 'rgba(99,102,241,0.12)' }}>
+                    <motion.button
+                        whileHover={{ scale: 1.04, boxShadow: '0 6px 24px rgba(99,102,241,0.45)' }}
+                        whileTap={{ scale: 0.96 }}
+                        onClick={handleSave}
+                        disabled={enabled.length === 0 || isSaving}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-bold disabled:opacity-40"
+                        style={{ background: 'linear-gradient(135deg,#4f46e5,#06b6d4)', color: '#fff', boxShadow: '0 4px 16px rgba(79,70,229,0.4)' }}>
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        {isSaving ? 'Saving...' : 'Save Formula'}
+                    </motion.button>
                 </div>
             </div>
 
-            {/* Results */}
+            {/* ── Results Table ── */}
             {formula && (
-                <div className="p-5 rounded-2xl bg-card border border-border space-y-4">
-                    <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="rounded-2xl overflow-hidden"
+                    style={{ background: 'rgba(10,22,40,0.5)', border: '1px solid rgba(99,102,241,0.12)' }}>
+                    <div className="flex items-center justify-between px-5 py-4 border-b"
+                        style={{ borderColor: 'rgba(99,102,241,0.12)' }}>
                         <div>
-                            <h2 className="font-semibold text-foreground">Results</h2>
-                            <p className="text-xs text-muted-foreground mt-0.5">
+                            <h3 className="text-sm font-bold" style={{ color: '#e2e8f0' }}>Calculated Results</h3>
+                            <p className="text-[11px] mt-0.5" style={{ color: '#475569' }}>
                                 {hasMarks
                                     ? `${marks.length} student${marks.length !== 1 ? 's' : ''} · out of ${formula.totalMarks} marks`
-                                    : 'No marks calculated yet'}
+                                    : 'No marks calculated yet — click Calculate above'}
                             </p>
                         </div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <Button size="sm" variant="secondary"
-                                leftIcon={<RefreshCw className="w-4 h-4" />}
-                                loading={isCalculating} onClick={() => calculate()}>
-                                {hasMarks ? 'Recalculate' : 'Calculate Marks'}
-                            </Button>
-                            {hasMarks && !isPublished && (
-                                <Button size="sm" leftIcon={<Send className="w-4 h-4" />}
-                                    loading={isPublishing} onClick={() => publish()}>
-                                    Publish Results
-                                </Button>
-                            )}
-                            {isPublished && (
-                                <div className="flex items-center gap-2">
-                                    <Badge variant="success">Published</Badge>
-                                    <ExportFinalMarksButton
-                                        marks={marks}
-                                        formula={formula}
-                                        courseTitle={courseTitle}
-                                    />
-                                </div>
-                            )}
-                        </div>
+                        {isPublished && <Badge variant="success">Published</Badge>}
                     </div>
 
-                    {isMarksLoading ? (
-                        <div className="space-y-2">
-                            {[1, 2, 3].map(i => <div key={i} className="h-12 rounded-xl bg-muted animate-pulse" />)}
-                        </div>
-                    ) : hasMarks ? (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border">
-                                        <th className="text-left py-2 pr-4 font-semibold">Student</th>
-                                        {formula.components.map(c => (
-                                            <th key={c.componentType} className="text-center py-2 px-3 font-semibold">
-                                                {c.componentType}
-                                                <span className="block font-normal normal-case text-muted-foreground">/{c.maxMarks}</span>
+                    <div className="p-4">
+                        {isMarksLoading ? (
+                            <div className="space-y-2">
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className="h-12 rounded-xl animate-pulse"
+                                        style={{ background: 'rgba(99,102,241,0.06)' }} />
+                                ))}
+                            </div>
+                        ) : hasMarks ? (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b" style={{ borderColor: 'rgba(99,102,241,0.15)' }}>
+                                            <th className="text-left py-2 pr-4 text-xs font-bold uppercase tracking-wider"
+                                                style={{ color: '#475569' }}>Student</th>
+                                            {formula.components.map(c => (
+                                                <th key={c.componentType} className="text-center py-2 px-3 text-xs font-bold uppercase tracking-wider"
+                                                    style={{ color: '#475569' }}>
+                                                    {c.componentType}
+                                                    <span className="block font-normal normal-case" style={{ color: '#334155' }}>/{c.maxMarks}</span>
+                                                </th>
+                                            ))}
+                                            <th className="text-center py-2 px-3 text-xs font-bold uppercase tracking-wider"
+                                                style={{ color: '#818cf8' }}>
+                                                Total
+                                                <span className="block font-normal normal-case" style={{ color: '#475569' }}>/{formula.totalMarks}</span>
                                             </th>
-                                        ))}
-                                        <th className="text-center py-2 px-3 font-semibold">
-                                            Total
-                                            <span className="block font-normal normal-case text-muted-foreground">/{formula.totalMarks}</span>
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {marks.map((m, idx) => {
-                                        let bd: Record<string, { earned: number }> = {}
-                                        try { bd = JSON.parse(m.breakdownJson) } catch {}
-                                        return (
-                                            <tr key={m.studentId} className={idx % 2 === 0 ? 'bg-muted/30' : ''}>
-                                                <td className="py-2.5 pr-4">
-                                                    <p className="font-medium text-foreground">{m.studentName}</p>
-                                                </td>
-                                                {formula.components.map(c => (
-                                                    <td key={c.componentType} className="text-center py-2.5 px-3 text-foreground">
-                                                        {bd[c.componentType] != null ? bd[c.componentType].earned.toFixed(1) : '—'}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {marks.map((m, idx) => {
+                                            let bd: Record<string, { earned: number }> = {}
+                                            try { bd = JSON.parse(m.breakdownJson) } catch {}
+                                            const pct = formula.totalMarks > 0 ? (m.finalMark / formula.totalMarks) * 100 : 0
+                                            return (
+                                                <motion.tr key={m.studentId}
+                                                    initial={{ opacity: 0 }}
+                                                    animate={{ opacity: 1 }}
+                                                    transition={{ delay: idx * 0.02 }}
+                                                    className="border-b transition-colors"
+                                                    style={{
+                                                        borderColor: 'rgba(99,102,241,0.08)',
+                                                        background: idx % 2 === 0 ? 'rgba(99,102,241,0.03)' : 'transparent',
+                                                    }}>
+                                                    <td className="py-3 pr-4">
+                                                        <p className="text-sm font-medium" style={{ color: '#e2e8f0' }}>{m.studentName}</p>
                                                     </td>
-                                                ))}
-                                                <td className="text-center py-2.5 px-3 font-bold text-foreground">
-                                                    {m.finalMark.toFixed(1)}
-                                                </td>
-                                            </tr>
-                                        )
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    ) : (
-                        <p className="text-sm text-muted-foreground text-center py-6">
-                            Click "Calculate Marks" to generate results.
-                        </p>
-                    )}
+                                                    {formula.components.map(c => (
+                                                        <td key={c.componentType} className="text-center py-3 px-3"
+                                                            style={{ color: '#94a3b8' }}>
+                                                            {bd[c.componentType] != null ? bd[c.componentType].earned.toFixed(1) : '—'}
+                                                        </td>
+                                                    ))}
+                                                    <td className="text-center py-3 px-3">
+                                                        <span className="text-sm font-bold tabular-nums"
+                                                            style={{ color: pct >= 80 ? '#34d399' : pct >= 70 ? '#60a5fa' : pct >= 60 ? '#fbbf24' : '#f87171' }}>
+                                                            {m.finalMark.toFixed(1)}
+                                                        </span>
+                                                    </td>
+                                                </motion.tr>
+                                            )
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="text-center py-10 text-sm" style={{ color: '#475569' }}>
+                                Click "Calculate" in the toolbar to generate results.
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
         </div>
