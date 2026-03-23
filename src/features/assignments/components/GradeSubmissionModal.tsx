@@ -8,6 +8,7 @@ import Avatar from '@/components/ui/Avatar'
 import ProgressBar from '@/components/ui/ProgressBar'
 import { formatDateTime } from '@/utils/dateUtils'
 import type { SubmissionDto, GradeSubmissionRequest } from '@/types/assignment.types'
+import AnalysisPanel from './AnalysisPanel'
 
 interface Props {
     isOpen: boolean
@@ -89,6 +90,14 @@ export default function GradeSubmissionModal({ isOpen, onClose, submission, maxM
                         <a href={submission.linkUrl} target="_blank" rel="noopener noreferrer">
                             <Button size="sm" variant="secondary">Open</Button>
                         </a>
+                    </div>
+                )}
+
+                {/* AI & Plagiarism Analysis */}
+                {submission.textContent && (
+                    <div className="space-y-2">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Analysis Tools</p>
+                        <AnalysisPanel submission={submission} />
                     </div>
                 )}
 

@@ -59,3 +59,23 @@ export interface GradeSubmissionRequest {
     obtainedMarks: number
     feedback?: string
 }
+
+export interface PlagiarismPair {
+    studentA: string
+    studentB: string
+    submissionAId: string
+    submissionBId: string
+    textA: string
+    textB: string
+    similarity: number
+    level: 'low' | 'medium' | 'high'
+    commonPhrases: string[]
+}
+
+export interface PlagiarismReport {
+    checkedAt: string
+    totalCompared: number
+    allPairs: PlagiarismPair[]
+    flaggedPairs: PlagiarismPair[]
+    cannotCheck: string[]
+}

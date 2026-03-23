@@ -52,7 +52,7 @@ export default function EditCourseModal({ isOpen, onClose, onSubmit, isLoading, 
     }, [course, reset])
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Edit Course" size="xl">
+        <Modal isOpen={isOpen} onClose={onClose} title="Edit Course" size="xl" scrollable>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="sm:col-span-2">
@@ -78,3 +78,4 @@ export default function EditCourseModal({ isOpen, onClose, onSubmit, isLoading, 
         </Modal>
     )
 }
+

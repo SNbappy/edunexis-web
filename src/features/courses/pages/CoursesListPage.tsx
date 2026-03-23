@@ -1,198 +1,336 @@
-import { useState } from 'react'
-import { Plus, BookOpen, Compass, Search } from 'lucide-react'
-import Button from '@/components/ui/Button'
-import CourseCard from '../components/CourseCard'
-import CreateCourseModal from '../components/CreateCourseModal'
-import JoinCourseModal from '../components/JoinCourseModal'
-import { SkeletonCard } from '@/components/ui/Skeleton'
-import EmptyState from '@/components/ui/EmptyState'
-import { useCourses } from '../hooks/useCourses'
-import { useAuthStore } from '@/store/authStore'
-import { isTeacher } from '@/utils/roleGuard'
-import { cn } from '@/utils/cn'
-import type { CourseDto } from '@/types/course.types'
+import { useState, useMemo } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import {
+  BookOpen, Search, Grid3X3, List, Plus, Users,
+  TrendingUp, Layers, Filter, X, Sparkles,
+  GraduationCap, LogIn, ChevronRight, SlidersHorizontal,
+  BookMarked, Star, Archive
+} from "lucide-react"
+import { Link } from "react-router-dom"
+import { useAuthStore } from "@/store/authStore"
+import { isTeacher } from "@/utils/roleGuard"
+import { useCourses } from "@/features/courses/hooks/useCourses"
+import CourseCard from "@/features/courses/components/CourseCard"
+import { ROUTES } from "@/config/constants"
 
-type Tab = 'my' | 'explore'
+type ViewMode = "grid" | "list"
+type SortMode = "name" | "newest" | "students" | "progress"
 
-export default function CoursesPage() {
-    const { user } = useAuthStore()
-    const teacher = isTeacher(user?.role ?? 'Student')
-    const [tab, setTab] = useState<Tab>('my')
-    const [showCreate, setShowCreate] = useState(false)
-    const [joiningCourse, setJoiningCourse] = useState<CourseDto | null>(null)
-    const [search, setSearch] = useState('')
+const SORT_OPTIONS: { value: SortMode; label: string }[] = [
+  { value: "name",     label: "Name A–Z"    },
+  { value: "newest",   label: "Newest First" },
+  { value: "students", label: "Most Students"},
+  { value: "progress", label: "Progress"    },
+]
 
-    const {
-        courses, allCourses,
-        isLoading, isLoadingAll,
-        createCourse, isCreating,
-        requestJoin, isJoining,
-        archiveCourse, deleteCourse,
-    } = useCourses()
+export default function CoursesListPage() {
+  const { user } = useAuthStore()
+  const teacher = isTeacher(user?.role ?? "Student")
 
-    const myIds = new Set(courses.map((c) => c.id))
-    const displayed = tab === 'my' ? courses : allCourses
+  const { courses = [], isLoading } = useCourses()
 
-    const filtered = displayed.filter((c) =>
-        !search ||
-        c.title.toLowerCase().includes(search.toLowerCase()) ||
-        c.courseCode.toLowerCase().includes(search.toLowerCase()) ||
-        c.department?.toLowerCase().includes(search.toLowerCase())
-    )
+  const [search, setSearch]       = useState("")
+  const [view, setView]           = useState<ViewMode>("grid")
+  const [sort, setSort]           = useState<SortMode>("newest")
+  const [showFilters, setShowFilters] = useState(false)
 
-    const active = filtered.filter((c) => !c.isArchived)
-    const archived = filtered.filter((c) => c.isArchived)
-    const loading = tab === 'my' ? isLoading : isLoadingAll
+  // Stats
+  const totalStudents  = useMemo(() => courses.reduce((s: number, c: any) => s + (c.enrollmentCount ?? 0), 0), [courses])
+  const totalTasks     = useMemo(() => courses.reduce((s: number, c: any) => s + (c.assignmentCount ?? 0), 0), [courses])
+  const avgProgress    = useMemo(() => {
+    const withProg = courses.filter((c: any) => c.progress != null)
+    if (!withProg.length) return null
+    return Math.round(withProg.reduce((s: number, c: any) => s + c.progress, 0) / withProg.length)
+  }, [courses])
 
-    return (
-        <div className="p-6 space-y-6 max-w-7xl mx-auto">
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div>
-                    <h1 className="text-2xl font-bold text-foreground">Courses</h1>
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                        {teacher ? 'Manage your courses' : 'Your learning journey'}
-                    </p>
-                </div>
-                {teacher && (
-                    <Button leftIcon={<Plus className="w-4 h-4" />} onClick={() => setShowCreate(true)}>
-                        Create Course
-                    </Button>
-                )}
-            </div>
+  const filtered = useMemo(() => {
+    let list = [...courses]
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      list = list.filter((c: any) =>
+        c.name?.toLowerCase().includes(q) ||
+        c.courseCode?.toLowerCase().includes(q) ||
+        c.teacher?.fullName?.toLowerCase().includes(q)
+      )
+    }
+    switch (sort) {
+      case "name":     list.sort((a, b) => a.name?.localeCompare(b.name ?? "") ?? 0); break
+      case "students": list.sort((a, b) => (b.enrollmentCount ?? 0) - (a.enrollmentCount ?? 0)); break
+      case "progress": list.sort((a, b) => (b.progress ?? 0) - (a.progress ?? 0)); break
+      case "newest":   list.sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()); break
+    }
+    return list
+  }, [courses, search, sort])
 
-            <div className="flex items-center gap-4 flex-wrap">
-                <div className="flex items-center gap-1 p-1 bg-muted rounded-xl">
-                    <button
-                        onClick={() => setTab('my')}
-                        className={cn(
-                            'flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all',
-                            tab === 'my' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                        )}
-                    >
-                        <BookOpen className="w-3.5 h-3.5" /> My Courses
-                        {courses.length > 0 && (
-                            <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-primary/10 text-primary font-bold">
-                                {courses.length}
-                            </span>
-                        )}
-                    </button>
-                    <button
-                        onClick={() => setTab('explore')}
-                        className={cn(
-                            'flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all',
-                            tab === 'explore' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                        )}
-                    >
-                        <Compass className="w-3.5 h-3.5" />
-                        {teacher ? 'All Courses' : 'Explore'}
-                        {tab === 'explore' && allCourses.length > 0 && (
-                            <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-muted-foreground/20 text-muted-foreground font-bold">
-                                {allCourses.length}
-                            </span>
-                        )}
-                    </button>
-                </div>
+  const STATS = [
+    {
+      label: "My Courses",
+      value: courses.length,
+      icon: BookMarked,
+      gradient: "linear-gradient(135deg,#1d4ed8,#0891b2)",
+      glow: "rgba(29,78,216,0.3)",
+      text: "#93c5fd",
+      bg: "rgba(29,78,216,0.1)",
+    },
+    {
+      label: teacher ? "Total Students" : "Assignments",
+      value: teacher ? totalStudents : totalTasks,
+      icon: teacher ? Users : Layers,
+      gradient: "linear-gradient(135deg,#7c3aed,#4f46e5)",
+      glow: "rgba(124,58,237,0.3)",
+      text: "#c4b5fd",
+      bg: "rgba(124,58,237,0.1)",
+    },
+    {
+      label: teacher ? "Total Tasks" : "Avg. Progress",
+      value: teacher ? totalTasks : (avgProgress !== null ? `${avgProgress}%` : "—"),
+      icon: teacher ? Archive : TrendingUp,
+      gradient: "linear-gradient(135deg,#0e7490,#0369a1)",
+      glow: "rgba(6,182,212,0.3)",
+      text: "#67e8f9",
+      bg: "rgba(6,182,212,0.1)",
+    },
+  ]
 
-                <div className="relative flex-1 min-w-[200px] max-w-sm">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search courses..."
-                        className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                    />
-                </div>
-            </div>
+  return (
+    <div className="min-h-full pb-10" style={{ background: "linear-gradient(180deg,#0d1b35 0%,#0a1628 100%)", minHeight: "100vh" }}>
 
-            {loading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                    {[1, 2, 3, 4].map((i) => <SkeletonCard key={i} />)}
-                </div>
-            ) : filtered.length === 0 ? (
-                <EmptyState
-                    icon={tab === 'explore' ? <Compass className="w-8 h-8" /> : <BookOpen className="w-8 h-8" />}
-                    title={tab === 'explore' ? 'No courses found' : 'No courses yet'}
-                    description={
-                        tab === 'my'
-                            ? teacher ? 'Create your first course to get started' : 'Switch to Explore tab to find and join courses'
-                            : 'No courses have been created yet'
-                    }
-                    action={teacher && tab === 'my' ? (
-                        <Button leftIcon={<Plus className="w-4 h-4" />} onClick={() => setShowCreate(true)}>
-                            Create Course
-                        </Button>
-                    ) : undefined}
-                />
-            ) : (
-                <div className="space-y-8">
-                    {active.length > 0 && (
-                        <div>
-                            {archived.length > 0 && (
-                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                                    Active · {active.length}
-                                </p>
-                            )}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                                {active.map((course, i) => (
-                                    <CourseCard
-                                        key={course.id}
-                                        course={course}
-                                        index={i}
-                                        tab={tab}
-                                        isMine={myIds.has(course.id)}
-                                        onArchive={teacher && myIds.has(course.id) ? archiveCourse : undefined}
-                                        onDelete={teacher && myIds.has(course.id) ? deleteCourse : undefined}
-                                        onJoin={!teacher && tab === 'explore' && !myIds.has(course.id)
-                                            ? (id) => setJoiningCourse(allCourses.find(c => c.id === id) ?? null)
-                                            : undefined
-                                        }
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    )}
+      {/* -- Hero Header -- */}
+      <div className="relative overflow-hidden"
+        style={{
+          background: "linear-gradient(135deg,rgba(13,30,60,0.9) 0%,rgba(10,20,45,0.95) 100%)",
+          borderBottom: "1px solid rgba(59,130,246,0.1)",
+        }}>
 
-                    {archived.length > 0 && tab === 'my' && (
-                        <div>
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                                Archived · {archived.length}
-                            </p>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                                {archived.map((course, i) => (
-                                    <CourseCard
-                                        key={course.id}
-                                        course={course}
-                                        index={i}
-                                        tab={tab}
-                                        isMine={true}
-                                        onArchive={teacher ? archiveCourse : undefined}
-                                        onDelete={teacher ? deleteCourse : undefined}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            <CreateCourseModal
-                isOpen={showCreate}
-                onClose={() => setShowCreate(false)}
-                onSubmit={(data) => createCourse(data, { onSuccess: () => setShowCreate(false) })}
-                isLoading={isCreating}
-            />
-
-            <JoinCourseModal
-                course={joiningCourse}
-                isOpen={!!joiningCourse}
-                onClose={() => setJoiningCourse(null)}
-                onSubmit={(courseId, code) => {
-                    requestJoin({ courseId, code }, {
-                        onSuccess: () => setJoiningCourse(null)
-                    })
-                }}
-                isLoading={isJoining}
-            />
+        {/* Background blobs */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute -top-16 right-1/4 w-72 h-72 rounded-full"
+            style={{ background: "radial-gradient(circle,rgba(29,78,216,0.12) 0%,transparent 70%)", filter: "blur(40px)" }} />
+          <div className="absolute -bottom-8 left-1/3 w-56 h-56 rounded-full"
+            style={{ background: "radial-gradient(circle,rgba(6,182,212,0.08) 0%,transparent 70%)", filter: "blur(40px)" }} />
         </div>
-    )
+
+        <div className="relative px-6 lg:px-8 pt-8 pb-6">
+          {/* Title row */}
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
+            className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                  style={{ background: "linear-gradient(135deg,#1d4ed8,#0891b2)", boxShadow: "0 4px 16px rgba(29,78,216,0.45)" }}>
+                  <BookOpen className="w-4.5 h-4.5 text-white" strokeWidth={2.5} />
+                </div>
+                <h1 className="text-[22px] font-extrabold" style={{ color: "#e2e8f0" }}>
+                  {teacher ? "My Courses" : "Learning Hub"}
+                </h1>
+                {courses.length > 0 && (
+                  <span className="px-2.5 py-1 rounded-xl text-[12px] font-bold"
+                    style={{ background: "rgba(29,78,216,0.2)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.25)" }}>
+                    {courses.length}
+                  </span>
+                )}
+              </div>
+              <p className="text-[13px] ml-12" style={{ color: "#475569" }}>
+                {teacher
+                  ? "Create, manage and track your courses"
+                  : "Continue your learning journey"}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 ml-12 sm:ml-0">
+              {/* Join course (student) */}
+              {!teacher && (
+                <Link to="/courses/join">
+                  <motion.div whileHover={{ scale: 1.03, y: -1 }} whileTap={{ scale: 0.97 }}
+                    className="flex items-center gap-2 h-10 px-4 rounded-xl font-bold text-[13px]"
+                    style={{ background: "rgba(6,182,212,0.12)", border: "1px solid rgba(6,182,212,0.25)", color: "#22d3ee" }}>
+                    <LogIn className="w-4 h-4" />
+                    Join Course
+                  </motion.div>
+                </Link>
+              )}
+              {/* Create course (teacher) */}
+              {teacher && (
+                <Link to="/courses/create">
+                  <motion.div whileHover={{ scale: 1.03, y: -1 }} whileTap={{ scale: 0.97 }}
+                    className="flex items-center gap-2 h-10 px-4 rounded-xl font-bold text-[13px] text-white"
+                    style={{ background: "linear-gradient(135deg,#1d4ed8,#0891b2)", boxShadow: "0 4px 16px rgba(29,78,216,0.4)" }}>
+                    <Plus className="w-4 h-4" />
+                    New Course
+                  </motion.div>
+                </Link>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Stats row */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            className="grid grid-cols-3 gap-3">
+            {STATS.map((s, i) => (
+              <motion.div key={s.label}
+                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 + i * 0.06 }}
+                className="flex items-center gap-3 px-4 py-3 rounded-2xl"
+                style={{ background: s.bg, border: `1px solid ${s.text}20` }}>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ background: s.gradient, boxShadow: `0 4px 12px ${s.glow}` }}>
+                  <s.icon className="w-4 h-4 text-white" strokeWidth={2} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[18px] font-extrabold leading-tight" style={{ color: s.text }}>
+                    {isLoading ? "—" : s.value}
+                  </p>
+                  <p className="text-[10.5px] font-semibold truncate" style={{ color: "#475569" }}>{s.label}</p>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </div>
+
+      {/* -- Toolbar -- */}
+      <div className="px-6 lg:px-8 py-4 flex flex-wrap items-center gap-3"
+        style={{ borderBottom: "1px solid rgba(99,102,241,0.08)", background: "rgba(10,18,38,0.6)" }}>
+
+        {/* Search */}
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#334155" }} />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search courses..."
+            className="w-full h-10 rounded-xl pl-10 pr-4 text-[13px] font-medium outline-none transition-all"
+            style={{
+              background: "rgba(13,24,42,0.8)",
+              border: "1px solid rgba(59,130,246,0.12)",
+              color: "#e2e8f0",
+            }}
+            onFocus={e => { (e.target as HTMLElement).style.borderColor = "rgba(59,130,246,0.4)"; (e.target as HTMLElement).style.boxShadow = "0 0 0 3px rgba(59,130,246,0.08)" }}
+            onBlur={e => { (e.target as HTMLElement).style.borderColor = "rgba(59,130,246,0.12)"; (e.target as HTMLElement).style.boxShadow = "none" }}
+          />
+          <AnimatePresence>
+            {search && (
+              <motion.button initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full flex items-center justify-center"
+                style={{ background: "rgba(59,130,246,0.15)" }}>
+                <X style={{ width: 11, height: 11, color: "#60a5fa" }} />
+              </motion.button>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Sort */}
+        <select
+          value={sort}
+          onChange={e => setSort(e.target.value as SortMode)}
+          className="h-10 rounded-xl px-3 text-[12.5px] font-semibold outline-none cursor-pointer"
+          style={{
+            background: "rgba(13,24,42,0.8)",
+            border: "1px solid rgba(59,130,246,0.12)",
+            color: "#94a3b8",
+          }}>
+          {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+
+        {/* View toggle */}
+        <div className="flex items-center gap-1 p-1 rounded-xl"
+          style={{ background: "rgba(13,24,42,0.8)", border: "1px solid rgba(59,130,246,0.1)" }}>
+          {([["grid", Grid3X3], ["list", List]] as const).map(([v, Icon]) => (
+            <button key={v} onClick={() => setView(v)}
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-150"
+              style={{
+                background: view === v ? "rgba(29,78,216,0.3)" : "transparent",
+                border: view === v ? "1px solid rgba(59,130,246,0.3)" : "1px solid transparent",
+              }}>
+              <Icon style={{ width: 15, height: 15, color: view === v ? "#60a5fa" : "#475569" }} />
+            </button>
+          ))}
+        </div>
+
+        {/* Count */}
+        <span className="text-[12px] font-medium ml-auto" style={{ color: "#334155" }}>
+          {filtered.length} of {courses.length} courses
+        </span>
+      </div>
+
+      {/* -- Content -- */}
+      <div className="px-6 lg:px-8 pt-6">
+
+        {/* Loading skeletons */}
+        {isLoading && (
+          <div className={view === "grid"
+            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+            : "space-y-3"}>
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className={`rounded-2xl animate-pulse ${view === "grid" ? "h-64" : "h-20"}`}
+                style={{ background: "rgba(13,24,42,0.6)", border: "1px solid rgba(59,130,246,0.06)" }} />
+            ))}
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!isLoading && filtered.length === 0 && (
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center justify-center py-28 text-center">
+            <motion.div whileHover={{ rotate: 10, scale: 1.05 }}
+              className="w-20 h-20 rounded-3xl flex items-center justify-center mb-5"
+              style={{ background: "linear-gradient(135deg,rgba(29,78,216,0.15),rgba(6,182,212,0.1))", border: "1px solid rgba(59,130,246,0.15)" }}>
+              {search ? <Search className="w-8 h-8" style={{ color: "#334155" }} strokeWidth={1.5} />
+                      : <BookOpen className="w-8 h-8" style={{ color: "#334155" }} strokeWidth={1.5} />}
+            </motion.div>
+            <h3 className="text-[17px] font-extrabold mb-2" style={{ color: "#334155" }}>
+              {search ? "No courses found" : teacher ? "No courses yet" : "You're not enrolled yet"}
+            </h3>
+            <p className="text-[13px] mb-6 max-w-xs" style={{ color: "#1e3a5f" }}>
+              {search
+                ? `No results for "${search}". Try a different keyword.`
+                : teacher
+                  ? "Create your first course and start teaching."
+                  : "Join a course using an invite code to get started."}
+            </p>
+            {!search && (
+              <Link to={teacher ? "/courses/create" : "/courses/join"}>
+                <motion.div whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.96 }}
+                  className="flex items-center gap-2 h-11 px-6 rounded-xl font-bold text-[13.5px] text-white"
+                  style={{ background: "linear-gradient(135deg,#1d4ed8,#0891b2)", boxShadow: "0 4px 20px rgba(29,78,216,0.4)" }}>
+                  {teacher ? <><Plus className="w-4 h-4" /> Create Course</> : <><LogIn className="w-4 h-4" /> Join a Course</>}
+                </motion.div>
+              </Link>
+            )}
+          </motion.div>
+        )}
+
+        {/* Course grid / list */}
+        {!isLoading && filtered.length > 0 && (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={view}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className={view === "grid"
+                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+                : "space-y-2.5"}>
+              {filtered.map((course: any, i: number) => (
+                <CourseCard
+                  key={course.id}
+                  course={course}
+                  index={i}
+                  isTeacher={teacher}
+                  viewMode={view}
+                />
+              ))}
+            </motion.div>
+          </AnimatePresence>
+        )}
+      </div>
+    </div>
+  )
 }
+
+
+
+
+
+
+

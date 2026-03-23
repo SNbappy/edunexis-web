@@ -1,4 +1,4 @@
-import api from '@/lib/axios'
+﻿import api from '@/lib/axios'
 import type { ApiResponse } from '@/types/api.types'
 import type { CourseDto, CourseMemberDto, CreateCourseRequest, UpdateCourseRequest } from '@/types/course.types'
 
@@ -21,6 +21,18 @@ export const courseService = {
 
     updateCourse: (id: string, data: UpdateCourseRequest) =>
         api.put<ApiResponse<CourseDto>>(`/Courses/${id}`, data).then((r) => r.data),
+
+    uploadCover: (file: File) => {
+        const form = new FormData()
+        form.append('file', file)
+        return api.post<ApiResponse<string>>('/Courses/upload-cover', form, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data)
+    },
+
+    uploadCover: (file: File) => {
+        const form = new FormData()
+        form.append('file', file)
+        return api.post<ApiResponse<string>>('/Courses/upload-cover', form, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data)
+    },
 
     deleteCourse: (id: string) =>
         api.delete<ApiResponse>(`/Courses/${id}`).then((r) => r.data),
@@ -46,3 +58,5 @@ export const courseService = {
     reviewJoinRequest: (courseId: string, requestId: string, approve: boolean) =>
         api.post<ApiResponse>(`/Courses/${courseId}/join-requests/${requestId}/review`, { approve }).then((r) => r.data),
 }
+
+

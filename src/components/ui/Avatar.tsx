@@ -34,7 +34,7 @@ function getColor(name?: string | null): string {
     return colors[idx]
 }
 
-export default function Avatar({ src, name, size = 'md', className }: AvatarProps) {
+export function Avatar({ src, name, size = 'md', className }: AvatarProps) {
     if (src) {
         return (
             <img
@@ -57,3 +57,5 @@ export default function Avatar({ src, name, size = 'md', className }: AvatarProp
         </div>
     )
 }
+
+export default Avatar

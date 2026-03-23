@@ -1,13 +1,13 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Users, UserMinus, AlertTriangle, GraduationCap, ChalkboardTeacher } from 'lucide-react'
+import { Users, UserMinus, AlertTriangle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import Avatar from '@/components/ui/Avatar'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
-import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
 import { useCourseMembers } from '../hooks/useCourseMembers'
+import { usePublicProfile } from '@/features/profile/hooks/usePublicProfile'
 import { useAuthStore } from '@/store/authStore'
 import { isTeacher } from '@/utils/roleGuard'
 import type { CourseMemberDto, CourseDto } from '@/types/course.types'
@@ -15,144 +15,138 @@ import type { CourseMemberDto, CourseDto } from '@/types/course.types'
 interface Props { courseId: string; course?: CourseDto }
 
 export default function CourseMembersList({ courseId, course }: Props) {
-    const { user } = useAuthStore()
-    const teacher = isTeacher(user?.role ?? 'Student')
-    const navigate = useNavigate()
-    const { members, isMembersLoading, removeMember, isRemoving } = useCourseMembers(courseId)
-    const [confirmTarget, setConfirmTarget] = useState<CourseMemberDto | null>(null)
+  const { user } = useAuthStore()
+  const teacher = isTeacher(user?.role ?? 'Student')
+  const navigate = useNavigate()
+  const { members, isMembersLoading, removeMember, isRemoving } = useCourseMembers(courseId)
+  const { data: teacherProfile } = usePublicProfile(course?.teacherId)
+  const [confirmTarget, setConfirmTarget] = useState<CourseMemberDto | null>(null)
 
-    if (isMembersLoading) {
-        return (
-            <div className="space-y-2">
-                {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-14 rounded-xl bg-muted animate-pulse" />
-                ))}
-            </div>
-        )
-    }
+  const handleVisitProfile = (userId: string, memberData: object) => {
+    navigate(`/users/${userId}`, { state: { member: memberData } })
+  }
 
-    const handleVisitProfile = (userId: string, memberData: object) => {
-        navigate(`/users/${userId}`, { state: { member: memberData } })
-    }
+  if (isMembersLoading) return (
+    <div className="space-y-2">
+      {[1,2,3].map(i => (
+        <div key={i} className="h-16 rounded-2xl animate-pulse"
+          style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.1)' }} />
+      ))}
+    </div>
+  )
 
-    return (
-        <>
-            <div className="space-y-3">
-
-                {/* Teacher card */}
-                {course && (
-                    <div className="mb-1">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
-                            Instructor
-                        </p>
-                        <motion.div
-                            initial={{ opacity: 0, y: 6 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            onClick={() => handleVisitProfile(course.teacherId, {
-                                userId: course.teacherId,
-                                fullName: course.teacherName,
-                                role: 'Teacher',
-                            })}
-                            className="flex items-center gap-3 p-3 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 cursor-pointer transition-all"
-                        >
-                            <Avatar name={course.teacherName} size="sm" />
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-foreground truncate">{course.teacherName}</p>
-                                <p className="text-xs text-muted-foreground">Course Teacher</p>
-                            </div>
-                            <Badge variant="primary">Teacher</Badge>
-                        </motion.div>
-                    </div>
-                )}
-
-                {/* Students */}
-                {members.length === 0 ? (
-                    <EmptyState
-                        icon={<Users className="w-7 h-7" />}
-                        title="No students yet"
-                        description="Approve join requests to add students"
-                        className="py-8"
-                    />
-                ) : (
-                    <>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
-                            Students ({members.length})
-                        </p>
-                        <AnimatePresence>
-                            {members.map((m, i) => (
-                                <motion.div
-                                    key={m.userId}
-                                    initial={{ opacity: 0, y: 6 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, x: -20 }}
-                                    transition={{ delay: i * 0.03 }}
-                                    className="group flex items-center gap-3 p-3 rounded-xl border border-border bg-card hover:border-primary/30 hover:bg-muted/40 cursor-pointer transition-all"
-                                    onClick={() => handleVisitProfile(m.userId, m)}
-                                >
-                                    <Avatar src={m.profilePhotoUrl} name={m.fullName} size="sm" />
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-foreground truncate">{m.fullName}</p>
-                                        <p className="text-xs text-muted-foreground truncate">{m.email}</p>
-                                    </div>
-                                    {m.studentId && (
-                                        <span className="text-xs text-muted-foreground font-mono shrink-0 hidden sm:block">
-                                            {m.studentId}
-                                        </span>
-                                    )}
-                                    {m.isCR
-                                        ? <Badge variant="primary">CR</Badge>
-                                        : <Badge variant="student">Student</Badge>
-                                    }
-                                    {teacher && user?.id !== m.userId && (
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); setConfirmTarget(m) }}
-                                            className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all opacity-0 group-hover:opacity-100"
-                                            title="Remove student"
-                                        >
-                                            <UserMinus className="w-4 h-4" />
-                                        </button>
-                                    )}
-                                </motion.div>
-                            ))}
-                        </AnimatePresence>
-                    </>
-                )}
-            </div>
-
-            <Modal
-                isOpen={!!confirmTarget}
-                onClose={() => setConfirmTarget(null)}
-                title="Remove Student"
-                size="sm"
-            >
-                <div className="space-y-4">
-                    <div className="flex items-center gap-3 p-4 rounded-xl bg-destructive/5 border border-destructive/20">
-                        <AlertTriangle className="w-5 h-5 text-destructive shrink-0" />
-                        <p className="text-sm text-foreground">
-                            Remove <span className="font-semibold">{confirmTarget?.fullName}</span> from this course?
-                            They can re-request to join later.
-                        </p>
-                    </div>
-                    <div className="flex gap-3">
-                        <Button variant="secondary" className="flex-1" onClick={() => setConfirmTarget(null)}>
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            className="flex-1"
-                            loading={isRemoving}
-                            onClick={() => {
-                                if (confirmTarget)
-                                    removeMember(confirmTarget.userId, {
-                                        onSuccess: () => setConfirmTarget(null)
-                                    })
-                            }}
-                        >
-                            <UserMinus className="w-4 h-4" /> Remove
-                        </Button>
-                    </div>
+  return (
+    <>
+      <div className="space-y-4">
+        {/* ── Instructor ── */}
+        {course && (
+          <div>
+            <p className="text-[10px] font-bold tracking-widest uppercase mb-2 px-1"
+              style={{ color: 'rgba(129,140,248,0.5)' }}>Instructor</p>
+            <motion.div
+              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+              onClick={() => handleVisitProfile(course.teacherId, {
+                userId: course.teacherId, fullName: course.teacherName, role: 'Teacher',
+              })}
+              whileHover={{ scale: 1.01, borderColor: 'rgba(99,102,241,0.4)' }}
+              className="flex items-center gap-3 p-4 rounded-2xl cursor-pointer transition-all"
+              style={{ background: 'linear-gradient(135deg,rgba(79,70,229,0.12) 0%,rgba(6,182,212,0.06) 100%)', border: '1px solid rgba(99,102,241,0.2)', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
+              <div className="relative shrink-0">
+                <div className="rounded-xl overflow-hidden" style={{ border: '2px solid rgba(99,102,241,0.4)', width: 40, height: 40 }}>
+                  <Avatar
+                    src={teacherProfile?.profilePhotoUrl ?? course.teacherProfilePhotoUrl}
+                    name={course.teacherName || 'Instructor'}
+                    size="md" className="w-full h-full rounded-none" />
                 </div>
-            </Modal>
-        </>
-    )
+                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full"
+                  style={{ background: '#818cf8', border: '2px solid #060d1f' }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold truncate" style={{ color: '#e2e8f0' }}>
+                  {course.teacherName || 'Course Instructor'}
+                </p>
+                <p className="text-xs" style={{ color: '#475569' }}>Course Teacher</p>
+              </div>
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg"
+                style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', color: '#818cf8' }}>
+                Teacher
+              </span>
+            </motion.div>
+          </div>
+        )}
+
+        {/* ── Students ── */}
+        {members.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-14 rounded-2xl"
+            style={{ background: 'rgba(10,22,40,0.4)', border: '1px dashed rgba(99,102,241,0.15)' }}>
+            <Users className="w-10 h-10 mb-3" style={{ color: 'rgba(99,102,241,0.2)' }} strokeWidth={1} />
+            <p className="text-[15px] font-bold" style={{ color: '#334155' }}>No students yet</p>
+            <p className="text-[13px] mt-1" style={{ color: '#475569' }}>Approve join requests to add students</p>
+          </div>
+        ) : (
+          <div>
+            <p className="text-[10px] font-bold tracking-widest uppercase mb-2 px-1"
+              style={{ color: 'rgba(129,140,248,0.5)' }}>Students ({members.length})</p>
+            <div className="space-y-2">
+              <AnimatePresence>
+                {members.map((m, i) => (
+                  <motion.div key={m.userId}
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -20 }} transition={{ delay: i * 0.04 }}
+                    onClick={() => handleVisitProfile(m.userId, m)}
+                    whileHover={{ scale: 1.01, borderColor: 'rgba(99,102,241,0.3)' }}
+                    className="group flex items-center gap-3 p-3.5 rounded-2xl cursor-pointer transition-all"
+                    style={{ background: 'rgba(10,22,40,0.7)', border: '1px solid rgba(99,102,241,0.1)', boxShadow: '0 2px 12px rgba(0,0,0,0.25)' }}>
+                    <div className="rounded-xl overflow-hidden shrink-0"
+                      style={{ border: '1.5px solid rgba(99,102,241,0.25)', width: 36, height: 36 }}>
+                      <Avatar src={m.profilePhotoUrl} name={m.fullName} size="sm" className="w-full h-full rounded-none" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate" style={{ color: '#e2e8f0' }}>{m.fullName}</p>
+                      <p className="text-xs truncate" style={{ color: '#475569' }}>{m.email}</p>
+                    </div>
+                    {m.studentId && (
+                      <span className="text-xs font-mono shrink-0 hidden sm:block" style={{ color: '#475569' }}>{m.studentId}</span>
+                    )}
+                    {m.isCR
+                      ? <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg" style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', color: '#818cf8' }}>CR</span>
+                      : <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg" style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', color: '#34d399' }}>Student</span>
+                    }
+                    {teacher && user?.id !== m.userId && (
+                      <button
+                        onClick={e => { e.stopPropagation(); setConfirmTarget(m) }}
+                        className="p-1.5 rounded-lg transition-all opacity-0 group-hover:opacity-100 shrink-0"
+                        style={{ color: '#ef4444', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}
+                        title="Remove student">
+                        <UserMinus className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <Modal isOpen={!!confirmTarget} onClose={() => setConfirmTarget(null)} title="Remove Student" size="sm">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 p-4 rounded-xl"
+            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+            <AlertTriangle className="w-5 h-5 shrink-0" style={{ color: '#ef4444' }} />
+            <p className="text-sm" style={{ color: '#e2e8f0' }}>
+              Remove <span className="font-bold">{confirmTarget?.fullName}</span> from this course?
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="secondary" className="flex-1" onClick={() => setConfirmTarget(null)}>Cancel</Button>
+            <Button variant="destructive" className="flex-1" loading={isRemoving}
+              onClick={() => { if (confirmTarget) removeMember(confirmTarget.userId, { onSuccess: () => setConfirmTarget(null) }) }}>
+              <UserMinus className="w-4 h-4" /> Remove
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </>
+  )
 }

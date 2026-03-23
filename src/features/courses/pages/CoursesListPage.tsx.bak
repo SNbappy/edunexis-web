@@ -1,0 +1,332 @@
+import { useState, useMemo } from "react"
+import { Link } from "react-router-dom"
+import { motion, AnimatePresence } from "framer-motion"
+import {
+    BookOpen, Plus, Search, Users, ChevronRight,
+    GraduationCap, Layers, BookMarked, Award,
+    Grid3X3, AlignJustify, Sparkles
+} from "lucide-react"
+import { useAuthStore } from "@/store/authStore"
+import { isTeacher } from "@/utils/roleGuard"
+import { useCourses } from "../hooks/useCourses"
+
+const PALETTES = [
+    { grad: "linear-gradient(135deg,#7c3aed 0%,#9333ea 50%,#c026d3 100%)", light: "#faf5ff", accent: "#7c3aed", border: "#e9d5ff" },
+    { grad: "linear-gradient(135deg,#0891b2 0%,#0e7490 50%,#0369a1 100%)", light: "#f0f9ff", accent: "#0891b2", border: "#bae6fd" },
+    { grad: "linear-gradient(135deg,#059669 0%,#047857 50%,#065f46 100%)", light: "#f0fdf4", accent: "#059669", border: "#bbf7d0" },
+    { grad: "linear-gradient(135deg,#d97706 0%,#b45309 50%,#92400e 100%)", light: "#fffbeb", accent: "#d97706", border: "#fde68a" },
+    { grad: "linear-gradient(135deg,#e11d48 0%,#be185d 50%,#9d174d 100%)", light: "#fff1f2", accent: "#e11d48", border: "#fecdd3" },
+    { grad: "linear-gradient(135deg,#4f46e5 0%,#4338ca 50%,#3730a3 100%)", light: "#eef2ff", accent: "#4f46e5", border: "#c7d2fe" },
+]
+
+export default function CoursesListPage() {
+    const { user } = useAuthStore()
+    const teacher = isTeacher(user?.role ?? "Student")
+    const { data: courses = [], isLoading } = useCourses()
+    const [search, setSearch] = useState("")
+    const [view, setView] = useState<"grid" | "list">("grid")
+
+    const filtered = useMemo(() =>
+        courses.filter((c: any) =>
+            c.title?.toLowerCase().includes(search.toLowerCase()) ||
+            c.courseCode?.toLowerCase().includes(search.toLowerCase())
+        ), [courses, search])
+
+    return (
+        <div className="min-h-full p-6 lg:p-8 space-y-6">
+
+            {/* ── Page Header ── */}
+            <motion.div
+                initial={{ opacity: 0, y: -12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="flex items-start justify-between gap-4 flex-wrap"
+            >
+                <div>
+                    <div className="flex items-center gap-2 mb-1">
+                        <div
+                            className="w-8 h-8 rounded-xl flex items-center justify-center"
+                            style={{ background: "linear-gradient(135deg,#7c3aed,#9333ea)", boxShadow: "0 4px 16px rgba(124,58,237,0.35)" }}
+                        >
+                            <BookOpen className="w-4 h-4 text-white" strokeWidth={2.5} />
+                        </div>
+                        <span className="text-[11px] font-bold tracking-widest uppercase" style={{ color: "#a78bfa" }}>
+                            {teacher ? "My Courses" : "Enrolled Courses"}
+                        </span>
+                    </div>
+                    <h1
+                        className="text-2xl lg:text-3xl font-extrabold tracking-tight"
+                        style={{
+                            background: "linear-gradient(135deg,#1e1b4b,#7c3aed,#0891b2)",
+                            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+                        }}
+                    >
+                        {teacher ? "Your Teaching Hub" : "My Learning Space"}
+                    </h1>
+                    <p className="text-sm font-medium mt-1" style={{ color: "#94a3b8" }}>
+                        {teacher
+                            ? `Managing ${courses.length} course${courses.length !== 1 ? "s" : ""} · Share your knowledge`
+                            : `${courses.length} course${courses.length !== 1 ? "s" : ""} enrolled · Keep growing`
+                        }
+                    </p>
+                </div>
+                {teacher && (
+                    <Link to="/courses/new">
+                        <motion.button
+                            whileHover={{ scale: 1.03, boxShadow: "0 8px 32px rgba(124,58,237,0.35)" }}
+                            whileTap={{ scale: 0.97 }}
+                            className="flex items-center gap-2 h-10 px-5 rounded-xl text-white font-bold text-sm"
+                            style={{ background: "linear-gradient(135deg,#7c3aed,#9333ea)", boxShadow: "0 4px 20px rgba(124,58,237,0.28)" }}
+                        >
+                            <Plus className="w-4 h-4" strokeWidth={2.5} />
+                            Create Course
+                        </motion.button>
+                    </Link>
+                )}
+            </motion.div>
+
+            {/* ── Stats Row ── */}
+            {courses.length > 0 && (
+                <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="grid grid-cols-2 lg:grid-cols-4 gap-3"
+                >
+                    {[
+                        { label: "Total Courses", value: courses.length, icon: Layers, color: "#7c3aed", bg: "#f5f3ff", border: "#ede9fe" },
+                        { label: teacher ? "Total Students" : "Courses Active", value: teacher ? courses.reduce((a: number, c: any) => a + (c.memberCount ?? 0), 0) : courses.length, icon: Users, color: "#0891b2", bg: "#ecfeff", border: "#cffafe" },
+                        { label: "Assignments", value: teacher ? "Manage" : "Track", icon: BookMarked, color: "#d97706", bg: "#fffbeb", border: "#fef3c7" },
+                        { label: teacher ? "Published" : "Completed", value: teacher ? courses.filter((c: any) => !c.isArchived).length : "—", icon: Award, color: "#059669", bg: "#f0fdf4", border: "#dcfce7" },
+                    ].map((stat, i) => (
+                        <motion.div
+                            key={stat.label}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0.1 + i * 0.05 }}
+                            className="rounded-2xl p-4 flex items-center gap-3"
+                            style={{ background: stat.bg, border: `1px solid ${stat.border}` }}
+                        >
+                            <div
+                                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                                style={{ background: `${stat.color}18`, border: `1px solid ${stat.color}30` }}
+                            >
+                                <stat.icon style={{ width: 18, height: 18, color: stat.color }} strokeWidth={2} />
+                            </div>
+                            <div>
+                                <p className="text-lg font-extrabold leading-none" style={{ color: stat.color }}>
+                                    {stat.value}
+                                </p>
+                                <p className="text-[11px] font-semibold mt-0.5" style={{ color: `${stat.color}99` }}>
+                                    {stat.label}
+                                </p>
+                            </div>
+                        </motion.div>
+                    ))}
+                </motion.div>
+            )}
+
+            {/* ── Search + View Toggle ── */}
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="flex items-center gap-3"
+            >
+                <div className="relative flex-1 max-w-sm">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#a78bfa" }} />
+                    <input
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        placeholder="Search courses..."
+                        className="w-full h-10 pl-10 pr-4 rounded-xl text-sm font-medium outline-none transition-all"
+                        style={{ background: "rgba(255,255,255,0.85)", border: "1px solid #ede9fe", color: "#1e1b4b", backdropFilter: "blur(8px)" }}
+                        onFocus={e => (e.currentTarget.style.borderColor = "#a78bfa")}
+                        onBlur={e => (e.currentTarget.style.borderColor = "#ede9fe")}
+                    />
+                </div>
+                <div className="flex items-center gap-1 p-1 rounded-xl" style={{ background: "#f5f3ff", border: "1px solid #ede9fe" }}>
+                    {([["grid", Grid3X3], ["list", AlignJustify]] as const).map(([v, Icon]) => (
+                        <button
+                            key={v}
+                            onClick={() => setView(v)}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                            style={{
+                                background: view === v ? "linear-gradient(135deg,#7c3aed,#9333ea)" : "transparent",
+                                boxShadow: view === v ? "0 2px 8px rgba(124,58,237,0.3)" : "none",
+                            }}
+                        >
+                            <Icon style={{ width: 14, height: 14, color: view === v ? "#fff" : "#a78bfa" }} strokeWidth={2.5} />
+                        </button>
+                    ))}
+                </div>
+            </motion.div>
+
+            {/* ── Course Cards ── */}
+            {isLoading ? (
+                <div className={`grid gap-4 ${view === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
+                    {[...Array(6)].map((_, i) => (
+                        <div key={i} className="rounded-2xl overflow-hidden animate-pulse" style={{ background: "#f5f3ff", border: "1px solid #ede9fe" }}>
+                            <div className="h-28" style={{ background: "#ede9fe" }} />
+                            <div className="p-5 space-y-3">
+                                <div className="h-4 w-3/4 rounded-lg" style={{ background: "#ede9fe" }} />
+                                <div className="h-3 w-1/2 rounded-lg" style={{ background: "#ede9fe" }} />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : filtered.length === 0 ? (
+                <EmptyState search={search} isTeacher={teacher} />
+            ) : (
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={view}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className={`grid gap-4 ${view === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}
+                    >
+                        {filtered.map((course: any, i: number) => (
+                            <CourseCard key={course.id} course={course} index={i} view={view} isTeacher={teacher} />
+                        ))}
+                    </motion.div>
+                </AnimatePresence>
+            )}
+        </div>
+    )
+}
+
+function CourseCard({ course, index, view, isTeacher }: { course: any; index: number; view: "grid" | "list"; isTeacher: boolean }) {
+    const p = PALETTES[index % PALETTES.length]
+    const initials = (course.title as string).split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: index * 0.05, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="reveal-card"
+        >
+            <Link to={`/courses/${course.id}`}>
+                <motion.div
+                    whileHover={{ y: view === "grid" ? -4 : -2, boxShadow: `0 16px 48px ${p.accent}22` }}
+                    transition={{ duration: 0.2 }}
+                    className={`rounded-2xl overflow-hidden cursor-pointer group ${view === "list" ? "flex items-stretch" : ""}`}
+                    style={{
+                        background: "rgba(255,255,255,0.92)",
+                        border: `1px solid ${p.border}`,
+                        boxShadow: `0 4px 24px ${p.accent}0d`,
+                        backdropFilter: "blur(12px)",
+                    }}
+                >
+                    {/* ── Banner ── */}
+                    <div
+                        className={`relative ${view === "list" ? "w-36 shrink-0" : "h-28"} flex items-center justify-center overflow-hidden`}
+                        style={{ background: p.grad }}
+                    >
+                        <div
+                            className="absolute inset-0 opacity-20"
+                            style={{ backgroundImage: "radial-gradient(circle at 2px 2px, rgba(255,255,255,0.5) 1px, transparent 0)", backgroundSize: "18px 18px" }}
+                        />
+                        <div className="relative z-10">
+                            <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center border border-white/30">
+                                <span className="text-white font-black text-lg">{initials}</span>
+                            </div>
+                        </div>
+                        {course.courseCode && (
+                            <div
+                                className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-lg text-[10px] font-black tracking-wider"
+                                style={{ background: "rgba(255,255,255,0.2)", color: "#fff", border: "1px solid rgba(255,255,255,0.3)", backdropFilter: "blur(4px)" }}
+                            >
+                                {course.courseCode}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* ── Content ── */}
+                    <div className={`${view === "list" ? "flex items-center flex-1 gap-4 px-5 py-4" : "p-5"}`}>
+                        <div className={view === "list" ? "flex-1 min-w-0" : ""}>
+                            <h3
+                                className="font-bold text-[15px] leading-snug line-clamp-1 group-hover:transition-colors"
+                                style={{ color: "#1e1b4b" }}
+                                onMouseEnter={e => ((e.target as HTMLElement).style.color = p.accent)}
+                                onMouseLeave={e => ((e.target as HTMLElement).style.color = "#1e1b4b")}
+                            >
+                                {course.title}
+                            </h3>
+                            {course.description && (
+                                <p className="text-[12px] mt-1 line-clamp-2 font-medium" style={{ color: "#94a3b8" }}>
+                                    {course.description}
+                                </p>
+                            )}
+                            <div className="flex items-center gap-3 mt-3 flex-wrap">
+                                <div className="flex items-center gap-1.5">
+                                    <Users style={{ width: 13, height: 13, color: p.accent }} strokeWidth={2} />
+                                    <span className="text-[11.5px] font-semibold" style={{ color: "#64748b" }}>
+                                        {course.memberCount ?? 0} members
+                                    </span>
+                                </div>
+                                {course.courseType && (
+                                    <span
+                                        className="text-[10.5px] font-bold px-2 py-0.5 rounded-lg"
+                                        style={{ background: p.light, color: p.accent, border: `1px solid ${p.border}` }}
+                                    >
+                                        {course.courseType}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                        <div className={`flex items-center ${view === "list" ? "shrink-0" : "mt-4 justify-end"}`}>
+                            <motion.div
+                                whileHover={{ x: 2 }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-bold"
+                                style={{ background: `${p.accent}12`, border: `1px solid ${p.border}`, color: p.accent }}
+                            >
+                                {isTeacher ? "Manage" : "Continue"}
+                                <ChevronRight style={{ width: 13, height: 13 }} strokeWidth={2.5} />
+                            </motion.div>
+                        </div>
+                    </div>
+                </motion.div>
+            </Link>
+        </motion.div>
+    )
+}
+
+function EmptyState({ search, isTeacher }: { search: string; isTeacher: boolean }) {
+    return (
+        <motion.div
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center justify-center py-20 text-center"
+        >
+            <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-5"
+                style={{ background: "linear-gradient(135deg,#f5f3ff,#ede9fe)", border: "2px solid #ede9fe" }}>
+                <GraduationCap style={{ width: 36, height: 36, color: "#a78bfa" }} strokeWidth={1.5} />
+            </div>
+            <h3 className="text-lg font-bold mb-2" style={{ color: "#2d1a5e" }}>
+                {search ? "No courses found" : isTeacher ? "No courses yet" : "Not enrolled yet"}
+            </h3>
+            <p className="text-sm font-medium max-w-xs" style={{ color: "#94a3b8" }}>
+                {search
+                    ? `No results for "${search}". Try a different keyword.`
+                    : isTeacher
+                        ? "Create your first course and start teaching."
+                        : "Browse available courses and join one to begin."}
+            </p>
+            {!search && isTeacher && (
+                <Link to="/courses/new">
+                    <motion.button
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        className="mt-6 flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white"
+                        style={{ background: "linear-gradient(135deg,#7c3aed,#9333ea)" }}
+                    >
+                        <Sparkles style={{ width: 16, height: 16 }} />
+                        Create First Course
+                    </motion.button>
+                </Link>
+            )}
+        </motion.div>
+    )
+}

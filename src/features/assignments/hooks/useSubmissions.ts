@@ -1,10 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { assignmentService } from '../services/assignmentService'
+import { useAuthStore } from '@/store/authStore'
+import { isTeacher } from '@/utils/roleGuard'
 import type { SubmitAssignmentRequest, GradeSubmissionRequest } from '@/types/assignment.types'
 import toast from 'react-hot-toast'
 
 export function useSubmissions(courseId: string, assignmentId: string) {
     const qc = useQueryClient()
+    const { user } = useAuthStore()
+    const teacher = isTeacher(user?.role ?? 'Student')
     const key = ['submissions', courseId, assignmentId]
 
     const query = useQuery({
@@ -14,7 +18,7 @@ export function useSubmissions(courseId: string, assignmentId: string) {
             if (!res.success) throw new Error(res.message)
             return res.data ?? []
         },
-        enabled: !!courseId && !!assignmentId,
+        enabled: !!courseId && !!assignmentId && teacher,
     })
 
     const invalidate = () => {

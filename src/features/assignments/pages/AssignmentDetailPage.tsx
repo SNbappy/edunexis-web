@@ -30,13 +30,13 @@ function Countdown({ deadline }: { deadline: string }) {
             const secs = differenceInSeconds(parseISO(deadline), new Date())
             if (secs <= 0) { setTimeLeft('Deadline passed'); return }
             setUrgent(secs < 86400)
-            const h = Math.floor(secs / 3600)
-            const m = Math.floor((secs % 3600) / 60)
-            const s = secs % 60
-            if (h > 48) {
+            if (secs > 172800) {
                 setTimeLeft(formatDistanceToNow(parseISO(deadline), { addSuffix: true }))
             } else {
-                setTimeLeft(`:: remaining`)
+                const h = Math.floor(secs / 3600)
+                const m = Math.floor((secs % 3600) / 60)
+                const s = secs % 60
+                setTimeLeft(String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0') + ' remaining')
             }
         }
         update()
@@ -59,7 +59,7 @@ export default function AssignmentDetailPage() {
     const [activeTab, setActiveTab] = useState<'details' | 'submissions'>('details')
     const [submitOpen, setSubmitOpen] = useState(false)
 
-    const { assignment, isLoading, isError, submitAssignment, isSubmitting } =
+    const { assignment, isLoading, isError, mySubmission, submitAssignment, isSubmitting } =
         useAssignment(courseId, assignmentId)
 
     const { submissions, isLoading: subsLoading } = useSubmissions(courseId, assignmentId)
@@ -85,8 +85,8 @@ export default function AssignmentDetailPage() {
     }
 
     const isPastDue = isPast(parseISO(assignment.deadline))
-    const canSubmit = assignment.isOpen && (!isPastDue || assignment.allowLateSubmission) && !teacher
-    const gradedCount = submissions.filter((s) => s.isGraded).length
+    const canSubmit = !mySubmission && assignment.isOpen && (!isPastDue || assignment.allowLateSubmission) && !teacher
+    const gradedCount = teacher ? submissions.filter((s) => s.isGraded).length : 0
 
     return (
         <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
@@ -119,6 +119,11 @@ export default function AssignmentDetailPage() {
                             {assignment.allowLateSubmission && (
                                 <Badge variant="muted">Late submission allowed</Badge>
                             )}
+                            {!teacher && mySubmission && (
+                                <Badge variant="success">
+                                    <CheckCircle2 className="w-3 h-3 inline mr-1" />Submitted
+                                </Badge>
+                            )}
                         </div>
                         <h1 className="text-2xl font-bold text-foreground truncate">{assignment.title}</h1>
                         <p className="text-xs text-muted-foreground">
@@ -126,7 +131,6 @@ export default function AssignmentDetailPage() {
                         </p>
                     </div>
 
-                    {/* Stats row */}
                     <div className="flex items-center gap-4 flex-wrap shrink-0">
                         <div className="flex flex-col items-center gap-0.5 px-4 py-2 rounded-xl bg-muted/50 border border-border min-w-[80px]">
                             <Award className="w-4 h-4 text-primary" />
@@ -150,7 +154,6 @@ export default function AssignmentDetailPage() {
                     </div>
                 </div>
 
-                {/* Deadline row */}
                 <div className="flex items-center gap-6 flex-wrap pt-2 border-t border-border">
                     <div className="flex items-center gap-2">
                         <CalendarClock className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -191,10 +194,8 @@ export default function AssignmentDetailPage() {
                     initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                     className="grid grid-cols-1 lg:grid-cols-3 gap-5"
                 >
-                    {/* Left — Main content */}
+                    {/* Left - Main content */}
                     <div className="lg:col-span-2 space-y-4">
-
-                        {/* Instructions */}
                         {assignment.instructions && (
                             <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
                                 <div className="flex items-center gap-2">
@@ -207,7 +208,6 @@ export default function AssignmentDetailPage() {
                             </div>
                         )}
 
-                        {/* Rubric Notes */}
                         {assignment.rubricNotes && (
                             <div className="rounded-2xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-5 space-y-3">
                                 <div className="flex items-center gap-2">
@@ -220,7 +220,6 @@ export default function AssignmentDetailPage() {
                             </div>
                         )}
 
-                        {/* Reference File */}
                         {assignment.referenceFileUrl && (
                             <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
                                 <div className="flex items-center gap-2">
@@ -246,23 +245,83 @@ export default function AssignmentDetailPage() {
                         )}
                     </div>
 
-                    {/* Right — Submission / Info sidebar */}
+                    {/* Right - Sidebar */}
                     <div className="space-y-4">
                         {/* Student submission card */}
                         {!teacher && (
                             <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
                                 <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Your Submission</h3>
 
-                                {canSubmit ? (
+                                {mySubmission ? (
+                                    <div className="space-y-3">
+                                        {/* Submitted badge */}
+                                        <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Submitted</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {formatDateTime(mySubmission.submittedAt)}
+                                                    {mySubmission.isLate ? ' ? Late' : ''}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Text preview */}
+                                        {mySubmission.textContent && (
+                                            <div className="p-3 rounded-xl bg-muted/50 border border-border max-h-36 overflow-y-auto">
+                                                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Your Answer</p>
+                                                <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{mySubmission.textContent}</p>
+                                            </div>
+                                        )}
+
+                                        {/* File link */}
+                                        {mySubmission.fileUrl && (
+                                            <a href={mySubmission.fileUrl} target="_blank" rel="noopener noreferrer"
+                                                className="flex items-center gap-2 p-3 rounded-xl border border-border bg-muted/40 hover:bg-muted transition-colors">
+                                                <FileText className="w-4 h-4 text-primary shrink-0" />
+                                                <span className="text-sm text-foreground flex-1">View submitted file</span>
+                                                <Download className="w-3.5 h-3.5 text-muted-foreground" />
+                                            </a>
+                                        )}
+
+                                        {/* Link submission */}
+                                        {mySubmission.linkUrl && (
+                                            <a href={mySubmission.linkUrl} target="_blank" rel="noopener noreferrer"
+                                                className="flex items-center gap-2 p-3 rounded-xl border border-border bg-muted/40 hover:bg-muted transition-colors">
+                                                <Send className="w-4 h-4 text-primary shrink-0" />
+                                                <span className="text-sm text-primary truncate flex-1">{mySubmission.linkUrl}</span>
+                                            </a>
+                                        )}
+
+                                        {/* Grade */}
+                                        {mySubmission.isGraded ? (
+                                            <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Grade</p>
+                                                    <span className="text-xl font-bold text-primary">{mySubmission.marks}<span className="text-sm font-normal text-muted-foreground">/{assignment.maxMarks}</span></span>
+                                                </div>
+                                                {mySubmission.feedback && (
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-muted-foreground mb-1">Feedback</p>
+                                                        <p className="text-sm text-foreground">{mySubmission.feedback}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-center text-muted-foreground py-1">? Awaiting grade from teacher</p>
+                                        )}
+
+                                        {/* Resubmit if still open */}
+                                        {assignment.isOpen && (!isPastDue || assignment.allowLateSubmission) && (
+                                            <Button size="sm" variant="secondary" className="w-full" onClick={() => setSubmitOpen(true)}>
+                                                Update Submission
+                                            </Button>
+                                        )}
+                                    </div>
+                                ) : canSubmit ? (
                                     <>
-                                        <p className="text-sm text-muted-foreground">
-                                            Submit your work before the deadline.
-                                        </p>
-                                        <Button
-                                            className="w-full"
-                                            leftIcon={<Send className="w-4 h-4" />}
-                                            onClick={() => setSubmitOpen(true)}
-                                        >
+                                        <p className="text-sm text-muted-foreground">Submit your work before the deadline.</p>
+                                        <Button className="w-full" leftIcon={<Send className="w-4 h-4" />} onClick={() => setSubmitOpen(true)}>
                                             Submit Assignment
                                         </Button>
                                     </>
@@ -338,4 +397,3 @@ export default function AssignmentDetailPage() {
         </div>
     )
 }
-

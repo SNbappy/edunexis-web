@@ -1,38 +1,68 @@
-import { cva, type VariantProps } from 'class-variance-authority'
-import { cn } from '@/utils/cn'
+﻿import { cva, type VariantProps } from "class-variance-authority"
+import { cn } from "@/utils/cn"
 
 const badgeVariants = cva(
-    'inline-flex items-center gap-1 rounded-full font-medium text-xs px-2.5 py-0.5 transition-colors',
-    {
-        variants: {
-            variant: {
-                default: 'bg-primary/10 text-primary',
-                success: 'bg-success/10 text-success',
-                warning: 'bg-warning/10 text-warning',
-                danger: 'bg-destructive/10 text-destructive',
-                muted: 'bg-muted text-muted-foreground',
-                outline: 'border border-border text-foreground',
-                teacher: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
-                student: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
-                admin: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-                cr: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-            },
-        },
-        defaultVariants: { variant: 'default' },
-    }
+  "inline-flex items-center gap-1.5 font-semibold rounded-full select-none transition-all duration-200",
+  {
+    variants: {
+      variant: {
+        primary: "badge-primary",
+        accent:  "badge-accent",
+        success: "badge-success",
+        warning: "badge-warning",
+        danger:  "badge-danger",
+        neutral: "badge-neutral",
+        solid:   "gradient-primary text-white shadow-glow-xs",
+        warm:    "gradient-warm text-white shadow-[0_2px_12px_rgba(236,72,153,0.32)]",
+        ocean:   "gradient-ocean text-white shadow-glow-accent",
+        outline: "bg-transparent border border-border text-muted-foreground hover:border-primary-300 hover:text-primary-700",
+      },
+      size: {
+        xs: "px-1.5 py-0.5 text-[9px]",
+        sm: "px-2   py-0.5 text-[10px]",
+        md: "px-2.5 py-1   text-[11px]",
+        lg: "px-3   py-1.5 text-xs",
+      },
+    },
+    defaultVariants: { variant: "primary", size: "md" },
+  }
 )
 
-interface BadgeProps extends VariantProps<typeof badgeVariants> {
-    children: React.ReactNode
-    className?: string
-    dot?: boolean
+interface BadgeProps
+  extends React.HTMLAttributes<HTMLSpanElement>,
+    VariantProps<typeof badgeVariants> {
+  dot?:      boolean
+  dotColor?: string
+  icon?:     React.ReactNode
+  pulse?:    boolean
 }
 
-export default function Badge({ children, variant, className, dot }: BadgeProps) {
-    return (
-        <span className={cn(badgeVariants({ variant }), className)}>
-            {dot && <span className="w-1.5 h-1.5 rounded-full bg-current" />}
-            {children}
+export default function Badge({
+  className, variant, size, dot, dotColor, icon, pulse, children, ...props
+}: BadgeProps) {
+  return (
+    <span className={cn(badgeVariants({ variant, size, className }))} {...props}>
+      {dot && (
+        <span className="relative inline-flex shrink-0" style={{ width: 6, height: 6 }}>
+          {pulse && (
+            <span
+              className="absolute inline-flex w-full h-full rounded-full animate-ping opacity-60"
+              style={{ background: dotColor ?? "currentColor" }}
+            />
+          )}
+          <span
+            className="relative inline-block rounded-full"
+            style={{
+              width: 6, height: 6,
+              background: dotColor ?? "currentColor",
+            }}
+          />
         </span>
-    )
+      )}
+      {icon && <span className="shrink-0">{icon}</span>}
+      {children}
+    </span>
+  )
 }
+
+export { badgeVariants }

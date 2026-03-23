@@ -1,4 +1,4 @@
-﻿export type CourseType = 'Theory' | 'Lab'
+export type CourseType = 'Theory' | 'Lab'
 
 export interface CourseDto {
     id: string
@@ -15,6 +15,7 @@ export interface CourseDto {
     joiningCode: string
     teacherId: string
     teacherName: string
+    teacherProfilePhotoUrl: string | null
     isArchived: boolean
     memberCount: number
     createdAt: string
@@ -28,7 +29,6 @@ export interface CourseMemberDto {
     profilePhotoUrl: string | null
     joinedAt: string
     isCR: boolean
-    role?: string
     role?: string
 }
 
@@ -67,5 +67,3 @@ export interface JoinRequest {
     requestedAt: string
     status: 'Pending' | 'Approved' | 'Rejected'
 }
-
-

@@ -9,6 +9,9 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    watch: {
+      ignored: ['**/node_modules/**', '**/dist/**', '**/.git/**']
+    },
     proxy: {
       '/api': { target: 'http://localhost:5041', changeOrigin: true },
     },

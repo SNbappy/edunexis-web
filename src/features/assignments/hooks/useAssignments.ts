@@ -1,4 +1,7 @@
+import { isTeacher } from '@/utils/roleGuard'
+import { useAuthStore } from '@/store/authStore'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { assignmentService } from '../services/assignmentService'
 import type {
     CreateAssignmentRequest, UpdateAssignmentRequest,
@@ -89,7 +92,10 @@ export function useAssignments(courseId: string) {
 
 export function useAssignment(courseId: string, assignmentId: string) {
     const qc = useQueryClient()
+    const { user } = useAuthStore()
+    const teacher = isTeacher(user?.role ?? 'Student')
     const key = ['assignment', courseId, assignmentId]
+    const mySubKey = ['my-submission', assignmentId]
 
     const query = useQuery({
         queryKey: key,
@@ -101,11 +107,24 @@ export function useAssignment(courseId: string, assignmentId: string) {
         enabled: !!courseId && !!assignmentId,
     })
 
+    const mySubQuery = useQuery({
+        queryKey: mySubKey,
+        queryFn: async () => {
+            const res = await assignmentService.getMySubmission(assignmentId)
+            if (res.success && res.data) return res.data
+            return null
+        },
+        enabled: !!assignmentId && !!user && !teacher,
+        retry: false,
+        staleTime: 0,
+    })
+
     const submitMutation = useMutation({
         mutationFn: (data: SubmitAssignmentRequest) =>
             assignmentService.submit(assignmentId, data),
         onSuccess: (res) => {
             if (res.success) {
+                if (res.data) qc.setQueryData(mySubKey, res.data)
                 qc.invalidateQueries({ queryKey: key })
                 qc.invalidateQueries({ queryKey: ['assignments', courseId] })
                 toast.success('Assignment submitted!')
@@ -118,6 +137,7 @@ export function useAssignment(courseId: string, assignmentId: string) {
         assignment: query.data ?? null,
         isLoading: query.isLoading,
         isError: query.isError,
+        mySubmission: mySubQuery.data ?? null,
         submitAssignment: submitMutation.mutate,
         isSubmitting: submitMutation.isPending,
     }

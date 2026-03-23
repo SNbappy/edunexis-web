@@ -11,8 +11,12 @@ export const assignmentService = {
     getAll: (courseId: string) =>
         api.get<ApiResponse<AssignmentDto[]>>(courseBase(courseId)).then((r) => r.data),
 
-    getById: (courseId: string, assignmentId: string) =>
-        api.get<ApiResponse<AssignmentDto>>(courseBase(courseId) + '/' + assignmentId).then((r) => r.data),
+    getById: async (courseId: string, assignmentId: string) => {
+        const res = await api.get<ApiResponse<AssignmentDto[]>>(courseBase(courseId)).then((r) => r.data)
+        if (!res.success || !res.data) return { ...res, data: null }
+        const found = res.data.find((a) => a.id === assignmentId) ?? null
+        return { ...res, data: found }
+    },
 
     create: (courseId: string, data: CreateAssignmentRequest) => {
         const form = new FormData()
@@ -69,6 +73,15 @@ export const assignmentService = {
         api
             .get<ApiResponse<SubmissionDto[]>>('/Assignments/assignments/' + assignmentId + '/submissions')
             .then((r) => r.data),
+
+    getMySubmission: async (assignmentId: string) => {
+        try {
+            const r = await api.get<ApiResponse<SubmissionDto>>('/Assignments/assignments/' + assignmentId + '/my-submission')
+            return r.data
+        } catch {
+            return { success: false, message: '', data: null }
+        }
+    },
 
     grade: (submissionId: string, data: GradeSubmissionRequest) =>
         api
