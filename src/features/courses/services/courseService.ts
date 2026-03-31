@@ -16,8 +16,6 @@ export const courseService = {
 
     create: (data: CreateCourseRequest) =>
         api.post<ApiResponse<CourseDto>>('/Courses', data).then((r) => r.data),
-    createCourse: (data: CreateCourseRequest) =>
-        api.post<ApiResponse<CourseDto>>('/Courses', data).then((r) => r.data),
 
     updateCourse: (id: string, data: UpdateCourseRequest) =>
         api.put<ApiResponse<CourseDto>>(`/Courses/${id}`, data).then((r) => r.data),
@@ -25,13 +23,11 @@ export const courseService = {
     uploadCover: (file: File) => {
         const form = new FormData()
         form.append('file', file)
-        return api.post<ApiResponse<string>>('/Courses/upload-cover', form, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data)
-    },
-
-    uploadCover: (file: File) => {
-        const form = new FormData()
-        form.append('file', file)
-        return api.post<ApiResponse<string>>('/Courses/upload-cover', form, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data)
+        return api
+            .post<ApiResponse<string>>('/Courses/upload-cover', form, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            })
+            .then((r) => r.data)
     },
 
     deleteCourse: (id: string) =>
@@ -52,11 +48,18 @@ export const courseService = {
     requestJoin: (id: string, joiningCode: string) =>
         api.post<ApiResponse>(`/Courses/${id}/join`, { joiningCode }).then((r) => r.data),
 
+    // Standalone join — only needs the joining code (calls new backend endpoint)
+    joinByCode: (joiningCode: string) =>
+        api.post<ApiResponse>('/Courses/join-by-code', { joiningCode }).then((r) => r.data),
+
     leave: (id: string) =>
         api.post<ApiResponse>(`/Courses/${id}/leave`).then((r) => r.data),
 
     reviewJoinRequest: (courseId: string, requestId: string, approve: boolean) =>
-        api.post<ApiResponse>(`/Courses/${courseId}/join-requests/${requestId}/review`, { approve }).then((r) => r.data),
+        api
+            .post<ApiResponse>(
+                `/Courses/${courseId}/join-requests/${requestId}/review`,
+                { approve },
+            )
+            .then((r) => r.data),
 }
-
-

@@ -1,4 +1,4 @@
-export type CourseType = 'Theory' | 'Lab'
+﻿export type CourseType = 'Theory' | 'Lab'
 
 export interface CourseDto {
     id: string
@@ -7,6 +7,7 @@ export interface CourseDto {
     creditHours: number
     department: string
     academicSession: string
+    year: string
     semester: string
     section: string | null
     courseType: CourseType
@@ -38,6 +39,7 @@ export interface CreateCourseRequest {
     creditHours: number
     department: string
     academicSession: string
+    year: string
     semester: string
     section?: string
     courseType: CourseType
@@ -52,6 +54,7 @@ export interface UpdateCourseRequest {
     creditHours: number
     department: string
     academicSession: string
+    year: string
     semester: string
     section?: string
     courseType: CourseType
@@ -67,3 +70,4 @@ export interface JoinRequest {
     requestedAt: string
     status: 'Pending' | 'Approved' | 'Rejected'
 }
+

@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react"
-import { Search, Menu, Bell, Command, ChevronDown, X, Sparkles } from "lucide-react"
+ï»¿import { useState, useRef, useEffect } from "react"
+import { Search, Menu, Bell, Command, ChevronDown, X, Sparkles, LayoutDashboard, BookOpen, BellRing, User } from "lucide-react"
 import { Link } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { useAuthStore } from "@/store/authStore"
@@ -12,20 +12,30 @@ interface TopbarProps { onMenuClick: () => void }
 
 export default function Topbar({ onMenuClick }: TopbarProps) {
   const { user } = useAuthStore()
-  const unreadCount = useNotifications()
+  const { unreadCount } = useNotifications()
   const [notifOpen, setNotifOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchVal, setSearchVal] = useState("")
   const [scrolled, setScrolled] = useState(false)
+  const [bellShake, setBellShake] = useState(false)
+  const prevUnread = useRef(0)
   const searchRef = useRef<HTMLInputElement>(null)
   const headerRef = useRef<HTMLElement>(null)
   const firstName = user?.profile?.fullName?.split(" ")[0] ?? "there"
 
-  // -- Scroll detection: walks up DOM to find real scrollable container ---------
+  // Shake bell when new notifications arrive
+  useEffect(() => {
+    if (unreadCount > prevUnread.current) {
+      setBellShake(true)
+      setTimeout(() => setBellShake(false), 600)
+    }
+    prevUnread.current = unreadCount
+  }, [unreadCount])
+
+  // Scroll detection
   useEffect(() => {
     const el = headerRef.current
     if (!el) return
-
     let parent = el.parentElement
     while (parent && parent !== document.body) {
       const { overflow, overflowY } = window.getComputedStyle(parent)
@@ -33,19 +43,17 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
       parent = parent.parentElement
     }
     const scrollTarget = (parent && parent !== document.body) ? parent : window
-
     const onScroll = () => {
       const top = scrollTarget === window
         ? (scrollTarget as Window).scrollY
         : (scrollTarget as HTMLElement).scrollTop
       setScrolled(top > 10)
     }
-
     scrollTarget.addEventListener("scroll", onScroll, { passive: true })
     return () => scrollTarget.removeEventListener("scroll", onScroll)
   }, [])
 
-  // -- Cmd+K shortcut ---------------------------------------------------------
+  // Cmd+K shortcut
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -60,10 +68,10 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
   }, [])
 
   const quickLinks = [
-    { label: "Dashboard",     to: ROUTES.DASHBOARD,  color: "#818cf8", emoji: "?" },
-    { label: "My Courses",    to: ROUTES.COURSES,    color: "#34d399", emoji: "??" },
-    { label: "Notifications", to: "/notifications",  color: "#fbbf24", emoji: "??" },
-    { label: "My Profile",    to: ROUTES.PROFILE,    color: "#f472b6", emoji: "??" },
+    { label: "Dashboard",     to: ROUTES.DASHBOARD, color: "#818cf8", icon: LayoutDashboard },
+    { label: "My Courses",    to: ROUTES.COURSES,   color: "#34d399", icon: BookOpen        },
+    { label: "Notifications", to: "/notifications", color: "#fbbf24", icon: BellRing        },
+    { label: "My Profile",    to: ROUTES.PROFILE,   color: "#f472b6", icon: User            },
   ]
 
   const headerStyle = scrolled
@@ -91,7 +99,6 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
         className="h-14 flex items-center gap-3 px-4 lg:px-6 shrink-0 relative z-30"
         style={headerStyle}>
 
-        {/* Accent line at very top — only when not scrolled */}
         {!scrolled && (
           <div className="absolute top-0 left-0 right-0 h-[2px] pointer-events-none"
             style={{ background: "linear-gradient(90deg,transparent,rgba(99,102,241,0.7),rgba(139,92,246,0.7),rgba(99,102,241,0.7),transparent)" }} />
@@ -145,25 +152,65 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
 
           {/* Bell */}
           <div className="relative">
-            <motion.button whileTap={{ scale: 0.92 }} onClick={() => setNotifOpen(o => !o)}
+            <motion.button
+              whileTap={{ scale: 0.92 }}
+              animate={bellShake ? { rotate: [0, -18, 18, -12, 12, -6, 6, 0] } : {}}
+              transition={bellShake ? { duration: 0.55, ease: "easeInOut" } : {}}
+              onClick={() => setNotifOpen(o => !o)}
               className="relative w-9 h-9 flex items-center justify-center rounded-xl transition-all"
               style={{
-                background: notifOpen ? "rgba(99,102,241,0.25)" : scrolled ? "rgba(99,102,241,0.06)" : "rgba(99,102,241,0.12)",
-                border: notifOpen ? "1px solid rgba(129,140,248,0.4)" : scrolled ? "1px solid rgba(99,102,241,0.12)" : "1px solid rgba(99,102,241,0.28)",
-                boxShadow: notifOpen ? "0 0 16px rgba(99,102,241,0.25)" : "none",
+                background: notifOpen
+                  ? "rgba(99,102,241,0.25)"
+                  : unreadCount > 0
+                    ? "rgba(99,102,241,0.16)"
+                    : scrolled ? "rgba(99,102,241,0.06)" : "rgba(99,102,241,0.12)",
+                border: notifOpen
+                  ? "1px solid rgba(129,140,248,0.4)"
+                  : unreadCount > 0
+                    ? "1px solid rgba(99,102,241,0.4)"
+                    : scrolled ? "1px solid rgba(99,102,241,0.12)" : "1px solid rgba(99,102,241,0.28)",
+                boxShadow: unreadCount > 0
+                  ? "0 0 14px rgba(99,102,241,0.3)"
+                  : notifOpen ? "0 0 16px rgba(99,102,241,0.25)" : "none",
                 transition: "all 0.35s ease",
               }}>
-              <Bell style={{ width: 16, height: 16, color: notifOpen ? "#818cf8" : "rgba(148,163,184,0.7)" }} strokeWidth={2.5} />
+              <Bell
+                style={{
+                  width: 16, height: 16,
+                  color: unreadCount > 0 ? "#818cf8" : notifOpen ? "#818cf8" : "rgba(148,163,184,0.7)"
+                }}
+                strokeWidth={2.5}
+              />
+
+              {/* Unread badge */}
               <AnimatePresence>
                 {unreadCount > 0 && (
-                  <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
-                    className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-0.5 rounded-full text-white text-[9px] font-bold flex items-center justify-center"
-                    style={{ background: "linear-gradient(135deg,#ef4444,#ec4899)", boxShadow: "0 2px 6px rgba(239,68,68,0.5)" }}>
-                    {unreadCount > 9 ? "9+" : unreadCount}
+                  <motion.span
+                    key="badge"
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                    className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full text-white text-[9px] font-extrabold flex items-center justify-center"
+                    style={{
+                      background: "linear-gradient(135deg,#ef4444,#ec4899)",
+                      boxShadow: "0 2px 8px rgba(239,68,68,0.6), 0 0 0 2px rgba(6,10,22,0.9)"
+                    }}>
+                    {unreadCount > 99 ? "99+" : unreadCount > 9 ? "9+" : unreadCount}
                   </motion.span>
                 )}
               </AnimatePresence>
+
+              {/* Pulse ring when unread */}
+              {unreadCount > 0 && !notifOpen && (
+                <motion.span
+                  className="absolute inset-0 rounded-xl pointer-events-none"
+                  animate={{ boxShadow: ["0 0 0 0 rgba(99,102,241,0.4)", "0 0 0 6px rgba(99,102,241,0)"] }}
+                  transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
+                />
+              )}
             </motion.button>
+
             <NotificationsPanel isOpen={notifOpen} onClose={() => setNotifOpen(false)} />
           </div>
 
@@ -204,7 +251,7 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
         </div>
       </header>
 
-      {/* -- Spotlight Search -- */}
+      {/* Spotlight Search */}
       <AnimatePresence>
         {searchOpen && (
           <>
@@ -243,21 +290,24 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
               {!searchVal && (
                 <div className="px-4 py-4">
                   <p className="text-[10px] font-bold tracking-widest uppercase mb-2" style={{ color: "rgba(99,102,241,0.4)" }}>Quick Links</p>
-                  {quickLinks.map(link => (
-                    <Link key={link.to} to={link.to} onClick={() => setSearchOpen(false)}>
-                      <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all mb-0.5"
-                        style={{ border: "1px solid transparent" }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = `${link.color}0d`; (e.currentTarget as HTMLElement).style.borderColor = `${link.color}25` }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.borderColor = "transparent" }}>
-                        <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-                          style={{ background: `${link.color}12`, border: `1px solid ${link.color}25` }}>
-                          <span className="text-[13px]">{link.emoji}</span>
+                  {quickLinks.map(link => {
+                    const Icon = link.icon
+                    return (
+                      <Link key={link.to} to={link.to} onClick={() => setSearchOpen(false)}>
+                        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all mb-0.5"
+                          style={{ border: "1px solid transparent" }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = `${link.color}0d`; (e.currentTarget as HTMLElement).style.borderColor = `${link.color}25` }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.borderColor = "transparent" }}>
+                          <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+                            style={{ background: `${link.color}12`, border: `1px solid ${link.color}25` }}>
+                            <Icon style={{ width: 14, height: 14, color: link.color }} />
+                          </div>
+                          <span className="text-[13px] font-semibold" style={{ color: "#cbd5e1" }}>{link.label}</span>
+                          <span className="ml-auto text-[11px] font-semibold" style={{ color: link.color }}>Go &rarr;</span>
                         </div>
-                        <span className="text-[13px] font-semibold" style={{ color: "#cbd5e1" }}>{link.label}</span>
-                        <span className="ml-auto text-[11px] font-semibold" style={{ color: link.color }}>Go ?</span>
-                      </div>
-                    </Link>
-                  ))}
+                      </Link>
+                    )
+                  })}
                 </div>
               )}
 
@@ -275,4 +325,3 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
     </>
   )
 }
-

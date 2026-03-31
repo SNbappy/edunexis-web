@@ -13,6 +13,8 @@ import RegisterPage from '@/features/auth/pages/RegisterPage'
 import DashboardPage from '@/features/dashboard/pages/DashboardPage'
 
 import CoursesListPage from '@/features/courses/pages/CoursesListPage'
+import CreateCoursePage from '@/features/courses/pages/CreateCoursePage'
+import EditCoursePage from '@/features/courses/pages/EditCoursePage'
 import CourseDetailPage from '@/features/courses/pages/CourseDetailPage'
 import AssignmentDetailPage from '@/features/assignments/pages/AssignmentDetailPage'
 import JoinCoursePage from '@/features/courses/pages/JoinCoursePage'
@@ -48,6 +50,9 @@ export default function App() {
           <Route element={<DashboardLayout />}>
             <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
             <Route path={ROUTES.COURSES}   element={<CoursesListPage />} />
+            <Route path="/courses/join" element={<JoinCoursePage />} />
+            <Route path="/courses/create" element={<CreateCoursePage />} />
+            <Route path="/courses/:courseId/edit" element={<EditCoursePage />} />
 
             <Route path="/courses/:courseId/join" element={<JoinCoursePage />} />
             <Route path="/courses/:courseId"      element={<Navigate to="stream" replace />} />
@@ -101,6 +106,7 @@ export default function App() {
     </Routes>
   )
 }
+
 
 
 

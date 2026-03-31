@@ -1,9 +1,10 @@
-import { useEffect } from 'react'
+﻿import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Bell, BellOff, CheckCheck, Loader2,
   ClipboardList, Megaphone, Users, BookOpen,
-  GraduationCap, Info, AlertCircle, Sparkles, Clock, Check, X, Trash2
+  GraduationCap, Info, AlertCircle, Sparkles,
+  Clock, Check, X, Trash2, TrendingUp, Mic, FileText
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { useNotifications } from '../hooks/useNotifications'
@@ -12,14 +13,16 @@ import { useNavigate } from 'react-router-dom'
 interface Props { isOpen: boolean; onClose: () => void }
 
 const TYPE_CONFIG: Record<string, { icon: any; color: string; bg: string; border: string; label: string }> = {
-  Assignment:       { icon: ClipboardList, color: '#818cf8', bg: 'rgba(99,102,241,0.12)',  border: 'rgba(99,102,241,0.3)',   label: 'Assignment'   },
-  Announcement:     { icon: Megaphone,     color: '#a78bfa', bg: 'rgba(139,92,246,0.12)',  border: 'rgba(139,92,246,0.3)',   label: 'Announcement' },
-  CourseEnrollment: { icon: GraduationCap, color: '#34d399', bg: 'rgba(52,211,153,0.12)',  border: 'rgba(52,211,153,0.3)',   label: 'Enrollment'   },
-  CourseMaterial:   { icon: BookOpen,      color: '#22d3ee', bg: 'rgba(6,182,212,0.12)',   border: 'rgba(6,182,212,0.3)',    label: 'Material'     },
-  JoinRequest:      { icon: Users,         color: '#fb923c', bg: 'rgba(251,146,60,0.12)',  border: 'rgba(251,146,60,0.3)',   label: 'Join Request' },
-  Grade:            { icon: Sparkles,      color: '#fbbf24', bg: 'rgba(251,191,36,0.12)',  border: 'rgba(251,191,36,0.3)',   label: 'Grade'        },
-  General:          { icon: Info,          color: '#94a3b8', bg: 'rgba(148,163,184,0.10)', border: 'rgba(148,163,184,0.2)',  label: 'General'      },
-  Alert:            { icon: AlertCircle,   color: '#f87171', bg: 'rgba(248,113,113,0.12)', border: 'rgba(248,113,113,0.3)',  label: 'Alert'        },
+  JoinRequestReceived:        { icon: Users,         color: '#fb923c', bg: 'rgba(251,146,60,0.12)',  border: 'rgba(251,146,60,0.3)',   label: 'Join Request'  },
+  CourseJoinApproved:         { icon: GraduationCap, color: '#34d399', bg: 'rgba(52,211,153,0.12)',  border: 'rgba(52,211,153,0.3)',   label: 'Approved'      },
+  CourseJoinRejected:         { icon: AlertCircle,   color: '#f87171', bg: 'rgba(248,113,113,0.12)', border: 'rgba(248,113,113,0.3)',  label: 'Rejected'      },
+  NewMaterial:                { icon: BookOpen,      color: '#22d3ee', bg: 'rgba(6,182,212,0.12)',   border: 'rgba(6,182,212,0.3)',    label: 'Material'      },
+  NewAssignment:              { icon: ClipboardList, color: '#818cf8', bg: 'rgba(99,102,241,0.12)',  border: 'rgba(99,102,241,0.3)',   label: 'Assignment'    },
+  AssignmentDeadlineReminder: { icon: Clock,         color: '#f87171', bg: 'rgba(248,113,113,0.12)', border: 'rgba(248,113,113,0.3)',  label: 'Deadline'      },
+  MarksPublished:             { icon: TrendingUp,    color: '#34d399', bg: 'rgba(52,211,153,0.12)',  border: 'rgba(52,211,153,0.3)',   label: 'Marks'         },
+  GradeComplaint:             { icon: Sparkles,      color: '#fbbf24', bg: 'rgba(251,191,36,0.12)',  border: 'rgba(251,191,36,0.3)',   label: 'Complaint'     },
+  NewAnnouncement:            { icon: Megaphone,     color: '#a78bfa', bg: 'rgba(139,92,246,0.12)',  border: 'rgba(139,92,246,0.3)',   label: 'Announcement'  },
+  General:                    { icon: Info,          color: '#94a3b8', bg: 'rgba(148,163,184,0.10)', border: 'rgba(148,163,184,0.2)',  label: 'General'       },
 }
 const getConfig = (type: string) => TYPE_CONFIG[type] ?? TYPE_CONFIG.General
 
@@ -92,7 +95,7 @@ export default function NotificationsPanel({ isOpen, onClose }: Props) {
                 <div className="flex items-center justify-center py-14">
                   <div className="flex flex-col items-center gap-3">
                     <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#4f46e5' }} />
-                    <span className="text-[11px]" style={{ color: '#475569' }}>Loading…</span>
+                    <span className="text-[11px]" style={{ color: '#475569' }}>Loading...</span>
                   </div>
                 </div>
               ) : notifications.length === 0 ? (
@@ -132,7 +135,6 @@ export default function NotificationsPanel({ isOpen, onClose }: Props) {
                         onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = cfg.border}
                         onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = isUnread ? cfg.border : 'rgba(99,102,241,0.08)'}>
 
-                        {/* Unread bar */}
                         {isUnread && (
                           <div className="absolute left-0 top-2.5 bottom-2.5 w-[3px] rounded-full"
                             style={{ background: `linear-gradient(180deg,${cfg.color},${cfg.color}55)` }} />
@@ -150,12 +152,10 @@ export default function NotificationsPanel({ isOpen, onClose }: Props) {
                                 style={{ color: isUnread ? '#e2e8f0' : '#64748b' }}>
                                 {n.title ?? n.message ?? 'Notification'}
                               </p>
-                              <div className="flex items-center gap-1 shrink-0">
-                                {isUnread && (
-                                  <div className="w-1.5 h-1.5 rounded-full shrink-0"
-                                    style={{ background: cfg.color, boxShadow: `0 0 5px ${cfg.color}` }} />
-                                )}
-                              </div>
+                              {isUnread && (
+                                <div className="w-1.5 h-1.5 rounded-full shrink-0 mt-1"
+                                  style={{ background: cfg.color, boxShadow: `0 0 5px ${cfg.color}` }} />
+                              )}
                             </div>
 
                             {n.body && (
@@ -170,8 +170,6 @@ export default function NotificationsPanel({ isOpen, onClose }: Props) {
                                 style={{ color: '#334155' }}>
                                 <Clock className="w-2.5 h-2.5" />{timeAgo}
                               </span>
-
-                              {/* Hover actions */}
                               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
                                 {isUnread && (
                                   <button onClick={e => { e.stopPropagation(); markRead?.(n.id) }}
@@ -204,7 +202,7 @@ export default function NotificationsPanel({ isOpen, onClose }: Props) {
                   style={{ color: '#818cf8', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.15)' }}
                   onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(99,102,241,0.15)'}
                   onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'rgba(99,102,241,0.08)'}>
-                  View all notifications →
+                  View all notifications
                 </button>
               </div>
             )}
