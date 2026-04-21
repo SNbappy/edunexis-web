@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/authStore'
 import { ROUTES } from '@/config/constants'
 import toast from 'react-hot-toast'
 import type { LoginRequest } from '@/types/auth.types'
+import axios from 'axios'
 
 export function useLogin() {
     const [loading, setLoading] = useState(false)
@@ -30,7 +31,12 @@ export function useLogin() {
                 navigate(ROUTES.DASHBOARD)
             }
         } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : 'Login failed. Please try again.'
+            let msg = 'Login failed. Please try again.'
+            if (axios.isAxiosError(err)) {
+                msg = err.response?.data?.message ?? err.response?.data?.title ?? msg
+            } else if (err instanceof Error) {
+                msg = err.message
+            }
             setError(msg)
             toast.error(msg)
         } finally {

@@ -1,0 +1,660 @@
+﻿
+========== tailwind.config.js ==========
+
+/** @type {import("tailwindcss").Config} */
+const config = {
+  darkMode: 'class',
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    extend: {
+      colors: {
+        background: "rgb(var(--background) / <alpha-value>)",
+        foreground: "rgb(var(--foreground) / <alpha-value>)",
+        surface: {
+          DEFAULT: "rgb(var(--surface) / <alpha-value>)",
+          raised: "rgb(var(--surface-raised) / <alpha-value>)",
+        },
+        primary: {
+          50: "rgb(var(--primary-50) / <alpha-value>)",
+          100: "rgb(var(--primary-100) / <alpha-value>)",
+          200: "rgb(var(--primary-200) / <alpha-value>)",
+          300: "rgb(var(--primary-300) / <alpha-value>)",
+          400: "rgb(var(--primary-400) / <alpha-value>)",
+          DEFAULT: "rgb(var(--primary) / <alpha-value>)",
+          600: "rgb(var(--primary-600) / <alpha-value>)",
+          700: "rgb(var(--primary-700) / <alpha-value>)",
+          foreground: "rgb(var(--primary-foreground) / <alpha-value>)",
+          hover: "rgb(var(--primary-hover) / <alpha-value>)",
+        },
+        accent: {
+          DEFAULT: "rgb(var(--accent) / <alpha-value>)",
+          foreground: "rgb(var(--accent-foreground) / <alpha-value>)",
+        },
+        card: {
+          DEFAULT: "rgb(var(--card) / <alpha-value>)",
+          foreground: "rgb(var(--card-foreground) / <alpha-value>)",
+        },
+        border: "rgb(var(--border) / <alpha-value>)",
+        muted: {
+          DEFAULT: "rgb(var(--muted) / <alpha-value>)",
+          foreground: "rgb(var(--muted-foreground) / <alpha-value>)",
+        },
+        destructive: { DEFAULT: "rgb(var(--destructive) / <alpha-value>)" },
+        success: { DEFAULT: "rgb(var(--success) / <alpha-value>)" },
+        warning: { DEFAULT: "rgb(var(--warning) / <alpha-value>)" },
+      },
+      fontFamily: {
+        sans: ["Plus Jakarta Sans", "Inter", "system-ui", "sans-serif"],
+      },
+      fontSize: {
+        "2xs": ["0.625rem", { lineHeight: "1rem" }],
+      },
+      borderRadius: {
+        "4xl": "2rem",
+        "5xl": "2.5rem",
+      },
+      animation: {
+        "fade-in": "fadeIn 0.5s ease-in-out",
+        "fade-in-up": "fadeInUp 0.55s cubic-bezier(0.16,1,0.3,1)",
+        "fade-in-down": "fadeInDown 0.45s cubic-bezier(0.16,1,0.3,1)",
+        "slide-up": "slideUp 0.4s cubic-bezier(0.16,1,0.3,1)",
+        "slide-in-right": "slideInRight 0.3s cubic-bezier(0.16,1,0.3,1)",
+        "float": "float 6s ease-in-out infinite",
+        "float-delayed": "float 6s ease-in-out 2s infinite",
+        "pulse-glow": "pulseGlow 2.5s ease-in-out infinite",
+        "spin-slow": "spin 8s linear infinite",
+        "scale-in": "scaleIn 0.3s cubic-bezier(0.16,1,0.3,1)",
+        "shimmer": "shimmer 2s linear infinite",
+        "shimmer-fast": "shimmer 1.2s linear infinite",
+        "border-pulse": "borderPulse 2.5s ease-in-out infinite",
+        "glow-pulse": "glowPulse 3s ease-in-out infinite",
+        "bounce-sm": "bounceSm 0.5s cubic-bezier(0.16,1,0.3,1)",
+        "slide-down": "slideDown 0.35s cubic-bezier(0.16,1,0.3,1)",
+      },
+      keyframes: {
+        fadeIn: { "0%": { opacity: "0" }, "100%": { opacity: "1" } },
+        fadeInUp: { "0%": { opacity: "0", transform: "translateY(20px)" }, "100%": { opacity: "1", transform: "translateY(0)" } },
+        fadeInDown: { "0%": { opacity: "0", transform: "translateY(-14px)" }, "100%": { opacity: "1", transform: "translateY(0)" } },
+        slideUp: { "0%": { opacity: "0", transform: "translateY(16px)" }, "100%": { opacity: "1", transform: "translateY(0)" } },
+        slideDown: { "0%": { opacity: "0", transform: "translateY(-10px)" }, "100%": { opacity: "1", transform: "translateY(0)" } },
+        slideInRight: { "0%": { opacity: "0", transform: "translateX(20px)" }, "100%": { opacity: "1", transform: "translateX(0)" } },
+        float: { "0%,100%": { transform: "translateY(0)" }, "50%": { transform: "translateY(-18px)" } },
+        pulseGlow: {
+          "0%,100%": { boxShadow: "0 4px 20px rgba(124,58,237,0.28)" },
+          "50%": { boxShadow: "0 4px 60px rgba(124,58,237,0.62), 0 0 80px rgba(6,182,212,0.22)" },
+        },
+        scaleIn: { "0%": { opacity: "0", transform: "scale(0.94)" }, "100%": { opacity: "1", transform: "scale(1)" } },
+        shimmer: { "0%": { backgroundPosition: "-200% 0" }, "100%": { backgroundPosition: "200% 0" } },
+        borderPulse: { "0%,100%": { borderColor: "rgba(124,58,237,0.2)" }, "50%": { borderColor: "rgba(124,58,237,0.6)" } },
+        bounceSm: { "0%": { transform: "scale(0.96)" }, "60%": { transform: "scale(1.03)" }, "100%": { transform: "scale(1)" } },
+        glowPulse: { "0%,100%": { opacity: "0.6" }, "50%": { opacity: "1" } },
+      },
+      boxShadow: {
+        // Semantic elevation
+        "xs": "0 1px 2px rgba(0,0,0,0.05)",
+        "sm": "0 1px 4px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04)",
+        "md": "0 4px 12px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.04)",
+        "lg": "0 8px 28px rgba(0,0,0,0.09), 0 4px 8px rgba(0,0,0,0.05)",
+        "xl": "0 20px 56px rgba(0,0,0,0.12), 0 8px 16px rgba(0,0,0,0.06)",
+        // Brand glow
+        "glow-xs": "0 2px 10px rgba(124,58,237,0.2)",
+        "glow-sm": "0 2px 16px rgba(124,58,237,0.28)",
+        "glow-md": "0 4px 28px rgba(124,58,237,0.38)",
+        "glow-lg": "0 8px 48px rgba(124,58,237,0.46)",
+        "glow-primary": "0 0 0 1px rgba(124,58,237,0.2), 0 4px 32px rgba(124,58,237,0.52)",
+        "glow-accent": "0 0 0 1px rgba(6,182,212,0.15), 0 4px 32px rgba(6,182,212,0.45)",
+        "glow-success": "0 4px 24px rgba(16,185,129,0.35)",
+        "glow-danger": "0 4px 24px rgba(239,68,68,0.35)",
+        // Component-specific
+        "card": "0 2px 10px rgba(124,58,237,0.05), 0 1px 3px rgba(124,58,237,0.04)",
+        "card-hover": "0 14px 44px rgba(124,58,237,0.14), 0 4px 12px rgba(124,58,237,0.08)",
+        "glass": "0 4px 32px rgba(0,0,0,0.08), 0 1px 0 rgba(255,255,255,0.9) inset",
+        "topbar": "0 1px 0 rgba(124,58,237,0.05), 0 4px 24px rgba(124,58,237,0.04)",
+        "sidebar": "4px 0 32px rgba(124,58,237,0.07), 1px 0 0 rgba(124,58,237,0.06)",
+        "modal": "0 32px 80px rgba(18,12,50,0.16), 0 8px 24px rgba(124,58,237,0.1)",
+        "btn-primary": "0 4px 18px rgba(124,58,237,0.42), 0 1px 4px rgba(124,58,237,0.28)",
+        "btn-hover": "0 8px 32px rgba(124,58,237,0.52), 0 2px 8px rgba(124,58,237,0.3)",
+        "input-focus": "0 0 0 4px rgba(124,58,237,0.1)",
+      },
+      backdropBlur: {
+        xs: "2px",
+        "2xl": "40px",
+        "3xl": "64px",
+      },
+    },
+  },
+  plugins: [],
+}
+module.exports = config
+
+
+========== src/index.css ==========
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg:        248 249 255;
+    --bg-2:      255 255 255;
+    --bg-3:      241 242 250;
+    --fg:        17  24  39;
+    --fg-2:      75  85  99;
+    --fg-3:      156 163 175;
+    --border:    226 228 240;
+    --border-2:  209 213 228;
+    --card:      255 255 255;
+    --sidebar:   255 255 255;
+  }
+
+  .dark {
+    --bg:        11  17  32;
+    --bg-2:      16  24  44;
+    --bg-3:      21  32  57;
+    --fg:        226 232 248;
+    --fg-2:      160 174 210;
+    --fg-3:      94  113 155;
+    --border:    30  44  78;
+    --border-2:  40  58  100;
+    --card:      16  24  44;
+    --sidebar:   13  20  38;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { font-family: "Inter", system-ui, sans-serif; }
+
+  body {
+    background: rgb(var(--bg));
+    color: rgb(var(--fg));
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar       { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.2); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.35); }
+  ::selection { background: rgba(99,102,241,0.25); }
+}
+
+@layer utilities {
+  .bg-app   { background: rgb(var(--bg));   }
+  .bg-card  { background: rgb(var(--card)); }
+  .bg-app-2 { background: rgb(var(--bg-2)); }
+  .bg-app-3 { background: rgb(var(--bg-3)); }
+  .text-app   { color: rgb(var(--fg));   }
+  .text-app-2 { color: rgb(var(--fg-2)); }
+  .text-app-3 { color: rgb(var(--fg-3)); }
+  .border-app { border-color: rgb(var(--border)); }
+
+  .card {
+    background: rgb(var(--card));
+    border: 1px solid rgb(var(--border));
+    border-radius: 16px;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0);    }
+  }
+  .animate-fade-in { animation: fadeUp 0.3s ease both; }
+
+  @keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position:  200% 0; }
+  }
+  .skeleton {
+    background: linear-gradient(90deg, rgb(var(--bg-3)) 25%, rgb(var(--bg-2)) 50%, rgb(var(--bg-3)) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: 8px;
+  }
+}
+
+/* -- Animated background orbs -- */
+@keyframes orbFloat1 {
+  0%, 100% { transform: translate(0px, 0px) scale(1);     }
+  25%       { transform: translate(30px, -40px) scale(1.05); }
+  50%       { transform: translate(-20px, 30px) scale(0.97); }
+  75%       { transform: translate(40px, 20px) scale(1.03);  }
+}
+@keyframes orbFloat2 {
+  0%, 100% { transform: translate(0px, 0px) scale(1);      }
+  33%       { transform: translate(-35px, 25px) scale(1.04); }
+  66%       { transform: translate(25px, -30px) scale(0.96); }
+}
+@keyframes orbFloat3 {
+  0%, 100% { transform: translate(0px, 0px) scale(1);       }
+  40%       { transform: translate(20px, -35px) scale(1.06); }
+  70%       { transform: translate(-30px, 15px) scale(0.98); }
+}
+
+
+========== src/App.tsx ==========
+
+import { lazy, Suspense } from "react"
+import { Routes, Route, Navigate } from "react-router-dom"
+import AuthGuard from "@/components/guards/AuthGuard"
+import GuestGuard from "@/components/guards/GuestGuard"
+import ProfileGuard from "@/components/guards/ProfileGuard"
+import EnrollmentGuard from "@/components/guards/EnrollmentGuard"
+import DashboardLayout from "@/components/layout/DashboardLayout"
+import { ROUTES } from "@/config/constants"
+
+const LoginPage             = lazy(() => import("@/features/auth/pages/LoginPage"))
+const RegisterPage          = lazy(() => import("@/features/auth/pages/RegisterPage"))
+const DashboardPage         = lazy(() => import("@/features/dashboard/pages/DashboardPage"))
+const CoursesListPage       = lazy(() => import("@/features/courses/pages/CoursesListPage"))
+const CreateCoursePage      = lazy(() => import("@/features/courses/pages/CreateCoursePage"))
+const EditCoursePage        = lazy(() => import("@/features/courses/pages/EditCoursePage"))
+const CourseDetailPage      = lazy(() => import("@/features/courses/pages/CourseDetailPage"))
+const AssignmentDetailPage  = lazy(() => import("@/features/assignments/pages/AssignmentDetailPage"))
+const JoinCoursePage        = lazy(() => import("@/features/courses/pages/JoinCoursePage"))
+const CTEventPage           = lazy(() => import("@/features/ct/pages/CTEventPage"))
+const PresentationEventPage = lazy(() => import("@/features/presentations/pages/PresentationEventPage"))
+const CompleteProfilePage   = lazy(() => import("@/features/profile/pages/CompleteProfilePage"))
+const EditProfilePage       = lazy(() => import("@/features/profile/pages/EditProfilePage"))
+const NotificationsPage     = lazy(() => import("@/features/notifications/pages/NotificationsPage"))
+const UserProfilePage       = lazy(() => import("@/features/profile/pages/UserProfilePage"))
+const NotFoundPage          = lazy(() => import("@/pages/NotFoundPage"))
+const UnauthorizedPage      = lazy(() => import("@/pages/UnauthorizedPage"))
+
+function PageLoader() {
+  const stored = (() => {
+    try { return JSON.parse(localStorage.getItem("edunexis-theme") ?? "{}") }
+    catch { return {} }
+  })()
+  const dark = stored?.state?.dark ?? true
+
+  return (
+    <div className="min-h-screen flex items-center justify-center"
+      style={{ background: dark ? "rgb(11,17,32)" : "rgb(248,249,255)" }}>
+      <div className="flex flex-col items-center gap-5">
+
+        {/* Animated logo */}
+        <div className="relative flex items-center justify-center">
+          <div className="absolute w-20 h-20 rounded-2xl animate-ping opacity-15"
+            style={{ background: "linear-gradient(135deg,#6366f1,#06b6d4)", animationDuration: "1.6s" }} />
+          <div className="relative w-16 h-16 rounded-2xl flex items-center justify-center"
+            style={{ background: "linear-gradient(135deg,#6366f1,#06b6d4)", boxShadow: "0 8px 32px rgba(99,102,241,0.45)" }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white"
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+            </svg>
+          </div>
+        </div>
+
+        {/* Brand */}
+        <div className="text-center">
+          <p className="text-[20px] font-extrabold tracking-tight"
+            style={{ background: "linear-gradient(135deg,#6366f1,#06b6d4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+            EduNexis
+          </p>
+          <p className="text-[11px] font-semibold mt-0.5 tracking-widest uppercase"
+            style={{ color: dark ? "#4a6090" : "#9ca3af" }}>
+            Learning Platform
+          </p>
+          <div className="flex items-center justify-center gap-1.5 mt-3">
+            {[0, 1, 2].map(i => (
+              <div key={i} className="w-1.5 h-1.5 rounded-full"
+                style={{
+                  background: "#6366f1",
+                  animation: `edunexisBounce 1.2s ease-in-out ${i * 0.18}s infinite`,
+                }} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes edunexisBounce {
+          0%, 80%, 100% { transform: scale(0.55); opacity: 0.35; }
+          40%            { transform: scale(1.1);  opacity: 1; }
+        }
+      `}</style>
+    </div>
+  )
+}
+
+export default function App() {
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route index element={<Navigate to={ROUTES.DASHBOARD} replace />} />
+
+        <Route element={<GuestGuard />}>
+          <Route path={ROUTES.LOGIN}    element={<LoginPage />} />
+          <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+        </Route>
+
+        <Route element={<AuthGuard />}>
+          <Route path={ROUTES.PROFILE_COMPLETE} element={<CompleteProfilePage />} />
+        </Route>
+
+        <Route element={<AuthGuard />}>
+          <Route element={<ProfileGuard />}>
+            <Route element={<DashboardLayout />}>
+              <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
+              <Route path={ROUTES.COURSES}   element={<CoursesListPage />} />
+              <Route path="/courses/join"           element={<JoinCoursePage />} />
+              <Route path="/courses/create"         element={<CreateCoursePage />} />
+              <Route path="/courses/:courseId/edit" element={<EditCoursePage />} />
+              <Route path="/courses/:courseId/join" element={<JoinCoursePage />} />
+              <Route path="/courses/:courseId"      element={<Navigate to="stream" replace />} />
+              <Route path="/courses/:courseId/presentations/:presentationId"
+                element={<EnrollmentGuard><PresentationEventPage /></EnrollmentGuard>} />
+              <Route path="/courses/:courseId/ct/:ctId"
+                element={<EnrollmentGuard><CTEventPage /></EnrollmentGuard>} />
+              <Route path="/courses/:courseId/:tab"
+                element={<EnrollmentGuard><CourseDetailPage /></EnrollmentGuard>} />
+              <Route path="/courses/:courseId/assignments/:assignmentId"
+                element={<EnrollmentGuard><AssignmentDetailPage /></EnrollmentGuard>} />
+              <Route path={ROUTES.PROFILE}       element={<EditProfilePage />} />
+              <Route path={ROUTES.PROFILE_EDIT}  element={<EditProfilePage />} />
+              <Route path={ROUTES.NOTIFICATIONS} element={<NotificationsPage />} />
+              <Route path="/users/:userId"        element={<UserProfilePage />} />
+            </Route>
+          </Route>
+        </Route>
+
+        <Route path={ROUTES.UNAUTHORIZED} element={<UnauthorizedPage />} />
+        <Route path="*"                   element={<NotFoundPage />} />
+      </Routes>
+    </Suspense>
+  )
+}
+
+
+========== src/main.tsx ==========
+
+import { StrictMode } from "react"
+import { createRoot } from "react-dom/client"
+import { BrowserRouter } from "react-router-dom"
+import { QueryClientProvider } from "@tanstack/react-query"
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
+import { Toaster } from "react-hot-toast"
+import App from "./App"
+import { queryClient } from "./lib/queryClient"
+import ThemeProvider from "./components/ThemeProvider"
+import "./index.css"
+
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+        <ThemeProvider>
+          <App />
+          <Toaster
+            position="top-right"
+            gutter={8}
+            toastOptions={{
+              duration: 4000,
+              style: { borderRadius: "12px", fontSize: "13px", fontWeight: "500" },
+              success: {
+                style: { background: "#f0fdf4", color: "#166534", border: "1px solid #bbf7d0" },
+                iconTheme: { primary: "#22c55e", secondary: "#f0fdf4" },
+              },
+              error: {
+                style: { background: "#fef2f2", color: "#991b1b", border: "1px solid #fecaca" },
+                iconTheme: { primary: "#ef4444", secondary: "#fef2f2" },
+              },
+            }}
+          />
+        </ThemeProvider>
+      </BrowserRouter>
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
+  </StrictMode>
+)
+
+
+========== src/components/ThemeProvider.tsx ==========
+
+import { useEffect } from "react"
+import { useThemeStore } from "@/store/themeStore"
+
+export default function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const { dark } = useThemeStore()
+
+  useEffect(() => {
+    const root = document.documentElement
+    if (dark) {
+      root.classList.add("dark")
+    } else {
+      root.classList.remove("dark")
+    }
+  }, [dark])
+
+  return <>{children}</>
+}
+
+
+========== src/store/themeStore.ts ==========
+
+import { create } from "zustand"
+import { persist } from "zustand/middleware"
+
+interface ThemeState {
+  dark: boolean
+  toggle: () => void
+}
+
+export const useThemeStore = create<ThemeState>()(
+  persist(
+    (set) => ({
+      dark: false,
+      toggle: () => set((s) => ({ dark: !s.dark })),
+    }),
+    { name: "edunexis-theme" }
+  )
+)
+
+
+========== src/components/ui/Button.tsx ==========
+
+import { forwardRef } from "react"
+import { cn } from "@/utils/cn"
+import Spinner from "./Spinner"
+import { useThemeStore } from "@/store/themeStore"
+
+type Variant = "primary" | "secondary" | "ghost" | "outline" | "danger" | "success" | "warning"
+type Size    = "sm" | "md" | "lg" | "xl" | "icon" | "icon-sm" | "icon-lg"
+
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?:   Variant
+  size?:      Size
+  loading?:   boolean
+  leftIcon?:  React.ReactNode
+  rightIcon?: React.ReactNode
+}
+
+const SIZE_CLASSES: Record<Size, string> = {
+  sm:       "h-8  px-3.5 text-xs  rounded-lg",
+  md:       "h-10 px-4   text-sm  rounded-xl",
+  lg:       "h-11 px-6   text-sm  rounded-xl",
+  xl:       "h-12 px-8   text-base rounded-2xl",
+  icon:     "h-9  w-9    rounded-xl",
+  "icon-sm":"h-8  w-8    rounded-lg",
+  "icon-lg":"h-11 w-11   rounded-xl",
+}
+
+function getVariantStyle(variant: Variant, dark: boolean): React.CSSProperties {
+  switch (variant) {
+    case "primary":
+      return { background: "linear-gradient(135deg,#6366f1,#0891b2)", color: "white", border: "none", boxShadow: "0 4px 14px rgba(99,102,241,0.35)" }
+    case "secondary":
+      return { background: dark ? "rgba(255,255,255,0.07)" : "#f3f4f6", color: dark ? "#e2e8f8" : "#374151", border: `1px solid ${dark ? "rgba(255,255,255,0.1)" : "#e5e7eb"}` }
+    case "ghost":
+      return { background: "transparent", color: dark ? "#8896c8" : "#6b7280", border: "1px solid transparent" }
+    case "outline":
+      return { background: "transparent", color: dark ? "#a5b4fc" : "#6366f1", border: `1px solid ${dark ? "rgba(99,102,241,0.3)" : "#c7d2fe"}` }
+    case "danger":
+      return { background: dark ? "rgba(239,68,68,0.12)" : "#fef2f2", color: "#ef4444", border: `1px solid ${dark ? "rgba(239,68,68,0.25)" : "#fecaca"}` }
+    case "success":
+      return { background: "linear-gradient(135deg,#059669,#0891b2)", color: "white", border: "none", boxShadow: "0 4px 14px rgba(5,150,105,0.35)" }
+    case "warning":
+      return { background: dark ? "rgba(217,119,6,0.15)" : "#fffbeb", color: "#d97706", border: `1px solid ${dark ? "rgba(217,119,6,0.3)" : "#fde68a"}` }
+    default:
+      return { background: "linear-gradient(135deg,#6366f1,#0891b2)", color: "white", border: "none" }
+  }
+}
+
+function getHoverStyle(variant: Variant, dark: boolean): React.CSSProperties {
+  switch (variant) {
+    case "primary":
+    case "success":
+      return { filter: "brightness(1.1)", transform: "scale(1.02)" }
+    case "secondary":
+      return { background: dark ? "rgba(255,255,255,0.11)" : "#e5e7eb" }
+    case "outline":
+      return { background: dark ? "rgba(99,102,241,0.1)" : "#eef2ff" }
+    case "danger":
+      return { background: dark ? "rgba(239,68,68,0.2)" : "#fee2e2" }
+    case "ghost":
+      return { background: dark ? "rgba(255,255,255,0.06)" : "#f3f4f6" }
+    case "warning":
+      return { background: dark ? "rgba(217,119,6,0.25)" : "#fef3c7" }
+    default:
+      return {}
+  }
+}
+
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant = "primary", size = "md", loading, leftIcon, rightIcon, children, disabled, style, onMouseEnter, onMouseLeave, ...props }, ref) => {
+    const { dark } = useThemeStore()
+    const baseStyle = getVariantStyle(variant, dark)
+    const hoverStyle = getHoverStyle(variant, dark)
+
+    return (
+      <button
+        ref={ref}
+        className={cn(
+          "relative inline-flex items-center justify-center gap-2 font-semibold",
+          "transition-all duration-150 ease-out select-none overflow-hidden",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50",
+          "disabled:pointer-events-none disabled:opacity-40",
+          "active:scale-[0.96]",
+          SIZE_CLASSES[size ?? "md"],
+          className
+        )}
+        style={{ ...baseStyle, ...style }}
+        disabled={disabled || loading}
+        onMouseEnter={e => {
+          Object.assign(e.currentTarget.style, hoverStyle)
+          onMouseEnter?.(e)
+        }}
+        onMouseLeave={e => {
+          Object.assign(e.currentTarget.style, baseStyle)
+          e.currentTarget.style.filter = ""
+          e.currentTarget.style.transform = ""
+          onMouseLeave?.(e)
+        }}
+        {...props}
+      >
+        {loading ? <Spinner size="sm" className="text-current" /> : (leftIcon ?? null)}
+        {children}
+        {!loading && rightIcon}
+      </button>
+    )
+  }
+)
+Button.displayName = "Button"
+export default Button
+
+
+========== src/components/ui/Input.tsx ==========
+
+import { forwardRef } from "react"
+import { cn } from "@/utils/cn"
+import { useThemeStore } from "@/store/themeStore"
+
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string
+  error?: string
+  hint?:  string
+  leftIcon?:  React.ReactNode
+  rightIcon?: React.ReactNode
+}
+
+const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ className, label, error, hint, leftIcon, rightIcon, id, ...props }, ref) => {
+    const { dark } = useThemeStore()
+    const inputId  = id ?? label?.toLowerCase().replace(/\s+/g, "-")
+
+    const baseBg     = dark ? "rgba(255,255,255,0.05)" : "#f9fafb"
+    const baseBorder = error
+      ? (dark ? "rgba(239,68,68,0.5)" : "#fca5a5")
+      : (dark ? "rgba(255,255,255,0.1)" : "#e5e7eb")
+    const textColor  = dark ? "#e5e7eb" : "#111827"
+    const labelColor = dark ? "#9ca3af" : "#374151"
+
+    return (
+      <div className="space-y-1.5">
+        {label && (
+          <label htmlFor={inputId}
+            className="block text-[13px] font-semibold"
+            style={{ color: labelColor }}>
+            {label}
+          </label>
+        )}
+        <div className="relative">
+          {leftIcon && (
+            <div className="absolute left-3 top-1/2 -translate-y-1/2"
+              style={{ color: dark ? "#6b7280" : "#9ca3af" }}>
+              {leftIcon}
+            </div>
+          )}
+          <input
+            ref={ref}
+            id={inputId}
+            className={cn(
+              "w-full h-10 rounded-xl text-[13.5px] font-medium outline-none transition-all duration-150",
+              leftIcon  ? "pl-10" : "pl-4",
+              rightIcon ? "pr-10" : "pr-4",
+              className
+            )}
+            style={{
+              background:   baseBg,
+              border:       `1px solid ${baseBorder}`,
+              color:        textColor,
+            }}
+            onFocus={e => {
+              e.target.style.borderColor = error
+                ? (dark ? "rgba(239,68,68,0.7)" : "#f87171")
+                : (dark ? "rgba(99,102,241,0.5)" : "#6366f1")
+              e.target.style.boxShadow = error
+                ? "0 0 0 3px rgba(239,68,68,0.08)"
+                : "0 0 0 3px rgba(99,102,241,0.1)"
+              e.target.style.background = dark ? "rgba(255,255,255,0.07)" : "#ffffff"
+            }}
+            onBlur={e => {
+              e.target.style.borderColor = baseBorder
+              e.target.style.boxShadow   = "none"
+              e.target.style.background  = baseBg
+            }}
+            {...props}
+          />
+          {rightIcon && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2"
+              style={{ color: dark ? "#6b7280" : "#9ca3af" }}>
+              {rightIcon}
+            </div>
+          )}
+        </div>
+        {error && (
+          <p className="text-[12px] font-medium" style={{ color: "#ef4444" }}>{error}</p>
+        )}
+        {!error && hint && (
+          <p className="text-[12px]" style={{ color: dark ? "#6b7280" : "#9ca3af" }}>{hint}</p>
+        )}
+      </div>
+    )
+  }
+)
+Input.displayName = "Input"
+export default Input
+

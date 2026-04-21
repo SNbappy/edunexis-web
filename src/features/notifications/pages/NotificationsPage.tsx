@@ -1,28 +1,30 @@
 import { useState, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  Bell, Check, CheckCheck, Trash2,
-  BookOpen, ClipboardList, Megaphone, Users, GraduationCap,
-  Info, AlertCircle, Clock, Sparkles
+  Bell, CheckCheck, Trash2, BookOpen, ClipboardList,
+  Megaphone, Users, GraduationCap, Info, AlertCircle,
+  Sparkles, BellOff, Check,
 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { useNotifications } from "@/features/notifications/hooks/useNotifications"
+import { useThemeStore } from "@/store/themeStore"
 
-const TYPE_CONFIG: Record<string, { icon: any; color: string; bg: string; border: string; label: string }> = {
-  Assignment:       { icon: ClipboardList, color: "#818cf8", bg: "rgba(99,102,241,0.12)",  border: "rgba(99,102,241,0.3)",   label: "Assignment"   },
-  Announcement:     { icon: Megaphone,     color: "#a78bfa", bg: "rgba(139,92,246,0.12)",  border: "rgba(139,92,246,0.3)",   label: "Announcement" },
-  CourseEnrollment: { icon: GraduationCap, color: "#34d399", bg: "rgba(52,211,153,0.12)",  border: "rgba(52,211,153,0.3)",   label: "Enrollment"   },
-  CourseMaterial:   { icon: BookOpen,      color: "#22d3ee", bg: "rgba(6,182,212,0.12)",   border: "rgba(6,182,212,0.3)",    label: "Material"     },
-  JoinRequest:      { icon: Users,         color: "#fb923c", bg: "rgba(251,146,60,0.12)",  border: "rgba(251,146,60,0.3)",   label: "Join Request" },
-  Grade:            { icon: Sparkles,      color: "#fbbf24", bg: "rgba(251,191,36,0.12)",  border: "rgba(251,191,36,0.3)",   label: "Grade"        },
-  General:          { icon: Info,          color: "#94a3b8", bg: "rgba(148,163,184,0.10)", border: "rgba(148,163,184,0.25)", label: "General"      },
-  Alert:            { icon: AlertCircle,   color: "#f87171", bg: "rgba(248,113,113,0.12)", border: "rgba(248,113,113,0.3)",  label: "Alert"        },
+const TYPE_CONFIG: Record<string, { icon: any; color: string; lightBg: string; darkBg: string; label: string }> = {
+  Assignment:       { icon: ClipboardList, color: "#6366f1", lightBg: "#eef2ff",  darkBg: "rgba(99,102,241,0.15)",  label: "Assignment"   },
+  Announcement:     { icon: Megaphone,     color: "#7c3aed", lightBg: "#f5f3ff",  darkBg: "rgba(124,58,237,0.15)", label: "Announcement" },
+  CourseEnrollment: { icon: GraduationCap, color: "#059669", lightBg: "#ecfdf5",  darkBg: "rgba(5,150,105,0.15)",  label: "Enrollment"   },
+  CourseMaterial:   { icon: BookOpen,      color: "#0891b2", lightBg: "#ecfeff",  darkBg: "rgba(8,145,178,0.15)",  label: "Material"     },
+  JoinRequest:      { icon: Users,         color: "#d97706", lightBg: "#fffbeb",  darkBg: "rgba(217,119,6,0.15)",  label: "Join Request" },
+  Grade:            { icon: Sparkles,      color: "#d97706", lightBg: "#fffbeb",  darkBg: "rgba(217,119,6,0.15)",  label: "Grade"        },
+  General:          { icon: Info,          color: "#6b7280", lightBg: "#f9fafb",  darkBg: "rgba(107,114,128,0.12)",label: "General"      },
+  Alert:            { icon: AlertCircle,   color: "#ef4444", lightBg: "#fef2f2",  darkBg: "rgba(239,68,68,0.15)",  label: "Alert"        },
 }
-const getConfig = (type: string) => TYPE_CONFIG[type] ?? TYPE_CONFIG.General
+const getCfg = (type: string) => TYPE_CONFIG[type] ?? TYPE_CONFIG.General
 
 const FILTERS = ["All", "Unread", "Assignment", "Announcement", "Grade", "Enrollment"]
 
 export default function NotificationsPage() {
+  const { dark } = useThemeStore()
   const { notifications = [], unreadCount, markAllRead, markRead, deleteNotification, isLoading }
     = useNotifications()
 
@@ -43,190 +45,184 @@ export default function NotificationsPage() {
     setDeleting(null)
   }
 
+  // Theme tokens
+  const cardBg   = dark ? "rgba(16,24,44,0.75)" : "rgba(255,255,255,0.9)"
+  const blur     = "blur(20px)"
+  const border   = dark ? "rgba(99,102,241,0.15)" : "#e5e7eb"
+  const textMain = dark ? "#e2e8f8" : "#111827"
+  const textSub  = dark ? "#8896c8" : "#6b7280"
+  const textMuted= dark ? "#5a6a9a" : "#9ca3af"
+  const hoverBg  = dark ? "rgba(99,102,241,0.06)" : "#f9fafb"
+  const unreadBg = dark ? "rgba(99,102,241,0.08)" : "#fafafa"
+  const inputBg  = dark ? "rgba(255,255,255,0.05)" : "#f9fafb"
+
+  const unread = typeof unreadCount === "number" ? unreadCount : (unreadCount as any)?.unreadCount ?? 0
+
   return (
-    <div className="min-h-full pb-10"
-      style={{ background: "linear-gradient(180deg,#060d1f 0%,#07102b 60%,#060d1f 100%)" }}>
+    <div className="min-h-full p-6 lg:p-8 max-w-4xl mx-auto">
 
-      {/* Ambient glow */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-20 left-1/4 w-96 h-96 rounded-full"
-          style={{ background: "radial-gradient(circle,rgba(79,70,229,0.07) 0%,transparent 70%)", filter: "blur(60px)" }} />
-      </div>
-
-      <div className="relative max-w-3xl mx-auto px-4 py-8">
-
-        {/* Header */}
-        <div className="flex items-center justify-between mb-7">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0"
-              style={{ background: "linear-gradient(135deg,#4f46e5,#7c3aed)", boxShadow: "0 4px 20px rgba(79,70,229,0.4)" }}>
-              <Bell className="w-5 h-5 text-white" />
+      {/* -- Header -- */}
+      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+        <div>
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{ background: dark ? "rgba(99,102,241,0.15)" : "#eef2ff", border: dark ? "1px solid rgba(99,102,241,0.25)" : "1px solid #c7d2fe" }}>
+              <Bell style={{ width: 16, height: 16, color: "#6366f1" }} strokeWidth={2} />
             </div>
-            <div>
-              <h1 className="text-[20px] font-extrabold" style={{ color: "#f1f5f9" }}>Notifications</h1>
-              <p className="text-[12px] font-medium" style={{ color: "#64748b" }}>
-                {unreadCount > 0 ? `${unreadCount} unread message${unreadCount !== 1 ? "s" : ""}` : "You're all caught up"}
-              </p>
-            </div>
-            {unreadCount > 0 && (
-              <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }}
-                className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold text-white"
-                style={{ background: "linear-gradient(135deg,#ef4444,#ec4899)", boxShadow: "0 2px 8px rgba(239,68,68,0.4)" }}>
-                {unreadCount}
-              </motion.span>
+            <h1 className="text-[22px] font-extrabold" style={{ color: textMain }}>Notifications</h1>
+            {unread > 0 && (
+              <span className="px-2.5 py-0.5 rounded-full text-[12px] font-bold text-white"
+                style={{ background: "#6366f1" }}>
+                {unread} new
+              </span>
             )}
           </div>
-          {unreadCount > 0 && (
-            <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-              onClick={markAllRead}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-bold"
-              style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.3)", color: "#a5b4fc" }}>
-              <CheckCheck className="w-3.5 h-3.5" /> Mark all read
-            </motion.button>
-          )}
+          <p className="text-[13px]" style={{ color: textMuted }}>
+            {notifications.length} total notifications
+          </p>
         </div>
 
-        {/* Filter tabs */}
-        <div className="flex items-center gap-2 mb-5 overflow-x-auto no-scrollbar pb-1">
-          {FILTERS.map(f => (
-            <motion.button key={f} whileTap={{ scale: 0.95 }}
+        {unread > 0 && (
+          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+            onClick={() => markAllRead?.()}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold"
+            style={{ background: dark ? "rgba(99,102,241,0.12)" : "#eef2ff", color: "#6366f1", border: dark ? "1px solid rgba(99,102,241,0.25)" : "1px solid #c7d2fe" }}>
+            <CheckCheck style={{ width: 15, height: 15 }} />
+            Mark all read
+          </motion.button>
+        )}
+      </motion.div>
+
+      {/* -- Filter chips -- */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.05 }}
+        className="flex items-center gap-2 flex-wrap mb-6">
+        {FILTERS.map(f => {
+          const active = activeFilter === f
+          const count  = f === "Unread" ? unread : f === "All" ? notifications.length : notifications.filter((n: any) => n.type?.toLowerCase().includes(f.toLowerCase())).length
+          return (
+            <motion.button key={f} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
               onClick={() => setActiveFilter(f)}
-              className="px-3.5 py-1.5 rounded-xl text-[12px] font-bold whitespace-nowrap transition-all"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[12px] font-semibold transition-all"
               style={{
-                background: activeFilter === f ? "linear-gradient(135deg,#4f46e5,#7c3aed)" : "rgba(10,18,42,0.8)",
-                color:      activeFilter === f ? "#fff" : "#64748b",
-                border:     activeFilter === f ? "1px solid transparent" : "1px solid rgba(99,102,241,0.15)",
-                boxShadow:  activeFilter === f ? "0 4px 14px rgba(79,70,229,0.35)" : "none",
+                background: active ? "#6366f1" : inputBg,
+                color:      active ? "white"   : textSub,
+                border:     active ? "none"    : `1px solid ${border}`,
+                boxShadow:  active ? "0 4px 12px rgba(99,102,241,0.3)" : "none",
               }}>
               {f}
-              {f === "Unread" && unreadCount > 0 && (
-                <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-extrabold"
-                  style={{ background: "rgba(255,255,255,0.25)" }}>{unreadCount}</span>
+              {count > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                  style={{ background: active ? "rgba(255,255,255,0.25)" : (dark ? "rgba(99,102,241,0.15)" : "#eef2ff"), color: active ? "white" : "#6366f1" }}>
+                  {count}
+                </span>
               )}
             </motion.button>
+          )
+        })}
+      </motion.div>
+
+      {/* -- Notification list -- */}
+      {isLoading ? (
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-20 rounded-2xl animate-pulse"
+              style={{ background: dark ? "rgba(99,102,241,0.06)" : "#f3f4f6" }} />
           ))}
         </div>
-
-        {/* List */}
-        {isLoading ? (
-          <div className="space-y-3">
-            {[1,2,3,4,5].map(i => (
-              <div key={i} className="h-20 rounded-2xl animate-pulse"
-                style={{ background: "rgba(15,25,50,0.6)", border: "1px solid rgba(99,102,241,0.08)" }} />
-            ))}
+      ) : filtered.length === 0 ? (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          className="flex flex-col items-center justify-center py-20 rounded-2xl"
+          style={{ background: cardBg, backdropFilter: blur, WebkitBackdropFilter: blur, border: `2px dashed ${border}` }}>
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
+            style={{ background: dark ? "rgba(99,102,241,0.12)" : "#eef2ff" }}>
+            <BellOff style={{ width: 28, height: 28, color: "#6366f1" }} strokeWidth={1.5} />
           </div>
-        ) : filtered.length === 0 ? (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
-              style={{ background: "rgba(79,70,229,0.1)", border: "1px solid rgba(99,102,241,0.2)" }}>
-              <Bell className="w-7 h-7" style={{ color: "#4f46e5" }} />
-            </div>
-            <p className="text-[15px] font-bold mb-1" style={{ color: "#94a3b8" }}>No notifications</p>
-            <p className="text-[12px]" style={{ color: "#475569" }}>
-              {activeFilter === "Unread" ? "You've read everything!" : "Nothing here yet"}
-            </p>
-          </motion.div>
-        ) : (
-          <AnimatePresence initial={false}>
-            <div className="space-y-2">
-              {filtered.map((notif: any, i: number) => {
-                const cfg    = getConfig(notif.type)
-                const Icon   = cfg.icon
-                const isUnread = !notif.isRead
-                const timeAgo  = notif.createdAt
-                  ? formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })
-                  : ""
+          <p className="text-[16px] font-bold mb-1" style={{ color: textMain }}>No notifications</p>
+          <p className="text-[13px]" style={{ color: textMuted }}>
+            {activeFilter !== "All" ? `No ${activeFilter.toLowerCase()} notifications` : "You are all caught up!"}
+          </p>
+        </motion.div>
+      ) : (
+        <div className="space-y-2">
+          <AnimatePresence>
+            {filtered.map((notif: any, i: number) => {
+              const cfg     = getCfg(notif.type)
+              const isUnread= !notif.isRead
+              return (
+                <motion.div key={notif.id}
+                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -20, height: 0 }}
+                  transition={{ delay: i * 0.03 }}
+                  className="group relative flex items-start gap-4 p-4 rounded-2xl cursor-pointer transition-all"
+                  style={{
+                    background: isUnread ? (dark ? "rgba(99,102,241,0.08)" : "rgba(99,102,241,0.03)") : cardBg,
+                    backdropFilter: blur, WebkitBackdropFilter: blur,
+                    border: isUnread ? (dark ? "1px solid rgba(99,102,241,0.2)" : "1px solid #c7d2fe") : `1px solid ${border}`,
+                  }}
+                  onClick={() => !notif.isRead && markRead?.(notif.id)}
+                  onMouseEnter={e => { if (!isUnread) (e.currentTarget as HTMLElement).style.background = hoverBg }}
+                  onMouseLeave={e => { if (!isUnread) (e.currentTarget as HTMLElement).style.background = cardBg }}
+                >
+                  {/* Unread dot */}
+                  {isUnread && (
+                    <div className="absolute top-4 right-4 w-2 h-2 rounded-full shrink-0"
+                      style={{ background: "#6366f1" }} />
+                  )}
 
-                return (
-                  <motion.div key={notif.id}
-                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, x: 40, scale: 0.95 }}
-                    transition={{ duration: 0.2, delay: i * 0.03 }}
-                    className="group relative overflow-hidden rounded-2xl cursor-pointer transition-all"
-                    style={{
-                      background: isUnread ? "rgba(13,20,45,0.95)" : "rgba(10,16,34,0.6)",
-                      border: isUnread ? `1px solid ${cfg.border}` : "1px solid rgba(99,102,241,0.1)",
-                      boxShadow: isUnread ? `0 4px 20px rgba(0,0,0,0.3)` : "none",
-                    }}
-                    onClick={() => isUnread && markRead?.(notif.id)}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = cfg.border}
-                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = isUnread ? cfg.border : "rgba(99,102,241,0.1)"}>
+                  {/* Icon */}
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
+                    style={{ background: dark ? cfg.darkBg : cfg.lightBg, border: `1px solid ${cfg.color}28` }}>
+                    <cfg.icon style={{ width: 17, height: 17, color: cfg.color }} strokeWidth={2} />
+                  </div>
 
-                    {/* Unread accent bar */}
-                    {isUnread && (
-                      <div className="absolute left-0 top-3 bottom-3 w-[3px] rounded-full"
-                        style={{ background: `linear-gradient(180deg,${cfg.color},${cfg.color}55)` }} />
-                    )}
-
-                    <div className="flex items-start gap-3.5 px-4 py-4 pl-5">
-                      {/* Icon */}
-                      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
-                        style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
-                        <Icon className="w-4 h-4" style={{ color: cfg.color }} />
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 mb-0.5">
-                          <p className="text-[13px] font-bold leading-snug line-clamp-1"
-                            style={{ color: isUnread ? "#e2e8f0" : "#94a3b8" }}>
-                            {notif.title ?? notif.message ?? "Notification"}
-                          </p>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            {isUnread && (
-                              <div className="w-1.5 h-1.5 rounded-full mt-0.5"
-                                style={{ background: cfg.color, boxShadow: `0 0 6px ${cfg.color}` }} />
-                            )}
-                            <span className="text-[10.5px] font-medium whitespace-nowrap flex items-center gap-1"
-                              style={{ color: "#475569" }}>
-                              <Clock className="w-3 h-3" />{timeAgo}
-                            </span>
-                          </div>
-                        </div>
-
-                        {notif.body && (
-                          <p className="text-[12px] leading-relaxed line-clamp-2"
-                            style={{ color: isUnread ? "#64748b" : "#334155" }}>
-                            {notif.body}
-                          </p>
-                        )}
-
-                        <div className="flex items-center gap-2 mt-2.5">
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg"
-                            style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
-                            {cfg.label}
-                          </span>
-
-                          {/* Hover actions */}
-                          <div className="ml-auto flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-150">
-                            {isUnread && (
-                              <motion.button whileTap={{ scale: 0.9 }}
-                                onClick={e => { e.stopPropagation(); markRead?.(notif.id) }}
-                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold"
-                                style={{ background: "rgba(99,102,241,0.15)", color: "#a5b4fc", border: "1px solid rgba(99,102,241,0.25)" }}>
-                                <Check className="w-3 h-3" /> Mark read
-                              </motion.button>
-                            )}
-                            <motion.button whileTap={{ scale: 0.9 }}
-                              onClick={e => { e.stopPropagation(); handleDelete(notif.id) }}
-                              className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
-                              style={{ background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.2)" }}>
-                              {deleting === notif.id
-                                ? <div className="w-3 h-3 rounded-full border-2 border-red-400 border-t-transparent animate-spin" />
-                                : <Trash2 className="w-3.5 h-3.5" style={{ color: "#f87171" }} />}
-                            </motion.button>
-                          </div>
-                        </div>
-                      </div>
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                        style={{ background: dark ? cfg.darkBg : cfg.lightBg, color: cfg.color }}>
+                        {cfg.label}
+                      </span>
+                      <span className="text-[11px]" style={{ color: textMuted }}>
+                        {notif.createdAt
+                          ? formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })
+                          : "Just now"}
+                      </span>
                     </div>
-                  </motion.div>
-                )
-              })}
-            </div>
+                    <p className="text-[13.5px] font-medium leading-snug" style={{ color: isUnread ? textMain : textSub }}>
+                      {notif.message}
+                    </p>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {isUnread && (
+                      <motion.button whileTap={{ scale: 0.9 }}
+                        onClick={e => { e.stopPropagation(); markRead?.(notif.id) }}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
+                        style={{ color: "#6366f1" }}
+                        onMouseEnter={e => (e.currentTarget.style.background = dark ? "rgba(99,102,241,0.15)" : "#eef2ff")}
+                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                        title="Mark as read">
+                        <Check style={{ width: 14, height: 14 }} />
+                      </motion.button>
+                    )}
+                    <motion.button whileTap={{ scale: 0.9 }}
+                      onClick={e => { e.stopPropagation(); handleDelete(notif.id) }}
+                      className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
+                      style={{ color: deleting === notif.id ? "#ef4444" : textMuted }}
+                      onMouseEnter={e => { (e.currentTarget.style.background = dark ? "rgba(239,68,68,0.12)" : "#fef2f2"); (e.currentTarget.style.color = "#ef4444") }}
+                      onMouseLeave={e => { (e.currentTarget.style.background = "transparent"); (e.currentTarget.style.color = textMuted) }}
+                      title="Delete">
+                      <Trash2 style={{ width: 14, height: 14 }} />
+                    </motion.button>
+                  </div>
+                </motion.div>
+              )
+            })}
           </AnimatePresence>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

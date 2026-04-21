@@ -1,8 +1,28 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useCallback } from "react"
 import * as THREE from "three"
 
-export default function ThreeFullBackground() {
+export interface ThreeFullBackgroundRef {
+  onHoverForm: (hovering: boolean) => void
+}
+
+interface Props {
+  variant?: "login" | "register"
+  onReady?: (ref: ThreeFullBackgroundRef) => void
+}
+
+export default function ThreeFullBackground({ variant = "login", onReady }: Props) {
   const mountRef = useRef<HTMLDivElement>(null)
+  const hoverRef = useRef(false)
+
+  const handleReady = useCallback(() => {
+    if (onReady) {
+      onReady({
+        onHoverForm: (hovering: boolean) => {
+          hoverRef.current = hovering
+        },
+      })
+    }
+  }, [onReady])
 
   useEffect(() => {
     if (!mountRef.current) return
@@ -19,6 +39,9 @@ export default function ThreeFullBackground() {
     const camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 1000)
     camera.position.z = 30
 
+    const primaryColor   = variant === "register" ? 0xf59e0b : 0x7c3aed
+    const secondaryColor = variant === "register" ? 0xec4899 : 0x38bdf8
+
     // Particles
     const count = 320
     const positions = new Float32Array(count * 3)
@@ -26,14 +49,14 @@ export default function ThreeFullBackground() {
     const geo = new THREE.BufferGeometry()
     geo.setAttribute("position", new THREE.BufferAttribute(positions, 3))
     const mat = new THREE.PointsMaterial({
-      size: 0.35, color: 0x3b82f6, transparent: true, opacity: 0.55,
+      size: 0.35, color: primaryColor, transparent: true, opacity: 0.55,
       sizeAttenuation: true,
     })
     const particles = new THREE.Points(geo, mat)
     scene.add(particles)
 
-    // Lines mesh
-    const lineMat = new THREE.LineBasicMaterial({ color: 0x1d4ed8, transparent: true, opacity: 0.15 })
+    // Lines
+    const lineMat = new THREE.LineBasicMaterial({ color: secondaryColor, transparent: true, opacity: 0.15 })
     const lineGeo = new THREE.BufferGeometry()
     const linePositions: number[] = []
     for (let i = 0; i < 60; i++) {
@@ -45,15 +68,18 @@ export default function ThreeFullBackground() {
     const lines = new THREE.LineSegments(lineGeo, lineMat)
     scene.add(lines)
 
+    handleReady()
+
     let frameId: number
     let t = 0
     const animate = () => {
       frameId = requestAnimationFrame(animate)
       t += 0.004
-      particles.rotation.y = t * 0.06
-      particles.rotation.x = t * 0.03
-      lines.rotation.y = t * 0.04
-      if (mat) mat.opacity = 0.45 + Math.sin(t * 0.8) * 0.1
+      const speed = hoverRef.current ? 0.35 : 1
+      particles.rotation.y = t * 0.06 * speed
+      particles.rotation.x = t * 0.03 * speed
+      lines.rotation.y     = t * 0.04 * speed
+      mat.opacity = 0.45 + Math.sin(t * 0.8) * 0.1
       renderer.render(scene, camera)
     }
     animate()
@@ -76,9 +102,19 @@ export default function ThreeFullBackground() {
       lineMat.dispose()
       if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement)
     }
-  }, [])
+  }, [variant, handleReady])
 
   return (
-    <div ref={mountRef} className="absolute inset-0 w-full h-full" style={{ zIndex: 0, pointerEvents: "none" }} />
+    <div
+      ref={mountRef}
+      className="fixed inset-0 w-full h-full"
+      style={{
+        zIndex: 0,
+        pointerEvents: "none",
+        background: variant === "register"
+          ? "linear-gradient(135deg, #0a0612 0%, #130a1e 40%, #0d0a18 100%)"
+          : "linear-gradient(135deg, #03000e 0%, #0d0521 40%, #06011a 100%)",
+      }}
+    />
   )
 }

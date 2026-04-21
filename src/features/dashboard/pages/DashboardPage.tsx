@@ -1,438 +1,370 @@
-import { useEffect, useRef, useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { motion } from "framer-motion"
-import gsap from "gsap"
 import {
-  BookOpen, Users, Bell, TrendingUp, ChevronRight,
-  Plus, Clock, Zap, Award, BarChart3, GraduationCap,
-  ArrowUpRight, Layers, Target, Flame, Calendar,
-  Activity, Star, CheckCircle2
+  BookOpen, Users, TrendingUp, Plus, Clock,
+  Award, GraduationCap, ArrowUpRight, Target, Flame,
+  Calendar, ChevronRight, Sparkles, Bell,
 } from "lucide-react"
 import { useAuthStore } from "@/store/authStore"
+import { useThemeStore } from "@/store/themeStore"
 import { useCourses } from "@/features/courses/hooks/useCourses"
 import { isTeacher } from "@/utils/roleGuard"
 import { ROUTES } from "@/config/constants"
-import ThreeHeroCanvas from "@/components/three/ThreeHeroCanvas"
 
-const CARD_GLOW = [
-  { color: "#3b82f6", shadow: "rgba(59,130,246,0.3)",  bg: "rgba(30,58,138,0.3)",  border: "rgba(59,130,246,0.22)" },
-  { color: "#34d399", shadow: "rgba(52,211,153,0.25)", bg: "rgba(5,150,105,0.2)",  border: "rgba(52,211,153,0.22)" },
-  { color: "#f59e0b", shadow: "rgba(245,158,11,0.25)", bg: "rgba(217,119,6,0.2)",  border: "rgba(245,158,11,0.22)" },
-  { color: "#a78bfa", shadow: "rgba(167,139,250,0.25)",bg: "rgba(124,58,237,0.2)", border: "rgba(167,139,250,0.22)" },
-]
+const fade = (delay = 0) => ({
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.35, ease: [0.25,0.46,0.45,0.94], delay },
+})
 
-function LiveClock() {
-  const [time, setTime] = useState(new Date())
-  useEffect(() => {
-    const id = setInterval(() => setTime(new Date()), 1000)
-    return () => clearInterval(id)
-  }, [])
-  const pad = (n: number) => String(n).padStart(2, "0")
+function LiveClock({ dark }: { dark: boolean }) {
+  const [t, setT] = useState(new Date())
+  useEffect(() => { const id = setInterval(() => setT(new Date()), 1000); return () => clearInterval(id) }, [])
+  const p = (n: number) => String(n).padStart(2, "0")
   return (
-    <div className="flex items-center gap-1.5">
-      <Clock className="w-3.5 h-3.5" style={{ color: "#3b82f6" }} />
-      <span className="text-[12px] font-bold font-mono" style={{ color: "#94a3b8" }}>
-        {pad(time.getHours())}:{pad(time.getMinutes())}:{pad(time.getSeconds())}
-      </span>
-    </div>
+    <span className="font-mono text-[12px]" style={{ color: dark ? "rgba(255,255,255,0.4)" : "#9ca3af" }}>
+      {p(t.getHours())}:{p(t.getMinutes())}:{p(t.getSeconds())}
+    </span>
   )
 }
 
+const PALETTE = [
+  { color: "#6366f1", light: "#eef2ff", border: "#c7d2fe", darkBg: "rgba(99,102,241,0.12)",  darkBorder: "rgba(99,102,241,0.25)", text: "#4338ca" },
+  { color: "#0891b2", light: "#ecfeff", border: "#a5f3fc", darkBg: "rgba(8,145,178,0.12)",   darkBorder: "rgba(6,182,212,0.25)",  text: "#0e7490" },
+  { color: "#d97706", light: "#fffbeb", border: "#fde68a", darkBg: "rgba(217,119,6,0.12)",   darkBorder: "rgba(251,191,36,0.25)", text: "#b45309" },
+  { color: "#059669", light: "#ecfdf5", border: "#a7f3d0", darkBg: "rgba(5,150,105,0.12)",   darkBorder: "rgba(16,185,129,0.25)", text: "#047857" },
+]
+
 export default function DashboardPage() {
-  const { user } = useAuthStore()
+  const { user }   = useAuthStore()
+  const { dark }   = useThemeStore()
   const { courses, isLoading } = useCourses()
-  const teacher = isTeacher(user?.role ?? "Student")
+  const teacher    = isTeacher(user?.role ?? "Student")
 
-  const firstName = user?.profile?.fullName?.split(" ")[0] ?? "there"
-  const hour = new Date().getHours()
-  const timeLabel = hour < 12 ? "Morning" : hour < 17 ? "Afternoon" : "Evening"
-  const timeGreeting = hour < 12 ? "Rise & shine" : hour < 17 ? "Hope your day is going well" : "Great work today"
-  const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })
-
-  // Effect 1: Hero elements — always present on mount
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.fromTo(".dash-hero-text",
-        { opacity: 0, y: 28, filter: "blur(4px)" },
-        { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.9, ease: "power3.out", stagger: 0.1 }
-      )
-      gsap.fromTo(".action-btn",
-        { opacity: 0, x: -16, scale: 0.95 },
-        { opacity: 1, x: 0, scale: 1, duration: 0.4, ease: "back.out(1.5)", stagger: 0.07, delay: 0.42 }
-      )
-    })
-    return () => ctx.revert()
-  }, [])
-
-  // Effect 2: Data-dependent elements — wait for courses to load
-  useEffect(() => {
-    if (isLoading) return
-    const ctx = gsap.context(() => {
-      const statCards = gsap.utils.toArray<HTMLElement>(".stat-card")
-      if (statCards.length) {
-        gsap.fromTo(statCards,
-          { opacity: 0, y: 44, scale: 0.93 },
-          { opacity: 1, y: 0, scale: 1, duration: 0.65, ease: "power3.out", stagger: 0.09, delay: 0.1 }
-        )
-        gsap.to(".stat-glow", {
-          opacity: 0.65, duration: 2.2, repeat: -1, yoyo: true, ease: "sine.inOut", stagger: 0.55
-        })
-      }
-      const courseCards = gsap.utils.toArray<HTMLElement>(".course-card")
-      if (courseCards.length) {
-        gsap.fromTo(courseCards,
-          { opacity: 0, y: 28, scale: 0.97 },
-          { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "power3.out", stagger: 0.08, delay: 0.2 }
-        )
-      }
-    })
-    return () => ctx.revert()
-  }, [isLoading, courses])
-
-  const totalCourses = courses.length
+  const firstName     = user?.profile?.fullName?.split(" ")[0] ?? "there"
+  const hour          = new Date().getHours()
+  const greeting      = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening"
+  const today         = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })
+  const totalCourses  = courses.length
   const activeCourses = courses.filter((c: any) => !c.isArchived).length
-  const recentCourses = courses.slice(0, 6)
+  const totalStudents = courses.reduce((a: number, c: any) => a + (c.enrolledCount ?? c.memberCount ?? c.membersCount ?? 0), 0)
+  const recent        = courses.slice(0, 6)
+
+  // Theme-aware card style
+  const card = {
+    background:          dark ? "rgba(16,24,44,0.7)"  : "rgba(255,255,255,0.85)",
+    backdropFilter:      "blur(20px)",
+    WebkitBackdropFilter:"blur(20px)",
+  }
+  const cardBorder = (color?: string) => dark
+    ? `1px solid ${color ?? "rgba(99,102,241,0.15)"}`
+    : `1px solid ${color ?? "#e5e7eb"}`
+
+  const textMain  = dark ? "#e2e8f8" : "#111827"
+  const textSub   = dark ? "#8896c8" : "#6b7280"
+  const textMuted = dark ? "#5a6a9a" : "#9ca3af"
 
   const STATS = teacher
     ? [
-        { label: "Total Courses",  value: totalCourses, icon: BookOpen,   idx: 0, trend: "+2 this month" },
-        { label: "Total Students", value: courses.reduce((a: number, c: any) => a + (c.enrolledCount ?? (c as any).memberCount ?? (c as any).membersCount ?? (c as any).enrolledCount ?? 0), 0), icon: Users, idx: 1, trend: "across all courses" },
-        { label: "Active Courses", value: activeCourses, icon: Flame,     idx: 2, trend: `${totalCourses - activeCourses} archived` },
-        { label: "Avg Engagement", value: "87%",         icon: TrendingUp, idx: 3, trend: "? 4% this week" },
+        { label: "Total Courses",  value: totalCourses,   icon: BookOpen,   ...PALETTE[0], sub: "+2 this month"     },
+        { label: "Total Students", value: totalStudents,  icon: Users,      ...PALETTE[1], sub: "all courses"       },
+        { label: "Active Courses", value: activeCourses,  icon: Flame,      ...PALETTE[2], sub: `${totalCourses - activeCourses} archived` },
+        { label: "Avg Engagement", value: "87%",          icon: TrendingUp, ...PALETTE[3], sub: "+4% this week"     },
       ]
     : [
-        { label: "Enrolled",      value: totalCourses,  icon: BookOpen, idx: 0, trend: "active courses" },
-        { label: "In Progress",   value: activeCourses, icon: Target,   idx: 1, trend: "keep going!" },
-        { label: "Achievements",  value: 0,             icon: Award,    idx: 2, trend: "complete tasks" },
-        { label: "Hours Learned", value: "—",           icon: Clock,    idx: 3, trend: "coming soon" },
-      ]
-
-  const ACTIONS = teacher
-    ? [
-        { label: "Create Course",  icon: Plus,      to: ROUTES.COURSES, accent: "#3b82f6", glow: "rgba(59,130,246,0.35)" },
-        { label: "View Analytics", icon: BarChart3,  to: ROUTES.COURSES, accent: "#34d399", glow: "rgba(52,211,153,0.3)" },
-        { label: "My Courses",     icon: Layers,     to: ROUTES.COURSES, accent: "#a78bfa", glow: "rgba(167,139,250,0.3)" },
-      ]
-    : [
-        { label: "Join a Course",  icon: Plus,          to: ROUTES.COURSES, accent: "#3b82f6", glow: "rgba(59,130,246,0.35)" },
-        { label: "Browse Courses", icon: GraduationCap, to: ROUTES.COURSES, accent: "#34d399", glow: "rgba(52,211,153,0.3)" },
-        { label: "My Progress",    icon: TrendingUp,    to: ROUTES.COURSES, accent: "#a78bfa", glow: "rgba(167,139,250,0.3)" },
+        { label: "Enrolled",       value: totalCourses,   icon: BookOpen,   ...PALETTE[0], sub: "active courses"    },
+        { label: "In Progress",    value: activeCourses,  icon: Target,     ...PALETTE[1], sub: "keep going!"       },
+        { label: "Achievements",   value: 0,              icon: Award,      ...PALETTE[2], sub: "complete tasks"    },
+        { label: "Hours Learned",  value: "--",           icon: Clock,      ...PALETTE[3], sub: "coming soon"       },
       ]
 
   return (
-    <div className="min-h-full relative"
-      style={{ background: "linear-gradient(180deg,#060d1f 0%,#07102b 60%,#060d1f 100%)" }}>
+    <div className="min-h-full p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
 
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-20 -left-20 w-96 h-96 rounded-full"
-          style={{ background: "radial-gradient(circle,rgba(37,99,235,0.07) 0%,transparent 70%)", filter: "blur(40px)" }} />
-        <div className="absolute top-1/3 right-0 w-72 h-72 rounded-full"
-          style={{ background: "radial-gradient(circle,rgba(52,211,153,0.04) 0%,transparent 70%)", filter: "blur(40px)" }} />
-      </div>
-
-      <div className="relative z-10 p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
-
-        {/* -- Hero Banner -- */}
-        <div className="relative rounded-3xl overflow-hidden"
-          style={{
-            background: "linear-gradient(135deg,rgba(8,20,60,0.92) 0%,rgba(6,13,31,0.95) 100%)",
-            border: "1px solid rgba(59,130,246,0.18)",
-            boxShadow: "0 8px 48px rgba(0,0,0,0.55), inset 0 1px 0 rgba(59,130,246,0.12)",
-            minHeight: 210,
-          }}>
-
-          {/* THREE.JS STAR CANVAS — interactive gold square particles */}
-          <ThreeHeroCanvas />
-
-          {/* Subtle grid overlay on top of canvas */}
-          <div className="absolute inset-0 pointer-events-none"
-            style={{
-              backgroundImage: "linear-gradient(rgba(59,130,246,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.04) 1px,transparent 1px)",
-              backgroundSize: "54px 54px",
-              maskImage: "linear-gradient(to right,transparent,black 15%,black 85%,transparent)",
-              zIndex: 1,
-            }} />
-
-          {/* Fade edges */}
-          <div className="absolute inset-0 pointer-events-none" style={{
-            background: "linear-gradient(to right,rgba(6,13,31,0.6) 0%,transparent 25%,transparent 75%,rgba(6,13,31,0.6) 100%)",
-            zIndex: 2,
+      {/* -- Hero banner -- */}
+      <motion.div {...fade(0)}
+        className="relative rounded-3xl overflow-hidden p-7 lg:p-8"
+        style={{
+          background: "linear-gradient(135deg, #6366f1 0%, #0891b2 100%)",
+          boxShadow: "0 8px 40px rgba(99,102,241,0.35)",
+        }}
+      >
+        {/* Decoration circles */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full" style={{ background: "rgba(255,255,255,0.07)" }} />
+          <div className="absolute top-8 right-32 w-28 h-28 rounded-full" style={{ background: "rgba(255,255,255,0.05)" }} />
+          <div className="absolute -bottom-10 left-1/3 w-40 h-40 rounded-full" style={{ background: "rgba(255,255,255,0.04)" }} />
+          <div className="absolute top-0 left-0 right-0 bottom-0" style={{
+            backgroundImage: "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
+            backgroundSize: "40px 40px",
           }} />
-
-          <div className="relative p-8 flex flex-col lg:flex-row lg:items-center gap-6" style={{ zIndex: 3 }}>
-            <div className="flex-1 space-y-4">
-              <div className="dash-hero-text flex items-center gap-3 flex-wrap">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full"
-                  style={{ background: "rgba(37,99,235,0.2)", border: "1px solid rgba(59,130,246,0.3)" }}>
-                  <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#34d399" }} />
-                  <span className="text-[11px] font-bold tracking-widest uppercase" style={{ color: "#60a5fa" }}>
-                    Good {timeLabel}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-                  style={{ background: "rgba(15,23,42,0.6)", border: "1px solid rgba(59,130,246,0.12)" }}>
-                  <Calendar className="w-3 h-3" style={{ color: "#475569" }} />
-                  <span className="text-[11px] font-semibold" style={{ color: "#475569" }}>{today}</span>
-                </div>
-                <LiveClock />
-              </div>
-
-              <div className="dash-hero-text">
-                <h1 className="text-3xl lg:text-[2.6rem] font-extrabold tracking-tight leading-tight"
-                  style={{ background: "linear-gradient(135deg,#fff 0%,#93c5fd 55%,#34d399 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                  Welcome back, {firstName}!
-                </h1>
-                <p className="text-[13.5px] font-medium mt-2" style={{ color: "#475569" }}>
-                  {timeGreeting}. {teacher
-                    ? `You have ${activeCourses} active course${activeCourses !== 1 ? "s" : ""} — keep inspiring.`
-                    : `You are enrolled in ${totalCourses} course${totalCourses !== 1 ? "s" : ""} — keep learning!`}
-                </p>
-              </div>
-
-              <div className="dash-hero-text flex flex-wrap gap-2.5">
-                {ACTIONS.map(a => (
-                  <Link key={a.label} to={a.to}>
-                    <motion.div
-                      className="action-btn flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-[13px] cursor-pointer select-none"
-                      style={{ background: `${a.accent}15`, border: `1px solid ${a.accent}30`, color: a.accent }}
-                      whileHover={{ scale: 1.05, y: -2, boxShadow: `0 6px 20px ${a.glow}` }}
-                      whileTap={{ scale: 0.96 }}>
-                      <a.icon className="w-4 h-4" strokeWidth={2.5} />
-                      {a.label}
-                    </motion.div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            <div className="shrink-0 flex flex-col items-center gap-4">
-              <motion.div
-                animate={{ y: [0, -6, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="w-20 h-20 rounded-3xl flex items-center justify-center relative"
-                style={{
-                  background: "linear-gradient(135deg,#1d4ed8 0%,#06b6d4 100%)",
-                  boxShadow: "0 8px 36px rgba(37,99,235,0.55), 0 0 0 1px rgba(59,130,246,0.35), inset 0 1px 0 rgba(255,255,255,0.15)",
-                }}>
-                <GraduationCap className="w-10 h-10 text-white" strokeWidth={1.5} />
-                <div className="absolute -inset-1 rounded-3xl"
-                  style={{ background: "conic-gradient(from 0deg,rgba(59,130,246,0.3),rgba(6,182,212,0.3),transparent,rgba(59,130,246,0.3))", filter: "blur(6px)", zIndex: -1 }} />
-              </motion.div>
-              <div className="text-center">
-                <p className="text-[13px] font-extrabold" style={{ color: "#e2e8f0" }}>{user?.role ?? "Student"}</p>
-                <p className="text-[11px] mt-0.5" style={{ color: "#3b82f6" }}>{user?.profile?.fullName}</p>
-              </div>
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
-                style={{ background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.2)" }}>
-                <Activity className="w-3 h-3" style={{ color: "#34d399" }} />
-                <span className="text-[11px] font-bold" style={{ color: "#34d399" }}>Online</span>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* -- Stats -- */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {STATS.map((s) => {
-            const g = CARD_GLOW[s.idx]
-            return (
-              <motion.div key={s.label}
-                className="stat-card relative rounded-2xl p-5 flex flex-col gap-2 overflow-hidden cursor-default"
-                style={{ background: `linear-gradient(135deg,${g.bg} 0%,rgba(6,13,31,0.6) 100%)`, border: `1px solid ${g.border}`, boxShadow: `0 4px 24px ${g.shadow}` }}
-                whileHover={{ scale: 1.03, y: -3, boxShadow: `0 12px 40px ${g.shadow}` }}>
-                <div className="stat-glow absolute -top-4 -right-4 w-20 h-20 rounded-full pointer-events-none opacity-40"
-                  style={{ background: `radial-gradient(circle,${g.color}40 0%,transparent 70%)`, filter: "blur(12px)" }} />
-                <div className="flex items-start justify-between">
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center"
-                    style={{ background: `${g.color}18`, border: `1px solid ${g.border}` }}>
-                    <s.icon className="w-5 h-5" style={{ color: g.color }} strokeWidth={2} />
-                  </div>
-                  <TrendingUp className="w-3.5 h-3.5 opacity-30" style={{ color: g.color }} />
-                </div>
-                <div>
-                  <p className="text-[26px] font-extrabold leading-none" style={{ color: "#f1f5f9" }}>
-                    {isLoading ? (
-                      <span className="inline-block w-12 h-6 rounded-lg animate-pulse" style={{ background: `${g.color}20` }} />
-                    ) : s.value}
-                  </p>
-                  <p className="text-[12px] font-bold mt-1" style={{ color: "#64748b" }}>{s.label}</p>
-                </div>
-                <p className="text-[10.5px] font-semibold" style={{ color: `${g.color}90` }}>{s.trend}</p>
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
-                  style={{ background: `linear-gradient(90deg,${g.color}50,transparent)` }} />
-              </motion.div>
-            )
-          })}
-        </div>
-
-        {/* -- Courses + Side Panel -- */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-2">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-[17px] font-extrabold" style={{ color: "#e2e8f0" }}>
-                  {teacher ? "Your Courses" : "Enrolled Courses"}
-                </h2>
-                <p className="text-[12px] mt-0.5" style={{ color: "#475569" }}>
-                  {recentCourses.length} shown &middot; {activeCourses} active
-                </p>
-              </div>
+        <div className="relative flex flex-col lg:flex-row lg:items-center gap-6">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 flex-wrap mb-3">
+              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold"
+                style={{ background: "rgba(255,255,255,0.2)", color: "white" }}>
+                <div className="w-1.5 h-1.5 rounded-full bg-green-300 animate-pulse" />
+                {greeting}
+              </span>
+              <span className="text-[12px] font-medium" style={{ color: "rgba(255,255,255,0.65)" }}>{today}</span>
+              <LiveClock dark={true} />
+            </div>
+            <h1 className="text-[28px] lg:text-[34px] font-extrabold text-white tracking-tight leading-tight mb-1.5">
+              Welcome back, {firstName}!
+            </h1>
+            <p className="text-[14px] mb-5" style={{ color: "rgba(255,255,255,0.72)" }}>
+              {teacher
+                ? `You have ${activeCourses} active course${activeCourses !== 1 ? "s" : ""} - keep inspiring your students.`
+                : `You are enrolled in ${totalCourses} course${totalCourses !== 1 ? "s" : ""} - keep learning!`}
+            </p>
+            <div className="flex items-center gap-3 flex-wrap">
+              <Link to={teacher ? "/courses/create" : ROUTES.COURSES}>
+                <motion.div whileHover={{ scale: 1.04, y: -1 }} whileTap={{ scale: 0.96 }}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[13px] font-bold cursor-pointer"
+                  style={{ background: "white", color: "#6366f1", boxShadow: "0 4px 16px rgba(0,0,0,0.18)" }}>
+                  <Plus style={{ width: 15, height: 15 }} strokeWidth={2.5} />
+                  {teacher ? "Create Course" : "Join Course"}
+                </motion.div>
+              </Link>
               <Link to={ROUTES.COURSES}>
-                <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[13px] font-bold cursor-pointer"
-                  style={{ background: "rgba(30,58,138,0.25)", border: "1px solid rgba(59,130,246,0.2)", color: "#60a5fa" }}>
-                  View all <ArrowUpRight className="w-3.5 h-3.5" />
+                <motion.div whileHover={{ scale: 1.04, y: -1 }} whileTap={{ scale: 0.96 }}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[13px] font-bold cursor-pointer"
+                  style={{ background: "rgba(255,255,255,0.18)", color: "white", border: "1px solid rgba(255,255,255,0.28)" }}>
+                  <BookOpen style={{ width: 15, height: 15 }} strokeWidth={2} />
+                  {teacher ? "My Courses" : "Browse Courses"}
                 </motion.div>
               </Link>
             </div>
-
-            {isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="h-36 rounded-2xl animate-pulse"
-                    style={{ background: "rgba(30,58,138,0.12)", border: "1px solid rgba(59,130,246,0.07)" }} />
-                ))}
-              </div>
-            ) : recentCourses.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-14 rounded-2xl"
-                style={{ background: "rgba(10,22,40,0.4)", border: "1px dashed rgba(59,130,246,0.15)" }}>
-                <BookOpen className="w-10 h-10 mb-3" style={{ color: "rgba(59,130,246,0.25)" }} strokeWidth={1} />
-                <p className="text-[15px] font-bold" style={{ color: "#334155" }}>No courses yet</p>
-                <p className="text-[13px] mt-1 mb-4" style={{ color: "#475569" }}>
-                  {teacher ? "Create your first course" : "Join a course to begin"}
-                </p>
-                <Link to={ROUTES.COURSES}>
-                  <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer"
-                    style={{ background: "linear-gradient(135deg,#1d4ed8,#2563eb)", color: "#fff", boxShadow: "0 4px 20px rgba(37,99,235,0.4)" }}>
-                    <Plus className="w-4 h-4" /> {teacher ? "Create Course" : "Join a Course"}
-                  </motion.div>
-                </Link>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {recentCourses.map((course: any, i: number) => {
-                  const g = CARD_GLOW[i % 4]
-                  return (
-                    <Link key={course.id} to={`/courses/${course.id}/stream`}>
-                      <motion.div
-                        className="course-card relative rounded-2xl p-5 cursor-pointer overflow-hidden group"
-                        style={{
-                          background: "linear-gradient(135deg,rgba(10,22,40,0.8) 0%,rgba(6,13,31,0.92) 100%)",
-                          border: `1px solid ${g.border}`,
-                          boxShadow: "0 4px 20px rgba(0,0,0,0.35)",
-                        }}
-                        whileHover={{ scale: 1.025, y: -4, borderColor: g.color + "55", boxShadow: `0 16px 48px ${g.shadow}` }}
-                        transition={{ duration: 0.2 }}>
-                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                          style={{ background: `linear-gradient(105deg,transparent 30%,${g.color}06 50%,transparent 70%)` }} />
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                            style={{ background: g.bg, border: `1px solid ${g.border}` }}>
-                            <BookOpen className="w-5 h-5" style={{ color: g.color }} strokeWidth={2} />
-                          </div>
-                          <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity"
-                            style={{ color: g.color }} />
-                        </div>
-                        <h3 className="text-[14px] font-bold leading-snug mb-1 line-clamp-2" style={{ color: "#e2e8f0" }}>
-                          {course.title ?? course.name ?? "Untitled Course"}
-                        </h3>
-                        <p className="text-[11.5px] line-clamp-1 mb-3" style={{ color: "#475569" }}>
-                          {(course as any).description ?? (course as any).section ?? "No description"}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5">
-                            <Users className="w-3.5 h-3.5" style={{ color: "#475569" }} />
-                            <span className="text-[11px] font-semibold" style={{ color: "#475569" }}>
-                              {course.enrolledCount ?? (course as any).memberCount ?? (course as any).membersCount ?? (course as any).enrolledCount ?? (course as any).totalMembers ?? 0} members
-                            </span>
-                          </div>
-                          {(course as any).isArchived ?? false ? (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                              style={{ background: "rgba(71,85,105,0.2)", color: "#64748b", border: "1px solid rgba(71,85,105,0.25)" }}>
-                              Archived
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                              style={{ background: `${g.color}15`, color: g.color, border: `1px solid ${g.color}28` }}>
-                              <CheckCircle2 className="w-2.5 h-2.5" /> Active
-                            </span>
-                          )}
-                        </div>
-                        <div className="absolute bottom-0 left-0 right-0 h-[2px] rounded-b-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                          style={{ background: `linear-gradient(90deg,transparent,${g.color}60,transparent)` }} />
-                      </motion.div>
-                    </Link>
-                  )
-                })}
-              </div>
-            )}
           </div>
+          <motion.div
+            animate={{ y: [0, -8, 0] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="hidden lg:flex w-24 h-24 rounded-3xl items-center justify-center shrink-0"
+            style={{ background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.28)", backdropFilter: "blur(10px)" }}
+          >
+            <GraduationCap className="w-12 h-12 text-white" strokeWidth={1.5} />
+          </motion.div>
+        </div>
+      </motion.div>
 
-          {/* Right panel */}
-          <div className="space-y-4">
-            <div className="rounded-2xl p-5"
-              style={{ background: "rgba(10,22,40,0.65)", border: "1px solid rgba(59,130,246,0.1)" }}>
-              <div className="flex items-center gap-2 mb-4">
-                <Star className="w-4 h-4" style={{ color: "#f59e0b" }} />
-                <h3 className="text-[13px] font-extrabold" style={{ color: "#e2e8f0" }}>Quick Stats</h3>
+      {/* -- Stats -- */}
+      <motion.div {...fade(0.06)} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {STATS.map((s, i) => (
+          <motion.div key={s.label}
+            initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + i * 0.06 }}
+            whileHover={{ y: -3, boxShadow: `0 12px 32px ${s.color}28` }}
+            className="rounded-2xl p-5 cursor-default"
+            style={{
+              ...card,
+              border: cardBorder(dark ? s.darkBorder : s.border),
+            }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ background: dark ? s.darkBg : s.light }}>
+                <s.icon style={{ width: 18, height: 18, color: s.color }} strokeWidth={2} />
               </div>
-              <div className="space-y-3">
-                {[
-                  { label: "Courses Active",  val: activeCourses, color: "#3b82f6", pct: Math.min((activeCourses / Math.max(totalCourses, 1)) * 100, 100) },
-                  { label: "Completion Rate", val: "—",           color: "#34d399", pct: 0 },
-                  { label: "Total Members",   val: courses.reduce((a: number, c: any) => a + (c.enrolledCount ?? (c as any).memberCount ?? (c as any).membersCount ?? (c as any).enrolledCount ?? 0), 0), color: "#a78bfa", pct: 60 },
-                ].map(row => (
-                  <div key={row.label}>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-[11.5px] font-semibold" style={{ color: "#64748b" }}>{row.label}</span>
-                      <span className="text-[11.5px] font-bold" style={{ color: row.color }}>{row.val}</span>
-                    </div>
-                    <div className="w-full h-1.5 rounded-full" style={{ background: "rgba(59,130,246,0.08)" }}>
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${row.pct}%` }}
-                        transition={{ duration: 1.2, delay: 0.8, ease: "circOut" }}
-                        className="h-full rounded-full"
-                        style={{ background: `linear-gradient(90deg,${row.color},${row.color}80)` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                style={{ background: dark ? s.darkBg : s.light, color: s.color }}>
+                {s.sub}
+              </span>
             </div>
+            <p className="text-[28px] font-extrabold leading-none" style={{ color: textMain }}>
+              {isLoading
+                ? <span className="inline-block w-12 h-7 rounded-lg animate-pulse" style={{ background: dark ? s.darkBg : s.light }} />
+                : s.value}
+            </p>
+            <p className="text-[12px] font-medium mt-1" style={{ color: textSub }}>{s.label}</p>
+          </motion.div>
+        ))}
+      </motion.div>
 
-            <Link to="/notifications">
-              <motion.div whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.98 }}
-                className="rounded-2xl p-5 cursor-pointer"
-                style={{ background: "rgba(30,58,138,0.2)", border: "1px solid rgba(59,130,246,0.15)" }}>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Bell className="w-4 h-4" style={{ color: "#3b82f6" }} />
-                    <span className="text-[13px] font-extrabold" style={{ color: "#e2e8f0" }}>Notifications</span>
-                  </div>
-                  <ArrowUpRight className="w-3.5 h-3.5" style={{ color: "#3b82f6" }} />
-                </div>
-                <p className="text-[11.5px]" style={{ color: "#475569" }}>Check your latest updates and announcements.</p>
+      {/* -- Courses + Side panel -- */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+        {/* Courses */}
+        <motion.div {...fade(0.12)} className="xl:col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-[16px] font-bold" style={{ color: textMain }}>
+                {teacher ? "Your Courses" : "Enrolled Courses"}
+              </h2>
+              <p className="text-[12px] mt-0.5" style={{ color: textMuted }}>
+                {recent.length} shown - {activeCourses} active
+              </p>
+            </div>
+            <Link to={ROUTES.COURSES}>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[12px] font-semibold cursor-pointer"
+                style={{ background: dark ? "rgba(99,102,241,0.15)" : "#eef2ff", color: "#6366f1", border: cardBorder(dark ? "rgba(99,102,241,0.3)" : "#c7d2fe") }}>
+                View all <ArrowUpRight style={{ width: 13, height: 13 }} />
               </motion.div>
             </Link>
+          </div>
 
-            <div className="rounded-2xl p-4 flex items-center justify-between"
-              style={{ background: "rgba(6,13,31,0.65)", border: "1px solid rgba(59,130,246,0.07)" }}>
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4" style={{ color: "#3b82f6" }} />
-                <span className="text-[11.5px] font-semibold" style={{ color: "#475569" }}>EduNexis v2.0</span>
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-32 rounded-2xl animate-pulse"
+                  style={{ background: dark ? "rgba(99,102,241,0.08)" : "#f3f4f6" }} />
+              ))}
+            </div>
+          ) : recent.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 rounded-2xl"
+              style={{ ...card, border: `2px dashed ${dark ? "rgba(99,102,241,0.2)" : "#e5e7eb"}` }}>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3"
+                style={{ background: dark ? "rgba(99,102,241,0.15)" : "#eef2ff" }}>
+                <BookOpen style={{ width: 24, height: 24, color: "#6366f1" }} strokeWidth={1.5} />
               </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#34d399" }} />
-                <span className="text-[10.5px] font-bold" style={{ color: "#34d399" }}>All systems up</span>
+              <p className="text-[15px] font-semibold mb-1" style={{ color: textMain }}>No courses yet</p>
+              <p className="text-[13px] mb-5" style={{ color: textSub }}>
+                {teacher ? "Create your first course to get started" : "Join a course to begin learning"}
+              </p>
+              <Link to={teacher ? "/courses/create" : ROUTES.COURSES}>
+                <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer text-white"
+                  style={{ background: "#6366f1", boxShadow: "0 4px 16px rgba(99,102,241,0.4)" }}>
+                  <Plus style={{ width: 15, height: 15 }} />
+                  {teacher ? "Create Course" : "Join a Course"}
+                </motion.div>
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {recent.map((course: any, i: number) => {
+                const p = PALETTE[i % 4]
+                return (
+                  <Link key={course.id} to={`/courses/${course.id}/stream`}>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.14 + i * 0.05 }}
+                      whileHover={{ y: -3, boxShadow: `0 12px 32px ${p.color}22` }}
+                      className="group rounded-2xl p-5 cursor-pointer"
+                      style={{ ...card, border: cardBorder(dark ? p.darkBorder : p.border) }}
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                          style={{ background: dark ? p.darkBg : p.light }}>
+                          <BookOpen style={{ width: 17, height: 17, color: p.color }} strokeWidth={2} />
+                        </div>
+                        <ChevronRight style={{ width: 15, height: 15, color: textMuted }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                      <h3 className="text-[14px] font-semibold line-clamp-2 leading-snug mb-1"
+                        style={{ color: textMain }}>
+                        {course.title ?? course.name ?? "Untitled Course"}
+                      </h3>
+                      <p className="text-[12px] line-clamp-1 mb-3" style={{ color: textMuted }}>
+                        {course.description ?? course.courseCode ?? course.section ?? "No description"}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <Users style={{ width: 13, height: 13, color: textMuted }} />
+                          <span className="text-[11px]" style={{ color: textMuted }}>
+                            {course.enrolledCount ?? course.memberCount ?? course.membersCount ?? 0} members
+                          </span>
+                        </div>
+                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                          style={course.isArchived
+                            ? { background: dark ? "rgba(255,255,255,0.06)" : "#f3f4f6", color: textMuted }
+                            : { background: dark ? p.darkBg : p.light, color: p.color }
+                          }>
+                          {course.isArchived ? "Archived" : "Active"}
+                        </span>
+                      </div>
+                    </motion.div>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
+        </motion.div>
+
+        {/* Right panel */}
+        <motion.div {...fade(0.18)} className="space-y-4">
+
+          {/* Profile card */}
+          <div className="rounded-2xl p-5" style={{ ...card, border: cardBorder() }}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-[16px] font-bold text-white shrink-0"
+                style={{ background: "linear-gradient(135deg,#6366f1,#06b6d4)" }}>
+                {(user?.profile?.fullName ?? user?.email ?? "U").charAt(0).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-semibold leading-tight truncate" style={{ color: textMain }}>
+                  {user?.profile?.fullName ?? "User"}
+                </p>
+                <p className="text-[11px] mt-0.5 truncate" style={{ color: textMuted }}>
+                  {user?.email}
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full shrink-0"
+                style={{ background: dark ? "rgba(16,185,129,0.15)" : "#ecfdf5", border: dark ? "1px solid rgba(16,185,129,0.3)" : "1px solid #a7f3d0" }}>
+                <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#10b981" }} />
+                <span className="text-[10px] font-bold" style={{ color: "#10b981" }}>Online</span>
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: "Courses", val: totalCourses,  ...PALETTE[0] },
+                { label: "Active",  val: activeCourses, ...PALETTE[3] },
+              ].map(s => (
+                <div key={s.label} className="rounded-xl p-3 text-center"
+                  style={{ background: dark ? s.darkBg : s.light, border: cardBorder(dark ? s.darkBorder : s.border) }}>
+                  <p className="text-[22px] font-extrabold" style={{ color: s.color }}>{s.val}</p>
+                  <p className="text-[11px] mt-0.5 font-medium" style={{ color: dark ? s.color + "bb" : s.text }}>{s.label}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+
+          {/* Notifications */}
+          <Link to="/notifications">
+            <motion.div whileHover={{ y: -2 }}
+              className="rounded-2xl p-4 cursor-pointer flex items-center gap-3"
+              style={{ ...card, border: cardBorder() }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ background: dark ? "rgba(99,102,241,0.15)" : "#eef2ff" }}>
+                <Bell style={{ width: 18, height: 18, color: "#6366f1" }} />
+              </div>
+              <div className="flex-1">
+                <p className="text-[13px] font-semibold" style={{ color: textMain }}>Notifications</p>
+                <p className="text-[11px] mt-0.5" style={{ color: textMuted }}>Check latest updates</p>
+              </div>
+              <ArrowUpRight style={{ width: 14, height: 14, color: textMuted }} />
+            </motion.div>
+          </Link>
+
+          {/* System status */}
+          <div className="rounded-2xl p-4 flex items-center justify-between"
+            style={{ ...card, border: cardBorder() }}>
+            <div className="flex items-center gap-2">
+              <Sparkles style={{ width: 14, height: 14, color: "#6366f1" }} />
+              <span className="text-[12px] font-semibold" style={{ color: textSub }}>EduNexis v2.0</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#10b981" }} />
+              <span className="text-[11px] font-semibold" style={{ color: "#10b981" }}>All systems up</span>
+            </div>
+          </div>
+
+          {/* Date */}
+          <div className="rounded-2xl p-4"
+            style={{ background: dark ? "rgba(99,102,241,0.1)" : "linear-gradient(135deg,#eef2ff,#ecfeff)", border: cardBorder(dark ? "rgba(99,102,241,0.2)" : "#c7d2fe") }}>
+            <div className="flex items-center gap-2 mb-1">
+              <Calendar style={{ width: 14, height: 14, color: "#6366f1" }} />
+              <span className="text-[12px] font-bold" style={{ color: "#6366f1" }}>Today</span>
+            </div>
+            <p className="text-[12px] font-medium" style={{ color: textSub }}>
+              {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+            </p>
+          </div>
+        </motion.div>
       </div>
     </div>
   )
 }
-
-
-

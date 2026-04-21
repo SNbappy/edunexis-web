@@ -1,48 +1,55 @@
-﻿import { useEffect, useRef } from 'react'
-import { motion } from 'framer-motion'
-import { Megaphone, Sparkles } from 'lucide-react'
-import gsap from 'gsap'
-import AnnouncementCard from './AnnouncementCard'
-import CreateAnnouncementForm from './CreateAnnouncementForm'
-import { useAnnouncements } from '../hooks/useAnnouncements'
-import { useAuthStore } from '@/store/authStore'
-import { isTeacher } from '@/utils/roleGuard'
+import { useEffect, useRef } from "react"
+import { motion } from "framer-motion"
+import { Megaphone, Sparkles } from "lucide-react"
+import gsap from "gsap"
+import AnnouncementCard from "./AnnouncementCard"
+import CreateAnnouncementForm from "./CreateAnnouncementForm"
+import { useAnnouncements } from "../hooks/useAnnouncements"
+import { useAuthStore } from "@/store/authStore"
+import { useThemeStore } from "@/store/themeStore"
+import { isTeacher } from "@/utils/roleGuard"
 
 interface Props { courseId: string }
 
 export default function AnnouncementFeed({ courseId }: Props) {
-  const { user } = useAuthStore()
-  const teacher = isTeacher(user?.role ?? 'Student')
+  const { user }  = useAuthStore()
+  const { dark }  = useThemeStore()
+  const teacher   = isTeacher(user?.role ?? "Student")
   const { announcements, isLoading, create, isCreating, deleteAnnouncement, togglePin } = useAnnouncements(courseId)
-  const listRef = useRef<HTMLDivElement>(null)
+  const listRef   = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (isLoading || !listRef.current) return
-    const cards = listRef.current.querySelectorAll('.announcement-card')
+    const cards = listRef.current.querySelectorAll(".announcement-card")
     if (!cards.length) return
     gsap.fromTo(cards,
-      { opacity: 0, y: 24, scale: 0.98 },
-      { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94], stagger: 0.07 }
+      { opacity: 0, y: 16 },
+      { opacity: 1, y: 0, duration: 0.4, ease: "power3.out", stagger: 0.06 }
     )
   }, [isLoading, announcements.length])
+
+  const cardBg   = dark ? "rgba(16,24,44,0.75)" : "rgba(255,255,255,0.92)"
+  const blur     = "blur(20px)"
+  const border   = dark ? "rgba(99,102,241,0.15)" : "#e5e7eb"
+  const textMain = dark ? "#e2e8f8" : "#111827"
+  const textSub  = dark ? "#8896c8" : "#6b7280"
+  const skelBg   = dark ? "rgba(99,102,241,0.06)" : "#f3f4f6"
 
   if (isLoading) return (
     <div className="space-y-4 max-w-2xl mx-auto">
       {[1,2,3].map(i => (
-        <div key={i} className="rounded-2xl overflow-hidden animate-pulse"
-          style={{ background: 'rgba(10,22,40,0.7)', border: '1px solid rgba(99,102,241,0.1)', height: i === 1 ? 100 : 140 }}>
-          <div className="p-5 space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl shrink-0" style={{ background: 'rgba(99,102,241,0.12)' }} />
-              <div className="space-y-1.5 flex-1">
-                <div className="h-3 rounded-full w-1/3" style={{ background: 'rgba(99,102,241,0.1)' }} />
-                <div className="h-2.5 rounded-full w-1/4" style={{ background: 'rgba(99,102,241,0.07)' }} />
-              </div>
+        <div key={i} className="rounded-2xl animate-pulse p-5 space-y-3"
+          style={{ background: cardBg, backdropFilter: blur, border: `1px solid ${border}`, height: i === 1 ? 100 : 140 }}>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl shrink-0" style={{ background: skelBg }} />
+            <div className="space-y-1.5 flex-1">
+              <div className="h-3 rounded-full w-1/3" style={{ background: skelBg }} />
+              <div className="h-2.5 rounded-full w-1/4" style={{ background: skelBg }} />
             </div>
-            <div className="space-y-2 pl-12">
-              <div className="h-2.5 rounded-full w-full" style={{ background: 'rgba(99,102,241,0.07)' }} />
-              <div className="h-2.5 rounded-full w-4/5" style={{ background: 'rgba(99,102,241,0.07)' }} />
-            </div>
+          </div>
+          <div className="space-y-2 pl-12">
+            <div className="h-2.5 rounded-full w-full"  style={{ background: skelBg }} />
+            <div className="h-2.5 rounded-full w-4/5"   style={{ background: skelBg }} />
           </div>
         </div>
       ))}
@@ -56,25 +63,25 @@ export default function AnnouncementFeed({ courseId }: Props) {
       )}
 
       {announcements.length === 0 ? (
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center justify-center py-20 rounded-3xl text-center"
-          style={{ background: 'linear-gradient(135deg,rgba(10,22,40,0.6) 0%,rgba(6,13,31,0.8) 100%)', border: '1px dashed rgba(99,102,241,0.15)' }}>
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center justify-center py-20 rounded-2xl text-center"
+          style={{ background: cardBg, backdropFilter: blur, WebkitBackdropFilter: blur, border: `2px dashed ${dark ? "rgba(99,102,241,0.2)" : "#e5e7eb"}` }}>
           <div className="relative mb-5">
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg,rgba(79,70,229,0.2),rgba(6,182,212,0.1))', border: '1px solid rgba(99,102,241,0.25)' }}>
-              <Megaphone className="w-8 h-8" style={{ color: '#818cf8' }} strokeWidth={1.5} />
+              style={{ background: dark ? "rgba(99,102,241,0.12)" : "#eef2ff", border: dark ? "1px solid rgba(99,102,241,0.25)" : "1px solid #c7d2fe" }}>
+              <Megaphone style={{ width: 28, height: 28, color: "#6366f1" }} strokeWidth={1.5} />
             </div>
-            <motion.div animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
               className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center"
-              style={{ background: 'rgba(251,191,36,0.15)', border: '1px solid rgba(251,191,36,0.3)' }}>
-              <Sparkles className="w-2.5 h-2.5" style={{ color: '#fbbf24' }} />
+              style={{ background: dark ? "rgba(217,119,6,0.15)" : "#fffbeb", border: dark ? "1px solid rgba(217,119,6,0.3)" : "1px solid #fde68a" }}>
+              <Sparkles style={{ width: 10, height: 10, color: "#d97706" }} />
             </motion.div>
           </div>
-          <p className="text-base font-bold mb-1" style={{ color: '#e2e8f0' }}>No announcements yet</p>
-          <p className="text-sm max-w-xs" style={{ color: '#475569' }}>
+          <p className="text-[15px] font-bold mb-1" style={{ color: textMain }}>No announcements yet</p>
+          <p className="text-[13px] max-w-xs" style={{ color: textSub }}>
             {teacher
-              ? 'Post your first announcement to keep students informed'
-              : 'Your teacher has not posted any announcements yet'
+              ? "Post your first announcement to keep students informed"
+              : "Your teacher has not posted any announcements yet"
             }
           </p>
         </motion.div>

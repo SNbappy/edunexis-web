@@ -1,9 +1,9 @@
-﻿import { defineConfig } from 'vite'
+import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react({ babel: { plugins: [] } })],
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },
   },
@@ -21,3 +21,4 @@ export default defineConfig({
     exclude: ['@react-three/fiber', '@react-three/drei'],
   },
 })
+
