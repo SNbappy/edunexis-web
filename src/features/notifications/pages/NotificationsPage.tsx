@@ -1,228 +1,289 @@
-import { useState, useMemo } from "react"
+﻿import { useState, useMemo, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  Bell, CheckCheck, Trash2, BookOpen, ClipboardList,
-  Megaphone, Users, GraduationCap, Info, AlertCircle,
-  Sparkles, BellOff, Check,
+  Bell, BellOff, CheckCheck, Trash2, Check,
+  BookOpen, ClipboardList, Megaphone, Users,
+  GraduationCap, Info, AlertCircle, Sparkles,
+  Clock, TrendingUp,
 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { useNotifications } from "@/features/notifications/hooks/useNotifications"
-import { useThemeStore } from "@/store/themeStore"
+import { cn } from "@/utils/cn"
 
-const TYPE_CONFIG: Record<string, { icon: any; color: string; lightBg: string; darkBg: string; label: string }> = {
-  Assignment:       { icon: ClipboardList, color: "#6366f1", lightBg: "#eef2ff",  darkBg: "rgba(99,102,241,0.15)",  label: "Assignment"   },
-  Announcement:     { icon: Megaphone,     color: "#7c3aed", lightBg: "#f5f3ff",  darkBg: "rgba(124,58,237,0.15)", label: "Announcement" },
-  CourseEnrollment: { icon: GraduationCap, color: "#059669", lightBg: "#ecfdf5",  darkBg: "rgba(5,150,105,0.15)",  label: "Enrollment"   },
-  CourseMaterial:   { icon: BookOpen,      color: "#0891b2", lightBg: "#ecfeff",  darkBg: "rgba(8,145,178,0.15)",  label: "Material"     },
-  JoinRequest:      { icon: Users,         color: "#d97706", lightBg: "#fffbeb",  darkBg: "rgba(217,119,6,0.15)",  label: "Join Request" },
-  Grade:            { icon: Sparkles,      color: "#d97706", lightBg: "#fffbeb",  darkBg: "rgba(217,119,6,0.15)",  label: "Grade"        },
-  General:          { icon: Info,          color: "#6b7280", lightBg: "#f9fafb",  darkBg: "rgba(107,114,128,0.12)",label: "General"      },
-  Alert:            { icon: AlertCircle,   color: "#ef4444", lightBg: "#fef2f2",  darkBg: "rgba(239,68,68,0.15)",  label: "Alert"        },
+type Tone = "primary" | "success" | "warning" | "danger" | "info" | "muted"
+
+const TONE: Record<Tone, { wrap: string; dot: string }> = {
+  primary: { wrap: "bg-primary/10        text-primary",      dot: "bg-primary" },
+  success: { wrap: "bg-success-soft      text-success",      dot: "bg-success" },
+  warning: { wrap: "bg-warning-soft      text-warning",      dot: "bg-warning" },
+  danger:  { wrap: "bg-destructive-soft  text-destructive",  dot: "bg-destructive" },
+  info:    { wrap: "bg-info-soft         text-info",         dot: "bg-info" },
+  muted:   { wrap: "bg-muted             text-muted-foreground", dot: "bg-muted-foreground" },
+}
+
+const TYPE_CONFIG: Record<string, { icon: any; tone: Tone; label: string; group: string }> = {
+  NewAssignment:              { icon: ClipboardList, tone: "primary", label: "Assignment",    group: "assignment"   },
+  AssignmentDeadlineReminder: { icon: Clock,         tone: "danger",  label: "Deadline",      group: "assignment"   },
+  NewAnnouncement:            { icon: Megaphone,     tone: "primary", label: "Announcement",  group: "announcement" },
+  NewMaterial:                { icon: BookOpen,      tone: "info",    label: "Material",      group: "material"     },
+  JoinRequestReceived:        { icon: Users,         tone: "warning", label: "Join Request",  group: "enrollment"   },
+  CourseJoinApproved:         { icon: GraduationCap, tone: "success", label: "Approved",      group: "enrollment"   },
+  CourseJoinRejected:         { icon: AlertCircle,   tone: "danger",  label: "Rejected",      group: "enrollment"   },
+  MarksPublished:             { icon: TrendingUp,    tone: "success", label: "Grade",         group: "grade"        },
+  GradeComplaint:             { icon: Sparkles,      tone: "warning", label: "Complaint",     group: "grade"        },
+  General:                    { icon: Info,          tone: "muted",   label: "General",       group: "general"      },
 }
 const getCfg = (type: string) => TYPE_CONFIG[type] ?? TYPE_CONFIG.General
 
-const FILTERS = ["All", "Unread", "Assignment", "Announcement", "Grade", "Enrollment"]
+const FILTERS = [
+  { id: "all",          label: "All"           },
+  { id: "unread",       label: "Unread"        },
+  { id: "assignment",   label: "Assignments"   },
+  { id: "announcement", label: "Announcements" },
+  { id: "grade",        label: "Grades"        },
+  { id: "enrollment",   label: "Enrollment"    },
+] as const
+type FilterId = typeof FILTERS[number]["id"]
 
 export default function NotificationsPage() {
-  const { dark } = useThemeStore()
-  const { notifications = [], unreadCount, markAllRead, markRead, deleteNotification, isLoading }
-    = useNotifications()
+  const navigate = useNavigate()
+  const {
+    notifications = [],
+    unreadCount,
+    markAllRead,
+    markRead,
+    markBadgeSeen,
+    deleteNotification,
+    isLoading,
+  } = useNotifications()
 
-  const [activeFilter, setActiveFilter] = useState("All")
-  const [deleting, setDeleting]         = useState<string | null>(null)
+  const [activeFilter, setActiveFilter] = useState<FilterId>("all")
+
+  // Visiting this page counts as "seeing the badge" — matches Topbar behavior.
+  // Individual cards still require a click to become read.
+  useEffect(() => { markBadgeSeen() }, [markBadgeSeen])
 
   const filtered = useMemo(() => {
-    if (activeFilter === "All")    return notifications
-    if (activeFilter === "Unread") return notifications.filter((n: any) => !n.isRead)
-    return notifications.filter((n: any) =>
-      n.type?.toLowerCase().includes(activeFilter.toLowerCase())
-    )
+    if (activeFilter === "all")    return notifications
+    if (activeFilter === "unread") return notifications.filter((n: any) => !n.isRead)
+    return notifications.filter((n: any) => getCfg(n.type).group === activeFilter)
   }, [notifications, activeFilter])
 
-  const handleDelete = async (id: string) => {
-    setDeleting(id)
-    await deleteNotification?.(id)
-    setDeleting(null)
+  const countFor = (id: FilterId): number => {
+    if (id === "all")    return notifications.length
+    if (id === "unread") return unreadCount
+    return notifications.filter((n: any) => getCfg(n.type).group === id).length
   }
 
-  // Theme tokens
-  const cardBg   = dark ? "rgba(16,24,44,0.75)" : "rgba(255,255,255,0.9)"
-  const blur     = "blur(20px)"
-  const border   = dark ? "rgba(99,102,241,0.15)" : "#e5e7eb"
-  const textMain = dark ? "#e2e8f8" : "#111827"
-  const textSub  = dark ? "#8896c8" : "#6b7280"
-  const textMuted= dark ? "#5a6a9a" : "#9ca3af"
-  const hoverBg  = dark ? "rgba(99,102,241,0.06)" : "#f9fafb"
-  const unreadBg = dark ? "rgba(99,102,241,0.08)" : "#fafafa"
-  const inputBg  = dark ? "rgba(255,255,255,0.05)" : "#f9fafb"
-
-  const unread = typeof unreadCount === "number" ? unreadCount : (unreadCount as any)?.unreadCount ?? 0
+  const handleCardClick = (n: any) => {
+    if (!n.isRead) markRead?.(n.id)
+    if (n.redirectUrl) navigate(n.redirectUrl)
+  }
 
   return (
-    <div className="min-h-full p-6 lg:p-8 max-w-4xl mx-auto">
-
-      {/* -- Header -- */}
-      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+    <div className="p-6 lg:p-8 max-w-3xl mx-auto">
+      <motion.header
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.24 }}
+        className="flex items-start justify-between gap-4 mb-8 flex-wrap"
+      >
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background: dark ? "rgba(99,102,241,0.15)" : "#eef2ff", border: dark ? "1px solid rgba(99,102,241,0.25)" : "1px solid #c7d2fe" }}>
-              <Bell style={{ width: 16, height: 16, color: "#6366f1" }} strokeWidth={2} />
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl inline-flex items-center justify-center bg-primary/10 text-primary">
+              <Bell className="h-5 w-5" strokeWidth={2} />
             </div>
-            <h1 className="text-[22px] font-extrabold" style={{ color: textMain }}>Notifications</h1>
-            {unread > 0 && (
-              <span className="px-2.5 py-0.5 rounded-full text-[12px] font-bold text-white"
-                style={{ background: "#6366f1" }}>
-                {unread} new
-              </span>
-            )}
+            <div>
+              <h1 className="font-display text-2xl font-bold tracking-tight text-foreground leading-none">
+                Notifications
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                {notifications.length} total
+                {unreadCount > 0 && <> · <span className="font-semibold text-primary">{unreadCount} unread</span></>}
+              </p>
+            </div>
           </div>
-          <p className="text-[13px]" style={{ color: textMuted }}>
-            {notifications.length} total notifications
-          </p>
         </div>
 
-        {unread > 0 && (
-          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+        {unreadCount > 0 && (
+          <button
             onClick={() => markAllRead?.()}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold"
-            style={{ background: dark ? "rgba(99,102,241,0.12)" : "#eef2ff", color: "#6366f1", border: dark ? "1px solid rgba(99,102,241,0.25)" : "1px solid #c7d2fe" }}>
-            <CheckCheck style={{ width: 15, height: 15 }} />
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-xl text-sm font-semibold bg-primary/10 text-primary hover:bg-primary/15 focus-ring transition-colors"
+          >
+            <CheckCheck className="h-4 w-4" />
             Mark all read
-          </motion.button>
+          </button>
         )}
-      </motion.div>
+      </motion.header>
 
-      {/* -- Filter chips -- */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.05 }}
-        className="flex items-center gap-2 flex-wrap mb-6">
+      <div className="flex flex-wrap items-center gap-1.5 mb-6">
         {FILTERS.map(f => {
-          const active = activeFilter === f
-          const count  = f === "Unread" ? unread : f === "All" ? notifications.length : notifications.filter((n: any) => n.type?.toLowerCase().includes(f.toLowerCase())).length
+          const active = activeFilter === f.id
+          const count  = countFor(f.id)
           return (
-            <motion.button key={f} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-              onClick={() => setActiveFilter(f)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[12px] font-semibold transition-all"
-              style={{
-                background: active ? "#6366f1" : inputBg,
-                color:      active ? "white"   : textSub,
-                border:     active ? "none"    : `1px solid ${border}`,
-                boxShadow:  active ? "0 4px 12px rgba(99,102,241,0.3)" : "none",
-              }}>
-              {f}
+            <button
+              key={f.id}
+              onClick={() => setActiveFilter(f.id)}
+              className={cn(
+                "inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold transition-colors focus-ring",
+                active
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-subtle hover:text-foreground border border-border",
+              )}
+            >
+              {f.label}
               {count > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold"
-                  style={{ background: active ? "rgba(255,255,255,0.25)" : (dark ? "rgba(99,102,241,0.15)" : "#eef2ff"), color: active ? "white" : "#6366f1" }}>
+                <span className={cn(
+                  "inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold",
+                  active
+                    ? "bg-primary-foreground/20 text-primary-foreground"
+                    : "bg-primary/10 text-primary",
+                )}>
                   {count}
                 </span>
               )}
-            </motion.button>
+            </button>
           )
         })}
-      </motion.div>
+      </div>
 
-      {/* -- Notification list -- */}
       {isLoading ? (
-        <div className="space-y-3">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-20 rounded-2xl animate-pulse"
-              style={{ background: dark ? "rgba(99,102,241,0.06)" : "#f3f4f6" }} />
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-20 rounded-xl skeleton" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-          className="flex flex-col items-center justify-center py-20 rounded-2xl"
-          style={{ background: cardBg, backdropFilter: blur, WebkitBackdropFilter: blur, border: `2px dashed ${border}` }}>
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
-            style={{ background: dark ? "rgba(99,102,241,0.12)" : "#eef2ff" }}>
-            <BellOff style={{ width: 28, height: 28, color: "#6366f1" }} strokeWidth={1.5} />
-          </div>
-          <p className="text-[16px] font-bold mb-1" style={{ color: textMain }}>No notifications</p>
-          <p className="text-[13px]" style={{ color: textMuted }}>
-            {activeFilter !== "All" ? `No ${activeFilter.toLowerCase()} notifications` : "You are all caught up!"}
-          </p>
-        </motion.div>
+        <EmptyState filter={activeFilter} />
       ) : (
-        <div className="space-y-2">
-          <AnimatePresence>
-            {filtered.map((notif: any, i: number) => {
-              const cfg     = getCfg(notif.type)
-              const isUnread= !notif.isRead
+        <ul className="space-y-1.5">
+          <AnimatePresence initial={false}>
+            {filtered.map((n: any) => {
+              const cfg      = getCfg(n.type)
+              const Icon     = cfg.icon
+              const tone     = TONE[cfg.tone]
+              const isUnread = !n.isRead
+              const timeAgo  = n.createdAt
+                ? formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })
+                : "Just now"
+
               return (
-                <motion.div key={notif.id}
-                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, x: -20, height: 0 }}
-                  transition={{ delay: i * 0.03 }}
-                  className="group relative flex items-start gap-4 p-4 rounded-2xl cursor-pointer transition-all"
-                  style={{
-                    background: isUnread ? (dark ? "rgba(99,102,241,0.08)" : "rgba(99,102,241,0.03)") : cardBg,
-                    backdropFilter: blur, WebkitBackdropFilter: blur,
-                    border: isUnread ? (dark ? "1px solid rgba(99,102,241,0.2)" : "1px solid #c7d2fe") : `1px solid ${border}`,
-                  }}
-                  onClick={() => !notif.isRead && markRead?.(notif.id)}
-                  onMouseEnter={e => { if (!isUnread) (e.currentTarget as HTMLElement).style.background = hoverBg }}
-                  onMouseLeave={e => { if (!isUnread) (e.currentTarget as HTMLElement).style.background = cardBg }}
+                <motion.li
+                  key={n.id}
+                  layout
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{    opacity: 0, x: -16, scale: 0.98 }}
+                  transition={{ duration: 0.2 }}
                 >
-                  {/* Unread dot */}
-                  {isUnread && (
-                    <div className="absolute top-4 right-4 w-2 h-2 rounded-full shrink-0"
-                      style={{ background: "#6366f1" }} />
-                  )}
-
-                  {/* Icon */}
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
-                    style={{ background: dark ? cfg.darkBg : cfg.lightBg, border: `1px solid ${cfg.color}28` }}>
-                    <cfg.icon style={{ width: 17, height: 17, color: cfg.color }} strokeWidth={2} />
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
-                        style={{ background: dark ? cfg.darkBg : cfg.lightBg, color: cfg.color }}>
-                        {cfg.label}
-                      </span>
-                      <span className="text-[11px]" style={{ color: textMuted }}>
-                        {notif.createdAt
-                          ? formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })
-                          : "Just now"}
-                      </span>
-                    </div>
-                    <p className="text-[13.5px] font-medium leading-snug" style={{ color: isUnread ? textMain : textSub }}>
-                      {notif.message}
-                    </p>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {isUnread && (
-                      <motion.button whileTap={{ scale: 0.9 }}
-                        onClick={e => { e.stopPropagation(); markRead?.(notif.id) }}
-                        className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
-                        style={{ color: "#6366f1" }}
-                        onMouseEnter={e => (e.currentTarget.style.background = dark ? "rgba(99,102,241,0.15)" : "#eef2ff")}
-                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-                        title="Mark as read">
-                        <Check style={{ width: 14, height: 14 }} />
-                      </motion.button>
+                  <div
+                    onClick={() => handleCardClick(n)}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCardClick(n) } }}
+                    role="button"
+                    tabIndex={0}
+                    className={cn(
+                      "group relative flex items-start gap-4 p-4 rounded-xl cursor-pointer border transition-colors focus-ring",
+                      isUnread
+                        ? "bg-primary/5 border-primary/20 hover:bg-primary/10"
+                        : "bg-card border-border hover:bg-muted",
                     )}
-                    <motion.button whileTap={{ scale: 0.9 }}
-                      onClick={e => { e.stopPropagation(); handleDelete(notif.id) }}
-                      className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
-                      style={{ color: deleting === notif.id ? "#ef4444" : textMuted }}
-                      onMouseEnter={e => { (e.currentTarget.style.background = dark ? "rgba(239,68,68,0.12)" : "#fef2f2"); (e.currentTarget.style.color = "#ef4444") }}
-                      onMouseLeave={e => { (e.currentTarget.style.background = "transparent"); (e.currentTarget.style.color = textMuted) }}
-                      title="Delete">
-                      <Trash2 style={{ width: 14, height: 14 }} />
-                    </motion.button>
+                  >
+                    <div className={cn(
+                      "h-10 w-10 rounded-xl inline-flex items-center justify-center shrink-0",
+                      tone.wrap,
+                    )}>
+                      <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={cn(
+                          "inline-flex items-center h-5 px-2 rounded text-[10px] font-bold uppercase tracking-wide",
+                          tone.wrap,
+                        )}>
+                          {cfg.label}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          {timeAgo}
+                        </span>
+                        {n.redirectUrl && (
+                          <span className="text-[10px] text-muted-foreground/70 italic">
+                            · click to open
+                          </span>
+                        )}
+                      </div>
+                      <p className={cn(
+                        "text-sm mt-1.5 leading-snug",
+                        isUnread ? "font-semibold text-foreground" : "text-muted-foreground",
+                      )}>
+                        {n.title ?? n.message ?? "Notification"}
+                      </p>
+                      {n.body && (
+                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-2">
+                          {n.body}
+                        </p>
+                      )}
+                    </div>
+
+                    {isUnread && (
+                      <span
+                        className={cn("absolute top-4 right-4 h-2 w-2 rounded-full", tone.dot)}
+                        aria-label="Unread"
+                      />
+                    )}
+
+                    <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity self-center">
+                      {isUnread && (
+                        <button
+                          onClick={e => { e.stopPropagation(); markRead?.(n.id) }}
+                          className="h-8 w-8 rounded-lg inline-flex items-center justify-center text-primary hover:bg-primary/10 transition-colors"
+                          title="Mark as read"
+                          aria-label="Mark as read"
+                        >
+                          <Check className="h-4 w-4" />
+                        </button>
+                      )}
+                      <button
+                        onClick={e => { e.stopPropagation(); deleteNotification?.(n.id) }}
+                        className="h-8 w-8 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive-soft transition-colors"
+                        title="Delete"
+                        aria-label="Delete notification"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
-                </motion.div>
+                </motion.li>
               )
             })}
           </AnimatePresence>
-        </div>
+        </ul>
       )}
     </div>
+  )
+}
+
+function EmptyState({ filter }: { filter: FilterId }) {
+  const label = FILTERS.find(f => f.id === filter)?.label.toLowerCase() ?? "notifications"
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex flex-col items-center justify-center py-20 rounded-2xl border border-dashed border-border bg-card text-center px-6"
+    >
+      <div className="h-14 w-14 rounded-2xl inline-flex items-center justify-center bg-muted text-muted-foreground mb-4">
+        <BellOff className="h-6 w-6" strokeWidth={1.8} />
+      </div>
+      <p className="text-base font-semibold text-foreground">
+        {filter === "all" ? "You're all caught up" : `No ${label} notifications`}
+      </p>
+      <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+        {filter === "all"
+          ? "New updates about your courses and assignments will appear here."
+          : "Try a different filter to see more notifications."}
+      </p>
+    </motion.div>
   )
 }

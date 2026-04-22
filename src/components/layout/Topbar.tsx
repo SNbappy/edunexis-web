@@ -3,12 +3,12 @@ import { Search, Menu, Bell, X, LayoutDashboard, BookOpen, User } from "lucide-r
 import { Link, useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { useAuthStore } from "@/store/authStore"
-import { useThemeStore } from "@/store/themeStore"
 import { useNotifications } from "@/features/notifications/hooks/useNotifications"
 import NotificationsPanel from "@/features/notifications/components/NotificationsPanel"
 import Avatar from "@/components/ui/Avatar"
 import ThemeToggle from "@/components/ui/ThemeToggle"
 import { ROUTES } from "@/config/constants"
+import { cn } from "@/utils/cn"
 
 const SEARCH_LINKS = [
   { label: "Dashboard",     to: ROUTES.DASHBOARD, icon: LayoutDashboard },
@@ -21,30 +21,35 @@ interface Props { onMenuClick: () => void }
 
 export default function Topbar({ onMenuClick }: Props) {
   const { user } = useAuthStore()
-  const { dark } = useThemeStore()
-  const { unreadCount } = useNotifications()
+  const { badgeCount, markBadgeSeen } = useNotifications()
   const navigate = useNavigate()
+
   const [notifOpen,  setNotifOpen]  = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchVal,  setSearchVal]  = useState("")
   const [scrolled,   setScrolled]   = useState(false)
   const [bellShake,  setBellShake]  = useState(false)
-  const prevUnread = useRef(0)
+  const prevBadge  = useRef(0)
   const searchRef  = useRef<HTMLInputElement>(null)
 
-  const unread = typeof unreadCount === "number" ? unreadCount : (unreadCount as any)?.unreadCount ?? 0
-
+  // Shake bell when badge count rises
   useEffect(() => {
-    if (unread > prevUnread.current) {
+    if (badgeCount > prevBadge.current && prevBadge.current > 0) {
       setBellShake(true)
-      setTimeout(() => setBellShake(false), 600)
+      const t = setTimeout(() => setBellShake(false), 600)
+      return () => clearTimeout(t)
     }
-    prevUnread.current = unread
-  }, [unread])
+    prevBadge.current = badgeCount
+  }, [badgeCount])
+
+  // Mark badge seen when user opens the bell
+  useEffect(() => {
+    if (notifOpen) markBadgeSeen()
+  }, [notifOpen, markBadgeSeen])
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault()
         setSearchOpen(p => !p)
       }
@@ -61,195 +66,153 @@ export default function Topbar({ onMenuClick }: Props) {
   useEffect(() => {
     const main = document.querySelector("main")
     if (!main) return
-    const onScroll = () => setScrolled(main.scrollTop > 10)
+    const onScroll = () => setScrolled(main.scrollTop > 6)
     main.addEventListener("scroll", onScroll, { passive: true })
     return () => main.removeEventListener("scroll", onScroll)
   }, [])
 
   const filtered = SEARCH_LINKS.filter(l =>
-    !searchVal || l.label.toLowerCase().includes(searchVal.toLowerCase())
+    !searchVal || l.label.toLowerCase().includes(searchVal.toLowerCase()),
   )
-
-  const bg = dark ? 'rgba(13,20,38,0.85)' : 'rgba(255,255,255,0.85)'
-  const border = dark ? "rgb(38,38,58)"    : "rgb(228,228,238)"
-  const shadow = scrolled
-    ? dark  ? "0 1px 16px rgba(0,0,0,0.4)"
-            : "0 1px 16px rgba(0,0,0,0.07)"
-    : "none"
 
   return (
     <>
       <header
-        className="sticky top-0 z-30 flex items-center h-14 px-4 lg:px-6 gap-3 transition-all duration-200"
-        style={{ background: bg, borderBottom: `1px solid ${border}`, boxShadow: shadow }}
+        className={cn(
+          "sticky top-0 z-30 flex items-center h-16 px-4 lg:px-6 gap-3",
+          "bg-background/80 backdrop-blur-md",
+          "border-b transition-all duration-180",
+          scrolled ? "border-border shadow-sm" : "border-transparent",
+        )}
       >
-        {/* Mobile menu */}
-        <button onClick={onMenuClick}
-          className="lg:hidden w-9 h-9 flex items-center justify-center rounded-xl transition-colors"
-          style={{ color: dark ? "#9ca3af" : "#6b7280" }}
-          onMouseEnter={e => (e.currentTarget.style.background = dark ? "rgba(255,255,255,0.07)" : "#f3f4f6")}
-          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+        <button
+          onClick={onMenuClick}
+          aria-label="Open menu"
+          className="lg:hidden h-10 w-10 inline-flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted focus-ring transition-colors"
         >
-          <Menu style={{ width: 18, height: 18 }} />
+          <Menu className="h-[18px] w-[18px]" />
         </button>
 
-        {/* Search bar */}
-        <motion.button
-          whileHover={{ scale: 1.01 }}
+        <button
+          type="button"
           onClick={() => setSearchOpen(true)}
-          className="hidden sm:flex items-center gap-2.5 h-9 px-3.5 rounded-xl transition-colors flex-1 max-w-xs text-left"
-          style={{
-            background: dark ? "rgba(255,255,255,0.05)" : "#f9fafb",
-            border:     `1px solid ${dark ? "rgba(255,255,255,0.08)" : "#e5e7eb"}`,
-            color:      dark ? "#6b7280" : "#9ca3af",
-          }}
+          className={cn(
+            "group hidden sm:flex items-center gap-3 h-10 px-4 rounded-xl flex-1 max-w-md",
+            "bg-muted/70 hover:bg-muted border border-border hover:border-border-strong",
+            "text-muted-foreground hover:text-foreground",
+            "transition-colors focus-ring text-left",
+          )}
         >
-          <Search style={{ width: 14, height: 14 }} />
-          <span className="text-[13px] font-medium flex-1">Search anything...</span>
-          <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-md hidden md:block"
-            style={{ background: dark ? "rgba(255,255,255,0.08)" : "#f3f4f6", color: dark ? "#6b7280" : "#9ca3af" }}>
-            ?K
-          </span>
-        </motion.button>
+          <Search className="h-4 w-4 shrink-0" />
+          <span className="text-sm flex-1 truncate">Search pages, courses, people…</span>
+          <kbd className="hidden md:inline-flex items-center gap-1 h-6 px-1.5 rounded-md border border-border bg-background font-mono text-[10px] font-semibold text-muted-foreground">
+            <span>Ctrl</span>
+            <span>K</span>
+          </kbd>
+        </button>
 
         <div className="flex-1" />
 
-        {/* Right actions */}
-        <div className="flex items-center gap-2">
-
-          {/* Theme toggle */}
+        <div className="flex items-center gap-1.5">
           <ThemeToggle />
 
-          {/* Notifications */}
           <motion.button
-            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.92 }}
-            animate={bellShake ? { rotate: [0, -12, 12, -8, 8, 0] } : {}}
-            transition={{ duration: 0.5 }}
             onClick={() => setNotifOpen(p => !p)}
-            className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-colors focus-ring"
-            style={{
-              background: dark ? "rgba(255,255,255,0.05)" : "#f9fafb",
-              border:     `1px solid ${dark ? "rgba(255,255,255,0.08)" : "#e5e7eb"}`,
-              color:      dark ? "#9ca3af" : "#6b7280",
-            }}
+            aria-label={`Notifications${badgeCount > 0 ? ` (${badgeCount} new)` : ""}`}
+            animate={bellShake ? { rotate: [0, -10, 10, -6, 6, 0] } : {}}
+            transition={{ duration: 0.5 }}
+            className={cn(
+              "relative h-10 w-10 inline-flex items-center justify-center rounded-xl",
+              "text-muted-foreground hover:text-foreground hover:bg-muted",
+              "focus-ring transition-colors",
+              notifOpen && "bg-muted text-foreground",
+            )}
           >
-            <Bell style={{ width: 16, height: 16 }} strokeWidth={2} />
-            {unread > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-white font-bold"
-                style={{ background: "#ef4444", fontSize: 9 }}>
-                {unread > 9 ? "9+" : unread}
+            <Bell className="h-[18px] w-[18px]" strokeWidth={2} />
+            {badgeCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-white text-[10px] font-bold leading-none inline-flex items-center justify-center ring-2 ring-background">
+                {badgeCount > 9 ? "9+" : badgeCount}
               </span>
             )}
           </motion.button>
 
-          {/* User avatar */}
-          <Link to={ROUTES.PROFILE}>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-xl cursor-pointer transition-colors"
-              style={{
-                background: dark ? "rgba(255,255,255,0.04)" : "#f9fafb",
-                border:     `1px solid ${dark ? "rgba(255,255,255,0.07)" : "#e5e7eb"}`,
-              }}
-            >
-              <Avatar
-                src={user?.profile?.profilePhotoUrl ?? undefined}
-                name={user?.profile?.fullName ?? user?.email ?? "U"}
-                size="xs"
-              />
-              <div className="hidden md:block">
-                <p className="text-[12px] font-semibold leading-none"
-                  style={{ color: dark ? "#e5e7eb" : "#111827" }}>
-                  {user?.profile?.fullName?.split(" ")[0] ?? "User"}
-                </p>
-                <p className="text-[10px] mt-0.5"
-                  style={{ color: dark ? "#6b7280" : "#9ca3af" }}>
-                  {user?.role}
-                </p>
-              </div>
-            </motion.div>
+          <Link
+            to={ROUTES.PROFILE}
+            aria-label="Profile"
+            className="h-10 w-10 inline-flex items-center justify-center rounded-xl hover:bg-muted focus-ring transition-colors"
+          >
+            <Avatar
+              src={user?.profile?.profilePhotoUrl ?? undefined}
+              name={user?.profile?.fullName ?? user?.email ?? "U"}
+              size="sm"
+            />
           </Link>
         </div>
       </header>
 
-      {/* Notifications panel */}
       <NotificationsPanel isOpen={notifOpen} onClose={() => setNotifOpen(false)} />
 
-      {/* Search modal */}
       <AnimatePresence>
         {searchOpen && (
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh] px-4"
-            style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-50 flex items-start justify-center pt-[14vh] px-4 bg-foreground/30 backdrop-blur-sm"
             onClick={() => setSearchOpen(false)}
           >
             <motion.div
-              initial={{ opacity: 0, y: -16, scale: 0.97 }}
+              initial={{ opacity: 0, y: -12, scale: 0.98 }}
               animate={{ opacity: 1, y: 0,   scale: 1    }}
-              exit={{    opacity: 0, y: -16,  scale: 0.97 }}
-              transition={{ duration: 0.18 }}
+              exit={{    opacity: 0, y: -12, scale: 0.98 }}
+              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
               onClick={e => e.stopPropagation()}
-              className="w-full max-w-lg rounded-2xl overflow-hidden"
-              style={{
-                background: dark ? "rgb(20,20,30)" : "white",
-                border:     `1px solid ${dark ? "rgb(38,38,58)" : "#e5e7eb"}`,
-                boxShadow:  "0 24px 64px rgba(0,0,0,0.25)",
-              }}
+              className="w-full max-w-xl rounded-2xl overflow-hidden bg-card border border-border shadow-xl"
             >
-              {/* Search input */}
-              <div className="flex items-center gap-3 px-4 py-3.5"
-                style={{ borderBottom: `1px solid ${dark ? "rgb(38,38,58)" : "#f3f4f6"}` }}>
-                <Search style={{ width: 16, height: 16, color: dark ? "#6b7280" : "#9ca3af", flexShrink: 0 }} />
+              <div className="flex items-center gap-3 px-4 h-14 border-b border-border">
+                <Search className="h-4 w-4 text-muted-foreground shrink-0" />
                 <input
                   ref={searchRef}
                   value={searchVal}
                   onChange={e => setSearchVal(e.target.value)}
-                  placeholder="Search pages, courses, notifications..."
-                  className="flex-1 outline-none bg-transparent text-[14px] font-medium"
-                  style={{ color: dark ? "#e5e7eb" : "#111827" }}
+                  placeholder="Search pages, courses, notifications…"
+                  className="flex-1 bg-transparent outline-none text-sm font-medium text-foreground placeholder:text-muted-foreground"
                 />
-                <button onClick={() => setSearchOpen(false)}
-                  className="w-6 h-6 rounded-lg flex items-center justify-center transition-colors"
-                  style={{ background: dark ? "rgba(255,255,255,0.07)" : "#f3f4f6", color: dark ? "#9ca3af" : "#6b7280" }}>
-                  <X style={{ width: 12, height: 12 }} />
+                <button
+                  onClick={() => setSearchOpen(false)}
+                  className="h-6 w-6 rounded-md inline-flex items-center justify-center bg-muted hover:bg-subtle text-muted-foreground transition-colors"
+                  aria-label="Close"
+                >
+                  <X className="h-3 w-3" />
                 </button>
               </div>
 
-              {/* Results */}
-              <div className="p-2">
+              <div className="p-2 max-h-80 overflow-y-auto">
                 {filtered.length === 0 ? (
-                  <p className="text-center py-8 text-[13px]"
-                    style={{ color: dark ? "#6b7280" : "#9ca3af" }}>
-                    No results found
-                  </p>
+                  <p className="text-center py-10 text-sm text-muted-foreground">No results for "{searchVal}"</p>
                 ) : (
                   filtered.map(item => (
-                    <button key={item.to}
+                    <button
+                      key={item.to}
                       onClick={() => { navigate(item.to); setSearchOpen(false); setSearchVal("") }}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left"
-                      style={{ color: dark ? "#d1d5db" : "#374151" }}
-                      onMouseEnter={e => (e.currentTarget.style.background = dark ? "rgba(255,255,255,0.06)" : "#f9fafb")}
-                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                      className="w-full flex items-center gap-3 px-3 h-11 rounded-xl text-left text-foreground hover:bg-muted transition-colors"
                     >
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                        style={{ background: dark ? "rgba(99,102,241,0.15)" : "#eef2ff" }}>
-                        <item.icon style={{ width: 15, height: 15, color: "#6366f1" }} />
+                      <div className="h-8 w-8 rounded-lg inline-flex items-center justify-center bg-primary/10 text-primary">
+                        <item.icon className="h-4 w-4" />
                       </div>
-                      <span className="text-[13.5px] font-medium">{item.label}</span>
+                      <span className="text-sm font-medium">{item.label}</span>
                     </button>
                   ))
                 )}
               </div>
 
-              {/* Footer hint */}
-              <div className="px-4 py-2.5 flex items-center gap-3"
-                style={{ borderTop: `1px solid ${dark ? "rgb(38,38,58)" : "#f3f4f6"}` }}>
-                <span className="text-[11px]" style={{ color: dark ? "#4b5563" : "#d1d5db" }}>
-                  Press <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono"
-                    style={{ background: dark ? "rgba(255,255,255,0.08)" : "#f3f4f6", color: dark ? "#9ca3af" : "#6b7280" }}>
-                    ESC
-                  </kbd> to close
-                </span>
+              <div className="px-4 h-10 flex items-center gap-2 border-t border-border text-[11px] text-muted-foreground">
+                <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted font-mono text-[10px] font-semibold">ESC</kbd>
+                <span>to close</span>
+                <span className="mx-1 text-border">•</span>
+                <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted font-mono text-[10px] font-semibold">Enter</kbd>
+                <span>to select</span>
               </div>
             </motion.div>
           </motion.div>
@@ -258,5 +221,3 @@ export default function Topbar({ onMenuClick }: Props) {
     </>
   )
 }
-
-

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { TrendingUp, TrendingDown, Users, Calendar, Activity } from "lucide-react"
-import gsap from "gsap"
+// import gsap from "gsap"
 import { useThemeStore } from "@/store/themeStore"
 
 interface Props {
@@ -28,8 +28,8 @@ export default function AttendanceStatsCard({ totalSessions, averageAttendance, 
 
   useEffect(() => {
     if (barRef.current) {
-      gsap.fromTo(barRef.current, { width: "0%" },
-        { width: `${Math.min(averageAttendance, 100)}%`, duration: 1.4, ease: "power3.out", delay: 0.3 })
+      // gsap.fromTo(barRef.current, { width: "0%" },
+      //   { width: `${Math.min(averageAttendance, 100)}%`, duration: 1.4, ease: "power3.out", delay: 0.3 })
     }
     if (numRef.current) {
       gsap.fromTo({ val: 0 }, { val: averageAttendance }, {

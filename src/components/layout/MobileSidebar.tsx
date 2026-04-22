@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+﻿import { useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X } from "lucide-react"
 import Sidebar from "./Sidebar"
@@ -15,41 +15,36 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 lg:hidden"
-            style={{ background: "rgba(3,7,18,0.75)", backdropFilter: "blur(6px)" }}
-            onClick={onClose} />
-
-          {/* Drawer */}
           <motion.div
-            initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }}
-            transition={{ type: "spring", damping: 28, stiffness: 280 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 z-40 lg:hidden bg-foreground/40 backdrop-blur-sm"
+            aria-hidden
+          />
+
+          <motion.div
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
             className="fixed inset-y-0 left-0 z-50 lg:hidden flex"
-            style={{ width: 260 }}>
-            <div className="relative flex-1 flex flex-col overflow-hidden"
-              style={{
-                background: "linear-gradient(180deg,#070e21 0%,#060c1d 100%)",
-                borderRight: "1px solid rgba(99,102,241,0.12)",
-                boxShadow: "8px 0 40px rgba(0,0,0,0.6)"
-              }}>
+          >
+            <div className="relative flex-1 flex flex-col overflow-hidden shadow-2xl">
               <Sidebar />
             </div>
 
-            {/* Close button */}
-            <motion.button
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.15 }}
+            <button
               onClick={onClose}
-              className="absolute -right-11 top-4 w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background: "rgba(10,22,40,0.9)", border: "1px solid rgba(99,102,241,0.2)" }}>
-              <X className="w-4 h-4" style={{ color: "#818cf8" }} />
-            </motion.button>
+              aria-label="Close menu"
+              className="absolute -right-12 top-4 h-10 w-10 rounded-xl inline-flex items-center justify-center bg-card border border-border text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </motion.div>
         </>
       )}
     </AnimatePresence>
   )
 }
-

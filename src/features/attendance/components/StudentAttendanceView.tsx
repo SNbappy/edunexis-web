@@ -1,7 +1,7 @@
 ﻿import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { CheckCircle2, XCircle, Clock, TrendingUp, Award } from 'lucide-react'
-import gsap from 'gsap'
+// import gsap from 'gsap'
 import { useMyAttendance } from '../hooks/useAttendanceStats'
 
 interface Props { courseId: string }
@@ -22,10 +22,10 @@ export default function StudentAttendanceView({ courseId }: Props) {
       gsap.fromTo(barRef.current, { width: '0%' }, { width: `${Math.min(pct, 100)}%`, duration: 1.4, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.3 })
     }
     if (numRef.current) {
-      gsap.fromTo({ val: 0 }, { val: pct }, {
-        duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.3,
-        onUpdate: function() { if (numRef.current) numRef.current.textContent = Math.round(this.targets()[0].val) + '%' }
-      })
+      // gsap.fromTo({ val: 0 }, { val: pct }, {
+      //   duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.3,
+      //   onUpdate: function() { if (numRef.current) numRef.current.textContent = Math.round(this.targets()[0].val) + '%' }
+      // })
     }
     if (ringRef.current) {
       const circumference = 2 * Math.PI * 44

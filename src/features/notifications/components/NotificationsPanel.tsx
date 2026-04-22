@@ -1,28 +1,39 @@
-﻿import { useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+﻿import { motion, AnimatePresence } from "framer-motion"
 import {
   Bell, BellOff, CheckCheck, Loader2,
   ClipboardList, Megaphone, Users, BookOpen,
   GraduationCap, Info, AlertCircle, Sparkles,
-  Clock, Check, X, Trash2, TrendingUp, Mic, FileText
-} from 'lucide-react'
-import { formatDistanceToNow } from 'date-fns'
-import { useNotifications } from '../hooks/useNotifications'
-import { useNavigate } from 'react-router-dom'
+  Clock, Check, X, Trash2, TrendingUp,
+} from "lucide-react"
+import { formatDistanceToNow } from "date-fns"
+import { useNavigate } from "react-router-dom"
+import { useNotifications } from "../hooks/useNotifications"
+import { cn } from "@/utils/cn"
 
 interface Props { isOpen: boolean; onClose: () => void }
 
-const TYPE_CONFIG: Record<string, { icon: any; color: string; bg: string; border: string; label: string }> = {
-  JoinRequestReceived:        { icon: Users,         color: '#fb923c', bg: 'rgba(251,146,60,0.12)',  border: 'rgba(251,146,60,0.3)',   label: 'Join Request'  },
-  CourseJoinApproved:         { icon: GraduationCap, color: '#34d399', bg: 'rgba(52,211,153,0.12)',  border: 'rgba(52,211,153,0.3)',   label: 'Approved'      },
-  CourseJoinRejected:         { icon: AlertCircle,   color: '#f87171', bg: 'rgba(248,113,113,0.12)', border: 'rgba(248,113,113,0.3)',  label: 'Rejected'      },
-  NewMaterial:                { icon: BookOpen,      color: '#22d3ee', bg: 'rgba(6,182,212,0.12)',   border: 'rgba(6,182,212,0.3)',    label: 'Material'      },
-  NewAssignment:              { icon: ClipboardList, color: '#818cf8', bg: 'rgba(99,102,241,0.12)',  border: 'rgba(99,102,241,0.3)',   label: 'Assignment'    },
-  AssignmentDeadlineReminder: { icon: Clock,         color: '#f87171', bg: 'rgba(248,113,113,0.12)', border: 'rgba(248,113,113,0.3)',  label: 'Deadline'      },
-  MarksPublished:             { icon: TrendingUp,    color: '#34d399', bg: 'rgba(52,211,153,0.12)',  border: 'rgba(52,211,153,0.3)',   label: 'Marks'         },
-  GradeComplaint:             { icon: Sparkles,      color: '#fbbf24', bg: 'rgba(251,191,36,0.12)',  border: 'rgba(251,191,36,0.3)',   label: 'Complaint'     },
-  NewAnnouncement:            { icon: Megaphone,     color: '#a78bfa', bg: 'rgba(139,92,246,0.12)',  border: 'rgba(139,92,246,0.3)',   label: 'Announcement'  },
-  General:                    { icon: Info,          color: '#94a3b8', bg: 'rgba(148,163,184,0.10)', border: 'rgba(148,163,184,0.2)',  label: 'General'       },
+type Tone = "primary" | "success" | "warning" | "danger" | "info" | "muted"
+
+const TONE: Record<Tone, { wrap: string; dot: string }> = {
+  primary: { wrap: "bg-primary/10        text-primary",      dot: "bg-primary" },
+  success: { wrap: "bg-success-soft      text-success",      dot: "bg-success" },
+  warning: { wrap: "bg-warning-soft      text-warning",      dot: "bg-warning" },
+  danger:  { wrap: "bg-destructive-soft  text-destructive",  dot: "bg-destructive" },
+  info:    { wrap: "bg-info-soft         text-info",         dot: "bg-info" },
+  muted:   { wrap: "bg-muted             text-muted-foreground", dot: "bg-muted-foreground" },
+}
+
+const TYPE_CONFIG: Record<string, { icon: any; tone: Tone; label: string }> = {
+  JoinRequestReceived:        { icon: Users,         tone: "warning", label: "Join Request"  },
+  CourseJoinApproved:         { icon: GraduationCap, tone: "success", label: "Approved"      },
+  CourseJoinRejected:         { icon: AlertCircle,   tone: "danger",  label: "Rejected"      },
+  NewMaterial:                { icon: BookOpen,      tone: "info",    label: "Material"      },
+  NewAssignment:              { icon: ClipboardList, tone: "primary", label: "Assignment"    },
+  AssignmentDeadlineReminder: { icon: Clock,         tone: "danger",  label: "Deadline"      },
+  MarksPublished:             { icon: TrendingUp,    tone: "success", label: "Marks"         },
+  GradeComplaint:             { icon: Sparkles,      tone: "warning", label: "Complaint"     },
+  NewAnnouncement:            { icon: Megaphone,     tone: "primary", label: "Announcement"  },
+  General:                    { icon: Info,          tone: "muted",   label: "General"       },
 }
 const getConfig = (type: string) => TYPE_CONFIG[type] ?? TYPE_CONFIG.General
 
@@ -30,178 +41,160 @@ export default function NotificationsPanel({ isOpen, onClose }: Props) {
   const { notifications, unreadCount, isLoading, markRead, markAllRead, deleteNotification } = useNotifications()
   const navigate = useNavigate()
 
-  useEffect(() => {
-    if (!isOpen || unreadCount === 0) return
-    const t = setTimeout(() => markAllRead(), 3000)
-    return () => clearTimeout(t)
-  }, [isOpen])
+  // NOTE: No auto-mark-all-read here anymore. The badge clearing is handled
+  // in Topbar via markBadgeSeen. Individual notifications stay "unread"
+  // (bold styling) until the user clicks them or hits Mark all.
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          <div className="fixed inset-0 z-40" onClick={onClose} />
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.97 }}
-            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-            className="absolute right-0 top-full mt-2 w-[380px] max-h-[78vh] z-50 flex flex-col overflow-hidden rounded-2xl"
-            style={{
-              background: 'rgba(6,13,31,0.98)',
-              border: '1px solid rgba(99,102,241,0.18)',
-              boxShadow: '0 24px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(99,102,241,0.08)',
-              backdropFilter: 'blur(24px)',
-              WebkitBackdropFilter: 'blur(24px)',
-            }}>
+          <div className="fixed inset-0 z-40" onClick={onClose} aria-hidden />
 
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3.5 shrink-0"
-              style={{ borderBottom: '1px solid rgba(99,102,241,0.1)' }}>
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{    opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed top-[68px] right-4 lg:right-6 w-[380px] max-w-[calc(100vw-2rem)] max-h-[78vh] z-50 flex flex-col overflow-hidden rounded-2xl bg-card border border-border shadow-xl"
+            role="dialog"
+            aria-label="Notifications"
+          >
+            <div className="flex items-center justify-between px-4 h-14 shrink-0 border-b border-border">
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-xl flex items-center justify-center"
-                  style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', boxShadow: '0 4px 12px rgba(79,70,229,0.4)' }}>
-                  <Bell className="w-3.5 h-3.5 text-white" />
+                <div className="h-7 w-7 rounded-lg inline-flex items-center justify-center bg-primary/10 text-primary">
+                  <Bell className="h-3.5 w-3.5" />
                 </div>
-                <span className="text-[14px] font-extrabold" style={{ color: '#e2e8f0' }}>Notifications</span>
+                <span className="text-sm font-semibold text-foreground">Notifications</span>
                 {unreadCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold text-white"
-                    style={{ background: 'linear-gradient(135deg,#ef4444,#ec4899)', boxShadow: '0 2px 8px rgba(239,68,68,0.35)' }}>
+                  <span className="px-1.5 h-5 rounded-full inline-flex items-center text-[10px] font-bold bg-primary/15 text-primary">
                     {unreadCount}
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 {unreadCount > 0 && (
-                  <motion.button whileTap={{ scale: 0.95 }} onClick={() => markAllRead()}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold"
-                    style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)', color: '#a5b4fc' }}>
-                    <CheckCheck className="w-3 h-3" /> All read
-                  </motion.button>
+                  <button
+                    onClick={() => markAllRead()}
+                    className="inline-flex items-center gap-1 px-2 h-7 rounded-md text-[11px] font-semibold text-primary hover:bg-primary/10 transition-colors"
+                  >
+                    <CheckCheck className="h-3 w-3" />
+                    Mark all
+                  </button>
                 )}
-                <motion.button whileTap={{ scale: 0.95 }} onClick={onClose}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
-                  style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.15)', color: '#475569' }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#e2e8f0'}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#475569'}>
-                  <X className="w-3.5 h-3.5" />
-                </motion.button>
+                <button
+                  onClick={onClose}
+                  aria-label="Close"
+                  className="h-7 w-7 rounded-md inline-flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
               </div>
             </div>
 
-            {/* Body */}
-            <div className="flex-1 overflow-y-auto no-scrollbar p-2 space-y-1">
+            <div className="flex-1 overflow-y-auto p-2">
               {isLoading ? (
-                <div className="flex items-center justify-center py-14">
-                  <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#4f46e5' }} />
-                    <span className="text-[11px]" style={{ color: '#475569' }}>Loading...</span>
-                  </div>
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  <span className="text-xs text-muted-foreground">Loading…</span>
                 </div>
               ) : notifications.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-14 gap-3">
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                    style={{ background: 'rgba(79,70,229,0.1)', border: '1px solid rgba(99,102,241,0.2)' }}>
-                    <BellOff className="w-5 h-5" style={{ color: '#4f46e5' }} />
+                <div className="flex flex-col items-center justify-center py-16 gap-3 px-6 text-center">
+                  <div className="h-12 w-12 rounded-2xl inline-flex items-center justify-center bg-muted text-muted-foreground">
+                    <BellOff className="h-5 w-5" />
                   </div>
-                  <div className="text-center">
-                    <p className="text-[13px] font-bold" style={{ color: '#94a3b8' }}>All caught up!</p>
-                    <p className="text-[11px] mt-0.5" style={{ color: '#475569' }}>No new notifications</p>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">You're all caught up</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">New updates will appear here.</p>
                   </div>
                 </div>
               ) : (
-                <AnimatePresence>
-                  {notifications.map((n: any, i: number) => {
-                    const cfg    = getConfig(n.type)
-                    const Icon   = cfg.icon
-                    const isUnread = !n.isRead
-                    const timeAgo  = n.createdAt
-                      ? formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })
-                      : ''
-                    return (
-                      <motion.div key={n.id}
-                        initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, x: 30, scale: 0.95 }}
-                        transition={{ duration: 0.18, delay: i * 0.02 }}
-                        className="group relative rounded-xl cursor-pointer overflow-hidden transition-all"
-                        style={{
-                          background: isUnread ? 'rgba(13,20,45,0.9)' : 'rgba(10,16,34,0.4)',
-                          border: isUnread ? `1px solid ${cfg.border}` : '1px solid rgba(99,102,241,0.08)',
-                        }}
-                        onClick={() => {
-                          if (isUnread) markRead?.(n.id)
-                          if (n.redirectUrl) { navigate(n.redirectUrl); onClose() }
-                        }}
-                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = cfg.border}
-                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = isUnread ? cfg.border : 'rgba(99,102,241,0.08)'}>
+                <div className="space-y-1">
+                  <AnimatePresence initial={false}>
+                    {notifications.map((n: any) => {
+                      const cfg      = getConfig(n.type)
+                      const Icon     = cfg.icon
+                      const tone     = TONE[cfg.tone]
+                      const isUnread = !n.isRead
+                      const timeAgo  = n.createdAt
+                        ? formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })
+                        : ""
 
-                        {isUnread && (
-                          <div className="absolute left-0 top-2.5 bottom-2.5 w-[3px] rounded-full"
-                            style={{ background: `linear-gradient(180deg,${cfg.color},${cfg.color}55)` }} />
-                        )}
-
-                        <div className="flex items-start gap-3 px-3 py-3 pl-4">
-                          <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
-                            style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
-                            <Icon className="w-3.5 h-3.5" style={{ color: cfg.color }} />
+                      return (
+                        <motion.div
+                          key={n.id}
+                          layout
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{    opacity: 0, x: 24, scale: 0.96 }}
+                          transition={{ duration: 0.15 }}
+                          onClick={() => {
+                            if (isUnread) markRead?.(n.id)
+                            if (n.redirectUrl) { navigate(n.redirectUrl); onClose() }
+                          }}
+                          className={cn(
+                            "group relative flex gap-3 rounded-xl p-3 cursor-pointer transition-colors",
+                            isUnread ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-muted/60",
+                          )}
+                        >
+                          {isUnread && (
+                            <span className="absolute left-1 top-4 h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
+                          )}
+                          <div className={cn("h-8 w-8 rounded-lg inline-flex items-center justify-center shrink-0", tone.wrap)}>
+                            <Icon className="h-4 w-4" />
                           </div>
-
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2">
-                              <p className="text-[12px] font-bold leading-snug line-clamp-1"
-                                style={{ color: isUnread ? '#e2e8f0' : '#64748b' }}>
-                                {n.title ?? n.message ?? 'Notification'}
-                              </p>
-                              {isUnread && (
-                                <div className="w-1.5 h-1.5 rounded-full shrink-0 mt-1"
-                                  style={{ background: cfg.color, boxShadow: `0 0 5px ${cfg.color}` }} />
-                              )}
-                            </div>
-
+                            <p className={cn(
+                              "text-[13px] leading-snug line-clamp-2",
+                              isUnread ? "font-semibold text-foreground" : "font-medium text-muted-foreground",
+                            )}>
+                              {n.title ?? n.message ?? "Notification"}
+                            </p>
                             {n.body && (
-                              <p className="text-[11px] leading-relaxed line-clamp-2 mt-0.5"
-                                style={{ color: isUnread ? '#475569' : '#334155' }}>
+                              <p className="text-xs leading-relaxed text-muted-foreground line-clamp-2 mt-0.5">
                                 {n.body}
                               </p>
                             )}
-
                             <div className="flex items-center justify-between mt-1.5">
-                              <span className="text-[10px] flex items-center gap-1 font-medium"
-                                style={{ color: '#334155' }}>
-                                <Clock className="w-2.5 h-2.5" />{timeAgo}
+                              <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                                <Clock className="h-2.5 w-2.5" />
+                                {timeAgo}
                               </span>
-                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 {isUnread && (
-                                  <button onClick={e => { e.stopPropagation(); markRead?.(n.id) }}
-                                    className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold"
-                                    style={{ background: 'rgba(99,102,241,0.15)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.2)' }}>
-                                    <Check className="w-2.5 h-2.5" /> Read
+                                  <button
+                                    onClick={e => { e.stopPropagation(); markRead?.(n.id) }}
+                                    className="inline-flex items-center gap-1 px-1.5 h-6 rounded text-[10px] font-semibold text-primary hover:bg-primary/10 transition-colors"
+                                    aria-label="Mark as read"
+                                  >
+                                    <Check className="h-2.5 w-2.5" />
+                                    Read
                                   </button>
                                 )}
-                                <button onClick={e => { e.stopPropagation(); deleteNotification?.(n.id) }}
-                                  className="w-6 h-6 rounded-md flex items-center justify-center"
-                                  style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)' }}>
-                                  <Trash2 className="w-3 h-3" style={{ color: '#f87171' }} />
+                                <button
+                                  onClick={e => { e.stopPropagation(); deleteNotification?.(n.id) }}
+                                  className="h-6 w-6 rounded inline-flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive-soft transition-colors"
+                                  aria-label="Delete"
+                                >
+                                  <Trash2 className="h-3 w-3" />
                                 </button>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      </motion.div>
-                    )
-                  })}
-                </AnimatePresence>
+                        </motion.div>
+                      )
+                    })}
+                  </AnimatePresence>
+                </div>
               )}
             </div>
 
-            {/* Footer */}
             {notifications.length > 0 && (
-              <div className="shrink-0 px-4 py-2.5" style={{ borderTop: '1px solid rgba(99,102,241,0.1)' }}>
-                <button onClick={() => { navigate('/notifications'); onClose() }}
-                  className="w-full text-[12px] font-bold py-1.5 rounded-xl transition-all"
-                  style={{ color: '#818cf8', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.15)' }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(99,102,241,0.15)'}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'rgba(99,102,241,0.08)'}>
+              <div className="shrink-0 px-3 py-2 border-t border-border">
+                <button
+                  onClick={() => { navigate("/notifications"); onClose() }}
+                  className="w-full h-9 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
+                >
                   View all notifications
                 </button>
               </div>

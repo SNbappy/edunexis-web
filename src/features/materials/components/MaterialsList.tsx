@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { FolderOpen, Folder, FileText } from "lucide-react"
-import gsap from "gsap"
+// import gsap from "gsap"
 import MaterialCard from "./MaterialCard"
 import { useThemeStore } from "@/store/themeStore"
 import type { MaterialDto } from "@/types/material.types"
@@ -36,10 +36,10 @@ export default function MaterialsList({ materials, courseId, isFlattenMode, onDe
   useEffect(() => {
     if (!listRef.current || !materials.length) return
     const items = listRef.current.querySelectorAll(".material-row")
-    gsap.fromTo(items,
-      { opacity: 0, y: 12 },
-      { opacity: 1, y: 0, duration: 0.35, ease: "power3.out", stagger: 0.04 }
-    )
+    // gsap.fromTo(items,
+    //   { opacity: 0, y: 12 },
+    //   { opacity: 1, y: 0, duration: 0.35, ease: "power3.out", stagger: 0.04 }
+    // )
   }, [materials.length, isFlattenMode])
 
   const cardBg   = dark ? "rgba(16,24,44,0.75)" : "rgba(255,255,255,0.92)"

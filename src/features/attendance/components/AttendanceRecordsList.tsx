@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Calendar, Users, CheckCircle2, XCircle, HelpCircle, Trash2, Pencil, ClipboardCheck } from "lucide-react"
-import gsap from "gsap"
+// import gsap from "gsap"
 import { formatDate, getDayName } from "@/utils/dateUtils"
 import { useThemeStore } from "@/store/themeStore"
 import type { AttendanceSessionDto } from "@/types/attendance.types"
@@ -33,10 +33,10 @@ export default function AttendanceRecordsList({ sessions, onDelete, onEdit, onVi
   useEffect(() => {
     if (!listRef.current || !sessions.length) return
     const items = listRef.current.querySelectorAll(".session-row")
-    gsap.fromTo(items,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.35, ease: "power3.out", stagger: 0.05 }
-    )
+    // gsap.fromTo(items,
+    //   { opacity: 0, y: 14 },
+    //   { opacity: 1, y: 0, duration: 0.35, ease: "power3.out", stagger: 0.05 }
+    // )
   }, [sessions.length])
 
   const cardBg   = dark ? "rgba(16,24,44,0.75)" : "rgba(255,255,255,0.92)"

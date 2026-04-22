@@ -1,229 +1,294 @@
-import { useState, useMemo } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import {
-  BookOpen, Search, Grid3X3, List, Plus, Users,
-  TrendingUp, Layers, X, BookMarked, Archive,
-  LogIn, ChevronRight,
-} from "lucide-react"
-import { Link, useNavigate } from "react-router-dom"
+﻿import { useState, useMemo, useEffect, useRef } from "react"
+import { Link } from "react-router-dom"
+import { motion } from "framer-motion"
+import { BookOpen, Search, Plus, LogIn, X } from "lucide-react"
 import { useAuthStore } from "@/store/authStore"
-import { useThemeStore } from "@/store/themeStore"
 import { isTeacher } from "@/utils/roleGuard"
 import { useCourses } from "@/features/courses/hooks/useCourses"
 import CourseCard from "@/features/courses/components/CourseCard"
-import { ROUTES } from "@/config/constants"
+import { cn } from "@/utils/cn"
 
-type ViewMode = "grid" | "list"
-type SortMode = "name" | "newest" | "students"
+type Status = "all" | "active" | "archived"
 
-const PALETTE = [
-  { color: "#6366f1", light: "#eef2ff", darkBg: "rgba(99,102,241,0.12)", border: "#c7d2fe", darkBorder: "rgba(99,102,241,0.25)" },
-  { color: "#0891b2", light: "#ecfeff", darkBg: "rgba(8,145,178,0.12)",  border: "#a5f3fc", darkBorder: "rgba(6,182,212,0.25)"  },
-  { color: "#d97706", light: "#fffbeb", darkBg: "rgba(217,119,6,0.12)",  border: "#fde68a", darkBorder: "rgba(251,191,36,0.25)" },
-]
+const STATUS_FILTERS = [
+  { id: "all",      label: "All"      },
+  { id: "active",   label: "Active"   },
+  { id: "archived", label: "Archived" },
+] as const
 
 export default function CoursesListPage() {
-  const { user }  = useAuthStore()
-  const { dark }  = useThemeStore()
-  const teacher   = isTeacher(user?.role ?? "Student")
-  const navigate  = useNavigate()
+  const { user } = useAuthStore()
+  const teacher  = isTeacher(user?.role ?? "Student")
   const { courses = [], isLoading } = useCourses()
 
   const [search, setSearch] = useState("")
-  const [view,   setView]   = useState<ViewMode>("grid")
-  const [sort,   setSort]   = useState<SortMode>("newest")
+  const [status, setStatus] = useState<Status>("active")
+  const searchRef = useRef<HTMLInputElement>(null)
 
-  const totalStudents = useMemo(() => courses.reduce((s: number, c: any) => s + (c.memberCount ?? 0), 0), [courses])
-  const totalTasks    = useMemo(() => courses.reduce((s: number, c: any) => s + (c.assignmentCount ?? 0), 0), [courses])
+  // "/" keyboard shortcut focuses search
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== "/") return
+      const t = e.target as HTMLElement
+      const typing = t && ["INPUT", "TEXTAREA"].includes(t.tagName) || t?.isContentEditable
+      if (typing) return
+      e.preventDefault()
+      searchRef.current?.focus()
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [])
 
   const filtered = useMemo(() => {
     let list = [...courses]
-    if (search.trim()) {
-      const q = search.toLowerCase()
+
+    // Status filter
+    if (status === "active")   list = list.filter((c: any) => !c.isArchived)
+    if (status === "archived") list = list.filter((c: any) =>  c.isArchived)
+
+    // Search
+    const q = search.trim().toLowerCase()
+    if (q) {
       list = list.filter((c: any) =>
-        c.title?.toLowerCase().includes(q) ||
-        c.courseCode?.toLowerCase().includes(q) ||
-        c.teacherName?.toLowerCase().includes(q)
+        c.title?.toLowerCase().includes(q)        ||
+        c.courseCode?.toLowerCase().includes(q)   ||
+        c.teacherName?.toLowerCase().includes(q)  ||
+        c.department?.toLowerCase().includes(q),
       )
     }
-    switch (sort) {
-      case "name":    list.sort((a, b) => a.title?.localeCompare(b.title ?? "") ?? 0); break
-      case "students": list.sort((a, b) => (b.memberCount ?? 0) - (a.memberCount ?? 0)); break
-      case "newest":  list.sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()); break
-    }
+
+    // Most-recent first by default
+    list.sort((a: any, b: any) =>
+      new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime(),
+    )
+
     return list
-  }, [courses, search, sort])
+  }, [courses, search, status])
 
-  // Theme tokens
-  const textMain  = dark ? "#e2e8f8" : "#111827"
-  const textSub   = dark ? "#8896c8" : "#6b7280"
-  const textMuted = dark ? "#5a6a9a" : "#9ca3af"
-  const cardBg    = dark ? "rgba(16,24,44,0.7)"  : "rgba(255,255,255,0.85)"
-  const cardBlur  = "blur(20px)"
-  const borderCol = dark ? "rgba(99,102,241,0.15)" : "#e5e7eb"
-  const inputBg   = dark ? "rgba(255,255,255,0.05)" : "#f9fafb"
-  const hoverBg   = dark ? "rgba(99,102,241,0.08)" : "#f9fafb"
+  const countFor = (id: Status): number => {
+    if (id === "all")      return courses.length
+    if (id === "active")   return courses.filter((c: any) => !c.isArchived).length
+    return                        courses.filter((c: any) =>  c.isArchived).length
+  }
 
-  const STATS = [
-    { label: "My Courses",    value: courses.length,  icon: BookMarked, ...PALETTE[0] },
-    { label: teacher ? "Total Students" : "Assignments", value: teacher ? totalStudents : totalTasks, icon: teacher ? Users : Layers, ...PALETTE[1] },
-    { label: teacher ? "Total Tasks"    : "Active",     value: teacher ? totalTasks : courses.filter((c: any) => !c.isArchived).length, icon: teacher ? Archive : TrendingUp, ...PALETTE[2] },
-  ]
+  const primaryCTA = teacher
+    ? { to: "/courses/create", label: "Create course",    icon: Plus  }
+    : { to: "/courses/join",   label: "Join a course",    icon: LogIn }
 
   return (
-    <div className="min-h-full">
-      {/* -- Page header -- */}
-      <div className="px-6 lg:px-8 pt-7 pb-5 max-w-7xl mx-auto">
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-[24px] font-extrabold tracking-tight" style={{ color: textMain }}>
-              {teacher ? "My Courses" : "Enrolled Courses"}
-            </h1>
-            <p className="text-[13px] mt-0.5" style={{ color: textMuted }}>
-              {courses.length} course{courses.length !== 1 ? "s" : ""} total
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {teacher ? (
-              <Link to="/courses/create">
-                <motion.div whileHover={{ scale: 1.03, y: -1 }} whileTap={{ scale: 0.97 }}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer text-white"
-                  style={{ background: "#6366f1", boxShadow: "0 4px 16px rgba(99,102,241,0.4)" }}>
-                  <Plus style={{ width: 15, height: 15 }} strokeWidth={2.5} /> Create Course
-                </motion.div>
-              </Link>
-            ) : (
-              <Link to="/courses/join">
-                <motion.div whileHover={{ scale: 1.03, y: -1 }} whileTap={{ scale: 0.97 }}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer text-white"
-                  style={{ background: "#6366f1", boxShadow: "0 4px 16px rgba(99,102,241,0.4)" }}>
-                  <LogIn style={{ width: 15, height: 15 }} strokeWidth={2.5} /> Join Course
-                </motion.div>
-              </Link>
-            )}
-          </div>
-        </motion.div>
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+      {/* ─── Header ─── */}
+      <motion.header
+        initial={{ opacity: 0, y: -6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.24 }}
+        className="flex items-start justify-between gap-4 flex-wrap"
+      >
+        <div>
+          <h1 className="font-display text-2xl lg:text-[28px] font-bold tracking-tight text-foreground">
+            {teacher ? "Your courses" : "Enrolled courses"}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {courses.length === 0
+              ? teacher
+                ? "Create your first course to get started."
+                : "Join a course to start learning."
+              : `${courses.length} course${courses.length === 1 ? "" : "s"} in total`}
+          </p>
+        </div>
 
-        {/* Stats row */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="grid grid-cols-3 gap-4 mb-6">
-          {STATS.map((s, i) => (
-            <motion.div key={s.label}
-              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.08 + i * 0.05 }}
-              whileHover={{ y: -2, boxShadow: `0 8px 24px ${s.color}22` }}
-              className="rounded-2xl p-4 flex items-center gap-3"
-              style={{ background: cardBg, backdropFilter: cardBlur, WebkitBackdropFilter: cardBlur, border: `1px solid ${dark ? s.darkBorder : s.border}` }}>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: dark ? s.darkBg : s.light }}>
-                <s.icon style={{ width: 18, height: 18, color: s.color }} strokeWidth={2} />
-              </div>
-              <div>
-                <p className="text-[22px] font-extrabold leading-none" style={{ color: textMain }}>{s.value}</p>
-                <p className="text-[11px] font-medium mt-0.5" style={{ color: textMuted }}>{s.label}</p>
-              </div>
-            </motion.div>
+        <Link to={primaryCTA.to}>
+          <button className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:brightness-105 focus-ring transition-all">
+            <primaryCTA.icon className="h-4 w-4" strokeWidth={2.25} />
+            {primaryCTA.label}
+          </button>
+        </Link>
+      </motion.header>
+
+      {/* ─── Filter bar ─── */}
+      <motion.div
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.24, delay: 0.04 }}
+        className="flex items-center gap-3 flex-wrap"
+      >
+        {/* Search */}
+        <div className="relative flex-1 min-w-[240px] max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <input
+            ref={searchRef}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search courses by name, code, teacher…"
+            aria-label="Search courses"
+            className={cn(
+              "w-full h-10 pl-10 pr-20 rounded-xl text-sm font-medium outline-none",
+              "bg-input text-foreground placeholder:text-muted-foreground/70",
+              "border border-border hover:border-border-strong",
+              "focus:border-primary focus:shadow-[0_0_0_3px_rgb(var(--ring)/0.18)]",
+              "transition-[border-color,box-shadow] duration-150",
+            )}
+          />
+          {search ? (
+            <button
+              onClick={() => { setSearch(""); searchRef.current?.focus() }}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 h-6 w-6 rounded-md inline-flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              aria-label="Clear search"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          ) : (
+            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden md:inline-flex items-center h-6 px-1.5 rounded-md border border-border bg-background font-mono text-[10px] font-semibold text-muted-foreground">
+              /
+            </kbd>
+          )}
+        </div>
+
+        {/* Status filter chips */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {STATUS_FILTERS.map(f => {
+            const active = status === f.id
+            const count  = countFor(f.id)
+            return (
+              <button
+                key={f.id}
+                onClick={() => setStatus(f.id)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold transition-colors focus-ring",
+                  active
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-subtle hover:text-foreground border border-border",
+                )}
+              >
+                {f.label}
+                {count > 0 && (
+                  <span className={cn(
+                    "inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold",
+                    active
+                      ? "bg-primary-foreground/20 text-primary-foreground"
+                      : "bg-primary/10 text-primary",
+                  )}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </motion.div>
+
+      {/* ─── Body ─── */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-[220px] rounded-2xl skeleton" />
           ))}
-        </motion.div>
-
-        {/* Search + filter bar */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
-          className="flex items-center gap-3 flex-wrap">
-
-          {/* Search */}
-          <div className="relative flex-1 min-w-[200px]">
-            <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 15, height: 15, color: textMuted }} />
-            <input
-              value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Search courses..."
-              className="w-full h-10 pl-9 pr-9 rounded-xl text-[13px] font-medium outline-none transition-all"
-              style={{ background: inputBg, border: `1px solid ${borderCol}`, color: textMain }}
-              onFocus={e => { e.target.style.borderColor = "#6366f1"; e.target.style.boxShadow = "0 0 0 3px rgba(99,102,241,0.1)" }}
-              onBlur={e => { e.target.style.borderColor = borderCol; e.target.style.boxShadow = "none" }}
+        </div>
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          search={search}
+          status={status}
+          teacher={teacher}
+          onClearSearch={() => setSearch("")}
+          onClearStatus={() => setStatus("all")}
+        />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filtered.map((course: any, i: number) => (
+            <CourseCard
+              key={course.id}
+              course={course}
+              index={i}
+              isTeacher={teacher}
             />
-            {search && (
-              <button onClick={() => setSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2"
-                style={{ color: textMuted }}>
-                <X style={{ width: 14, height: 14 }} />
-              </button>
-            )}
-          </div>
-
-          {/* Sort */}
-          <select value={sort} onChange={e => setSort(e.target.value as SortMode)}
-            className="h-10 px-3 rounded-xl text-[13px] font-medium outline-none transition-all"
-            style={{ background: inputBg, border: `1px solid ${borderCol}`, color: textMain }}>
-            <option value="newest">Newest First</option>
-            <option value="name">Name A-Z</option>
-            <option value="students">Most Students</option>
-          </select>
-
-          {/* View toggle */}
-          <div className="flex items-center rounded-xl overflow-hidden"
-            style={{ border: `1px solid ${borderCol}`, background: inputBg }}>
-            {(["grid", "list"] as const).map(v => (
-              <button key={v} onClick={() => setView(v)}
-                className="w-9 h-10 flex items-center justify-center transition-all"
-                style={{ background: view === v ? (dark ? "rgba(99,102,241,0.2)" : "#eef2ff") : "transparent", color: view === v ? "#6366f1" : textMuted }}>
-                {v === "grid" ? <Grid3X3 style={{ width: 15, height: 15 }} /> : <List style={{ width: 15, height: 15 }} />}
-              </button>
-            ))}
-          </div>
-        </motion.div>
-      </div>
-
-      {/* -- Course list -- */}
-      <div className="px-6 lg:px-8 pb-10 max-w-7xl mx-auto">
-        {isLoading ? (
-          <div className={view === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" : "space-y-3"}>
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="rounded-2xl animate-pulse"
-                style={{ height: view === "grid" ? 220 : 80, background: dark ? "rgba(99,102,241,0.08)" : "#f3f4f6" }} />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="flex flex-col items-center justify-center py-20 rounded-2xl"
-            style={{ background: cardBg, backdropFilter: cardBlur, WebkitBackdropFilter: cardBlur, border: `2px dashed ${dark ? "rgba(99,102,241,0.2)" : "#e5e7eb"}` }}>
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
-              style={{ background: dark ? "rgba(99,102,241,0.15)" : "#eef2ff" }}>
-              <BookOpen style={{ width: 28, height: 28, color: "#6366f1" }} strokeWidth={1.5} />
-            </div>
-            <p className="text-[16px] font-bold mb-1" style={{ color: textMain }}>
-              {search ? "No courses found" : "No courses yet"}
-            </p>
-            <p className="text-[13px] mb-6" style={{ color: textSub }}>
-              {search ? `No results for "${search}"` : teacher ? "Create your first course to get started" : "Join a course to begin learning"}
-            </p>
-            {!search && (
-              <Link to={teacher ? "/courses/create" : "/courses/join"}>
-                <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer text-white"
-                  style={{ background: "#6366f1", boxShadow: "0 4px 16px rgba(99,102,241,0.4)" }}>
-                  <Plus style={{ width: 15, height: 15 }} />
-                  {teacher ? "Create Course" : "Join a Course"}
-                </motion.div>
-              </Link>
-            )}
-          </motion.div>
-        ) : (
-          <AnimatePresence mode="wait">
-            <motion.div key={view}
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className={view === "grid"
-                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
-                : "space-y-3"}>
-              {filtered.map((course: any, i: number) => (
-                <CourseCard key={course.id} course={course} index={i}
-                  isTeacher={teacher} viewMode={view} />
-              ))}
-            </motion.div>
-          </AnimatePresence>
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
+  )
+}
+
+// ═════════════════════════════════════════════════════════════
+function EmptyState({
+  search, status, teacher, onClearSearch, onClearStatus,
+}: {
+  search: string
+  status: Status
+  teacher: boolean
+  onClearSearch: () => void
+  onClearStatus: () => void
+}) {
+  const searching = search.trim().length > 0
+  const statusFiltered = status !== "all"
+
+  // Filter-level empty (has courses but current filter hides them)
+  if (searching || statusFiltered) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="flex flex-col items-center justify-center py-16 px-6 text-center rounded-2xl border border-dashed border-border bg-card"
+      >
+        <div className="h-14 w-14 rounded-2xl inline-flex items-center justify-center bg-muted text-muted-foreground mb-4">
+          <Search className="h-6 w-6" strokeWidth={1.8} />
+        </div>
+        <p className="font-display text-base font-semibold text-foreground">
+          {searching ? "No matches" : "Nothing here"}
+        </p>
+        <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+          {searching
+            ? `No courses match "${search}".`
+            : `You don't have any ${status} courses.`}
+        </p>
+        <div className="flex gap-2 mt-5">
+          {searching && (
+            <button
+              onClick={onClearSearch}
+              className="h-9 px-3 rounded-lg text-xs font-semibold bg-muted hover:bg-subtle text-foreground transition-colors"
+            >
+              Clear search
+            </button>
+          )}
+          {statusFiltered && (
+            <button
+              onClick={onClearStatus}
+              className="h-9 px-3 rounded-lg text-xs font-semibold bg-muted hover:bg-subtle text-foreground transition-colors"
+            >
+              Show all
+            </button>
+          )}
+        </div>
+      </motion.div>
+    )
+  }
+
+  // True empty — no courses at all
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex flex-col items-center justify-center py-20 px-6 text-center rounded-2xl border border-dashed border-border bg-card"
+    >
+      <div className="h-16 w-16 rounded-2xl inline-flex items-center justify-center bg-primary/10 text-primary mb-5">
+        <BookOpen className="h-7 w-7" strokeWidth={1.8} />
+      </div>
+      <p className="font-display text-lg font-semibold text-foreground">
+        {teacher ? "No courses yet" : "You haven't joined any courses"}
+      </p>
+      <p className="text-sm text-muted-foreground mt-1.5 max-w-sm">
+        {teacher
+          ? "Create your first course to start managing students, materials, assignments, and grades — all in one place."
+          : "Ask your teacher for a course join code, then enroll to access materials, submit assignments, and track your grades."}
+      </p>
+      <Link
+        to={teacher ? "/courses/create" : "/courses/join"}
+        className="inline-flex items-center gap-2 h-10 px-4 rounded-xl mt-6 text-sm font-semibold bg-primary text-primary-foreground hover:brightness-105 transition"
+      >
+        {teacher
+          ? <><Plus className="h-4 w-4" /> Create course</>
+          : <><LogIn className="h-4 w-4" /> Join a course</>
+        }
+      </Link>
+    </motion.div>
   )
 }

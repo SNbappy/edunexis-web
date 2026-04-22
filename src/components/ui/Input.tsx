@@ -1,89 +1,89 @@
-import { forwardRef } from "react"
+﻿import { forwardRef } from "react"
 import { cn } from "@/utils/cn"
-import { useThemeStore } from "@/store/themeStore"
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string
-  error?: string
-  hint?:  string
+  label?:     string
+  error?:     string
+  hint?:      string
   leftIcon?:  React.ReactNode
   rightIcon?: React.ReactNode
+  sizeVariant?: "sm" | "md" | "lg"
+}
+
+const SIZE = {
+  sm: "h-9  text-xs",
+  md: "h-10 text-sm",
+  lg: "h-11 text-[15px]",
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, hint, leftIcon, rightIcon, id, ...props }, ref) => {
-    const { dark } = useThemeStore()
-    const inputId  = id ?? label?.toLowerCase().replace(/\s+/g, "-")
-
-    const baseBg     = dark ? "rgba(255,255,255,0.05)" : "#f9fafb"
-    const baseBorder = error
-      ? (dark ? "rgba(239,68,68,0.5)" : "#fca5a5")
-      : (dark ? "rgba(255,255,255,0.1)" : "#e5e7eb")
-    const textColor  = dark ? "#e5e7eb" : "#111827"
-    const labelColor = dark ? "#9ca3af" : "#374151"
+  ({ className, label, error, hint, leftIcon, rightIcon, id, sizeVariant = "md", ...props }, ref) => {
+    const inputId = id ?? label?.toLowerCase().replace(/\s+/g, "-")
 
     return (
       <div className="space-y-1.5">
         {label && (
-          <label htmlFor={inputId}
-            className="block text-[13px] font-semibold"
-            style={{ color: labelColor }}>
+          <label htmlFor={inputId} className="block text-xs font-semibold text-foreground/90">
             {label}
           </label>
         )}
+
         <div className="relative">
           {leftIcon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2"
-              style={{ color: dark ? "#6b7280" : "#9ca3af" }}>
+            <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground [&_svg]:w-4 [&_svg]:h-4">
               {leftIcon}
             </div>
           )}
+
           <input
             ref={ref}
             id={inputId}
+            aria-invalid={!!error}
             className={cn(
-              "w-full h-10 rounded-xl text-[13.5px] font-medium outline-none transition-all duration-150",
-              leftIcon  ? "pl-10" : "pl-4",
-              rightIcon ? "pr-10" : "pr-4",
-              className
+              // Base
+              "w-full rounded-xl font-medium placeholder:text-muted-foreground/70",
+              "bg-input text-foreground",
+              "border transition-[border-color,box-shadow,background-color] duration-150 ease-out",
+              "outline-none",
+              // Normal / error border
+              error
+                ? "border-destructive/60"
+                : "border-border hover:border-border-strong",
+              // Focus — via :focus, not inline style
+              error
+                ? "focus:border-destructive focus:shadow-[0_0_0_3px_rgb(var(--destructive)/0.15)]"
+                : "focus:border-primary focus:shadow-[0_0_0_3px_rgb(var(--ring)/0.18)]",
+              // Disabled
+              "disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-muted",
+              // Size
+              SIZE[sizeVariant],
+              // Padding adjusts for icons
+              leftIcon  ? "pl-10" : "pl-3.5",
+              rightIcon ? "pr-10" : "pr-3.5",
+              className,
             )}
-            style={{
-              background:   baseBg,
-              border:       `1px solid ${baseBorder}`,
-              color:        textColor,
-            }}
-            onFocus={e => {
-              e.target.style.borderColor = error
-                ? (dark ? "rgba(239,68,68,0.7)" : "#f87171")
-                : (dark ? "rgba(99,102,241,0.5)" : "#6366f1")
-              e.target.style.boxShadow = error
-                ? "0 0 0 3px rgba(239,68,68,0.08)"
-                : "0 0 0 3px rgba(99,102,241,0.1)"
-              e.target.style.background = dark ? "rgba(255,255,255,0.07)" : "#ffffff"
-            }}
-            onBlur={e => {
-              e.target.style.borderColor = baseBorder
-              e.target.style.boxShadow   = "none"
-              e.target.style.background  = baseBg
-            }}
             {...props}
           />
+
           {rightIcon && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2"
-              style={{ color: dark ? "#6b7280" : "#9ca3af" }}>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground [&_svg]:w-4 [&_svg]:h-4">
               {rightIcon}
             </div>
           )}
         </div>
+
         {error && (
-          <p className="text-[12px] font-medium" style={{ color: "#ef4444" }}>{error}</p>
+          <p className="text-xs font-medium text-destructive flex items-center gap-1">
+            <span aria-hidden>⚠</span>
+            {error}
+          </p>
         )}
         {!error && hint && (
-          <p className="text-[12px]" style={{ color: dark ? "#6b7280" : "#9ca3af" }}>{hint}</p>
+          <p className="text-xs text-muted-foreground">{hint}</p>
         )}
       </div>
     )
-  }
+  },
 )
 Input.displayName = "Input"
 export default Input

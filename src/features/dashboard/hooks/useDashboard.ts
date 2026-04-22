@@ -1,59 +1,62 @@
-import { useQueries } from '@tanstack/react-query'
-import { dashboardService, mapNotificationToActivity } from '../services/dashboardService'
-import { useAuthStore } from '@/store/authStore'
-import { isTeacher } from '@/utils/roleGuard'
+﻿import { useCourses } from "@/features/courses/hooks/useCourses"
+import { useNotifications } from "@/features/notifications/hooks/useNotifications"
+import { useAuthStore } from "@/store/authStore"
+import { isTeacher } from "@/utils/roleGuard"
 
+/**
+ * Dashboard aggregates data from the feature hooks instead of fetching
+ * its own copy. This keeps the React Query cache shared across pages —
+ * clicking Dashboard → Courses is instant since both pages read the
+ * same queryKey.
+ */
 export function useDashboard() {
-    const { user } = useAuthStore()
-    const teacher = isTeacher(user?.role ?? 'Student')
-    const role = teacher ? 'Teacher' : 'Student'
+  const { user } = useAuthStore()
+  const teacher  = isTeacher(user?.role ?? "Student")
 
-    const [coursesQuery, notificationsQuery] = useQueries({
-        queries: [
-            {
-                queryKey: ['courses', 'mine', user?.id],
-                queryFn: async () => {
-                    const res = await dashboardService.getCourses(role, user!.id)
-                    if (!res.success) throw new Error(res.message)
-                    return res.data ?? []
-                },
-                enabled: !!user,
-                staleTime: 60_000,
-            },
-            {
-                queryKey: ['notifications'],
-                queryFn: async () => {
-                    const res = await dashboardService.getNotifications()
-                    if (!res.success) throw new Error(res.message)
-                    return res.data ?? []
-                },
-                enabled: !!user,
-                staleTime: 30_000,
-            },
-        ],
-    })
+  const {
+    enrolled, pending, rejected,
+    isLoading: coursesLoading,
+    isError:   coursesError,
+  } = useCourses()
 
-    const courses = coursesQuery.data ?? []
-    const notifications = notificationsQuery.data ?? []
+  const {
+    notifications, unreadCount,
+    isLoading: notifLoading,
+  } = useNotifications()
 
-    const data = {
-        stats: {
-            totalCourses: courses.length,
-            totalStudents: teacher
-                ? courses.reduce((sum, c) => sum + (c.memberCount ?? 0), 0)
-                : undefined,
-            upcomingEvents: 0,
-            pendingAssignments: 0,
-            averageAttendance: 0,
-            pendingJoinRequests: 0,
-        },
-        courses,
-        recentActivity: notifications.map(mapNotificationToActivity),
-    }
+  // Honest real stats — no fake numbers
+  const activeCourses  = enrolled.filter((c: any) => !c.isArchived).length
+  const archivedCount  = enrolled.length - activeCourses
 
-    return {
-        data,
-        isLoading: coursesQuery.isLoading || notificationsQuery.isLoading,
-        isError: coursesQuery.isError || notificationsQuery.isError,
-    }
+  const totalStudents = teacher
+    ? enrolled.reduce(
+        (sum: number, c: any) => sum + (c.memberCount ?? 0),
+        0,
+      )
+    : 0
+
+  const recentActivity = notifications.slice(0, 6)
+
+  return {
+    // full course lists so the dashboard UI can show pending/rejected if it wants
+    courses:  enrolled,     // back-compat alias — existing dashboard reads this
+    enrolled,
+    pending,
+    rejected,
+    notifications,
+    recentActivity,
+
+    stats: {
+      totalCourses:  enrolled.length,
+      activeCourses,
+      archivedCount,
+      pendingCount:  pending.length,
+      rejectedCount: rejected.length,
+      totalStudents,
+      unreadCount,
+    },
+
+    isLoading: coursesLoading || notifLoading,
+    isError:   coursesError,
+  }
 }

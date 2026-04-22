@@ -1,42 +1,42 @@
-import { motion, AnimatePresence } from "framer-motion"
+﻿import { AnimatePresence, motion } from "framer-motion"
 import { Sun, Moon } from "lucide-react"
 import { useThemeStore } from "@/store/themeStore"
 
 export default function ThemeToggle() {
   const { dark, toggle } = useThemeStore()
+
   return (
-    <motion.button
-      whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.92 }}
+    <button
       onClick={toggle}
-      className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-      style={{
-        background: dark ? "rgba(99,102,241,0.18)" : "#f1f5f9",
-        border:     dark ? "1px solid rgba(99,102,241,0.3)" : "1px solid #e2e8f0",
-        color:      dark ? "#a5b4fc" : "#64748b",
-      }}
       title={dark ? "Switch to light mode" : "Switch to dark mode"}
+      aria-label="Toggle theme"
+      className="h-10 w-10 inline-flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted focus-ring transition-colors"
     >
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="wait" initial={false}>
         {dark ? (
-          <motion.div key="sun"
-            initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
+          <motion.span
+            key="sun"
+            initial={{ opacity: 0, rotate: -60, scale: 0.7 }}
             animate={{ opacity: 1, rotate: 0,   scale: 1   }}
-            exit={{    opacity: 0, rotate:  90,  scale: 0.5 }}
-            transition={{ duration: 0.18 }}
+            exit={{    opacity: 0, rotate: 60,  scale: 0.7 }}
+            transition={{ duration: 0.15 }}
+            className="inline-flex"
           >
-            <Sun style={{ width: 16, height: 16 }} strokeWidth={2} />
-          </motion.div>
+            <Sun className="h-[18px] w-[18px]" strokeWidth={2} />
+          </motion.span>
         ) : (
-          <motion.div key="moon"
-            initial={{ opacity: 0, rotate:  90, scale: 0.5 }}
-            animate={{ opacity: 1, rotate:   0, scale: 1   }}
-            exit={{    opacity: 0, rotate: -90, scale: 0.5 }}
-            transition={{ duration: 0.18 }}
+          <motion.span
+            key="moon"
+            initial={{ opacity: 0, rotate: 60,  scale: 0.7 }}
+            animate={{ opacity: 1, rotate: 0,   scale: 1   }}
+            exit={{    opacity: 0, rotate: -60, scale: 0.7 }}
+            transition={{ duration: 0.15 }}
+            className="inline-flex"
           >
-            <Moon style={{ width: 16, height: 16 }} strokeWidth={2} />
-          </motion.div>
+            <Moon className="h-[18px] w-[18px]" strokeWidth={2} />
+          </motion.span>
         )}
       </AnimatePresence>
-    </motion.button>
+    </button>
   )
 }

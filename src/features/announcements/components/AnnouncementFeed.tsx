@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { Megaphone, Sparkles } from "lucide-react"
-import gsap from "gsap"
+// import gsap from "gsap"
 import AnnouncementCard from "./AnnouncementCard"
 import CreateAnnouncementForm from "./CreateAnnouncementForm"
 import { useAnnouncements } from "../hooks/useAnnouncements"
@@ -22,10 +22,10 @@ export default function AnnouncementFeed({ courseId }: Props) {
     if (isLoading || !listRef.current) return
     const cards = listRef.current.querySelectorAll(".announcement-card")
     if (!cards.length) return
-    gsap.fromTo(cards,
-      { opacity: 0, y: 16 },
-      { opacity: 1, y: 0, duration: 0.4, ease: "power3.out", stagger: 0.06 }
-    )
+    // gsap.fromTo(cards,
+    //   { opacity: 0, y: 16 },
+    //   { opacity: 1, y: 0, duration: 0.4, ease: "power3.out", stagger: 0.06 }
+    // )
   }, [isLoading, announcements.length])
 
   const cardBg   = dark ? "rgba(16,24,44,0.75)" : "rgba(255,255,255,0.92)"
