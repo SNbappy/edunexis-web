@@ -17,7 +17,7 @@ import FormField from "@/components/forms/FormField"
 import FormStepper from "@/components/forms/FormStepper"
 import ShowAdvancedToggle from "@/components/forms/ShowAdvancedToggle"
 import LivePreviewPanel from "@/components/forms/LivePreviewPanel"
-import MiniCourseCardPreview from "../components/MiniCourseCardPreview"
+import { ActiveCourseCard } from "../components/CourseCard"
 
 import {
   DEPARTMENTS, YEARS, SEMESTERS, ACADEMIC_SESSIONS,
@@ -25,24 +25,18 @@ import {
 import { useAuthStore } from "@/store/authStore"
 import { useCourses } from "../hooks/useCourses"
 import { courseService } from "../services/courseService"
-
-/* ─── Schema ──────────────────────────────────────────────── */
+import type { CourseSummaryDto } from "@/types/course.types"
 
 const schema = z.object({
-  // Step 1 — Identity
   title: z.string().min(3, "Title must be at least 3 characters"),
   courseCode: z.string().min(2, "Course code is required"),
   courseType: z.enum(["Theory", "Lab"]),
   creditHours: z.coerce.number().min(0.5).max(6),
-
-  // Step 2 — When & Where
   department: z.string().min(1, "Department is required"),
   academicSession: z.string().min(1, "Academic session is required"),
   year: z.string().min(1, "Year is required"),
   semesterInYear: z.string().min(1, "Semester is required"),
   section: z.string().optional(),
-
-  // Step 3 — Describe
   description: z.string().optional(),
 })
 type FormData = z.infer<typeof schema>
@@ -53,14 +47,13 @@ const STEPS = [
   { label: "Describe" },
 ]
 
-/** Fields that must be valid to advance from each step. */
 const STEP_FIELDS: ReadonlyArray<ReadonlyArray<keyof FormData>> = [
   ["title", "courseCode", "courseType", "creditHours"],
   ["department", "academicSession", "year", "semesterInYear"],
   [],
 ]
 
-/* ─── Page ────────────────────────────────────────────────── */
+const PREVIEW_COURSE_ID = "create-course-preview"
 
 export default function CreateCoursePage() {
   const navigate = useNavigate()
@@ -89,10 +82,7 @@ export default function CreateCoursePage() {
     },
   })
 
-  // Watch all fields so the live preview updates as the teacher types
   const values = watch()
-
-  /* ─── Navigation between steps ─── */
 
   const nextStep = async () => {
     const fields = STEP_FIELDS[step]
@@ -106,7 +96,6 @@ export default function CreateCoursePage() {
   const prevStep = () => setStep(s => Math.max(s - 1, 0))
 
   const goToStep = async (target: number) => {
-    // Only allow jumping back or to the immediate next step (if current is valid)
     if (target <= step) {
       setStep(target)
       return
@@ -115,8 +104,6 @@ export default function CreateCoursePage() {
       await nextStep()
     }
   }
-
-  /* ─── Submission ─── */
 
   const submit = async (data: FormData) => {
     if (!user) return
@@ -152,32 +139,35 @@ export default function CreateCoursePage() {
     }
   }
 
-  /* ─── Step completion checks (for FormSection "complete" pill) ─── */
-
   const step1Complete = !!values.title && values.title.length >= 3
     && !!values.courseCode && values.courseCode.length >= 2
     && !!values.courseType && !!values.creditHours
   const step2Complete = !!values.department && !!values.academicSession
     && !!values.year && !!values.semesterInYear
 
-  /* ─── Preview ─── */
+  const previewCourse: CourseSummaryDto = {
+    id: PREVIEW_COURSE_ID,
+    title: values.title?.trim() || "Your course title",
+    courseCode: values.courseCode?.trim().toUpperCase() || "COURSE-000",
+    department: values.department || "Department",
+    academicSession: values.academicSession || "",
+    semester: values.year && values.semesterInYear
+      ? values.year + " - " + values.semesterInYear
+      : "Semester",
+    courseType: values.courseType ?? "Theory",
+    coverImageUrl: "",
+    teacherName: user?.profile?.fullName ?? "You",
+    teacherProfilePhotoUrl: user?.profile?.profilePhotoUrl ?? null,
+    isArchived: false,
+    memberCount: 0,
+    createdAt: new Date().toISOString(),
+  }
 
   const preview = (
-    <LivePreviewPanel caption="Students will see your course like this.">
-      <MiniCourseCardPreview
-        title={values.title}
-        courseCode={values.courseCode}
-        courseType={values.courseType}
-        department={values.department}
-        semester={values.year && values.semesterInYear ? values.year + " - " + values.semesterInYear : undefined}
-        section={values.section}
-        description={values.description}
-        creditHours={values.creditHours}
-      />
+    <LivePreviewPanel caption="Students will see your course exactly like this.">
+      <ActiveCourseCard course={previewCourse} />
     </LivePreviewPanel>
   )
-
-  /* ─── Footer actions ─── */
 
   const isLastStep = step === STEPS.length - 1
 
@@ -222,8 +212,6 @@ export default function CreateCoursePage() {
     </>
   )
 
-  /* ─── Render ─── */
-
   return (
     <FormPageLayout
       backLabel="Back to courses"
@@ -243,7 +231,6 @@ export default function CreateCoursePage() {
       <form
         onSubmit={handleSubmit(submit)}
         onKeyDown={e => {
-          // Prevent Enter from auto-submitting mid-form
           if (e.key === "Enter" && !isLastStep) e.preventDefault()
         }}
         className="space-y-6"
@@ -277,7 +264,7 @@ export default function CreateCoursePage() {
                     {...register("courseCode")}
                     label="Course code"
                     placeholder="e.g. CSE-301"
-                    hint="Short code like CSE-301 or MATH-101. Students can join with your joining code separately."
+                    hint="Short code like CSE-301 or MATH-101."
                     error={errors.courseCode?.message}
                   />
                   <div>
@@ -445,13 +432,12 @@ export default function CreateCoursePage() {
                 </div>
               </FormSection>
 
-              {/* Final summary */}
               <div className="mt-6 rounded-2xl border border-teal-200 bg-teal-50/60 p-5">
                 <p className="text-[12px] font-bold uppercase tracking-widest text-teal-700">
                   Ready to launch
                 </p>
                 <p className="mt-1.5 text-[13px] text-teal-900/80">
-                  Double-check the preview on the right. Once created, your course will appear on your Courses list and students can join with the code you share.
+                  Double-check the preview. Once created, your course will appear on your Courses list and students can join with the code you share.
                 </p>
               </div>
             </motion.div>

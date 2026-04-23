@@ -48,10 +48,10 @@ export function ActiveCourseCard({ course }: ActiveCardProps) {
     <motion.div
       whileHover={{ y: -2 }}
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
-      className={`group relative overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md ${course.isArchived ? "opacity-70" : ""}`}
+      className={`group relative overflow-hidden rounded-2xl border border-border bg-card shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)] transition-all hover:shadow-[0_12px_32px_-8px_rgba(20,184,166,0.18)] hover:-translate-y-0.5 hover:border-teal-200 ${course.isArchived ? "opacity-70 hover:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)] hover:translate-y-0" : ""}`}
     >
       {/* Top accent strip */}
-      <div className={`h-1 w-full ${accent}`} />
+      <div className={`h-1.5 w-full ${accent}`} />
 
       <Link to={`/courses/${course.id}/stream`} className="block p-5">
         {/* Header row */}
@@ -124,9 +124,9 @@ export function PendingCourseCard({ course }: PendingCardProps) {
   return (
     <div
       aria-disabled="true"
-      className="group relative overflow-hidden rounded-2xl border border-border bg-card opacity-70 transition-all hover:opacity-85"
+      className="group relative overflow-hidden rounded-2xl border border-border bg-card opacity-80 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.04)] transition-all hover:opacity-95 hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.08)]"
     >
-      <div className={`h-1 w-full ${accent}`} />
+      <div className={`h-1.5 w-full ${accent}`} />
 
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
@@ -191,9 +191,9 @@ export function RejectedCourseCard({
   return (
     <div
       aria-disabled="true"
-      className="group relative overflow-hidden rounded-2xl border border-border bg-card opacity-75 transition-all hover:opacity-95"
+      className="group relative overflow-hidden rounded-2xl border border-border bg-card opacity-80 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.04)] transition-all hover:opacity-95 hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.08)]"
     >
-      <div className={`h-1 w-full ${accent}`} />
+      <div className={`h-1.5 w-full ${accent}`} />
 
       {/* Dismiss button (top right absolute) */}
       <button
@@ -264,3 +264,5 @@ export function RejectedCourseCard({
  * @deprecated use ActiveCourseCard instead
  */
 export default ActiveCourseCard
+
+
