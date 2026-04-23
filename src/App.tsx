@@ -21,6 +21,7 @@ const JoinCoursePage        = lazy(() => import("@/features/courses/pages/JoinCo
 const CTEventPage           = lazy(() => import("@/features/ct/pages/CTEventPage"))
 const PresentationEventPage = lazy(() => import("@/features/presentations/pages/PresentationEventPage"))
 const CompleteProfilePage   = lazy(() => import("@/features/profile/pages/CompleteProfilePage"))
+const ProfilePage           = lazy(() => import("@/features/profile/pages/ProfilePage"))
 const EditProfilePage       = lazy(() => import("@/features/profile/pages/EditProfilePage"))
 const NotificationsPage     = lazy(() => import("@/features/notifications/pages/NotificationsPage"))
 const UserProfilePage       = lazy(() => import("@/features/profile/pages/UserProfilePage"))
