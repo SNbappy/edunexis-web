@@ -18,6 +18,7 @@ export function useCourseMembers(courseId: string) {
     },
     enabled: !!courseId,
     staleTime: 30_000,
+    refetchOnWindowFocus: true,
   })
 
   const joinRequestsQuery = useQuery({
@@ -27,12 +28,12 @@ export function useCourseMembers(courseId: string) {
       if (!res.success) throw new Error(res.message)
       return res.data ?? []
     },
-    // Pending requests are time-sensitive for teachers:
-    // - stale after 10s so any tab switch refetches
-    // - refetch when window regains focus so returning from email
-    //   or notification tray shows fresh state
     enabled: !!courseId && teacher,
-    staleTime: 10_000,
+    // Treat requests as always-stale: any mount, navigation, or focus
+    // event triggers a fresh fetch. Teachers clicking a notification
+    // must see the new request without manually reloading.
+    staleTime: 0,
+    refetchOnMount: "always",
     refetchOnWindowFocus: true,
   })
 
@@ -70,5 +71,7 @@ export function useCourseMembers(courseId: string) {
     isReviewing:       reviewMutation.isPending,
     removeMember:      removeMemberMutation.mutate,
     isRemoving:        removeMemberMutation.isPending,
+    refetchRequests:   joinRequestsQuery.refetch,
+    refetchMembers:    membersQuery.refetch,
   }
 }
