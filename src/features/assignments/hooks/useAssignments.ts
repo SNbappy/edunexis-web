@@ -120,7 +120,6 @@ export function useAssignment(courseId: string, assignmentId: string) {
         },
         enabled: !!assignmentId && !!user && !teacher,
         refetchOnWindowFocus: true,
-        staleTime: 15_000,
         retry: false,
         staleTime: 0,
     })
@@ -148,4 +147,5 @@ export function useAssignment(courseId: string, assignmentId: string) {
         isSubmitting: submitMutation.isPending,
     }
 }
+
 
