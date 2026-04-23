@@ -1,294 +1,300 @@
 ﻿import { useState, useMemo, useEffect, useRef } from "react"
-import { Link } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
-import { BookOpen, Search, Plus, LogIn, X } from "lucide-react"
+import { Plus, LogIn, Search, BookOpen, Archive as ArchiveIcon, Inbox } from "lucide-react"
+import Button from "@/components/ui/Button"
+import Skeleton from "@/components/ui/Skeleton"
+import {
+  ActiveCourseCard, PendingCourseCard, RejectedCourseCard,
+} from "../components/CourseCard"
+import { useCourses } from "../hooks/useCourses"
 import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
-import { useCourses } from "@/features/courses/hooks/useCourses"
-import CourseCard from "@/features/courses/components/CourseCard"
-import { cn } from "@/utils/cn"
 
-type Status = "all" | "active" | "archived"
-
-const STATUS_FILTERS = [
-  { id: "all",      label: "All"      },
-  { id: "active",   label: "Active"   },
-  { id: "archived", label: "Archived" },
-] as const
+type FilterKey = "active" | "archived" | "requests"
 
 export default function CoursesListPage() {
+  const navigate = useNavigate()
   const { user } = useAuthStore()
   const teacher  = isTeacher(user?.role ?? "Student")
-  const { courses = [], isLoading } = useCourses()
 
-  const [search, setSearch] = useState("")
-  const [status, setStatus] = useState<Status>("active")
+  const {
+    enrolled, pending, rejected,
+    isLoading, dismissRequest, isDismissing,
+  } = useCourses()
+
+  const [filter, setFilter] = useState<FilterKey>("active")
+  const [q, setQ] = useState("")
   const searchRef = useRef<HTMLInputElement>(null)
 
-  // "/" keyboard shortcut focuses search
+  // "/" shortcut to focus search
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key !== "/") return
-      const t = e.target as HTMLElement
-      const typing = t && ["INPUT", "TEXTAREA"].includes(t.tagName) || t?.isContentEditable
-      if (typing) return
-      e.preventDefault()
-      searchRef.current?.focus()
+    const h = (e: KeyboardEvent) => {
+      if (e.key === "/" && !(e.target as HTMLElement)?.matches("input, textarea")) {
+        e.preventDefault()
+        searchRef.current?.focus()
+      }
     }
-    window.addEventListener("keydown", handler)
-    return () => window.removeEventListener("keydown", handler)
+    window.addEventListener("keydown", h)
+    return () => window.removeEventListener("keydown", h)
   }, [])
 
-  const filtered = useMemo(() => {
-    let list = [...courses]
+  const requestCount = pending.length + rejected.length
+  const hasRequests  = !teacher && requestCount > 0
 
-    // Status filter
-    if (status === "active")   list = list.filter((c: any) => !c.isArchived)
-    if (status === "archived") list = list.filter((c: any) =>  c.isArchived)
-
-    // Search
-    const q = search.trim().toLowerCase()
-    if (q) {
-      list = list.filter((c: any) =>
-        c.title?.toLowerCase().includes(q)        ||
-        c.courseCode?.toLowerCase().includes(q)   ||
-        c.teacherName?.toLowerCase().includes(q)  ||
-        c.department?.toLowerCase().includes(q),
+  // Filter enrolled courses by search + archive status
+  const filteredEnrolled = useMemo(() => {
+    const needle = q.trim().toLowerCase()
+    return enrolled.filter(c => {
+      if (filter === "active"   && c.isArchived)  return false
+      if (filter === "archived" && !c.isArchived) return false
+      if (!needle) return true
+      return (
+        c.title.toLowerCase().includes(needle) ||
+        c.courseCode.toLowerCase().includes(needle) ||
+        c.teacherName.toLowerCase().includes(needle)
       )
-    }
+    })
+  }, [enrolled, filter, q])
 
-    // Most-recent first by default
-    list.sort((a: any, b: any) =>
-      new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime(),
+  const showingEnrolled = filter !== "requests"
+  const showingRequests = filter === "requests"
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-7xl px-6 py-8">
+        <Skeleton className="mb-6 h-10 w-64" />
+        <Skeleton className="mb-8 h-12 w-full max-w-md" />
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-48 rounded-2xl" />
+          ))}
+        </div>
+      </div>
     )
-
-    return list
-  }, [courses, search, status])
-
-  const countFor = (id: Status): number => {
-    if (id === "all")      return courses.length
-    if (id === "active")   return courses.filter((c: any) => !c.isArchived).length
-    return                        courses.filter((c: any) =>  c.isArchived).length
   }
 
-  const primaryCTA = teacher
-    ? { to: "/courses/create", label: "Create course",    icon: Plus  }
-    : { to: "/courses/join",   label: "Join a course",    icon: LogIn }
-
   return (
-    <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
-      {/* ─── Header ─── */}
-      <motion.header
-        initial={{ opacity: 0, y: -6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.24 }}
-        className="flex items-start justify-between gap-4 flex-wrap"
-      >
+    <div className="mx-auto max-w-7xl px-6 py-8">
+      {/* Header */}
+      <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl lg:text-[28px] font-bold tracking-tight text-foreground">
-            {teacher ? "Your courses" : "Enrolled courses"}
+          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
+            {teacher ? "Your courses" : "My courses"}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {courses.length === 0
-              ? teacher
-                ? "Create your first course to get started."
-                : "Join a course to start learning."
-              : `${courses.length} course${courses.length === 1 ? "" : "s"} in total`}
+          <p className="mt-1 text-[14px] text-muted-foreground">
+            {teacher
+              ? "Courses you're teaching this semester."
+              : "Classes you're enrolled in."}
           </p>
         </div>
 
-        <Link to={primaryCTA.to}>
-          <button className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:brightness-105 focus-ring transition-all">
-            <primaryCTA.icon className="h-4 w-4" strokeWidth={2.25} />
-            {primaryCTA.label}
-          </button>
-        </Link>
-      </motion.header>
+        <div className="flex items-center gap-2">
+          {teacher ? (
+            <Button onClick={() => navigate("/courses/create")}>
+              <Plus className="h-4 w-4" />
+              New course
+            </Button>
+          ) : (
+            <Button onClick={() => navigate("/courses/join")}>
+              <LogIn className="h-4 w-4" />
+              Join course
+            </Button>
+          )}
+        </div>
+      </header>
 
-      {/* ─── Filter bar ─── */}
-      <motion.div
-        initial={{ opacity: 0, y: 4 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.24, delay: 0.04 }}
-        className="flex items-center gap-3 flex-wrap"
-      >
-        {/* Search */}
-        <div className="relative flex-1 min-w-[240px] max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+      {/* Search + filter chips */}
+      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative max-w-md flex-1">
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             ref={searchRef}
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search courses by name, code, teacher…"
-            aria-label="Search courses"
-            className={cn(
-              "w-full h-10 pl-10 pr-20 rounded-xl text-sm font-medium outline-none",
-              "bg-input text-foreground placeholder:text-muted-foreground/70",
-              "border border-border hover:border-border-strong",
-              "focus:border-primary focus:shadow-[0_0_0_3px_rgb(var(--ring)/0.18)]",
-              "transition-[border-color,box-shadow] duration-150",
-            )}
+            type="text"
+            placeholder="Search by title, code, or teacher..."
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            className="h-11 w-full rounded-xl border border-border bg-card pl-11 pr-16 text-sm text-foreground placeholder:text-muted-foreground transition-all focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/30"
           />
-          {search ? (
-            <button
-              onClick={() => { setSearch(""); searchRef.current?.focus() }}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 h-6 w-6 rounded-md inline-flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              aria-label="Clear search"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          ) : (
-            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden md:inline-flex items-center h-6 px-1.5 rounded-md border border-border bg-background font-mono text-[10px] font-semibold text-muted-foreground">
+          {!q && (
+            <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-border bg-stone-50 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground">
               /
             </kbd>
           )}
         </div>
 
-        {/* Status filter chips */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          {STATUS_FILTERS.map(f => {
-            const active = status === f.id
-            const count  = countFor(f.id)
-            return (
-              <button
-                key={f.id}
-                onClick={() => setStatus(f.id)}
-                className={cn(
-                  "inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold transition-colors focus-ring",
-                  active
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-subtle hover:text-foreground border border-border",
-                )}
-              >
-                {f.label}
-                {count > 0 && (
-                  <span className={cn(
-                    "inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold",
-                    active
-                      ? "bg-primary-foreground/20 text-primary-foreground"
-                      : "bg-primary/10 text-primary",
-                  )}>
-                    {count}
-                  </span>
-                )}
-              </button>
-            )
-          })}
+        <div className="flex items-center gap-1.5">
+          <FilterChip active={filter === "active"}   onClick={() => setFilter("active")}>
+            Active
+          </FilterChip>
+          <FilterChip active={filter === "archived"} onClick={() => setFilter("archived")}>
+            Archived
+          </FilterChip>
+          {hasRequests && (
+            <FilterChip
+              active={filter === "requests"}
+              onClick={() => setFilter("requests")}
+              badge={requestCount}
+            >
+              Requests
+            </FilterChip>
+          )}
         </div>
-      </motion.div>
+      </div>
 
-      {/* ─── Body ─── */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-[220px] rounded-2xl skeleton" />
-          ))}
-        </div>
-      ) : filtered.length === 0 ? (
+      {/* Grid */}
+      {showingEnrolled && filteredEnrolled.length === 0 && (
         <EmptyState
-          search={search}
-          status={status}
+          filter={filter}
           teacher={teacher}
-          onClearSearch={() => setSearch("")}
-          onClearStatus={() => setStatus("all")}
+          hasSearch={!!q}
+          onCreate={() => navigate("/courses/create")}
+          onJoin={()   => navigate("/courses/join")}
         />
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filtered.map((course: any, i: number) => (
-            <CourseCard
-              key={course.id}
-              course={course}
-              index={i}
-              isTeacher={teacher}
-            />
+      )}
+
+      {showingEnrolled && filteredEnrolled.length > 0 && (
+        <motion.div
+          layout
+          className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3"
+        >
+          {filteredEnrolled.map(course => (
+            <ActiveCourseCard key={course.id} course={course} />
           ))}
+        </motion.div>
+      )}
+
+      {showingRequests && (
+        <div className="space-y-6">
+          {pending.length > 0 && (
+            <section>
+              <h2 className="mb-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                Pending ({pending.length})
+              </h2>
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+                {pending.map(p => (
+                  <PendingCourseCard key={p.requestId} course={p} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {rejected.length > 0 && (
+            <section>
+              <h2 className="mb-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                Declined ({rejected.length})
+              </h2>
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+                {rejected.map(r => (
+                  <RejectedCourseCard
+                    key={r.requestId}
+                    course={r}
+                    onDismiss={dismissRequest}
+                    isDismissing={isDismissing}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       )}
     </div>
   )
 }
 
-// ═════════════════════════════════════════════════════════════
-function EmptyState({
-  search, status, teacher, onClearSearch, onClearStatus,
-}: {
-  search: string
-  status: Status
-  teacher: boolean
-  onClearSearch: () => void
-  onClearStatus: () => void
-}) {
-  const searching = search.trim().length > 0
-  const statusFiltered = status !== "all"
+/* ─── Sub-components ─────────────────────────────────────────────── */
 
-  // Filter-level empty (has courses but current filter hides them)
-  if (searching || statusFiltered) {
+function FilterChip({
+  active, onClick, children, badge,
+}: {
+  active:   boolean
+  onClick:  () => void
+  children: React.ReactNode
+  badge?:   number
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-all ${
+        active
+          ? "bg-teal-600 text-white"
+          : "bg-stone-100 text-stone-700 hover:bg-stone-200"
+      }`}
+    >
+      {children}
+      {badge !== undefined && badge > 0 && (
+        <span
+          className={`inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums ${
+            active ? "bg-white/20 text-white" : "bg-white text-teal-700"
+          }`}
+        >
+          {badge}
+        </span>
+      )}
+    </button>
+  )
+}
+
+function EmptyState({
+  filter, teacher, hasSearch, onCreate, onJoin,
+}: {
+  filter:    FilterKey
+  teacher:   boolean
+  hasSearch: boolean
+  onCreate:  () => void
+  onJoin:    () => void
+}) {
+  if (hasSearch) {
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="flex flex-col items-center justify-center py-16 px-6 text-center rounded-2xl border border-dashed border-border bg-card"
-      >
-        <div className="h-14 w-14 rounded-2xl inline-flex items-center justify-center bg-muted text-muted-foreground mb-4">
-          <Search className="h-6 w-6" strokeWidth={1.8} />
-        </div>
-        <p className="font-display text-base font-semibold text-foreground">
-          {searching ? "No matches" : "Nothing here"}
-        </p>
-        <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-          {searching
-            ? `No courses match "${search}".`
-            : `You don't have any ${status} courses.`}
-        </p>
-        <div className="flex gap-2 mt-5">
-          {searching && (
-            <button
-              onClick={onClearSearch}
-              className="h-9 px-3 rounded-lg text-xs font-semibold bg-muted hover:bg-subtle text-foreground transition-colors"
-            >
-              Clear search
-            </button>
-          )}
-          {statusFiltered && (
-            <button
-              onClick={onClearStatus}
-              className="h-9 px-3 rounded-lg text-xs font-semibold bg-muted hover:bg-subtle text-foreground transition-colors"
-            >
-              Show all
-            </button>
-          )}
-        </div>
-      </motion.div>
+      <div className="rounded-2xl border border-dashed border-border bg-stone-50/50 py-16 text-center">
+        <Search className="mx-auto h-10 w-10 text-muted-foreground" />
+        <p className="mt-4 font-semibold text-foreground">No courses match your search</p>
+        <p className="mt-1 text-sm text-muted-foreground">Try different keywords.</p>
+      </div>
     )
   }
 
-  // True empty — no courses at all
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="flex flex-col items-center justify-center py-20 px-6 text-center rounded-2xl border border-dashed border-border bg-card"
-    >
-      <div className="h-16 w-16 rounded-2xl inline-flex items-center justify-center bg-primary/10 text-primary mb-5">
-        <BookOpen className="h-7 w-7" strokeWidth={1.8} />
+  if (filter === "archived") {
+    return (
+      <div className="rounded-2xl border border-dashed border-border bg-stone-50/50 py-16 text-center">
+        <ArchiveIcon className="mx-auto h-10 w-10 text-muted-foreground" />
+        <p className="mt-4 font-semibold text-foreground">No archived courses</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Archived courses appear here when you retire them.
+        </p>
       </div>
-      <p className="font-display text-lg font-semibold text-foreground">
-        {teacher ? "No courses yet" : "You haven't joined any courses"}
-      </p>
-      <p className="text-sm text-muted-foreground mt-1.5 max-w-sm">
-        {teacher
-          ? "Create your first course to start managing students, materials, assignments, and grades — all in one place."
-          : "Ask your teacher for a course join code, then enroll to access materials, submit assignments, and track your grades."}
-      </p>
-      <Link
-        to={teacher ? "/courses/create" : "/courses/join"}
-        className="inline-flex items-center gap-2 h-10 px-4 rounded-xl mt-6 text-sm font-semibold bg-primary text-primary-foreground hover:brightness-105 transition"
-      >
-        {teacher
-          ? <><Plus className="h-4 w-4" /> Create course</>
-          : <><LogIn className="h-4 w-4" /> Join a course</>
-        }
-      </Link>
-    </motion.div>
+    )
+  }
+
+  // filter === "active", no courses
+  return (
+    <div className="rounded-2xl border border-dashed border-border bg-stone-50/50 py-16 text-center">
+      {teacher ? (
+        <>
+          <BookOpen className="mx-auto h-10 w-10 text-muted-foreground" />
+          <p className="mt-4 font-semibold text-foreground">No courses yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Create your first course to get started.
+          </p>
+          <Button className="mt-5" onClick={onCreate}>
+            <Plus className="h-4 w-4" />
+            New course
+          </Button>
+        </>
+      ) : (
+        <>
+          <Inbox className="mx-auto h-10 w-10 text-muted-foreground" />
+          <p className="mt-4 font-semibold text-foreground">Not enrolled in any courses</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Ask your teacher for a joining code.
+          </p>
+          <Button className="mt-5" onClick={onJoin}>
+            <LogIn className="h-4 w-4" />
+            Join course
+          </Button>
+        </>
+      )}
+    </div>
   )
 }

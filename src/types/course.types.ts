@@ -54,8 +54,7 @@ export interface CourseSummaryDto {
 }
 
 /**
- * Pending join request from the student's perspective — the course they've
- * requested to join but the teacher hasn't approved/rejected yet.
+ * Pending join request from the student's perspective.
  */
 export interface PendingCourseDto {
   id:                      string
@@ -71,7 +70,7 @@ export interface PendingCourseDto {
 }
 
 /**
- * Rejected join request — stays on the student's list until they dismiss it.
+ * Rejected join request — stays on student's list until dismissed.
  */
 export interface RejectedCourseDto {
   id:                      string
@@ -95,6 +94,22 @@ export interface MyCoursesDto {
   enrolled: CourseSummaryDto[]
   pending:  PendingCourseDto[]
   rejected: RejectedCourseDto[]
+}
+
+/**
+ * Preview returned by /Courses/by-code/{code} for the Join flow.
+ * Lightweight — just enough to show "You're about to request to join X".
+ */
+export interface CourseByCodeDto {
+  id:                     string
+  title:                  string
+  courseCode:             string
+  department:             string
+  semester:               string
+  courseType:             string
+  teacherName:            string
+  teacherProfilePhotoUrl: string | null
+  memberCount:            number
 }
 
 export interface CourseMemberDto {

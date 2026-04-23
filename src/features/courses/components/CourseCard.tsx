@@ -1,176 +1,266 @@
-﻿import { memo } from "react"
-import { Link } from "react-router-dom"
+﻿import { Link } from "react-router-dom"
 import { motion } from "framer-motion"
-import { Users, BookOpen, ArrowRight, Clock } from "lucide-react"
-import { cn } from "@/utils/cn"
+import { Archive, Users, GraduationCap, X, Clock, XCircle } from "lucide-react"
+import type {
+  CourseSummaryDto, PendingCourseDto, RejectedCourseDto,
+} from "@/types/course.types"
 
-// Subtle accent-strip rotation — same palette as dashboard mini-cards
+/** Teal / amber / blue / violet rotation driven by course.id hash. */
 const ACCENTS = [
-  "bg-primary",
-  "bg-info",
-  "bg-success",
-  "bg-accent",
+  "bg-teal-500",
+  "bg-amber-500",
+  "bg-blue-500",
+  "bg-violet-500",
 ] as const
 
-interface CourseCardProps {
-  course: any
-  index?: number
-  isTeacher?: boolean
-  /** Kept for backward compatibility; the list-mode UI is de-emphasized. */
-  viewMode?: "grid" | "list"
+function pickAccent(id: string): string {
+  let hash = 0
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0
+  return ACCENTS[Math.abs(hash) % ACCENTS.length]
 }
 
-export default memo(function CourseCard({
-  course, index = 0, isTeacher = false, viewMode = "grid",
-}: CourseCardProps) {
-  const members  = course.memberCount ?? course.enrollmentCount ?? course.studentCount ?? 0
-  const archived = !!course.isArchived
-  const link     = `/courses/${course.id}/stream`
-  const accent   = ACCENTS[index % ACCENTS.length]
+function formatRelative(iso: string): string {
+  const d   = new Date(iso)
+  const now = new Date()
+  const ms  = now.getTime() - d.getTime()
+  const h   = ms / 3_600_000
+  if (h < 1)  return "just now"
+  if (h < 24) return `${Math.floor(h)}h ago`
+  const days = Math.floor(h / 24)
+  if (days < 7)  return `${days}d ago`
+  if (days < 30) return `${Math.floor(days / 7)}w ago`
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" })
+}
 
-  // ────── List view (compact, for power users) ──────
-  if (viewMode === "list") {
-    return (
-      <Link to={link}>
-        <motion.div
-          initial={{ opacity: 0, x: -6 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: index * 0.03 }}
-          className={cn(
-            "group flex items-center gap-4 px-4 py-3 rounded-xl border bg-card transition-colors",
-            "hover:border-primary/40 hover:bg-muted/50",
-            archived && "opacity-70",
-          )}
-        >
-          <div className={cn(
-            "h-10 w-10 rounded-lg inline-flex items-center justify-center shrink-0 text-white",
-            accent,
-          )}>
-            <BookOpen className="h-[18px] w-[18px]" strokeWidth={2} />
-          </div>
+/* ────────────────────────────────────────────────────────────────── */
+/*   ACTIVE CARD — enrolled, clickable                                */
+/* ────────────────────────────────────────────────────────────────── */
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              {course.courseCode && (
-                <span className="font-mono text-[11px] font-bold text-primary uppercase tracking-wide">
-                  {course.courseCode}
-                </span>
-              )}
-              <p className="text-[14px] font-semibold text-foreground truncate">
-                {course.title ?? "Untitled"}
-              </p>
-            </div>
-            <p className="text-xs text-muted-foreground truncate mt-0.5">
-              {[course.semester, course.department, course.teacherName].filter(Boolean).join(" · ") || "—"}
-            </p>
-          </div>
+interface ActiveCardProps {
+  course:    CourseSummaryDto
+  viewMode?: "grid" | "list"   // back-compat, unused
+}
 
-          <div className="flex items-center gap-3 shrink-0">
-            <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-              <Users className="h-3 w-3" />
-              {members}
-            </span>
-            <span className={cn("pill", archived ? "pill-muted" : "pill-brand")}>
-              {archived ? "Archived" : "Active"}
-            </span>
-            <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-          </div>
-        </motion.div>
-      </Link>
-    )
-  }
+export function ActiveCourseCard({ course }: ActiveCardProps) {
+  const accent = pickAccent(course.id)
 
-  // ────── Grid view (default) ──────
   return (
-    <Link to={link}>
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.04, duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-        className={cn(
-          "group relative flex flex-col rounded-2xl border bg-card overflow-hidden transition-all h-full",
-          "hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5",
-          archived && "opacity-70",
-        )}
-      >
-        {/* Accent strip on top — subtle visual differentiation */}
-        <div className={cn("h-1 w-full", accent)} aria-hidden />
+    <motion.div
+      whileHover={{ y: -2 }}
+      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+      className={`group relative overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md ${course.isArchived ? "opacity-70" : ""}`}
+    >
+      {/* Top accent strip */}
+      <div className={`h-1 w-full ${accent}`} />
 
-        <div className="flex flex-col gap-3 p-5 flex-1 min-h-0">
-          {/* Header: icon + status */}
-          <div className="flex items-start justify-between">
-            <div className={cn(
-              "h-11 w-11 rounded-xl inline-flex items-center justify-center shrink-0 text-white",
-              accent,
-            )}>
-              <BookOpen className="h-5 w-5" strokeWidth={2} />
-            </div>
-            <span className={cn("pill", archived ? "pill-muted" : "pill-brand")}>
-              {archived ? "Archived" : "Active"}
-            </span>
+      <Link to={`/courses/${course.id}/stream`} className="block p-5">
+        {/* Header row */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="mb-1 font-mono text-[11px] font-semibold uppercase tracking-wider text-teal-700">
+              {course.courseCode}
+            </p>
+            <h3 className="truncate font-display text-[17px] font-bold text-foreground group-hover:text-teal-700">
+              {course.title}
+            </h3>
           </div>
 
-          {/* Course code + semester row */}
-          {(course.courseCode || course.semester) && (
-            <div className="flex items-center gap-2 flex-wrap">
-              {course.courseCode && (
-                <span className="font-mono text-[11px] font-bold text-primary uppercase tracking-wide">
-                  {course.courseCode}
-                </span>
-              )}
-              {course.semester && (
-                <span className="text-[11px] text-muted-foreground">
-                  {course.semester}
-                </span>
-              )}
-              {course.creditHours && (
-                <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                  <Clock className="h-3 w-3" />
-                  {course.creditHours} cr
-                </span>
-              )}
+          {course.isArchived && (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-stone-600">
+              <Archive className="h-3 w-3" />
+              Archived
+            </span>
+          )}
+        </div>
+
+        {/* Teacher */}
+        <div className="mt-3 flex items-center gap-2">
+          {course.teacherProfilePhotoUrl ? (
+            <img
+              src={course.teacherProfilePhotoUrl}
+              alt=""
+              className="h-6 w-6 shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-stone-100 text-[11px] font-bold text-stone-600">
+              {course.teacherName.charAt(0).toUpperCase()}
             </div>
           )}
+          <span className="truncate text-[13px] text-muted-foreground">
+            {course.teacherName}
+          </span>
+        </div>
 
-          {/* Title */}
-          <h3 className="font-display text-[15px] font-semibold text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors">
-            {course.title ?? "Untitled Course"}
-          </h3>
+        {/* Divider */}
+        <div className="my-4 h-px bg-border" />
 
-          {/* Subtitle: teacher (for students) or department */}
-          <div className="flex-1 min-h-0">
-            {!isTeacher && course.teacherName ? (
-              <div className="flex items-center gap-2">
-                <div className={cn(
-                  "h-5 w-5 rounded-full inline-flex items-center justify-center text-[10px] font-bold text-white shrink-0",
-                  accent,
-                )}>
-                  {course.teacherName.charAt(0).toUpperCase()}
-                </div>
-                <p className="text-[12px] text-muted-foreground truncate">
-                  {course.teacherName}
-                </p>
-              </div>
-            ) : course.department ? (
-              <p className="text-[12px] text-muted-foreground truncate">
-                {course.department}
-              </p>
-            ) : null}
+        {/* Meta row */}
+        <div className="flex items-center justify-between text-[12px] text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            <GraduationCap className="h-3.5 w-3.5" />
+            <span className="truncate">{course.semester}</span>
           </div>
-
-          {/* Footer: members + open cta */}
-          <div className="flex items-center justify-between pt-3 border-t border-border">
-            <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <Users className="h-3 w-3" />
-              {members} member{members === 1 ? "" : "s"}
-            </span>
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground group-hover:text-primary transition-colors">
-              Open
-              <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
-            </span>
+          <div className="flex items-center gap-1.5">
+            <Users className="h-3.5 w-3.5" />
+            <span className="font-semibold tabular-nums">{course.memberCount}</span>
           </div>
         </div>
-      </motion.div>
-    </Link>
+      </Link>
+    </motion.div>
   )
-})
+}
+
+/* ────────────────────────────────────────────────────────────────── */
+/*   PENDING CARD — awaiting teacher review, not clickable            */
+/* ────────────────────────────────────────────────────────────────── */
+
+interface PendingCardProps {
+  course: PendingCourseDto
+}
+
+export function PendingCourseCard({ course }: PendingCardProps) {
+  const accent = pickAccent(course.id)
+
+  return (
+    <div
+      aria-disabled="true"
+      className="group relative overflow-hidden rounded-2xl border border-border bg-card opacity-70 transition-all hover:opacity-85"
+    >
+      <div className={`h-1 w-full ${accent}`} />
+
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="mb-1 font-mono text-[11px] font-semibold uppercase tracking-wider text-teal-700">
+              {course.courseCode}
+            </p>
+            <h3 className="truncate font-display text-[17px] font-bold text-foreground">
+              {course.title}
+            </h3>
+          </div>
+
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700">
+            <Clock className="h-3 w-3" />
+            Pending
+          </span>
+        </div>
+
+        <div className="mt-3 flex items-center gap-2">
+          {course.teacherProfilePhotoUrl ? (
+            <img
+              src={course.teacherProfilePhotoUrl}
+              alt=""
+              className="h-6 w-6 shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-stone-100 text-[11px] font-bold text-stone-600">
+              {course.teacherName.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <span className="truncate text-[13px] text-muted-foreground">
+            {course.teacherName}
+          </span>
+        </div>
+
+        <div className="my-4 h-px bg-border" />
+
+        <div className="flex items-center justify-between text-[12px] text-muted-foreground">
+          <span>Waiting for teacher</span>
+          <span className="tabular-nums">{formatRelative(course.requestedAt)}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ────────────────────────────────────────────────────────────────── */
+/*   REJECTED CARD — declined, dismissible                            */
+/* ────────────────────────────────────────────────────────────────── */
+
+interface RejectedCardProps {
+  course:      RejectedCourseDto
+  onDismiss:   (requestId: string) => void
+  isDismissing?: boolean
+}
+
+export function RejectedCourseCard({
+  course, onDismiss, isDismissing,
+}: RejectedCardProps) {
+  const accent = pickAccent(course.id)
+
+  return (
+    <div
+      aria-disabled="true"
+      className="group relative overflow-hidden rounded-2xl border border-border bg-card opacity-75 transition-all hover:opacity-95"
+    >
+      <div className={`h-1 w-full ${accent}`} />
+
+      {/* Dismiss button (top right absolute) */}
+      <button
+        type="button"
+        onClick={() => onDismiss(course.requestId)}
+        disabled={isDismissing}
+        aria-label="Dismiss rejected request"
+        className="absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-stone-100 text-stone-600 opacity-0 transition-all hover:bg-stone-200 hover:text-stone-900 group-hover:opacity-100 disabled:opacity-40"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-3 pr-8">
+          <div className="min-w-0 flex-1">
+            <p className="mb-1 font-mono text-[11px] font-semibold uppercase tracking-wider text-teal-700">
+              {course.courseCode}
+            </p>
+            <h3 className="truncate font-display text-[17px] font-bold text-foreground">
+              {course.title}
+            </h3>
+          </div>
+
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-red-300 bg-red-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-700">
+            <XCircle className="h-3 w-3" />
+            Rejected
+          </span>
+        </div>
+
+        <div className="mt-3 flex items-center gap-2">
+          {course.teacherProfilePhotoUrl ? (
+            <img
+              src={course.teacherProfilePhotoUrl}
+              alt=""
+              className="h-6 w-6 shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-stone-100 text-[11px] font-bold text-stone-600">
+              {course.teacherName.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <span className="truncate text-[13px] text-muted-foreground">
+            {course.teacherName}
+          </span>
+        </div>
+
+        <div className="my-4 h-px bg-border" />
+
+        <div className="flex items-center justify-between text-[12px] text-muted-foreground">
+          <span>Teacher declined</span>
+          <span className="tabular-nums">
+            {formatRelative(course.reviewedAt ?? course.requestedAt)}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ────────────────────────────────────────────────────────────────── */
+/*   BACKCOMPAT DEFAULT EXPORT                                        */
+/* ────────────────────────────────────────────────────────────────── */
+
+/**
+ * Default export kept for backward compatibility with existing imports.
+ * New code should import named variants directly.
+ *
+ * @deprecated use ActiveCourseCard instead
+ */
+export default ActiveCourseCard

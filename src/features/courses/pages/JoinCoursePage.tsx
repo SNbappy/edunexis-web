@@ -1,18 +1,25 @@
-import { useState, useRef } from "react"
+﻿import { useState, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
-import { courseService } from "../services/courseService"
+import { ArrowLeft, LogIn, Loader2, Hash, Sparkles, Search } from "lucide-react"
 import toast from "react-hot-toast"
-import { ArrowLeft, LogIn, Loader2, Hash, Sparkles, CheckCircle2 } from "lucide-react"
-import { useThemeStore } from "@/store/themeStore"
+import { courseService } from "../services/courseService"
+import { useCourses } from "../hooks/useCourses"
+import JoinCoursePreview from "../components/JoinCoursePreview"
+import type { CourseByCodeDto } from "@/types/course.types"
 
 const CODE_LENGTH = 8
 
+type Step = "entry" | "preview"
+
 export default function JoinCoursePage() {
-  const navigate  = useNavigate()
-  const { dark }  = useThemeStore()
-  const [code,    setCode]    = useState<string[]>(Array(CODE_LENGTH).fill(""))
-  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
+  const { requestJoin, isJoining } = useCourses()
+
+  const [step, setStep] = useState<Step>("entry")
+  const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(""))
+  const [lookup, setLookup] = useState<CourseByCodeDto | null>(null)
+  const [lookingUp, setLookingUp] = useState(false)
   const inputs = useRef<(HTMLInputElement | null)[]>([])
 
   const fullCode = code.join("").toUpperCase()
@@ -26,214 +33,242 @@ export default function JoinCoursePage() {
 
   const handleKeyDown = (i: number, e: React.KeyboardEvent) => {
     if (e.key === "Backspace" && !code[i] && i > 0) inputs.current[i - 1]?.focus()
-    if (e.key === "Enter" && fullCode.length === CODE_LENGTH) handleJoin()
+    if (e.key === "Enter" && filled === CODE_LENGTH) handleLookup()
   }
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault()
-    const pasted = e.clipboardData.getData("text").replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, CODE_LENGTH)
+    const pasted = e.clipboardData.getData("text")
+      .replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, CODE_LENGTH)
     const next = [...code]
     pasted.split("").forEach((c, i) => { next[i] = c })
     setCode(next)
     inputs.current[Math.min(pasted.length, CODE_LENGTH - 1)]?.focus()
   }
 
-  const handleJoin = async () => {
-    if (fullCode.length < CODE_LENGTH) return toast.error(`Enter the full ${CODE_LENGTH}-character code`)
-    setLoading(true)
+  const handleLookup = async () => {
+    if (filled < CODE_LENGTH) {
+      toast.error(`Enter the full ${CODE_LENGTH}-character code`)
+      return
+    }
+    setLookingUp(true)
     try {
-      const res = await courseService.joinByCode(fullCode)
-      if (res.success) {
-        toast.success("Join request sent! Awaiting teacher approval.")
-        navigate("/courses", { replace: true })
+      const res = await courseService.getByCode(fullCode)
+      if (res.success && res.data) {
+        setLookup(res.data)
+        setStep("preview")
       } else {
-        toast.error(res.message ?? "Invalid code or request failed.")
+        toast.error(res.message ?? "No course found with that code.")
       }
     } catch {
-      toast.error("Invalid joining code. Please try again.")
+      toast.error("Couldn't look up that code. Try again.")
     } finally {
-      setLoading(false)
+      setLookingUp(false)
     }
   }
 
-  // Theme
-  const bg        = dark ? "rgb(11,17,32)"            : "rgb(248,249,255)"
-  const cardBg    = dark ? "rgba(16,24,44,0.85)"      : "rgba(255,255,255,0.95)"
-  const blur      = "blur(20px)"
-  const border    = dark ? "rgba(99,102,241,0.15)"    : "#e5e7eb"
-  const topbarBg  = dark ? "rgba(11,17,32,0.85)"      : "rgba(255,255,255,0.85)"
-  const textMain  = dark ? "#e2e8f8"                  : "#111827"
-  const textSub   = dark ? "#8896c8"                  : "#6b7280"
-  const textMuted = dark ? "#5a6a9a"                  : "#9ca3af"
-  const divider   = dark ? "rgba(99,102,241,0.1)"     : "#f3f4f6"
-  const inputIdle = dark ? "rgba(255,255,255,0.04)"   : "#f9fafb"
-  const inputBorderIdle = dark ? "rgba(99,102,241,0.15)" : "#e5e7eb"
-  const inputFilled     = dark ? "rgba(99,102,241,0.15)" : "#eef2ff"
-  const inputBorderFilled = dark ? "rgba(99,102,241,0.45)" : "#6366f1"
-  const previewBg = dark ? "rgba(99,102,241,0.08)" : "#eef2ff"
-  const previewBorder = dark ? "rgba(99,102,241,0.15)" : "#c7d2fe"
+  const handleConfirmJoin = () => {
+    if (!lookup) return
+    requestJoin(
+      { courseId: lookup.id, code: fullCode },
+      {
+        onSuccess: (res: any) => {
+          if (res?.success) navigate("/courses?filter=requests", { replace: true })
+        },
+      } as any,
+    )
+  }
+
+  const handleBack = () => {
+    setStep("entry")
+    setLookup(null)
+  }
 
   return (
-    <div className="min-h-screen" style={{ background: bg }}>
-
-      {/* -- Topbar -- */}
-      <div className="sticky top-0 z-20 h-14 px-6 flex items-center"
-        style={{ background: topbarBg, backdropFilter: blur, WebkitBackdropFilter: blur, borderBottom: `1px solid ${border}` }}>
-        <motion.button whileHover={{ x: -2 }} onClick={() => navigate("/courses")}
-          className="flex items-center gap-2 text-[13px] font-semibold transition-colors"
-          style={{ color: textMuted }}
-          onMouseEnter={e => (e.currentTarget.style.color = "#6366f1")}
-          onMouseLeave={e => (e.currentTarget.style.color = textMuted)}>
-          <ArrowLeft style={{ width: 16, height: 16 }} /> Back to Courses
-        </motion.button>
+    <div className="min-h-screen bg-stone-50">
+      {/* Topbar */}
+      <div className="sticky top-0 z-20 flex h-14 items-center border-b border-border bg-white/85 px-6 backdrop-blur">
+        <button
+          onClick={() => navigate("/courses")}
+          className="inline-flex items-center gap-2 text-[13px] font-semibold text-muted-foreground transition-colors hover:text-teal-600"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to courses
+        </button>
       </div>
 
-      {/* -- Content -- */}
-      <div className="flex items-center justify-center px-4 py-16 min-h-[calc(100vh-56px)]">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, type: "spring", damping: 24 }}
-          className="w-full max-w-md">
-
-          {/* Heading */}
-          <div className="text-center mb-8">
-            <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 220, delay: 0.1 }}
-              className="w-18 h-18 rounded-2xl flex items-center justify-center mx-auto mb-5 w-[72px] h-[72px]"
-              style={{ background: dark ? "rgba(99,102,241,0.15)" : "#eef2ff", border: dark ? "1px solid rgba(99,102,241,0.3)" : "1px solid #c7d2fe", boxShadow: "0 8px 28px rgba(99,102,241,0.2)" }}>
-              <LogIn style={{ width: 32, height: 32, color: "#6366f1" }} strokeWidth={2} />
-            </motion.div>
-            <h1 className="text-[26px] font-extrabold mb-2" style={{ color: textMain }}>Join a Course</h1>
-            <p className="text-[14px] leading-relaxed" style={{ color: textSub }}>
-              Enter the 8-character code provided by your teacher
-            </p>
-          </div>
-
-          {/* Card */}
-          <div className="rounded-3xl p-7 space-y-6"
-            style={{ background: cardBg, backdropFilter: blur, WebkitBackdropFilter: blur, border: `1px solid ${border}`, boxShadow: dark ? "0 24px 64px rgba(0,0,0,0.4)" : "0 8px 32px rgba(99,102,241,0.08)" }}>
-
-            {/* Label */}
-            <div className="flex items-center gap-2">
-              <Hash style={{ width: 14, height: 14, color: "#6366f1" }} />
-              <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: textMuted }}>
-                Joining Code ({CODE_LENGTH} characters)
-              </span>
-            </div>
-
-            {/* Code inputs */}
-            <div className="flex items-center justify-center gap-2" onPaste={handlePaste}>
-              {code.slice(0, 4).map((c, i) => (
-                <motion.input key={i}
-                  ref={el => { inputs.current[i] = el }}
-                  type="text" inputMode="text" maxLength={1} value={c}
-                  onChange={e => handleChange(i, e.target.value)}
-                  onKeyDown={e => handleKeyDown(i, e)}
-                  onFocus={e => e.target.select()}
-                  whileFocus={{ scale: 1.06, y: -2 }}
-                  className="w-11 h-13 rounded-xl text-center text-[18px] font-extrabold outline-none transition-all"
-                  style={{
-                    width: 44, height: 52,
-                    background:  c ? inputFilled : inputIdle,
-                    border:      `2px solid ${c ? inputBorderFilled : inputBorderIdle}`,
-                    color:       c ? "#6366f1" : textSub,
-                    boxShadow:   c ? (dark ? "0 4px 16px rgba(99,102,241,0.25)" : "0 4px 12px rgba(99,102,241,0.15)") : "none",
-                  }} />
-              ))}
-
-              <span className="text-[18px] font-bold mx-0.5" style={{ color: textMuted }}>-</span>
-
-              {code.slice(4).map((c, j) => {
-                const i = j + 4
-                return (
-                  <motion.input key={i}
-                    ref={el => { inputs.current[i] = el }}
-                    type="text" inputMode="text" maxLength={1} value={c}
-                    onChange={e => handleChange(i, e.target.value)}
-                    onKeyDown={e => handleKeyDown(i, e)}
-                    onFocus={e => e.target.select()}
-                    whileFocus={{ scale: 1.06, y: -2 }}
-                    className="w-11 h-13 rounded-xl text-center text-[18px] font-extrabold outline-none transition-all"
-                    style={{
-                      width: 44, height: 52,
-                      background:  c ? inputFilled : inputIdle,
-                      border:      `2px solid ${c ? inputBorderFilled : inputBorderIdle}`,
-                      color:       c ? "#6366f1" : textSub,
-                      boxShadow:   c ? (dark ? "0 4px 16px rgba(99,102,241,0.25)" : "0 4px 12px rgba(99,102,241,0.15)") : "none",
-                    }} />
-                )
-              })}
-            </div>
-
-            {/* Progress dots */}
-            <div className="flex justify-center gap-1.5">
-              {code.map((c, i) => (
-                <motion.div key={i}
-                  animate={{ scale: c ? 1.2 : 1, background: c ? "#6366f1" : (dark ? "rgba(99,102,241,0.15)" : "#e5e7eb") }}
-                  className="rounded-full"
-                  style={{ width: 7, height: 7 }} />
-              ))}
-            </div>
-
-            {/* Live preview */}
-            {fullCode.length > 0 && (
-              <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
-                className="flex items-center justify-between px-4 py-3 rounded-xl"
-                style={{ background: previewBg, border: `1px solid ${previewBorder}` }}>
-                <span className="text-[12px] font-medium" style={{ color: textMuted }}>Code entered</span>
-                <span className="text-[15px] font-extrabold tracking-[0.15em]" style={{ color: "#6366f1" }}>
-                  {fullCode.slice(0, 4)}{fullCode.length > 4 ? "-" + fullCode.slice(4) : ""}
-                </span>
+      <div className="flex min-h-[calc(100vh-56px)] items-center justify-center px-4 py-16">
+        {step === "entry" ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+            className="w-full max-w-md"
+          >
+            {/* Heading */}
+            <div className="mb-8 text-center">
+              <motion.div
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 220, delay: 0.1 }}
+                className="mx-auto mb-5 flex h-[72px] w-[72px] items-center justify-center rounded-2xl border border-teal-200 bg-teal-50"
+              >
+                <LogIn className="h-8 w-8 text-teal-600" strokeWidth={2} />
               </motion.div>
-            )}
-
-            {/* Divider */}
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-px" style={{ background: divider }} />
-              <span className="text-[11px] font-semibold" style={{ color: textMuted }}>
-                {filled === CODE_LENGTH ? "ready to join!" : `${filled}/${CODE_LENGTH} entered`}
-              </span>
-              <div className="flex-1 h-px" style={{ background: divider }} />
+              <h1 className="font-display text-[26px] font-extrabold text-foreground">
+                Join a course
+              </h1>
+              <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
+                Enter the 8-character code provided by your teacher.
+              </p>
             </div>
 
-            {/* Buttons */}
-            <div className="flex gap-3">
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-                onClick={() => navigate("/courses")}
-                className="flex-1 h-11 rounded-xl font-semibold text-[13px] transition-all"
-                style={{ background: dark ? "rgba(255,255,255,0.06)" : "#f3f4f6", border: `1px solid ${border}`, color: textSub }}
-                onMouseEnter={e => (e.currentTarget.style.background = dark ? "rgba(255,255,255,0.09)" : "#e5e7eb")}
-                onMouseLeave={e => (e.currentTarget.style.background = dark ? "rgba(255,255,255,0.06)" : "#f3f4f6")}>
-                Cancel
-              </motion.button>
+            {/* Card */}
+            <div className="rounded-3xl border border-border bg-card p-7 shadow-sm">
+              {/* Label */}
+              <div className="mb-5 flex items-center gap-2">
+                <Hash className="h-3.5 w-3.5 text-teal-600" />
+                <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Joining code
+                </span>
+              </div>
 
-              <motion.button
-                whileHover={{ scale: filled < CODE_LENGTH ? 1 : 1.02 }}
-                whileTap={{   scale: filled < CODE_LENGTH ? 1 : 0.97 }}
-                onClick={handleJoin}
-                disabled={loading || filled < CODE_LENGTH}
-                className="flex-[2] h-11 rounded-xl font-bold text-[14px] flex items-center justify-center gap-2 text-white transition-all disabled:opacity-40"
-                style={{
-                  background: filled === CODE_LENGTH
-                    ? "linear-gradient(135deg,#6366f1,#0891b2)"
-                    : dark ? "rgba(99,102,241,0.15)" : "#eef2ff",
-                  color:      filled === CODE_LENGTH ? "white" : textMuted,
-                  boxShadow:  filled === CODE_LENGTH ? "0 4px 16px rgba(99,102,241,0.4)" : "none",
-                }}>
-                {loading
-                  ? <><Loader2 style={{ width: 16, height: 16 }} className="animate-spin" /> Joining...</>
-                  : filled === CODE_LENGTH
-                    ? <><CheckCircle2 style={{ width: 16, height: 16 }} /> Join Course</>
-                    : <><Sparkles style={{ width: 16, height: 16 }} /> Join Course</>
-                }
-              </motion.button>
+              {/* Code inputs */}
+              <div className="flex items-center justify-center gap-1.5" onPaste={handlePaste}>
+                {code.slice(0, 4).map((c, i) => (
+                  <CodeBox
+                    key={i}
+                    i={i}
+                    value={c}
+                    refCb={el => { inputs.current[i] = el }}
+                    onChange={handleChange}
+                    onKeyDown={handleKeyDown}
+                  />
+                ))}
+                <span className="mx-1 text-[16px] font-bold text-muted-foreground">—</span>
+                {code.slice(4).map((c, j) => {
+                  const i = j + 4
+                  return (
+                    <CodeBox
+                      key={i}
+                      i={i}
+                      value={c}
+                      refCb={el => { inputs.current[i] = el }}
+                      onChange={handleChange}
+                      onKeyDown={handleKeyDown}
+                    />
+                  )
+                })}
+              </div>
+
+              {/* Progress dots */}
+              <div className="mt-5 flex justify-center gap-1.5">
+                {code.map((c, i) => (
+                  <motion.div
+                    key={i}
+                    animate={{ scale: c ? 1.2 : 1 }}
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      c ? "bg-teal-600" : "bg-stone-300"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Divider + status */}
+              <div className="mt-6 flex items-center gap-3">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-[11px] font-semibold text-muted-foreground">
+                  {filled === CODE_LENGTH
+                    ? "ready to look up"
+                    : `${filled}/${CODE_LENGTH} entered`}
+                </span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+
+              {/* Buttons */}
+              <div className="mt-6 flex gap-3">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => navigate("/courses")}
+                  className="flex-1 rounded-xl border border-border bg-stone-50 py-2.5 text-[13px] font-semibold text-stone-700 transition-colors hover:bg-stone-100"
+                >
+                  Cancel
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: filled === CODE_LENGTH ? 1.02 : 1 }}
+                  whileTap={{   scale: filled === CODE_LENGTH ? 0.97 : 1 }}
+                  onClick={handleLookup}
+                  disabled={lookingUp || filled < CODE_LENGTH}
+                  className="flex flex-[2] items-center justify-center gap-2 rounded-xl bg-teal-600 py-2.5 text-[14px] font-bold text-white shadow-sm transition-all disabled:bg-stone-200 disabled:text-stone-500 disabled:shadow-none"
+                >
+                  {lookingUp ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Looking up...
+                    </>
+                  ) : filled === CODE_LENGTH ? (
+                    <>
+                      <Search className="h-4 w-4" />
+                      Find course
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      Find course
+                    </>
+                  )}
+                </motion.button>
+              </div>
+
+              <p className="mt-4 text-center text-[11px] text-muted-foreground">
+                We'll show you the course before sending the request.
+              </p>
             </div>
-
-            <p className="text-center text-[11px]" style={{ color: textMuted }}>
-              Your request will be reviewed by the teacher before approval
-            </p>
-          </div>
-        </motion.div>
+          </motion.div>
+        ) : (
+          lookup && (
+            <JoinCoursePreview
+              course={lookup}
+              onConfirm={handleConfirmJoin}
+              onBack={handleBack}
+              isJoining={isJoining}
+            />
+          )
+        )}
       </div>
     </div>
+  )
+}
+
+/* ─── Code input box ─────────────────────────────────────────────── */
+
+function CodeBox({
+  i, value, refCb, onChange, onKeyDown,
+}: {
+  i:          number
+  value:      string
+  refCb:      (el: HTMLInputElement | null) => void
+  onChange:   (i: number, v: string) => void
+  onKeyDown:  (i: number, e: React.KeyboardEvent) => void
+}) {
+  return (
+    <motion.input
+      ref={refCb}
+      type="text"
+      inputMode="text"
+      maxLength={1}
+      value={value}
+      onChange={e => onChange(i, e.target.value)}
+      onKeyDown={e => onKeyDown(i, e)}
+      onFocus={e => e.target.select()}
+      whileFocus={{ scale: 1.06, y: -2 }}
+      className={`h-[52px] w-11 rounded-xl text-center text-[18px] font-extrabold outline-none transition-all ${
+        value
+          ? "border-2 border-teal-600 bg-teal-50 text-teal-700 shadow-sm"
+          : "border-2 border-border bg-stone-50 text-muted-foreground"
+      }`}
+    />
   )
 }
