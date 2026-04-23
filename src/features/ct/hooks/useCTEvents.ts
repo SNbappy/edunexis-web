@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ctService } from '../services/ctService'
 import type { CreateCTEventRequest, UpdateCTEventRequest, GradeCTRequest } from '@/types/ct.types'
 import toast from 'react-hot-toast'
@@ -16,6 +16,8 @@ export function useCTEvents(courseId: string) {
             return res.data
         },
         enabled: !!courseId,
+        refetchOnWindowFocus: true,
+        staleTime: 15_000,
     })
 
     const createMutation = useMutation({
@@ -92,6 +94,8 @@ export function useCTMarks(ctEventId: string) {
             return res.data
         },
         enabled: !!ctEventId,
+        refetchOnWindowFocus: true,
+        staleTime: 15_000,
     })
 
     const gradeMutation = useMutation({
@@ -126,6 +130,7 @@ export function useCTMarks(ctEventId: string) {
         isUploading: uploadKhataMutation.isPending,
     }
 }
+
 
 
 

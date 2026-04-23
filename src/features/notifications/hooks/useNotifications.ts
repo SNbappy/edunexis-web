@@ -17,9 +17,9 @@ export function useNotifications() {
       if (!res.success) throw new Error(res.message)
       return res.data ?? []
     },
-    refetchInterval: 15_000,
+    refetchInterval: 5_000,
     refetchOnWindowFocus: true,
-    staleTime: 8_000,
+    staleTime: 2_000,
   })
 
   const markReadMutation = useMutation({
@@ -59,3 +59,4 @@ export function useNotifications() {
     deleteNotification: deleteMutation.mutate,
   }
 }
+

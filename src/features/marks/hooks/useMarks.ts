@@ -16,6 +16,8 @@ export function useMarks(courseId: string) {
             return res.data ?? null
         },
         enabled: !!courseId,
+        refetchOnWindowFocus: true,
+        staleTime: 15_000,
     })
 
     const marksQuery = useQuery({
@@ -26,6 +28,8 @@ export function useMarks(courseId: string) {
             return res.data ?? []
         },
         enabled: !!courseId,
+        refetchOnWindowFocus: true,
+        staleTime: 15_000,
     })
 
     const saveFormulaMutation = useMutation({
@@ -71,3 +75,4 @@ export function useMarks(courseId: string) {
         isPublishing:     publishMutation.isPending,
     }
 }
+

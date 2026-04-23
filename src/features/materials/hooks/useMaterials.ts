@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+﻿import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { materialService } from '../services/materialService'
 import toast from 'react-hot-toast'
@@ -38,6 +38,8 @@ export function useMaterials(courseId: string) {
                     return r.data ?? []
                 }),
         enabled: !!courseId,
+        refetchOnWindowFocus: true,
+        staleTime: 15_000,
     })
 
     const invalidate = () => qc.invalidateQueries({ queryKey: ['materials', courseId] })
@@ -109,3 +111,4 @@ export function useMaterials(courseId: string) {
         isDeleting: deleteMutation.isPending,
     }
 }
+

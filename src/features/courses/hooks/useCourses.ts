@@ -16,6 +16,8 @@ export function useCourses() {
       return res.data ?? { enrolled: [], pending: [], rejected: [] }
     },
     enabled: !!user,
+        refetchOnWindowFocus: true,
+        staleTime: 15_000,
     staleTime: 60_000,
   })
 
@@ -112,3 +114,4 @@ export function useCourses() {
     isDeleting:      deleteMutation.isPending,
   }
 }
+

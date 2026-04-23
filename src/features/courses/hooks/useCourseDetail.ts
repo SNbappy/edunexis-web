@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { courseService } from '../services/courseService'
 import type { UpdateCourseRequest } from '@/types/course.types'
 import toast from 'react-hot-toast'
@@ -14,6 +14,8 @@ export function useCourseDetail(courseId: string) {
             return res.data
         },
         enabled: !!courseId,
+        refetchOnWindowFocus: true,
+        staleTime: 15_000,
     })
 
     const updateMutation = useMutation({
@@ -36,3 +38,4 @@ export function useCourseDetail(courseId: string) {
         isUpdating: updateMutation.isPending,
     }
 }
+

@@ -1,4 +1,4 @@
-import { isTeacher } from '@/utils/roleGuard'
+﻿import { isTeacher } from '@/utils/roleGuard'
 import { useAuthStore } from '@/store/authStore'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -22,6 +22,8 @@ export function useAssignments(courseId: string) {
             return res.data ?? []
         },
         enabled: !!courseId,
+        refetchOnWindowFocus: true,
+        staleTime: 15_000,
     })
 
     const createMutation = useMutation({
@@ -105,6 +107,8 @@ export function useAssignment(courseId: string, assignmentId: string) {
             return res.data ?? null
         },
         enabled: !!courseId && !!assignmentId,
+        refetchOnWindowFocus: true,
+        staleTime: 15_000,
     })
 
     const mySubQuery = useQuery({
@@ -115,6 +119,8 @@ export function useAssignment(courseId: string, assignmentId: string) {
             return null
         },
         enabled: !!assignmentId && !!user && !teacher,
+        refetchOnWindowFocus: true,
+        staleTime: 15_000,
         retry: false,
         staleTime: 0,
     })
@@ -142,3 +148,4 @@ export function useAssignment(courseId: string, assignmentId: string) {
         isSubmitting: submitMutation.isPending,
     }
 }
+

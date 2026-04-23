@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { assignmentService } from '../services/assignmentService'
 import { useAuthStore } from '@/store/authStore'
 import { isTeacher } from '@/utils/roleGuard'
@@ -19,6 +19,8 @@ export function useSubmissions(courseId: string, assignmentId: string) {
             return res.data ?? []
         },
         enabled: !!courseId && !!assignmentId && teacher,
+        refetchOnWindowFocus: true,
+        staleTime: 15_000,
     })
 
     const invalidate = () => {
@@ -55,3 +57,4 @@ export function useSubmissions(courseId: string, assignmentId: string) {
         isGrading: gradeMutation.isPending,
     }
 }
+

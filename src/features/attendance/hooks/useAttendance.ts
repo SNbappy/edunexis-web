@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { attendanceService } from '../services/attendanceService'
 import type { TakeAttendanceRequest } from '@/types/attendance.types'
 import toast from 'react-hot-toast'
@@ -15,6 +15,8 @@ export function useAttendance(courseId: string) {
             return res.data
         },
         enabled: !!courseId,
+        refetchOnWindowFocus: true,
+        staleTime: 15_000,
     })
 
     const membersQuery = useQuery({
@@ -25,6 +27,8 @@ export function useAttendance(courseId: string) {
             return res.data
         },
         enabled: !!courseId,
+        refetchOnWindowFocus: true,
+        staleTime: 15_000,
     })
 
     const takeMutation = useMutation({
@@ -75,6 +79,7 @@ export function useAttendance(courseId: string) {
         deleteSession: deleteMutation.mutate,
     }
 }
+
 
 
 

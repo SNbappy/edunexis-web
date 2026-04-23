@@ -58,6 +58,8 @@ export function useAttendanceStats(courseId: string) {
             }
         },
         enabled: !!courseId,
+        refetchOnWindowFocus: true,
+        staleTime: 15_000,
     })
 }
 
@@ -72,8 +74,11 @@ export function useMyAttendance(courseId: string) {
             return res.data?.[0] ?? null
         },
         enabled: !!courseId && !!user?.id,
+        refetchOnWindowFocus: true,
+        staleTime: 15_000,
     })
 }
+
 
 
 

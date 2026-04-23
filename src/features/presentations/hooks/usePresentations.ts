@@ -16,6 +16,8 @@ export function usePresentations(courseId: string) {
             return res.data ?? []
         },
         enabled: !!courseId,
+        refetchOnWindowFocus: true,
+        staleTime: 15_000,
     })
 
     const createMutation = useMutation({
@@ -70,6 +72,8 @@ export function usePresentationResults(courseId: string, presentationId: string)
             return res.data ?? []
         },
         enabled: !!presentationId,
+        refetchOnWindowFocus: true,
+        staleTime: 15_000,
     })
 
     const saveMarksMutation = useMutation({
@@ -92,3 +96,4 @@ export function usePresentationResults(courseId: string, presentationId: string)
         isSaving:  saveMarksMutation.isPending,
     }
 }
+
