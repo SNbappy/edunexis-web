@@ -1,7 +1,7 @@
-import { useState } from "react"
+﻿import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Users, UserCheck, UserX, Clock, UserMinus, AlertTriangle } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import Avatar from "@/components/ui/Avatar"
 import Button from "@/components/ui/Button"
 import Modal from "@/components/ui/Modal"
@@ -26,7 +26,9 @@ export default function CourseMembersList({ courseId, course }: Props) {
   const { data: teacherProfile } = usePublicProfile(course?.teacherId)
 
   const [confirmTarget, setConfirmTarget] = useState<CourseMemberDto | null>(null)
-  const [filter, setFilter] = useState<FilterTab>("all")
+  const [searchParams] = useSearchParams()
+  const initialFilter = (searchParams.get("view") === "requests" ? "requests" : "all") as FilterTab
+  const [filter, setFilter] = useState<FilterTab>(initialFilter)
 
   const handleVisitProfile = (userId: string, memberData: object) =>
     navigate(`/users/${userId}`, { state: { member: memberData } })
@@ -141,14 +143,14 @@ export default function CourseMembersList({ courseId, course }: Props) {
                       style={{ background: dark ? "rgba(217,119,6,0.06)" : "#fffbeb", border: dark ? "1px solid rgba(217,119,6,0.12)" : "1px solid #fde68a" }}>
                       <div className="rounded-xl overflow-hidden shrink-0"
                         style={{ border: dark ? "1.5px solid rgba(217,119,6,0.3)" : "1.5px solid #fde68a", width: 36, height: 36 }}>
-                        <Avatar src={req.profilePhotoUrl} name={req.fullName} size="sm" className="w-full h-full rounded-none" />
+                        <Avatar src={req.profilePhotoUrl} name={req.studentName} size="sm" className="w-full h-full rounded-none" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-semibold truncate" style={{ color: textMain }}>{req.fullName}</p>
-                        <p className="text-[11px] truncate" style={{ color: textMuted }}>{req.email}</p>
+                        <p className="text-[13px] font-semibold truncate" style={{ color: textMain }}>{req.studentName}</p>
+                        <p className="text-[11px] truncate" style={{ color: textMuted }}>{req.studentEmail}</p>
                       </div>
-                      {req.studentId && (
-                        <span className="text-[11px] font-mono shrink-0 hidden sm:block" style={{ color: textMuted }}>{req.studentId}</span>
+                      {req.studentIdNumber && (
+                        <span className="text-[11px] font-mono shrink-0 hidden sm:block" style={{ color: textMuted }}>{req.studentIdNumber}</span>
                       )}
                       <div className="flex items-center gap-1.5 shrink-0">
                         <motion.button whileTap={{ scale: 0.95 }}
@@ -292,3 +294,6 @@ export default function CourseMembersList({ courseId, course }: Props) {
     </>
   )
 }
+
+
+
