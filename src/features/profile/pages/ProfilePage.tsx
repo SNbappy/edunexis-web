@@ -218,7 +218,7 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
             {/* Edit button — self only */}
             {isSelf && (
               <div className="flex items-center gap-2">
-                <Button variant="secondary" onClick={() => setEditOpen(true)}>
+                <Button variant="secondary" onClick={() => navigate("/profile/edit")}>
                   <Pencil className="h-3.5 w-3.5" />
                   Edit profile
                 </Button>
