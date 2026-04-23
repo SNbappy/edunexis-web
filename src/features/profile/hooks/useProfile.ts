@@ -1,98 +1,114 @@
-﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { profileService, type UpdateProfileRequest, type EducationRequest } from '../services/profileService'
-import { useAuthStore } from '@/store/authStore'
-import toast from 'react-hot-toast'
+﻿import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { profileService, type UpdateProfileRequest, type EducationRequest } from "../services/profileService"
+import { useAuthStore } from "@/store/authStore"
+import toast from "react-hot-toast"
 
 export function useProfile() {
-    const { setUser, user } = useAuthStore()
-    const qc = useQueryClient()
-    const invalidate = () => {
-        qc.invalidateQueries({ queryKey: ['profile'] })
-        qc.invalidateQueries({ queryKey: ['public-profile', user?.id] })
-    }
+  const { setUser, user } = useAuthStore()
+  const qc = useQueryClient()
 
-    const query = useQuery({
-        queryKey: ['profile'],
-        queryFn: async () => {
-            const res = await profileService.getProfile()
-            return res.data
-        },
-        enabled: !!user,
-    })
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["profile"] })
+    qc.invalidateQueries({ queryKey: ["public-profile", user?.id] })
+  }
 
-    const updateMutation = useMutation({
-        mutationFn: (data: UpdateProfileRequest) => profileService.updateProfile(data),
-        onSuccess: (res) => {
-            if (res.success && user) {
-                setUser({ ...user, profile: res.data, isProfileComplete: true })
-                invalidate()
-                toast.success('Profile updated!')
-            } else toast.error(res.message)
-        },
-        onError: () => toast.error('Failed to update profile.'),
-    })
+  const query = useQuery({
+    queryKey: ["profile"],
+    queryFn:  async () => {
+      const res = await profileService.getProfile()
+      return res.data
+    },
+    enabled: !!user,
+    refetchOnWindowFocus: true,
+    staleTime: 15_000,
+  })
 
-    const photoMutation = useMutation({
-        mutationFn: (file: File) => profileService.uploadPhoto(file),
-        onSuccess: (res) => { if (res.success) { invalidate(); toast.success('Photo updated!') } },
-        onError: () => toast.error('Failed to upload photo.'),
-    })
+  const updateMutation = useMutation({
+    mutationFn: (data: UpdateProfileRequest) => profileService.updateProfile(data),
+    onSuccess: (res) => {
+      if (res.success && user) {
+        setUser({ ...user, profile: res.data, isProfileComplete: true })
+        invalidate()
+        toast.success("Profile updated.")
+      } else toast.error(res.message)
+    },
+    onError: () => toast.error("Failed to update profile."),
+  })
 
-    const removePhotoMutation = useMutation({
-        mutationFn: () => profileService.removePhoto(),
-        onSuccess: (res) => { if (res.success) { invalidate(); toast.success('Photo removed.') } },
-        onError: () => toast.error('Failed to remove photo.'),
-    })
+  const photoMutation = useMutation({
+    mutationFn: (file: File) => profileService.uploadPhoto(file),
+    onSuccess: (res) => { if (res.success) { invalidate(); toast.success("Photo updated.") } },
+    onError: () => toast.error("Failed to upload photo."),
+  })
 
-    const coverMutation = useMutation({
-        mutationFn: (file: File) => profileService.uploadCover(file),
-        onSuccess: (res) => { if (res.success) { invalidate(); toast.success('Cover updated!') } },
-        onError: () => toast.error('Failed to upload cover.'),
-    })
+  const removePhotoMutation = useMutation({
+    mutationFn: () => profileService.removePhoto(),
+    onSuccess: (res) => { if (res.success) { invalidate(); toast.success("Photo removed.") } },
+    onError: () => toast.error("Failed to remove photo."),
+  })
 
-    const removeCoverMutation = useMutation({
-        mutationFn: () => profileService.removeCover(),
-        onSuccess: (res) => { if (res.success) { invalidate(); toast.success('Cover removed.') } },
-        onError: () => toast.error('Failed to remove cover.'),
-    })
+  const coverMutation = useMutation({
+    mutationFn: (file: File) => profileService.uploadCover(file),
+    onSuccess: (res) => { if (res.success) { invalidate(); toast.success("Cover updated.") } },
+    onError: () => toast.error("Failed to upload cover."),
+  })
 
-    const addEducationMutation = useMutation({
-        mutationFn: (data: EducationRequest) => profileService.addEducation(data),
-        onSuccess: (res) => { if (res.success) { invalidate(); toast.success('Education added!') } else toast.error(res.message) },
-        onError: () => toast.error('Failed to add education.'),
-    })
+  const removeCoverMutation = useMutation({
+    mutationFn: () => profileService.removeCover(),
+    onSuccess: (res) => { if (res.success) { invalidate(); toast.success("Cover removed.") } },
+    onError: () => toast.error("Failed to remove cover."),
+  })
 
-    const updateEducationMutation = useMutation({
-        mutationFn: ({ id, data }: { id: string; data: EducationRequest }) => profileService.updateEducation(id, data),
-        onSuccess: (res) => { if (res.success) { invalidate(); toast.success('Education updated!') } else toast.error(res.message) },
-        onError: () => toast.error('Failed to update education.'),
-    })
+  const addEducationMutation = useMutation({
+    mutationFn: (data: EducationRequest) => profileService.addEducation(data),
+    onSuccess: (res) => {
+      if (res.success) { invalidate(); toast.success("Education added.") }
+      else toast.error(res.message)
+    },
+    onError: () => toast.error("Failed to add education."),
+  })
 
-    const deleteEducationMutation = useMutation({
-        mutationFn: (id: string) => profileService.deleteEducation(id),
-        onSuccess: (res) => { if (res.success) { invalidate(); toast.success('Education removed.') } else toast.error(res.message) },
-        onError: () => toast.error('Failed to remove education.'),
-    })
+  const updateEducationMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: EducationRequest }) =>
+      profileService.updateEducation(id, data),
+    onSuccess: (res) => {
+      if (res.success) { invalidate(); toast.success("Education updated.") }
+      else toast.error(res.message)
+    },
+    onError: () => toast.error("Failed to update education."),
+  })
 
-    return {
-        profile: query.data,
-        isLoading: query.isLoading,
-        updateProfile: updateMutation.mutate,
-        isUpdating: updateMutation.isPending,
-        uploadPhoto: photoMutation.mutate,
-        isUploading: photoMutation.isPending,
-        removePhoto: removePhotoMutation.mutate,
-        isRemovingPhoto: removePhotoMutation.isPending,
-        uploadCover: coverMutation.mutate,
-        isUploadingCover: coverMutation.isPending,
-        removeCover: removeCoverMutation.mutate,
-        isRemovingCover: removeCoverMutation.isPending,
-        addEducation: addEducationMutation.mutate,
-        isAddingEdu: addEducationMutation.isPending,
-        updateEducation: updateEducationMutation.mutate,
-        isUpdatingEdu: updateEducationMutation.isPending,
-        deleteEducation: deleteEducationMutation.mutate,
-        isDeletingEdu: deleteEducationMutation.isPending,
-    }
+  const deleteEducationMutation = useMutation({
+    mutationFn: (id: string) => profileService.deleteEducation(id),
+    onSuccess: (res) => {
+      if (res.success) { invalidate(); toast.success("Education removed.") }
+      else toast.error(res.message)
+    },
+    onError: () => toast.error("Failed to remove education."),
+  })
+
+  return {
+    profile:  query.data,
+    isLoading: query.isLoading,
+
+    updateProfile:  updateMutation.mutate,
+    isUpdating:     updateMutation.isPending,
+
+    uploadPhoto:    photoMutation.mutate,
+    isUploading:    photoMutation.isPending,
+    removePhoto:    removePhotoMutation.mutate,
+    isRemovingPhoto: removePhotoMutation.isPending,
+
+    uploadCover:    coverMutation.mutate,
+    isUploadingCover: coverMutation.isPending,
+    removeCover:    removeCoverMutation.mutate,
+    isRemovingCover: removeCoverMutation.isPending,
+
+    addEducation:       addEducationMutation.mutate,
+    isAddingEducation:  addEducationMutation.isPending,
+    updateEducation:    updateEducationMutation.mutate,
+    isUpdatingEducation: updateEducationMutation.isPending,
+    deleteEducation:    deleteEducationMutation.mutate,
+    isDeletingEducation: deleteEducationMutation.isPending,
+  }
 }
-
