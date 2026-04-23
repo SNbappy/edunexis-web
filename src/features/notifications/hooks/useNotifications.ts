@@ -44,7 +44,7 @@ export function useNotifications() {
   // user opens the bell. Reappears when new notifications arrive.
   const badgeCount = notifications.filter((n: any) => {
     if (n.isRead) return false
-    const createdMs = n.createdAt ? new Date(n.createdAt).getTime() : 0
+    const createdMs = serverDateToMs(n.createdAt)
     return createdMs > badgeSeenAt
   }).length
 
@@ -59,4 +59,5 @@ export function useNotifications() {
     deleteNotification: deleteMutation.mutate,
   }
 }
+
 

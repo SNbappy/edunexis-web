@@ -1,4 +1,4 @@
-﻿import { useState } from "react"
+﻿import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Users, UserCheck, UserX, Clock, UserMinus, AlertTriangle } from "lucide-react"
 import { useNavigate, useSearchParams } from "react-router-dom"
@@ -22,7 +22,8 @@ export default function CourseMembersList({ courseId, course }: Props) {
   const navigate  = useNavigate()
 
   const { members, joinRequests, isMembersLoading, isRequestsLoading,
-          removeMember, isRemoving, reviewRequest, isReviewing } = useCourseMembers(courseId)
+          removeMember, isRemoving, reviewRequest, isReviewing,
+          refetchRequests, refetchMembers } = useCourseMembers(courseId)
   const { data: teacherProfile } = usePublicProfile(course?.teacherId)
 
   const [confirmTarget, setConfirmTarget] = useState<CourseMemberDto | null>(null)
@@ -294,6 +295,7 @@ export default function CourseMembersList({ courseId, course }: Props) {
     </>
   )
 }
+
 
 
 
