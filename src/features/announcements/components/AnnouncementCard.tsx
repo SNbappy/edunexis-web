@@ -1,135 +1,161 @@
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { FileText, ChevronDown, ChevronUp, MoreVertical, Pin, PinOff, Trash2 } from "lucide-react"
+import {
+  FileText, ChevronDown, ChevronUp, MoreVertical,
+  Pin, PinOff, Trash2, ExternalLink,
+} from "lucide-react"
 import Avatar from "@/components/ui/Avatar"
 import { formatRelative } from "@/utils/dateUtils"
 import { useAuthStore } from "@/store/authStore"
-import { useThemeStore } from "@/store/themeStore"
 import type { AnnouncementDto } from "@/types/announcement.types"
 
-interface Props {
+interface AnnouncementCardProps {
   announcement: AnnouncementDto
-  index?:       number
-  canPin?:      boolean
-  canDelete?:   boolean
-  onPin?:       (id: string) => void
-  onDelete?:    (id: string) => void
+  index?: number
+  canPin?: boolean
+  canDelete?: boolean
+  onPin?: (id: string) => void
+  onDelete?: (id: string) => void
 }
 
-function getFileName(url: string) {
+function getFileName(url: string): string {
   try { return decodeURIComponent(url.split("/").pop() ?? "Attachment") }
   catch { return "Attachment" }
 }
 
-export default function AnnouncementCard({ announcement, index = 0, canPin = false, canDelete = false, onPin, onDelete }: Props) {
-  const { user }  = useAuthStore()
-  const { dark }  = useThemeStore()
+const LONG_CONTENT_THRESHOLD = 280
+
+export default function AnnouncementCard({
+  announcement, index = 0, canPin = false, canDelete = false, onPin, onDelete,
+}: AnnouncementCardProps) {
+  const { user } = useAuthStore()
   const [expanded, setExpanded] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const menuRef   = useRef<HTMLDivElement>(null)
-  const isLong    = announcement.content.length > 280
-  const showMenu  = canPin || canDelete
-  const isPinned  = announcement.isPinned
+  const menuRef = useRef<HTMLDivElement>(null)
 
-  const photoUrl = announcement.authorId === user?.id
-    ? (user?.profile?.profilePhotoUrl ?? undefined) : undefined
+  const isLong = announcement.content.length > LONG_CONTENT_THRESHOLD
+  const showMenu = canPin || canDelete
+  const isPinned = announcement.isPinned
+  const isOwn = announcement.authorId === user?.id
+
+  const photoUrl = isOwn ? user?.profile?.profilePhotoUrl ?? undefined : undefined
 
   useEffect(() => {
     if (!menuOpen) return
-    const h = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
     }
-    document.addEventListener("mousedown", h)
-    return () => document.removeEventListener("mousedown", h)
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
   }, [menuOpen])
 
-  // Theme
-  const cardBg    = dark
-    ? isPinned ? "rgba(99,102,241,0.1)" : "rgba(16,24,44,0.75)"
-    : isPinned ? "rgba(99,102,241,0.03)" : "rgba(255,255,255,0.92)"
-  const blur      = "blur(20px)"
-  const border    = dark
-    ? isPinned ? "rgba(99,102,241,0.3)" : "rgba(99,102,241,0.12)"
-    : isPinned ? "#c7d2fe" : "#e5e7eb"
-  const textMain  = dark ? "#e2e8f8" : "#111827"
-  const textSub   = dark ? "#8896c8" : "#6b7280"
-  const textMuted = dark ? "#5a6a9a" : "#9ca3af"
-  const menuBg    = dark ? "rgb(16,24,44)" : "white"
-  const menuBorder= dark ? "rgba(99,102,241,0.2)" : "#e5e7eb"
-  const attachBg  = dark ? "rgba(99,102,241,0.08)" : "#eef2ff"
-  const attachBorder = dark ? "rgba(99,102,241,0.2)" : "#c7d2fe"
-
   return (
-    <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.2 }}
-      className="relative rounded-2xl overflow-hidden group"
-      style={{ background: cardBg, backdropFilter: blur, WebkitBackdropFilter: blur, border: `1px solid ${border}` }}>
-
-      {/* Pin accent line */}
+    <motion.article
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: Math.min(index * 0.04, 0.2), duration: 0.25 }}
+      whileHover={{ y: -2 }}
+      className={
+        "group relative overflow-hidden rounded-2xl border bg-card shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-all hover:shadow-[0_12px_32px_-8px_rgba(20,184,166,0.18)] " +
+        (isPinned
+          ? "border-teal-300 bg-teal-50/30"
+          : "border-border")
+      }
+    >
+      {/* Pinned accent stripe */}
       {isPinned && (
-        <div className="absolute top-0 left-0 right-0 h-[2px]"
-          style={{ background: "linear-gradient(90deg, transparent, #6366f1, #0891b2, transparent)" }} />
+        <div className="absolute inset-y-0 left-0 w-1 bg-teal-500" aria-hidden />
       )}
 
-      <div className="relative p-5 space-y-4">
+      <div className={"relative space-y-4 p-5 " + (isPinned ? "pl-6" : "")}>
         {/* Header */}
         <div className="flex items-start gap-3">
-          <div className="relative shrink-0">
-            <div className="rounded-xl overflow-hidden"
-              style={{ border: dark ? "1.5px solid rgba(99,102,241,0.3)" : "1.5px solid #c7d2fe", width: 36, height: 36 }}>
-              <Avatar src={photoUrl} name={announcement.authorName} size="sm" className="w-full h-full rounded-none" />
+          <div className="shrink-0">
+            <Avatar
+              src={photoUrl}
+              name={announcement.authorName}
+              size="sm"
+              className="h-10 w-10"
+            />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <p className="truncate font-display text-[14px] font-bold text-foreground">
+                {announcement.authorName}
+              </p>
+              {isPinned && (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="inline-flex shrink-0 items-center gap-1 rounded-full border border-teal-200 bg-teal-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-700"
+                >
+                  <Pin className="h-2.5 w-2.5" />
+                  Pinned
+                </motion.span>
+              )}
             </div>
+            <p className="mt-0.5 text-[11.5px] text-muted-foreground">
+              {formatRelative(announcement.createdAt)}
+            </p>
           </div>
-
-          <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-bold" style={{ color: textMain }}>{announcement.authorName}</p>
-            <p className="text-[11px]" style={{ color: textMuted }}>{formatRelative(announcement.createdAt)}</p>
-          </div>
-
-          {isPinned && (
-            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg shrink-0"
-              style={{ background: dark ? "rgba(99,102,241,0.15)" : "#eef2ff", border: dark ? "1px solid rgba(99,102,241,0.3)" : "1px solid #c7d2fe" }}>
-              <Pin style={{ width: 10, height: 10, color: "#6366f1" }} />
-              <span className="text-[10px] font-bold" style={{ color: "#6366f1" }}>Pinned</span>
-            </motion.div>
-          )}
 
           {showMenu && (
             <div className="relative shrink-0" ref={menuRef}>
-              <motion.button whileTap={{ scale: 0.9 }}
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.92 }}
                 onClick={() => setMenuOpen(v => !v)}
-                className="p-1.5 rounded-lg transition-all"
-                style={{ color: menuOpen ? "#6366f1" : textMuted, background: menuOpen ? (dark ? "rgba(99,102,241,0.12)" : "#eef2ff") : "transparent" }}>
-                <MoreVertical style={{ width: 15, height: 15 }} />
+                aria-label="Announcement actions"
+                aria-expanded={menuOpen}
+                className={
+                  "flex h-8 w-8 items-center justify-center rounded-lg transition-colors " +
+                  (menuOpen
+                    ? "bg-stone-100 text-foreground"
+                    : "text-muted-foreground hover:bg-stone-50 hover:text-foreground")
+                }
+              >
+                <MoreVertical className="h-4 w-4" />
               </motion.button>
+
               <AnimatePresence>
                 {menuOpen && (
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.94, y: -4 }}
-                    animate={{ opacity: 1, scale: 1,    y: 0   }}
-                    exit={{   opacity: 0, scale: 0.94, y: -4   }}
+                    initial={{ opacity: 0, scale: 0.96, y: -4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.96, y: -4 }}
                     transition={{ duration: 0.12 }}
-                    className="absolute right-0 top-9 z-50 w-44 rounded-xl overflow-hidden"
-                    style={{ background: menuBg, border: `1px solid ${menuBorder}`, boxShadow: dark ? "0 12px 32px rgba(0,0,0,0.5)" : "0 8px 24px rgba(0,0,0,0.12)" }}>
+                    className="absolute right-0 top-9 z-50 w-44 overflow-hidden rounded-xl border border-border bg-card shadow-lg"
+                  >
                     {canPin && (
-                      <button onClick={() => { onPin?.(announcement.id); setMenuOpen(false) }}
-                        className="flex items-center gap-2.5 w-full px-4 py-2.5 text-[13px] font-medium transition-colors"
-                        style={{ color: "#6366f1" }}
-                        onMouseEnter={e => (e.currentTarget.style.background = dark ? "rgba(99,102,241,0.1)" : "#eef2ff")}
-                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                        {isPinned
-                          ? <><PinOff style={{ width: 14, height: 14 }} /> Unpin</>
-                          : <><Pin    style={{ width: 14, height: 14 }} /> Pin to top</>
-                        }
+                      <button
+                        type="button"
+                        onClick={() => { onPin?.(announcement.id); setMenuOpen(false) }}
+                        className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium text-foreground transition-colors hover:bg-teal-50"
+                      >
+                        {isPinned ? (
+                          <>
+                            <PinOff className="h-3.5 w-3.5 text-teal-700" />
+                            Unpin
+                          </>
+                        ) : (
+                          <>
+                            <Pin className="h-3.5 w-3.5 text-teal-700" />
+                            Pin to top
+                          </>
+                        )}
                       </button>
                     )}
                     {canDelete && (
-                      <button onClick={() => { onDelete?.(announcement.id); setMenuOpen(false) }}
-                        className="flex items-center gap-2.5 w-full px-4 py-2.5 text-[13px] font-medium transition-colors"
-                        style={{ color: "#ef4444" }}
-                        onMouseEnter={e => (e.currentTarget.style.background = dark ? "rgba(239,68,68,0.1)" : "#fef2f2")}
-                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                        <Trash2 style={{ width: 14, height: 14 }} /> Delete
+                      <button
+                        type="button"
+                        onClick={() => { onDelete?.(announcement.id); setMenuOpen(false) }}
+                        className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium text-red-600 transition-colors hover:bg-red-50"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Delete
                       </button>
                     )}
                   </motion.div>
@@ -140,46 +166,60 @@ export default function AnnouncementCard({ announcement, index = 0, canPin = fal
         </div>
 
         {/* Content */}
-        <div className="pl-11 space-y-3">
+        <div className="space-y-3 pl-13" style={{ paddingLeft: 52 }}>
           <div>
-            <p className={`text-[13.5px] leading-relaxed whitespace-pre-wrap ${!expanded && isLong ? "line-clamp-4" : ""}`}
-              style={{ color: textSub }}>
+            <p
+              className={
+                "whitespace-pre-wrap text-[14px] leading-relaxed text-foreground " +
+                (!expanded && isLong ? "line-clamp-4" : "")
+              }
+            >
               {announcement.content}
             </p>
             {isLong && (
-              <button onClick={() => setExpanded(e => !e)}
-                className="flex items-center gap-1 mt-1.5 text-[12px] font-semibold transition-colors"
-                style={{ color: "#6366f1" }}
-                onMouseEnter={e => (e.currentTarget.style.color = "#818cf8")}
-                onMouseLeave={e => (e.currentTarget.style.color = "#6366f1")}>
-                {expanded
-                  ? <><ChevronUp style={{ width: 12, height: 12 }} /> Show less</>
-                  : <><ChevronDown style={{ width: 12, height: 12 }} /> Read more</>
-                }
+              <button
+                type="button"
+                onClick={() => setExpanded(e => !e)}
+                className="mt-1.5 inline-flex items-center gap-1 text-[12px] font-semibold text-teal-700 transition-colors hover:text-teal-800"
+              >
+                {expanded ? (
+                  <>
+                    <ChevronUp className="h-3 w-3" />
+                    Show less
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-3 w-3" />
+                    Read more
+                  </>
+                )}
               </button>
             )}
           </div>
 
           {/* Attachment */}
           {announcement.attachmentUrl && (
-            <motion.a whileHover={{ scale: 1.01 }}
-              href={announcement.attachmentUrl} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-3 p-3 rounded-xl transition-all"
-              style={{ background: attachBg, border: `1px solid ${attachBorder}` }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: dark ? "rgba(99,102,241,0.15)" : "#eef2ff" }}>
-                <FileText style={{ width: 16, height: 16, color: "#6366f1" }} />
+            <motion.a
+              whileHover={{ scale: 1.005 }}
+              href={announcement.attachmentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group/attach flex items-center gap-3 rounded-xl border border-teal-200 bg-teal-50/50 p-3 transition-colors hover:border-teal-300 hover:bg-teal-50"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-100 text-teal-700">
+                <FileText className="h-4 w-4" />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-semibold truncate" style={{ color: textMain }}>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px] font-semibold text-foreground">
                   {getFileName(announcement.attachmentUrl)}
                 </p>
-                <p className="text-[11px]" style={{ color: textMuted }}>Click to open</p>
+                <p className="text-[11px] text-muted-foreground">Click to open</p>
               </div>
+              <ExternalLink className="h-3.5 w-3.5 shrink-0 text-teal-700 opacity-0 transition-opacity group-hover/attach:opacity-100" />
             </motion.a>
           )}
         </div>
       </div>
-    </motion.div>
+    </motion.article>
   )
 }

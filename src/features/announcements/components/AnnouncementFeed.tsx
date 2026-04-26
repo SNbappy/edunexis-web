@@ -1,100 +1,142 @@
-import { useEffect, useRef } from "react"
 import { motion } from "framer-motion"
-import { Megaphone, Sparkles } from "lucide-react"
-// import gsap from "gsap"
+import { Pin, Megaphone } from "lucide-react"
 import AnnouncementCard from "./AnnouncementCard"
 import CreateAnnouncementForm from "./CreateAnnouncementForm"
 import { useAnnouncements } from "../hooks/useAnnouncements"
 import { useAuthStore } from "@/store/authStore"
-import { useThemeStore } from "@/store/themeStore"
 import { isTeacher } from "@/utils/roleGuard"
+import type { AnnouncementDto } from "@/types/announcement.types"
 
-interface Props { courseId: string }
+interface AnnouncementFeedProps {
+  courseId: string
+}
 
-export default function AnnouncementFeed({ courseId }: Props) {
-  const { user }  = useAuthStore()
-  const { dark }  = useThemeStore()
-  const teacher   = isTeacher(user?.role ?? "Student")
-  const { announcements, isLoading, create, isCreating, deleteAnnouncement, togglePin } = useAnnouncements(courseId)
-  const listRef   = useRef<HTMLDivElement>(null)
+export default function AnnouncementFeed({ courseId }: AnnouncementFeedProps) {
+  const { user } = useAuthStore()
+  const teacher = isTeacher(user?.role ?? "Student")
+  const {
+    announcements, isLoading, create, isCreating,
+    deleteAnnouncement, togglePin,
+  } = useAnnouncements(courseId)
 
-  useEffect(() => {
-    if (isLoading || !listRef.current) return
-    const cards = listRef.current.querySelectorAll(".announcement-card")
-    if (!cards.length) return
-    // gsap.fromTo(cards,
-    //   { opacity: 0, y: 16 },
-    //   { opacity: 1, y: 0, duration: 0.4, ease: "power3.out", stagger: 0.06 }
-    // )
-  }, [isLoading, announcements.length])
+  /* Split into pinned + unpinned, preserving creation order within each group. */
+  const pinned: AnnouncementDto[] = []
+  const unpinned: AnnouncementDto[] = []
+  for (const a of announcements) {
+    if (a.isPinned) pinned.push(a)
+    else unpinned.push(a)
+  }
 
-  const cardBg   = dark ? "rgba(16,24,44,0.75)" : "rgba(255,255,255,0.92)"
-  const blur     = "blur(20px)"
-  const border   = dark ? "rgba(99,102,241,0.15)" : "#e5e7eb"
-  const textMain = dark ? "#e2e8f8" : "#111827"
-  const textSub  = dark ? "#8896c8" : "#6b7280"
-  const skelBg   = dark ? "rgba(99,102,241,0.06)" : "#f3f4f6"
-
-  if (isLoading) return (
-    <div className="space-y-4 max-w-2xl mx-auto">
-      {[1,2,3].map(i => (
-        <div key={i} className="rounded-2xl animate-pulse p-5 space-y-3"
-          style={{ background: cardBg, backdropFilter: blur, border: `1px solid ${border}`, height: i === 1 ? 100 : 140 }}>
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl shrink-0" style={{ background: skelBg }} />
-            <div className="space-y-1.5 flex-1">
-              <div className="h-3 rounded-full w-1/3" style={{ background: skelBg }} />
-              <div className="h-2.5 rounded-full w-1/4" style={{ background: skelBg }} />
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-4">
+        {[1, 2, 3].map(i => (
+          <div
+            key={i}
+            className="animate-pulse rounded-2xl border border-border bg-card p-5"
+            style={{ height: i === 1 ? 100 : 140 }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 shrink-0 rounded-full bg-stone-200" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3 w-1/3 rounded-full bg-stone-200" />
+                <div className="h-2.5 w-1/4 rounded-full bg-stone-200" />
+              </div>
+            </div>
+            <div className="mt-4 space-y-2 pl-12">
+              <div className="h-2.5 w-full rounded-full bg-stone-200" />
+              <div className="h-2.5 w-4/5 rounded-full bg-stone-200" />
             </div>
           </div>
-          <div className="space-y-2 pl-12">
-            <div className="h-2.5 rounded-full w-full"  style={{ background: skelBg }} />
-            <div className="h-2.5 rounded-full w-4/5"   style={{ background: skelBg }} />
-          </div>
-        </div>
-      ))}
-    </div>
-  )
+        ))}
+      </div>
+    )
+  }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-5">
+    <div className="mx-auto max-w-2xl space-y-5">
+      {/* Composer — teachers only */}
       {teacher && (
-        <CreateAnnouncementForm courseId={courseId} onSubmit={create} isLoading={isCreating} />
+        <CreateAnnouncementForm
+          courseId={courseId}
+          onSubmit={create}
+          isLoading={isCreating}
+        />
       )}
 
-      {announcements.length === 0 ? (
-        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center justify-center py-20 rounded-2xl text-center"
-          style={{ background: cardBg, backdropFilter: blur, WebkitBackdropFilter: blur, border: `2px dashed ${dark ? "rgba(99,102,241,0.2)" : "#e5e7eb"}` }}>
-          <div className="relative mb-5">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
-              style={{ background: dark ? "rgba(99,102,241,0.12)" : "#eef2ff", border: dark ? "1px solid rgba(99,102,241,0.25)" : "1px solid #c7d2fe" }}>
-              <Megaphone style={{ width: 28, height: 28, color: "#6366f1" }} strokeWidth={1.5} />
-            </div>
-            <motion.div animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-              className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center"
-              style={{ background: dark ? "rgba(217,119,6,0.15)" : "#fffbeb", border: dark ? "1px solid rgba(217,119,6,0.3)" : "1px solid #fde68a" }}>
-              <Sparkles style={{ width: 10, height: 10, color: "#d97706" }} />
-            </motion.div>
+      {/* Empty state */}
+      {announcements.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-stone-50/50 px-6 py-16 text-center"
+        >
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-teal-200 bg-teal-50">
+            <Megaphone className="h-7 w-7 text-teal-600" strokeWidth={1.5} />
           </div>
-          <p className="text-[15px] font-bold mb-1" style={{ color: textMain }}>No announcements yet</p>
-          <p className="text-[13px] max-w-xs" style={{ color: textSub }}>
+          <h3 className="mt-5 font-display text-[16px] font-bold text-foreground">
+            {teacher ? "No announcements yet" : "Nothing posted yet"}
+          </h3>
+          <p className="mt-1 max-w-xs text-[13px] text-muted-foreground">
             {teacher
-              ? "Post your first announcement to keep students informed"
-              : "Your teacher has not posted any announcements yet"
-            }
+              ? "Share your first announcement to keep students in the loop. Use the composer above."
+              : "Your teacher hasn't posted anything yet. Check back soon."}
           </p>
         </motion.div>
-      ) : (
-        <div ref={listRef} className="space-y-4">
-          {announcements.map((a, i) => (
-            <div key={a.id} className="announcement-card">
-              <AnnouncementCard announcement={a} index={i}
-                canPin={teacher} canDelete={teacher || a.authorId === user?.id}
-                onPin={togglePin} onDelete={deleteAnnouncement} />
-            </div>
-          ))}
-        </div>
+      )}
+
+      {/* Pinned section */}
+      {pinned.length > 0 && (
+        <section className="space-y-3">
+          <header className="flex items-center gap-2 px-1">
+            <Pin className="h-3.5 w-3.5 text-teal-700" />
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-teal-700">
+              Pinned
+            </h2>
+            <span className="text-[11px] text-muted-foreground">
+              · {pinned.length} {pinned.length === 1 ? "post" : "posts"}
+            </span>
+          </header>
+          <div className="space-y-3">
+            {pinned.map((a, i) => (
+              <AnnouncementCard
+                key={a.id}
+                announcement={a}
+                index={i}
+                canPin={teacher}
+                canDelete={teacher || a.authorId === user?.id}
+                onPin={togglePin}
+                onDelete={deleteAnnouncement}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Recent section */}
+      {unpinned.length > 0 && (
+        <section className="space-y-3">
+          {pinned.length > 0 && (
+            <header className="flex items-center gap-2 px-1">
+              <h2 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                Recent
+              </h2>
+            </header>
+          )}
+          <div className="space-y-3">
+            {unpinned.map((a, i) => (
+              <AnnouncementCard
+                key={a.id}
+                announcement={a}
+                index={i}
+                canPin={teacher}
+                canDelete={teacher || a.authorId === user?.id}
+                onPin={togglePin}
+                onDelete={deleteAnnouncement}
+              />
+            ))}
+          </div>
+        </section>
       )}
     </div>
   )
