@@ -51,24 +51,21 @@ export default function CreateAnnouncementForm({
   const overWarning = charCount > CHAR_LIMIT * 0.9
 
   return (
-    <motion.div
-      layout
-      transition={{ layout: { duration: 0.22, ease: "easeOut" } }}
+    <div
       className={
-        "relative overflow-hidden rounded-2xl border bg-card shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-all " +
+        "relative overflow-hidden rounded-2xl border bg-card shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-colors " +
         (expanded
-          ? "border-teal-300 shadow-[0_0_0_3px_rgba(20,184,166,0.10)]"
-          : "border-border hover:border-teal-200 hover:shadow-[0_4px_16px_-4px_rgba(20,184,166,0.12)]")
+          ? "border-teal-300 dark:border-teal-700"
+          : "border-border hover:border-teal-200 dark:hover:border-teal-800")
       }
     >
-      {/* Submitting overlay */}
       <AnimatePresence>
         {isLoading && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-10 flex items-center justify-center gap-2.5 bg-card/85 backdrop-blur-sm"
+            className="absolute inset-0 z-10 flex items-center justify-center gap-2.5 bg-card/90 backdrop-blur-sm"
           >
             <Loader2 className="h-4 w-4 animate-spin text-teal-600" />
             <span className="text-[13px] font-semibold text-foreground">Posting…</span>
@@ -76,12 +73,11 @@ export default function CreateAnnouncementForm({
         )}
       </AnimatePresence>
 
-      {/* Collapsed state — inviting prompt */}
       {!expanded && (
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="flex w-full items-center gap-3 p-4 text-left"
+          className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-muted/50"
         >
           <Avatar
             src={user?.profile?.profilePhotoUrl}
@@ -92,21 +88,20 @@ export default function CreateAnnouncementForm({
           <span className="flex-1 truncate text-[14px] text-muted-foreground">
             Share something with your class…
           </span>
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-teal-700">
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-teal-700 dark:border-teal-800 dark:bg-teal-950/50 dark:text-teal-300">
             <Megaphone className="h-3 w-3" />
             Announce
           </span>
         </button>
       )}
 
-      {/* Expanded composer */}
       <AnimatePresence initial={false}>
         {expanded && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.22, ease: "easeOut" }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
             className="overflow-hidden"
           >
             <div className="space-y-3 p-4">
@@ -135,7 +130,7 @@ export default function CreateAnnouncementForm({
                 placeholder="What's on your mind? Use Ctrl+Enter to post."
                 rows={5}
                 maxLength={CHAR_LIMIT}
-                className="w-full resize-none rounded-xl border border-border bg-stone-50/60 px-4 py-3 text-[14px] text-foreground placeholder:text-muted-foreground transition-all focus:border-teal-600 focus:bg-card focus:outline-none focus:ring-2 focus:ring-teal-600/30"
+                className="w-full resize-none rounded-xl border border-border bg-muted/50 px-4 py-3 text-[14px] text-foreground placeholder:text-muted-foreground transition-all focus:border-teal-600 focus:bg-card focus:outline-none focus:ring-2 focus:ring-teal-600/30"
               />
 
               <div className="flex items-center justify-end">
@@ -149,16 +144,15 @@ export default function CreateAnnouncementForm({
                 </span>
               </div>
 
-              {/* Attachment chip */}
               <AnimatePresence>
                 {attachment && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="flex items-center gap-2.5 rounded-xl border border-teal-200 bg-teal-50/60 px-3 py-2.5"
+                    className="flex items-center gap-2.5 rounded-xl border border-teal-200 bg-teal-50/60 px-3 py-2.5 dark:border-teal-800 dark:bg-teal-950/30"
                   >
-                    <Paperclip className="h-3.5 w-3.5 shrink-0 text-teal-700" />
+                    <Paperclip className="h-3.5 w-3.5 shrink-0 text-teal-700 dark:text-teal-300" />
                     <span className="flex-1 truncate text-[12px] text-foreground">
                       {attachment.name}
                     </span>
@@ -174,12 +168,11 @@ export default function CreateAnnouncementForm({
                 )}
               </AnimatePresence>
 
-              {/* Actions */}
               <div className="flex items-center justify-between gap-3 border-t border-border pt-3">
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-stone-50 px-3 py-2 text-[12px] font-semibold text-foreground transition-colors hover:bg-teal-50 hover:text-teal-700"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted px-3 py-2 text-[12px] font-semibold text-foreground transition-colors hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700 dark:hover:border-teal-700 dark:hover:bg-teal-950/30 dark:hover:text-teal-300"
                 >
                   <Paperclip className="h-3.5 w-3.5" />
                   Attach file
@@ -195,7 +188,7 @@ export default function CreateAnnouncementForm({
                   <button
                     type="button"
                     onClick={handleCancel}
-                    className="rounded-lg px-3 py-2 text-[12px] font-semibold text-muted-foreground transition-colors hover:bg-stone-100 hover:text-foreground"
+                    className="rounded-lg px-3 py-2 text-[12px] font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   >
                     Cancel
                   </button>
@@ -216,6 +209,6 @@ export default function CreateAnnouncementForm({
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   )
 }
