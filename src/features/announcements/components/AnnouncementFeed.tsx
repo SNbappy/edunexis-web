@@ -1,4 +1,4 @@
-import { motion } from "framer-motion"
+﻿import { motion } from "framer-motion"
 import { Pin, Megaphone } from "lucide-react"
 import AnnouncementCard from "./AnnouncementCard"
 import CreateAnnouncementForm from "./CreateAnnouncementForm"
@@ -37,15 +37,15 @@ export default function AnnouncementFeed({ courseId }: AnnouncementFeedProps) {
             style={{ height: i === 1 ? 100 : 140 }}
           >
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 shrink-0 rounded-full bg-stone-200" />
+              <div className="h-10 w-10 shrink-0 rounded-full bg-muted" />
               <div className="flex-1 space-y-1.5">
-                <div className="h-3 w-1/3 rounded-full bg-stone-200" />
-                <div className="h-2.5 w-1/4 rounded-full bg-stone-200" />
+                <div className="h-3 w-1/3 rounded-full bg-muted" />
+                <div className="h-2.5 w-1/4 rounded-full bg-muted" />
               </div>
             </div>
             <div className="mt-4 space-y-2 pl-12">
-              <div className="h-2.5 w-full rounded-full bg-stone-200" />
-              <div className="h-2.5 w-4/5 rounded-full bg-stone-200" />
+              <div className="h-2.5 w-full rounded-full bg-muted" />
+              <div className="h-2.5 w-4/5 rounded-full bg-muted" />
             </div>
           </div>
         ))}
@@ -55,7 +55,7 @@ export default function AnnouncementFeed({ courseId }: AnnouncementFeedProps) {
 
   return (
     <div className="mx-auto max-w-2xl space-y-5">
-      {/* Composer — teachers only */}
+      {/* Composer â€” teachers only */}
       {teacher && (
         <CreateAnnouncementForm
           courseId={courseId}
@@ -69,7 +69,7 @@ export default function AnnouncementFeed({ courseId }: AnnouncementFeedProps) {
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-stone-50/50 px-6 py-16 text-center"
+          className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-muted/30 px-6 py-16 text-center"
         >
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-teal-200 bg-teal-50">
             <Megaphone className="h-7 w-7 text-teal-600" strokeWidth={1.5} />
@@ -94,7 +94,7 @@ export default function AnnouncementFeed({ courseId }: AnnouncementFeedProps) {
               Pinned
             </h2>
             <span className="text-[11px] text-muted-foreground">
-              · {pinned.length} {pinned.length === 1 ? "post" : "posts"}
+              Â· {pinned.length} {pinned.length === 1 ? "post" : "posts"}
             </span>
           </header>
           <div className="space-y-3">
