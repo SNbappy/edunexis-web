@@ -1,3 +1,5 @@
+﻿export type AssignmentMyStatus = 'NotSubmitted' | 'Submitted' | 'Graded'
+
 export interface AssignmentDto {
     id: string
     courseId: string
@@ -10,6 +12,11 @@ export interface AssignmentDto {
     referenceFileUrl?: string
     isOpen: boolean
     submissionCount: number
+    gradedCount?: number
+    myStatus?: AssignmentMyStatus | null
+    myMarks?: number | null
+    mySubmittedAt?: string | null
+    myIsLate?: boolean | null
     createdAt: string
 }
 
@@ -79,3 +86,4 @@ export interface PlagiarismReport {
     flaggedPairs: PlagiarismPair[]
     cannotCheck: string[]
 }
+
