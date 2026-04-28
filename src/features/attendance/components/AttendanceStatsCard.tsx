@@ -1,103 +1,185 @@
-import { useEffect, useRef } from "react"
-import { motion } from "framer-motion"
+import { useEffect, useRef, useState } from "react"
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion"
 import { TrendingUp, TrendingDown, Users, Calendar, Activity } from "lucide-react"
-// import gsap from "gsap"
-import { useThemeStore } from "@/store/themeStore"
 
-interface Props {
-  totalSessions:     number
+interface AttendanceStatsCardProps {
+  totalSessions: number
   averageAttendance: number
-  totalStudents?:    number
-  lastSessionDate?:  string
+  totalStudents?: number
+  lastSessionDate?: string
 }
 
-export default function AttendanceStatsCard({ totalSessions, averageAttendance, totalStudents }: Props) {
-  const { dark } = useThemeStore()
-  const barRef = useRef<HTMLDivElement>(null)
-  const numRef = useRef<HTMLSpanElement>(null)
+interface StatTone {
+  text: string
+  bg: string
+  border: string
+}
 
-  const barColor = averageAttendance >= 90 ? "#059669"
-    : averageAttendance >= 75 ? "#6366f1"
-    : averageAttendance >= 60 ? "#d97706"
-    : "#ef4444"
+function getAccent(avg: number): { bar: string; text: string; bg: string; ring: string; status: string } {
+  if (avg >= 90) return {
+    bar: "bg-emerald-500",
+    text: "text-emerald-700 dark:text-emerald-300",
+    bg: "bg-emerald-50 dark:bg-emerald-950/40",
+    ring: "border-emerald-200 dark:border-emerald-800",
+    status: "Excellent — keep it up",
+  }
+  if (avg >= 75) return {
+    bar: "bg-teal-500",
+    text: "text-teal-700 dark:text-teal-300",
+    bg: "bg-teal-50 dark:bg-teal-950/40",
+    ring: "border-teal-200 dark:border-teal-800",
+    status: "Good standing",
+  }
+  if (avg >= 60) return {
+    bar: "bg-amber-500",
+    text: "text-amber-700 dark:text-amber-300",
+    bg: "bg-amber-50 dark:bg-amber-950/40",
+    ring: "border-amber-200 dark:border-amber-800",
+    status: "At risk — below 75%",
+  }
+  return {
+    bar: "bg-red-500",
+    text: "text-red-700 dark:text-red-300",
+    bg: "bg-red-50 dark:bg-red-950/40",
+    ring: "border-red-200 dark:border-red-800",
+    status: "Critical — below 60%",
+  }
+}
 
-  const statusText = averageAttendance >= 90 ? "Excellent - keep it up!"
-    : averageAttendance >= 75 ? "Good standing"
-    : averageAttendance >= 60 ? "At risk - below 75%"
-    : "Critical - below 60%"
+export default function AttendanceStatsCard({
+  totalSessions, averageAttendance, totalStudents,
+}: AttendanceStatsCardProps) {
+  const accent = getAccent(averageAttendance)
+
+  /* Animated count-up using Framer Motion (no GSAP). */
+  const animatedValue = useMotionValue(0)
+  const spring = useSpring(animatedValue, { duration: 1100, bounce: 0 })
+  const display = useTransform(spring, v => v.toFixed(1) + "%")
+  const [shownText, setShownText] = useState("0.0%")
 
   useEffect(() => {
-    if (barRef.current) {
-      // gsap.fromTo(barRef.current, { width: "0%" },
-      //   { width: `${Math.min(averageAttendance, 100)}%`, duration: 1.4, ease: "power3.out", delay: 0.3 })
-    }
-    if (numRef.current) {
-      gsap.fromTo({ val: 0 }, { val: averageAttendance }, {
-        duration: 1.2, ease: "power3.out", delay: 0.3,
-        onUpdate: function() { if (numRef.current) numRef.current.textContent = this.targets()[0].val.toFixed(1) + "%" }
-      })
-    }
-  }, [averageAttendance])
+    animatedValue.set(averageAttendance)
+    const unsub = display.on("change", v => setShownText(v))
+    return () => unsub()
+  }, [averageAttendance, animatedValue, display])
 
-  const cardBg  = dark ? "rgba(16,24,44,0.75)" : "rgba(255,255,255,0.92)"
-  const blur    = "blur(20px)"
-  const border  = dark ? "rgba(99,102,241,0.15)" : "#e5e7eb"
-  const textMain= dark ? "#e2e8f8" : "#111827"
-  const textSub = dark ? "#8896c8" : "#6b7280"
-  const barBg   = dark ? "rgba(255,255,255,0.07)" : "#f3f4f6"
+  /* Animated bar width */
+  const barWidth = useMotionValue(0)
+  const barSpring = useSpring(barWidth, { duration: 1100, bounce: 0 })
+  const barWidthPct = useTransform(barSpring, v => v + "%")
 
-  const STATS = [
-    { label: "Total Sessions", value: totalSessions,              icon: Calendar, color: "#6366f1", lightBg: "#eef2ff", darkBg: "rgba(99,102,241,0.12)", border: "#c7d2fe", darkBorder: "rgba(99,102,241,0.25)" },
-    { label: "Avg. Attendance", value: `${averageAttendance.toFixed(1)}%`, icon: averageAttendance >= 75 ? TrendingUp : TrendingDown, color: barColor, lightBg: `${barColor}10`, darkBg: `${barColor}18`, border: `${barColor}30`, darkBorder: `${barColor}35` },
-    ...(totalStudents !== undefined ? [{ label: "Total Students", value: totalStudents, icon: Users, color: "#0891b2", lightBg: "#ecfeff", darkBg: "rgba(8,145,178,0.12)", border: "#a5f3fc", darkBorder: "rgba(6,182,212,0.25)" }] : []),
-  ]
+  useEffect(() => {
+    barWidth.set(Math.min(averageAttendance, 100))
+  }, [averageAttendance, barWidth])
 
   return (
-    <div className="space-y-4 mb-2">
-      {/* Main rate bar */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-        className="relative rounded-2xl p-5 overflow-hidden"
-        style={{ background: cardBg, backdropFilter: blur, WebkitBackdropFilter: blur, border: `1px solid ${dark ? `${barColor}30` : `${barColor}25`}` }}>
-        {/* Top accent line */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl"
-          style={{ background: `linear-gradient(90deg, transparent, ${barColor}, transparent)` }} />
-        <div className="flex items-center justify-between mb-4">
+    <div className="space-y-4">
+      {/* Main rate card */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={"relative overflow-hidden rounded-2xl border bg-card p-5 shadow-sm " + accent.ring}
+      >
+        <div className={"absolute inset-x-0 top-0 h-[2px] " + accent.bar} aria-hidden />
+
+        <div className="mb-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: dark ? `${barColor}18` : `${barColor}10`, border: `1px solid ${barColor}28` }}>
-              <Activity style={{ width: 18, height: 18, color: barColor }} strokeWidth={2} />
+            <div className={"flex h-10 w-10 items-center justify-center rounded-xl " + accent.bg + " " + accent.text}>
+              <Activity className="h-4 w-4" strokeWidth={2} />
             </div>
             <div>
-              <p className="text-[14px] font-bold" style={{ color: textMain }}>Overall Attendance Rate</p>
-              <p className="text-[12px]" style={{ color: textSub }}>{statusText}</p>
+              <p className="font-display text-[14px] font-bold text-foreground">
+                Overall attendance rate
+              </p>
+              <p className="text-[12px] text-muted-foreground">
+                {accent.status}
+              </p>
             </div>
           </div>
-          <span ref={numRef} className="text-[28px] font-extrabold" style={{ color: barColor }}>0%</span>
+
+          <span className={"font-display text-[26px] font-extrabold tabular-nums " + accent.text}>
+            {shownText}
+          </span>
         </div>
-        <div className="h-2.5 rounded-full overflow-hidden" style={{ background: barBg }}>
-          <div ref={barRef} className="h-full rounded-full"
-            style={{ background: `linear-gradient(90deg, ${barColor}, ${barColor}cc)`, boxShadow: `0 0 8px ${barColor}60`, width: 0 }} />
+
+        <div className="h-2.5 overflow-hidden rounded-full bg-muted">
+          <motion.div
+            className={"h-full rounded-full " + accent.bar}
+            style={{ width: barWidthPct }}
+          />
         </div>
       </motion.div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {STATS.map((c, i) => (
-          <motion.div key={c.label}
-            initial={{ opacity: 0, y: 12, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ delay: i * 0.07 + 0.1 }}
-            whileHover={{ y: -3, boxShadow: `0 8px 24px ${c.color}22` }}
-            className="rounded-2xl p-4"
-            style={{ background: dark ? c.darkBg : c.lightBg, border: `1px solid ${dark ? c.darkBorder : c.border}` }}>
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-3"
-              style={{ background: dark ? `${c.color}18` : `${c.color}15` }}>
-              <c.icon style={{ width: 16, height: 16, color: c.color }} strokeWidth={2} />
-            </div>
-            <p className="text-[22px] font-extrabold leading-none" style={{ color: textMain }}>{c.value}</p>
-            <p className="text-[11px] font-semibold mt-1" style={{ color: textSub }}>{c.label}</p>
-          </motion.div>
-        ))}
+      {/* Sub-stats */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <StatTile
+          index={0}
+          icon={Calendar}
+          label="Total sessions"
+          value={String(totalSessions)}
+          tone={{
+            text: "text-teal-700 dark:text-teal-300",
+            bg: "bg-teal-50 dark:bg-teal-950/40",
+            border: "border-teal-200 dark:border-teal-800",
+          }}
+        />
+
+        <StatTile
+          index={1}
+          icon={averageAttendance >= 75 ? TrendingUp : TrendingDown}
+          label="Avg. attendance"
+          value={averageAttendance.toFixed(1) + "%"}
+          tone={{
+            text: accent.text,
+            bg: accent.bg,
+            border: accent.ring,
+          }}
+        />
+
+        {totalStudents !== undefined && (
+          <StatTile
+            index={2}
+            icon={Users}
+            label="Total students"
+            value={String(totalStudents)}
+            tone={{
+              text: "text-violet-700 dark:text-violet-300",
+              bg: "bg-violet-50 dark:bg-violet-950/40",
+              border: "border-violet-200 dark:border-violet-800",
+            }}
+          />
+        )}
       </div>
     </div>
+  )
+}
+
+interface StatTileProps {
+  index: number
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
+  label: string
+  value: string
+  tone: StatTone
+}
+
+function StatTile({ index, icon: Icon, label, value, tone }: StatTileProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay: 0.1 + index * 0.05, duration: 0.3 }}
+      whileHover={{ y: -2 }}
+      className={"rounded-2xl border bg-card p-4 shadow-sm transition-shadow hover:shadow-md " + tone.border}
+    >
+      <div className={"mb-3 flex h-8 w-8 items-center justify-center rounded-lg " + tone.bg + " " + tone.text}>
+        <Icon className="h-4 w-4" strokeWidth={2} />
+      </div>
+      <p className={"font-display text-[22px] font-extrabold leading-none tabular-nums " + tone.text}>
+        {value}
+      </p>
+      <p className="mt-1 text-[11px] font-semibold text-muted-foreground">
+        {label}
+      </p>
+    </motion.div>
   )
 }

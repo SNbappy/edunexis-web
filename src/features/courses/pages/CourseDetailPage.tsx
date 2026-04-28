@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import {
   ChevronLeft, Users,
   Megaphone, ClipboardCheck, FolderOpen,
-  ClipboardList, BookMarked, Mic, BarChart3,
+  ClipboardList, BookMarked, FileCheck2, BarChart3,
 } from "lucide-react"
 
 import CourseHeader from "../components/CourseHeader"
@@ -76,7 +76,7 @@ export default function CourseDetailPage() {
     { key: COURSE_TABS.MATERIALS, label: "Materials", icon: FolderOpen },
     { key: COURSE_TABS.ASSIGNMENTS, label: "Assignments", icon: ClipboardList },
     { key: COURSE_TABS.CT, label: "CT", icon: BookMarked },
-    { key: COURSE_TABS.PRESENTATIONS, label: "Presentations", icon: Mic },
+    { key: COURSE_TABS.PRESENTATIONS, label: "Other tests", icon: FileCheck2 },
     { key: COURSE_TABS.MARKS, label: "Marks", icon: BarChart3 },
     {
       key: COURSE_TABS.MEMBERS,
