@@ -1,110 +1,130 @@
-import { useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { FolderOpen, Folder, FileText } from "lucide-react"
-// import gsap from "gsap"
 import MaterialCard from "./MaterialCard"
-import { useThemeStore } from "@/store/themeStore"
 import type { MaterialDto } from "@/types/material.types"
 
-interface Props {
-  materials:      MaterialDto[]
-  courseId:       string
+interface MaterialsListProps {
+  materials: MaterialDto[]
+  courseId: string
   isFlattenMode?: boolean
-  onDelete?:      (id: string) => void
-  onOpenFolder?:  (id: string, label: string) => void
+  onDelete?: (id: string) => void
+  onOpenFolder?: (id: string, label: string) => void
 }
 
-function SectionLabel({ icon, label, count, dark }: { icon: React.ReactNode; label: string; count: number; dark: boolean }) {
+interface SectionLabelProps {
+  icon: React.ReactNode
+  label: string
+  count: number
+}
+
+function SectionLabel({ icon, label, count }: SectionLabelProps) {
   return (
-    <div className="flex items-center gap-2 mb-2 px-1">
-      <div style={{ color: dark ? "rgba(99,102,241,0.5)" : "#9ca3af", display: "flex" }}>{icon}</div>
-      <span className="text-[10.5px] font-bold tracking-widest uppercase"
-        style={{ color: dark ? "rgba(99,102,241,0.5)" : "#9ca3af" }}>{label}</span>
-      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md"
-        style={{ background: dark ? "rgba(99,102,241,0.1)" : "#eef2ff", color: dark ? "rgba(165,180,252,0.6)" : "#6366f1", border: dark ? "1px solid rgba(99,102,241,0.15)" : "1px solid #c7d2fe" }}>
+    <div className="mb-2.5 flex items-center gap-2 px-1">
+      <div className="flex text-muted-foreground">{icon}</div>
+      <span className="text-[10.5px] font-bold uppercase tracking-widest text-muted-foreground">
+        {label}
+      </span>
+      <span className="rounded-md border border-border bg-muted px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground">
         {count}
       </span>
-      <div className="flex-1 h-px" style={{ background: dark ? "rgba(99,102,241,0.08)" : "#f3f4f6" }} />
+      <div className="h-px flex-1 bg-border" />
     </div>
   )
 }
 
-export default function MaterialsList({ materials, courseId, isFlattenMode, onDelete, onOpenFolder }: Props) {
-  const { dark } = useThemeStore()
-  const listRef  = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!listRef.current || !materials.length) return
-    const items = listRef.current.querySelectorAll(".material-row")
-    // gsap.fromTo(items,
-    //   { opacity: 0, y: 12 },
-    //   { opacity: 1, y: 0, duration: 0.35, ease: "power3.out", stagger: 0.04 }
-    // )
-  }, [materials.length, isFlattenMode])
-
-  const cardBg   = dark ? "rgba(16,24,44,0.75)" : "rgba(255,255,255,0.92)"
-  const blur     = "blur(20px)"
-  const textMain = dark ? "#e2e8f8" : "#111827"
-  const textSub  = dark ? "#8896c8" : "#6b7280"
-
+export default function MaterialsList({
+  materials, courseId, isFlattenMode, onDelete, onOpenFolder,
+}: MaterialsListProps) {
   if (materials.length === 0) {
     return (
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center justify-center py-20 rounded-2xl text-center"
-        style={{ background: cardBg, backdropFilter: blur, WebkitBackdropFilter: blur, border: `2px dashed ${dark ? "rgba(99,102,241,0.2)" : "#e5e7eb"}` }}>
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
-          style={{ background: dark ? "rgba(217,119,6,0.12)" : "#fffbeb", border: dark ? "1px solid rgba(217,119,6,0.25)" : "1px solid #fde68a" }}>
-          <FolderOpen style={{ width: 28, height: 28, color: "#d97706" }} strokeWidth={1.5} />
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-muted/30 px-6 py-16 text-center"
+      >
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-teal-200 bg-teal-50 dark:border-teal-800 dark:bg-teal-950/50">
+          <FolderOpen className="h-7 w-7 text-teal-600 dark:text-teal-400" strokeWidth={1.5} />
         </div>
-        <p className="text-[15px] font-bold mb-1" style={{ color: textMain }}>No materials found</p>
-        <p className="text-[13px]" style={{ color: textSub }}>
-          Upload files, create folders, or add links to share with students
+        <h3 className="mt-5 font-display text-[16px] font-bold text-foreground">
+          No materials here yet
+        </h3>
+        <p className="mt-1 max-w-xs text-[13px] text-muted-foreground">
+          Upload files, create folders, or share links so students can access course content.
         </p>
       </motion.div>
     )
   }
 
+  /* Flatten mode: all rendered as a single flat list of files. */
   if (isFlattenMode) {
     return (
-      <div ref={listRef} className="space-y-2">
-        <SectionLabel icon={<FileText style={{ width: 13, height: 13 }} />} label="All Files" count={materials.length} dark={dark} />
+      <div className="space-y-2">
+        <SectionLabel
+          icon={<FileText className="h-3.5 w-3.5" />}
+          label="All files"
+          count={materials.length}
+        />
         {materials.map((m, i) => (
-          <div key={m.id} className="material-row">
-            <MaterialCard material={m} index={i} courseId={courseId} onDelete={onDelete} />
-          </div>
+          <MaterialCard
+            key={m.id}
+            material={m}
+            index={i}
+            courseId={courseId}
+            onDelete={onDelete}
+          />
         ))}
       </div>
     )
   }
 
+  /* Default: split into folders + files sections. */
   const folders = materials.filter(m => m.type === "Folder")
-  const files   = materials.filter(m => m.type !== "Folder")
+  const files = materials.filter(m => m.type !== "Folder")
 
   return (
-    <div ref={listRef} className="space-y-5">
+    <div className="space-y-5">
       {folders.length > 0 && (
-        <div>
-          <SectionLabel icon={<Folder style={{ width: 13, height: 13 }} />} label="Folders" count={folders.length} dark={dark} />
+        <section>
+          <SectionLabel
+            icon={<Folder className="h-3.5 w-3.5" />}
+            label="Folders"
+            count={folders.length}
+          />
           <div className="space-y-2">
             {folders.map((m, i) => (
-              <div key={m.id} className="material-row">
-                <MaterialCard material={m} index={i} courseId={courseId} onDelete={onDelete} onOpenFolder={onOpenFolder} />
-              </div>
+              <MaterialCard
+                key={m.id}
+                material={m}
+                index={i}
+                courseId={courseId}
+                onDelete={onDelete}
+                onOpenFolder={onOpenFolder}
+              />
             ))}
           </div>
-        </div>
+        </section>
       )}
+
       {files.length > 0 && (
-        <div>
-          <SectionLabel icon={<FileText style={{ width: 13, height: 13 }} />} label="Files & Links" count={files.length} dark={dark} />
+        <section>
+          <SectionLabel
+            icon={<FileText className="h-3.5 w-3.5" />}
+            label="Files & links"
+            count={files.length}
+          />
           <div className="space-y-2">
             {files.map((m, i) => (
-              <div key={m.id} className="material-row">
-                <MaterialCard material={m} index={i} courseId={courseId} onDelete={onDelete} onOpenFolder={onOpenFolder} />
-              </div>
+              <MaterialCard
+                key={m.id}
+                material={m}
+                index={i}
+                courseId={courseId}
+                onDelete={onDelete}
+                onOpenFolder={onOpenFolder}
+              />
             ))}
           </div>
-        </div>
+        </section>
       )}
     </div>
   )

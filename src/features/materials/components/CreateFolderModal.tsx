@@ -1,98 +1,105 @@
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { motion } from 'framer-motion'
-import { FolderPlus } from 'lucide-react'
-import Modal from '@/components/ui/Modal'
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { motion } from "framer-motion"
+import { FolderPlus } from "lucide-react"
+import Modal from "@/components/ui/Modal"
 
 const schema = z.object({
-  title:       z.string().min(1, 'Folder name is required').max(60, 'Too long'),
+  title: z.string().min(1, "Folder name is required").max(60, "Too long"),
   description: z.string().optional(),
 })
 type FormData = z.infer<typeof schema>
 
-interface Props {
+interface CreateFolderModalProps {
   isOpen: boolean
   onClose: () => void
   onSubmit: (data: { title: string; description?: string }) => void
   isLoading?: boolean
 }
 
-const INPUT_BASE: React.CSSProperties = {
-  width: '100%', background: 'rgba(6,13,31,0.7)', border: '1px solid rgba(99,102,241,0.2)',
-  color: '#e2e8f0', borderRadius: 12, padding: '10px 14px', fontSize: 13,
-  outline: 'none', transition: 'border-color 0.2s',
-}
+export default function CreateFolderModal({
+  isOpen, onClose, onSubmit, isLoading,
+}: CreateFolderModalProps) {
+  const {
+    register, handleSubmit, reset, formState: { errors },
+  } = useForm<FormData>({ resolver: zodResolver(schema) })
 
-export default function CreateFolderModal({ isOpen, onClose, onSubmit, isLoading }: Props) {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(schema),
-  })
-  const handleClose = () => { reset(); onClose() }
+  const handleClose = () => {
+    reset()
+    onClose()
+  }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="New Folder" size="sm">
+    <Modal isOpen={isOpen} onClose={handleClose} title="New folder" size="sm">
       <form onSubmit={handleSubmit(d => onSubmit(d))} className="space-y-4">
-
-        {/* Icon */}
         <div className="flex items-center justify-center py-2">
           <motion.div
             animate={{ rotate: [0, -8, 8, -4, 4, 0] }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="w-16 h-16 rounded-2xl flex items-center justify-center"
-            style={{ background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.25)', boxShadow: '0 4px 20px rgba(251,191,36,0.2)' }}>
-            <FolderPlus className="w-8 h-8" style={{ color: '#fbbf24' }} />
+            className="flex h-16 w-16 items-center justify-center rounded-2xl border border-teal-200 bg-teal-50 dark:border-teal-800 dark:bg-teal-950/50"
+          >
+            <FolderPlus className="h-7 w-7 text-teal-600 dark:text-teal-400" />
           </motion.div>
         </div>
 
-        {/* Folder name */}
         <div>
-          <label className="block text-[12px] font-bold mb-1.5" style={{ color: '#64748b' }}>
-            Folder Name <span style={{ color: '#f87171' }}>*</span>
+          <label className="mb-1.5 block text-[12px] font-bold text-foreground">
+            Folder name
+            <span className="ml-1 text-red-600">*</span>
           </label>
           <input
-            {...register('title')}
+            {...register("title")}
             placeholder="e.g. Week 1 Slides"
             autoFocus
-            style={INPUT_BASE}
-            onFocus={e => (e.target as HTMLInputElement).style.borderColor = 'rgba(99,102,241,0.5)'}
-            onBlur={e => (e.target as HTMLInputElement).style.borderColor = errors.title ? 'rgba(248,113,113,0.5)' : 'rgba(99,102,241,0.2)'}
+            className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13px] text-foreground placeholder:text-muted-foreground transition-all focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/30"
           />
           {errors.title && (
-            <p className="text-[11px] mt-1 font-medium" style={{ color: '#f87171' }}>{errors.title.message}</p>
+            <p className="mt-1 text-[11.5px] font-medium text-red-600">
+              {errors.title.message}
+            </p>
           )}
         </div>
 
-        {/* Description */}
         <div>
-          <label className="block text-[12px] font-bold mb-1.5" style={{ color: '#64748b' }}>Description (optional)</label>
+          <label className="mb-1.5 block text-[12px] font-bold text-foreground">
+            Description
+            <span className="ml-1 font-normal text-muted-foreground">(optional)</span>
+          </label>
           <textarea
-            {...register('description')}
-            rows={2} placeholder="What's in this folder?"
-            style={{ ...INPUT_BASE, resize: 'none' }}
-            onFocus={e => (e.target as HTMLTextAreaElement).style.borderColor = 'rgba(99,102,241,0.5)'}
-            onBlur={e => (e.target as HTMLTextAreaElement).style.borderColor = 'rgba(99,102,241,0.2)'}
+            {...register("description")}
+            rows={2}
+            placeholder="What's in this folder?"
+            className="w-full resize-none rounded-xl border border-border bg-card px-4 py-2.5 text-[13px] text-foreground placeholder:text-muted-foreground transition-all focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/30"
           />
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-3 pt-1">
-          <motion.button type="button" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+        <div className="flex gap-3 border-t border-border pt-3">
+          <button
+            type="button"
             onClick={handleClose}
-            className="flex-1 py-2.5 rounded-xl text-sm font-bold"
-            style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.15)', color: '#818cf8' }}>
+            className="flex-1 rounded-xl border border-border bg-muted px-4 py-2.5 text-[13px] font-semibold text-foreground transition-colors hover:bg-stone-100 dark:hover:bg-stone-900"
+          >
             Cancel
-          </motion.button>
-          <motion.button type="submit"
-            whileHover={{ scale: 1.02, boxShadow: '0 6px 24px rgba(251,191,36,0.35)' }}
-            whileTap={{ scale: 0.97 }}
+          </button>
+          <motion.button
+            type="submit"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             disabled={!!isLoading}
-            className="flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
-            style={{ background: 'linear-gradient(135deg,rgba(251,191,36,0.9),rgba(245,158,11,0.9))', color: '#111', opacity: isLoading ? 0.7 : 1 }}>
-            {isLoading
-              ? <><span className="w-3.5 h-3.5 rounded-full border-2 border-black border-t-transparent animate-spin" /> Creating...</>
-              : <><FolderPlus className="w-4 h-4" /> Create Folder</>
-            }
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-[13px] font-bold text-white shadow-sm transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isLoading ? (
+              <>
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Creating…
+              </>
+            ) : (
+              <>
+                <FolderPlus className="h-4 w-4" />
+                Create folder
+              </>
+            )}
           </motion.button>
         </div>
       </form>

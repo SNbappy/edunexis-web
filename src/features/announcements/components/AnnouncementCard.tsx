@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react"
+﻿import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   FileText, ChevronDown, ChevronUp, MoreVertical,
@@ -58,14 +58,15 @@ export default function AnnouncementCard({
       transition={{ delay: Math.min(index * 0.04, 0.2), duration: 0.25 }}
       whileHover={{ y: -2 }}
       className={
-        "group relative overflow-hidden rounded-2xl border bg-card shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-all hover:shadow-[0_12px_32px_-8px_rgba(20,184,166,0.18)] " +
+        "group relative rounded-2xl border bg-card shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-all hover:shadow-[0_12px_32px_-8px_rgba(20,184,166,0.18)] " +
         (isPinned
-          ? "border-teal-300 bg-teal-50/30 dark:border-teal-700 dark:bg-teal-950/20"
-          : "border-border")
+          ? "border-teal-300 bg-teal-50/30 dark:border-teal-700 dark:bg-teal-950/20 "
+          : "border-border ") +
+        (menuOpen ? "z-30" : "z-0")
       }
     >
       {isPinned && (
-        <div className="absolute inset-y-0 left-0 w-1 bg-teal-500" aria-hidden />
+        <div className="absolute inset-y-0 left-0 w-1 rounded-l-2xl bg-teal-500" aria-hidden />
       )}
 
       <div className={"relative space-y-4 p-5 " + (isPinned ? "pl-6" : "")}>
