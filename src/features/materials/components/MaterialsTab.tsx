@@ -5,11 +5,13 @@ import MaterialsList from "./MaterialsList"
 import MaterialsBreadcrumb from "./MaterialsBreadcrumb"
 import UploadMaterialModal from "./UploadMaterialModal"
 import CreateFolderModal from "./CreateFolderModal"
+import MaterialPreviewModal from "./MaterialPreviewModal"
 import ConfirmDialog from "@/components/ui/ConfirmDialog"
 import { useMaterials } from "../hooks/useMaterials"
 import type { FileTypeFilter } from "../hooks/useMaterials"
 import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
+import type { MaterialDto } from "@/types/material.types"
 
 interface MaterialsTabProps {
   courseId: string
@@ -24,9 +26,7 @@ const SORT_TABS = [
 interface FileFilterOption {
   label: string
   value: FileTypeFilter
-  /** Tailwind classes for active state — covers both light & dark. */
   active: string
-  /** Tailwind classes for the icon dot. */
   dotColor: string
 }
 
@@ -57,6 +57,7 @@ export default function MaterialsTab({ courseId }: MaterialsTabProps) {
   const [folderOpen, setFolderOpen] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [search, setSearch] = useState("")
+  const [previewMaterial, setPreviewMaterial] = useState<MaterialDto | null>(null)
 
   const filtered = materials.filter((m: any) =>
     m.title.toLowerCase().includes(search.toLowerCase())
@@ -66,9 +67,7 @@ export default function MaterialsTab({ courseId }: MaterialsTabProps) {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
-      {/* Toolbar */}
       <div className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)]">
-        {/* Top row: breadcrumb + actions */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
             {breadcrumb.length > 1 && !isFlattenMode ? (
@@ -104,7 +103,6 @@ export default function MaterialsTab({ courseId }: MaterialsTabProps) {
           )}
         </div>
 
-        {/* Search + sort */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative min-w-[200px] flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -126,7 +124,6 @@ export default function MaterialsTab({ courseId }: MaterialsTabProps) {
             )}
           </div>
 
-          {/* Sort segmented control */}
           <div className="flex items-center gap-0.5 rounded-xl border border-border bg-muted/50 p-1">
             {SORT_TABS.map(tab => {
               const active = sortMode === tab.value
@@ -150,7 +147,6 @@ export default function MaterialsTab({ courseId }: MaterialsTabProps) {
         </div>
       </div>
 
-      {/* File type filter chips — only when looking at flattened files */}
       <AnimatePresence>
         {isFlattenMode && (
           <motion.div
@@ -186,7 +182,6 @@ export default function MaterialsTab({ courseId }: MaterialsTabProps) {
         )}
       </AnimatePresence>
 
-      {/* List */}
       {isLoading ? (
         <div className="space-y-2">
           {[1, 2, 3, 4].map(i => (
@@ -200,10 +195,10 @@ export default function MaterialsTab({ courseId }: MaterialsTabProps) {
           isFlattenMode={isFlattenMode}
           onDelete={teacher ? id => setDeleteId(id) : undefined}
           onOpenFolder={openFolder}
+          onPreview={(m) => setPreviewMaterial(m)}
         />
       )}
 
-      {/* Modals */}
       <UploadMaterialModal
         isOpen={uploadOpen}
         onClose={() => setUploadOpen(false)}
@@ -237,6 +232,14 @@ export default function MaterialsTab({ courseId }: MaterialsTabProps) {
         description="This will permanently remove the material. This action cannot be undone."
         confirmLabel="Delete"
         isLoading={isDeleting}
+      />
+
+      <MaterialPreviewModal
+        isOpen={!!previewMaterial}
+        onClose={() => setPreviewMaterial(null)}
+        fileUrl={previewMaterial?.fileUrl ?? ""}
+        fileName={previewMaterial?.fileName ?? previewMaterial?.title ?? ""}
+        fileSizeBytes={previewMaterial?.fileSizeBytes ?? undefined}
       />
     </div>
   )

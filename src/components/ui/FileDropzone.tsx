@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react'
+﻿import { useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Upload, X, File, CheckCircle2 } from 'lucide-react'
 import { formatFileSize, ACCEPTED_MATERIAL_TYPES } from '@/utils/fileUtils'
@@ -70,8 +70,8 @@ export default function FileDropzone({
                 className={cn(
                     'relative flex flex-col items-center justify-center gap-3 p-8 rounded-2xl border-2 border-dashed cursor-pointer transition-all',
                     dragOver
-                        ? 'border-primary bg-primary/10 scale-[1.01]'
-                        : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                        ? 'border-teal-500 bg-teal-50 dark:bg-teal-950/30 scale-[1.01]'
+                        : 'border-border hover:border-teal-300 dark:border-teal-700 hover:bg-muted/50'
                 )}
             >
                 <input
@@ -84,7 +84,7 @@ export default function FileDropzone({
                 />
                 <motion.div
                     animate={dragOver ? { scale: 1.2 } : { scale: 1 }}
-                    className="w-12 h-12 rounded-2xl gradient-primary flex items-center justify-center shadow-lg"
+                    className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center shadow-lg"
                 >
                     <Upload className="w-6 h-6 text-white" />
                 </motion.div>
@@ -93,7 +93,7 @@ export default function FileDropzone({
                         {dragOver ? 'Drop files here!' : 'Drag & drop files or click to browse'}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                        PDF, DOC, PPT, images, videos, archives · Max {maxSizeMB}MB each
+                        PDF, DOC, PPT, images, videos, archives Â· Max {maxSizeMB}MB each
                     </p>
                 </div>
             </div>
@@ -113,8 +113,8 @@ export default function FileDropzone({
                         exit={{ opacity: 0, x: 20 }}
                         className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card"
                     >
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                            <File className="w-4 h-4 text-primary" />
+                        <div className="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center shrink-0">
+                            <File className="w-4 h-4 text-teal-700 dark:text-teal-300" />
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
@@ -132,3 +132,4 @@ export default function FileDropzone({
         </div>
     )
 }
+

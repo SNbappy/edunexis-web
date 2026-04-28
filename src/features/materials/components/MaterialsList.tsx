@@ -1,4 +1,4 @@
-import { motion } from "framer-motion"
+﻿import { motion } from "framer-motion"
 import { FolderOpen, Folder, FileText } from "lucide-react"
 import MaterialCard from "./MaterialCard"
 import type { MaterialDto } from "@/types/material.types"
@@ -33,7 +33,7 @@ function SectionLabel({ icon, label, count }: SectionLabelProps) {
 }
 
 export default function MaterialsList({
-  materials, courseId, isFlattenMode, onDelete, onOpenFolder,
+  materials, courseId, isFlattenMode, onDelete, onOpenFolder, onPreview,
 }: MaterialsListProps) {
   if (materials.length === 0) {
     return (
@@ -71,6 +71,7 @@ export default function MaterialsList({
             index={i}
             courseId={courseId}
             onDelete={onDelete}
+            onPreview={onPreview}
           />
         ))}
       </div>
@@ -99,6 +100,7 @@ export default function MaterialsList({
                 courseId={courseId}
                 onDelete={onDelete}
                 onOpenFolder={onOpenFolder}
+                onPreview={onPreview}
               />
             ))}
           </div>
@@ -121,6 +123,7 @@ export default function MaterialsList({
                 courseId={courseId}
                 onDelete={onDelete}
                 onOpenFolder={onOpenFolder}
+                onPreview={onPreview}
               />
             ))}
           </div>
