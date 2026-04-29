@@ -1,101 +1,175 @@
-﻿import { useEffect, useRef } from 'react'
-import { motion } from 'framer-motion'
-import { CheckCircle2, XCircle, Clock, TrendingUp, Award } from 'lucide-react'
-// import gsap from 'gsap'
-import { useMyAttendance } from '../hooks/useAttendanceStats'
+﻿import { useEffect, useState } from "react"
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion"
+import { CheckCircle2, XCircle, Clock, TrendingUp, Award } from "lucide-react"
+import { useMyAttendance } from "../hooks/useAttendanceStats"
 
-interface Props { courseId: string }
+interface StudentAttendanceViewProps { courseId: string }
 
-export default function StudentAttendanceView({ courseId }: Props) {
+interface ToneClasses {
+  ring: string
+  text: string
+  bar: string
+  bg: string
+  border: string
+}
+
+function getTone(pct: number): { tone: ToneClasses; status: string } {
+  if (pct >= 75) return {
+    tone: {
+      ring: "stroke-emerald-500",
+      text: "text-emerald-700 dark:text-emerald-300",
+      bar: "bg-emerald-500",
+      bg: "bg-emerald-50 dark:bg-emerald-950/40",
+      border: "border-emerald-200 dark:border-emerald-800",
+    },
+    status: "Good standing",
+  }
+  if (pct >= 50) return {
+    tone: {
+      ring: "stroke-amber-500",
+      text: "text-amber-700 dark:text-amber-300",
+      bar: "bg-amber-500",
+      bg: "bg-amber-50 dark:bg-amber-950/40",
+      border: "border-amber-200 dark:border-amber-800",
+    },
+    status: "At risk — below 75%",
+  }
+  return {
+    tone: {
+      ring: "stroke-red-500",
+      text: "text-red-700 dark:text-red-300",
+      bar: "bg-red-500",
+      bg: "bg-red-50 dark:bg-red-950/40",
+      border: "border-red-200 dark:border-red-800",
+    },
+    status: "Critical — below 50%",
+  }
+}
+
+export default function StudentAttendanceView({ courseId }: StudentAttendanceViewProps) {
   const { data: summary, isLoading } = useMyAttendance(courseId)
-  const barRef  = useRef<HTMLDivElement>(null)
-  const numRef  = useRef<HTMLSpanElement>(null)
-  const ringRef = useRef<SVGCircleElement>(null)
-
   const pct = summary?.attendancePercent ?? 0
-  const barColor = pct >= 75 ? '#34d399' : pct >= 50 ? '#fbbf24' : '#f87171'
-  const barGlow  = pct >= 75 ? 'rgba(52,211,153,0.5)' : pct >= 50 ? 'rgba(251,191,36,0.5)' : 'rgba(248,113,113,0.5)'
+  const { tone, status } = getTone(pct)
+
+  /* Animated count + bar (Framer Motion, no GSAP) */
+  const animatedNum = useMotionValue(0)
+  const numSpring = useSpring(animatedNum, { duration: 1200, bounce: 0 })
+  const numText = useTransform(numSpring, v => Math.round(v) + "%")
+  const [shownNum, setShownNum] = useState("0%")
+
+  const barWidth = useMotionValue(0)
+  const barSpring = useSpring(barWidth, { duration: 1200, bounce: 0 })
+  const barWidthPct = useTransform(barSpring, v => v + "%")
+
+  const ringOffset = useMotionValue(2 * Math.PI * 44)
+  const ringSpring = useSpring(ringOffset, { duration: 1200, bounce: 0 })
 
   useEffect(() => {
     if (!summary) return
-    if (barRef.current) {
-      gsap.fromTo(barRef.current, { width: '0%' }, { width: `${Math.min(pct, 100)}%`, duration: 1.4, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.3 })
-    }
-    if (numRef.current) {
-      // gsap.fromTo({ val: 0 }, { val: pct }, {
-      //   duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.3,
-      //   onUpdate: function() { if (numRef.current) numRef.current.textContent = Math.round(this.targets()[0].val) + '%' }
-      // })
-    }
-    if (ringRef.current) {
-      const circumference = 2 * Math.PI * 44
-      gsap.fromTo(ringRef.current,
-        { strokeDashoffset: circumference },
-        { strokeDashoffset: circumference - (pct / 100) * circumference, duration: 1.5, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.2 }
-      )
-    }
-  }, [summary])
+    animatedNum.set(pct)
+    barWidth.set(Math.min(pct, 100))
+    const circ = 2 * Math.PI * 44
+    ringOffset.set(circ - (pct / 100) * circ)
+    const unsub = numText.on("change", v => setShownNum(v))
+    return () => unsub()
+  }, [summary, pct, animatedNum, barWidth, ringOffset, numText])
 
-  if (isLoading) return (
-    <div className="space-y-4">
-      {[1,2].map(i => (
-        <div key={i} className="h-28 rounded-2xl animate-pulse"
-          style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.1)' }} />
-      ))}
-    </div>
-  )
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2].map(i => (
+          <div
+            key={i}
+            className="h-28 animate-pulse rounded-2xl border border-border bg-muted/40"
+          />
+        ))}
+      </div>
+    )
+  }
 
-  if (!summary) return (
-    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col items-center justify-center py-20 rounded-3xl text-center"
-      style={{ background: 'rgba(10,22,40,0.6)', border: '1px dashed rgba(99,102,241,0.15)' }}>
-      <Clock className="w-10 h-10 mb-3 opacity-20" style={{ color: '#818cf8' }} />
-      <p className="text-sm font-semibold" style={{ color: '#334155' }}>No attendance records yet.</p>
-    </motion.div>
-  )
-
-  const statusLabel = pct >= 75 ? 'âœ… Good standing' : pct >= 50 ? 'âš ï¸ At risk â€” below 75%' : 'ðŸš¨ Critical â€” below 50%'
+  if (!summary) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-muted/30 px-6 py-16 text-center"
+      >
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-teal-300 bg-teal-100 dark:border-teal-700 dark:bg-teal-900/60">
+          <Clock className="h-7 w-7 text-teal-700 dark:text-teal-200" strokeWidth={1.75} />
+        </div>
+        <p className="mt-5 font-display text-[14px] font-bold text-foreground">
+          No attendance records yet
+        </p>
+        <p className="mt-1 text-[12px] text-muted-foreground">
+          Your attendance will appear here once the teacher takes a session.
+        </p>
+      </motion.div>
+    )
+  }
 
   const STATS = [
-    { label: 'Present',  value: summary.presentCount,  icon: CheckCircle2, color: '#34d399', bg: 'rgba(52,211,153,0.1)',  border: 'rgba(52,211,153,0.2)'  },
-    { label: 'Absent',   value: summary.absentCount,   icon: XCircle,      color: '#f87171', bg: 'rgba(248,113,113,0.1)', border: 'rgba(248,113,113,0.2)' },
-    { label: 'Unmarked', value: summary.unmarkedCount, icon: Clock,        color: '#fbbf24', bg: 'rgba(251,191,36,0.1)',  border: 'rgba(251,191,36,0.2)'  },
-    { label: 'Total',    value: summary.totalSessions, icon: TrendingUp,   color: '#818cf8', bg: 'rgba(99,102,241,0.1)',  border: 'rgba(99,102,241,0.2)'  },
+    { label: "Present", value: summary.presentCount, icon: CheckCircle2, tone: "emerald" as const },
+    { label: "Absent", value: summary.absentCount, icon: XCircle, tone: "red" as const },
+    { label: "Unmarked", value: summary.unmarkedCount, icon: Clock, tone: "amber" as const },
+    { label: "Total", value: summary.totalSessions, icon: TrendingUp, tone: "teal" as const },
   ]
 
   const circumference = 2 * Math.PI * 44
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-4"
+    >
       {/* Hero rate card */}
-      <div className="relative rounded-2xl p-6 overflow-hidden"
-        style={{ background: 'linear-gradient(135deg,rgba(10,22,40,0.92),rgba(6,13,31,0.97))', border: `1px solid ${barColor}28`, boxShadow: `0 4px 28px rgba(0,0,0,0.4), 0 0 0 1px ${barColor}10 inset` }}>
-        <div className="absolute top-0 left-0 right-0 h-[1px]"
-          style={{ background: `linear-gradient(90deg,transparent,${barColor}60,transparent)` }} />
+      <div className={"relative overflow-hidden rounded-2xl border bg-card p-6 shadow-sm " + tone.border}>
+        <div className={"absolute inset-x-0 top-0 h-[2px] " + tone.bar} aria-hidden />
+
         <div className="flex items-center gap-6">
           {/* SVG ring */}
           <div className="relative shrink-0">
             <svg width="110" height="110" viewBox="0 0 110 110" className="-rotate-90">
-              <circle cx="55" cy="55" r="44" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
-              <circle ref={ringRef} cx="55" cy="55" r="44" fill="none"
-                stroke={barColor} strokeWidth="8" strokeLinecap="round"
-                strokeDasharray={circumference} strokeDashoffset={circumference}
-                style={{ filter: `drop-shadow(0 0 8px ${barGlow})` }} />
+              <circle
+                cx="55" cy="55" r="44"
+                fill="none"
+                className="stroke-muted"
+                strokeWidth="8"
+              />
+              <motion.circle
+                cx="55" cy="55" r="44"
+                fill="none"
+                strokeWidth="8"
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                style={{ strokeDashoffset: ringSpring }}
+                className={tone.ring}
+              />
             </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span ref={numRef} className="text-2xl font-extrabold" style={{ color: barColor }}>0%</span>
-              <span className="text-[10px] font-semibold" style={{ color: '#475569' }}>Rate</span>
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+              <span className={"font-display text-2xl font-extrabold tabular-nums " + tone.text}>
+                {shownNum}
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Rate
+              </span>
             </div>
           </div>
+
           <div className="flex-1">
-            <p className="text-lg font-extrabold mb-1" style={{ color: '#e2e8f0' }}>Attendance Rate</p>
-            <p className="text-sm mb-3" style={{ color: '#475569' }}>{statusLabel}</p>
-            <div className="h-2.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
-              <div ref={barRef} className="h-full rounded-full"
-                style={{ background: `linear-gradient(90deg,${barColor},${barColor}aa)`, boxShadow: `0 0 12px ${barGlow}`, width: 0 }} />
+            <p className="font-display text-lg font-extrabold text-foreground">
+              Attendance rate
+            </p>
+            <p className={"mb-3 text-[13px] font-semibold " + tone.text}>
+              {status}
+            </p>
+            <div className="h-2.5 overflow-hidden rounded-full bg-muted">
+              <motion.div
+                className={"h-full rounded-full " + tone.bar}
+                style={{ width: barWidthPct }}
+              />
             </div>
-            <p className="text-[11px] mt-2" style={{ color: '#334155' }}>
+            <p className="mt-2 text-[11px] text-muted-foreground">
               {summary.presentCount} of {summary.totalSessions} sessions attended
             </p>
           </div>
@@ -103,34 +177,52 @@ export default function StudentAttendanceView({ courseId }: Props) {
       </div>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {STATS.map((s, i) => (
-          <motion.div key={s.label}
-            initial={{ opacity: 0, y: 14, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ delay: i * 0.08 }}
-            whileHover={{ y: -3, boxShadow: `0 10px 28px rgba(0,0,0,0.4)` }}
-            className="relative rounded-2xl p-4 overflow-hidden"
-            style={{ background: s.bg, border: `1px solid ${s.border}`, boxShadow: '0 4px 16px rgba(0,0,0,0.3)', transition: 'all 0.2s' }}>
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-3"
-              style={{ background: `${s.color}18`, border: `1px solid ${s.border}` }}>
-              <s.icon className="w-4 h-4" style={{ color: s.color }} />
-            </div>
-            <p className="text-2xl font-extrabold leading-none mb-1" style={{ color: '#f1f5f9' }}>{s.value}</p>
-            <p className="text-[11px] font-semibold" style={{ color: '#64748b' }}>{s.label}</p>
-            <div className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full"
-              style={{ background: `linear-gradient(90deg,${s.color}50,transparent)` }} />
-          </motion.div>
-        ))}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {STATS.map((s, i) => {
+          const tileTone =
+            s.tone === "emerald" ? { text: "text-emerald-700 dark:text-emerald-300", bg: "bg-emerald-50 dark:bg-emerald-950/40", border: "border-emerald-200 dark:border-emerald-800" }
+              : s.tone === "red" ? { text: "text-red-700 dark:text-red-300", bg: "bg-red-50 dark:bg-red-950/40", border: "border-red-200 dark:border-red-800" }
+                : s.tone === "amber" ? { text: "text-amber-700 dark:text-amber-300", bg: "bg-amber-50 dark:bg-amber-950/40", border: "border-amber-200 dark:border-amber-800" }
+                  : { text: "text-teal-700 dark:text-teal-300", bg: "bg-teal-50 dark:bg-teal-950/40", border: "border-teal-200 dark:border-teal-800" }
+          const Icon = s.icon
+          return (
+            <motion.div
+              key={s.label}
+              initial={{ opacity: 0, y: 14, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ delay: i * 0.06 + 0.1 }}
+              whileHover={{ y: -2 }}
+              className={"rounded-2xl border bg-card p-4 shadow-sm " + tileTone.border}
+            >
+              <div className={"mb-3 flex h-8 w-8 items-center justify-center rounded-lg " + tileTone.bg + " " + tileTone.text}>
+                <Icon className="h-4 w-4" strokeWidth={2} />
+              </div>
+              <p className={"font-display text-2xl font-extrabold leading-none tabular-nums " + tileTone.text}>
+                {s.value}
+              </p>
+              <p className="mt-1 text-[11px] font-semibold text-muted-foreground">
+                {s.label}
+              </p>
+            </motion.div>
+          )
+        })}
       </div>
 
-      {/* Status message */}
+      {/* Below-threshold message */}
       {pct < 75 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-          className="flex items-center gap-3 p-4 rounded-2xl"
-          style={{ background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.2)' }}>
-          <Award className="w-5 h-5 shrink-0" style={{ color: '#fbbf24' }} />
-          <p className="text-sm" style={{ color: '#94a3b8' }}>
-            You need <span className="font-bold" style={{ color: '#fbbf24' }}>{Math.max(0, Math.ceil((75 * summary.totalSessions / 100) - summary.presentCount))} more</span> attended sessions to reach 75% attendance.
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/40"
+        >
+          <Award className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <p className="text-[13px] text-amber-900 dark:text-amber-200">
+            You need{" "}
+            <strong className="font-bold">
+              {Math.max(0, Math.ceil((75 * summary.totalSessions / 100) - summary.presentCount))} more
+            </strong>{" "}
+            attended sessions to reach 75% attendance.
           </p>
         </motion.div>
       )}
