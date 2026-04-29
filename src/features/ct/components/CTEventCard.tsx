@@ -1,149 +1,204 @@
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Calendar, Upload, CheckCircle2, MoreVertical, Eye, Edit2, Send, EyeOff, Trash2, ClipboardList } from "lucide-react"
+import {
+  Calendar, Upload, CheckCircle2, MoreVertical,
+  Eye, Edit2, Send, EyeOff, Trash2, ClipboardList,
+} from "lucide-react"
 import { formatDate } from "@/utils/dateUtils"
 import { useAuthStore } from "@/store/authStore"
-import { useThemeStore } from "@/store/themeStore"
 import { isTeacher } from "@/utils/roleGuard"
 import type { CTEventDto } from "@/types/ct.types"
 
-interface Props {
-  ct:             CTEventDto
-  index?:         number
-  onView:         (ct: CTEventDto) => void
-  onDelete?:      (ct: CTEventDto) => void
-  onPublish?:     (id: string) => void
-  onUnpublish?:   (id: string) => void
+interface CTEventCardProps {
+  ct: CTEventDto
+  index?: number
+  onView: (ct: CTEventDto) => void
+  onDelete?: (ct: CTEventDto) => void
+  onPublish?: (id: string) => void
+  onUnpublish?: (id: string) => void
   onUploadKhata?: (ct: CTEventDto) => void
-  onEnterMarks?:  (ct: CTEventDto) => void
+  onEnterMarks?: (ct: CTEventDto) => void
 }
 
-function MenuBtn({ icon: Icon, label, color, onClick, dark }: { icon: any; label: string; color: string; onClick: () => void; dark: boolean }) {
+interface MenuItemProps {
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
+  label: string
+  variant: "default" | "danger"
+  onClick: () => void
+}
+
+function MenuItem({ icon: Icon, label, variant, onClick }: MenuItemProps) {
+  const colorClass = variant === "danger"
+    ? "text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+    : "text-foreground hover:bg-teal-50 dark:hover:bg-teal-950/30"
+
+  const iconClass = variant === "danger"
+    ? "text-red-600"
+    : "text-teal-700 dark:text-teal-300"
+
   return (
-    <button onClick={onClick}
-      className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors"
-      style={{ color }}
-      onMouseEnter={e => (e.currentTarget.style.background = dark ? `${color}15` : `${color}0f`)}
-      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-      <Icon style={{ width: 14, height: 14 }} strokeWidth={2} />
+    <button
+      type="button"
+      onClick={onClick}
+      className={"flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium transition-colors " + colorClass}
+    >
+      <Icon className={"h-3.5 w-3.5 " + iconClass} strokeWidth={2} />
       {label}
     </button>
   )
 }
 
-export default function CTEventCard({ ct, index = 0, onView, onDelete, onPublish, onUnpublish, onUploadKhata, onEnterMarks }: Props) {
-  const { user }  = useAuthStore()
-  const { dark }  = useThemeStore()
-  const teacher   = isTeacher(user?.role ?? "Student")
+export default function CTEventCard({
+  ct, index = 0, onView, onDelete, onPublish, onUnpublish, onUploadKhata, onEnterMarks,
+}: CTEventCardProps) {
+  const { user } = useAuthStore()
+  const teacher = isTeacher(user?.role ?? "Student")
   const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   const isPublished = ct.status === "Published"
-  const isDraft     = ct.status === "Draft"
+  const isDraft = ct.status === "Draft"
 
-  const statusColor  = isPublished ? "#059669" : "#d97706"
-  const statusLight  = isPublished ? "#ecfdf5" : "#fffbeb"
-  const statusDark   = isPublished ? "rgba(5,150,105,0.15)"  : "rgba(217,119,6,0.15)"
-  const statusBorder = isPublished ? (dark ? "rgba(5,150,105,0.3)" : "#a7f3d0") : (dark ? "rgba(217,119,6,0.3)" : "#fde68a")
+  /* Status-driven palette */
+  const statusBadge = isPublished
+    ? "border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+    : "border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+
+  const stripeClass = isPublished
+    ? "bg-emerald-500"
+    : "bg-amber-500"
 
   const hasMenu = teacher && (onUploadKhata || onEnterMarks || onPublish || onUnpublish || onDelete)
 
-  // Theme
-  const cardBg    = dark ? "rgba(16,24,44,0.75)" : "rgba(255,255,255,0.92)"
-  const blur      = "blur(20px)"
-  const border    = dark ? "rgba(124,58,237,0.15)" : "#e5e7eb"
-  const hoverBorder = dark ? "rgba(124,58,237,0.35)" : "#ddd6fe"
-  const textMain  = dark ? "#e2e8f8" : "#111827"
-  const textSub   = dark ? "#8896c8" : "#6b7280"
-  const textMuted = dark ? "#5a6a9a" : "#9ca3af"
-  const menuBg    = dark ? "rgb(16,24,44)" : "white"
-  const menuBorder= dark ? "rgba(124,58,237,0.2)" : "#e5e7eb"
-  const divider   = dark ? "rgba(124,58,237,0.1)" : "#f3f4f6"
+  useEffect(() => {
+    if (!menuOpen) return
+    const h = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", h)
+    return () => document.removeEventListener("mousedown", h)
+  }, [menuOpen])
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
+      transition={{ delay: Math.min(index * 0.04, 0.2), duration: 0.25 }}
       onClick={() => onView(ct)}
-      whileHover={{ y: -2, boxShadow: dark ? "0 8px 24px rgba(124,58,237,0.15)" : "0 4px 16px rgba(124,58,237,0.1)" }}
-      className="group relative rounded-2xl cursor-pointer"
-      style={{ background: cardBg, backdropFilter: blur, WebkitBackdropFilter: blur, border: `1px solid ${border}`, transition: "border-color 0.2s" }}
-      onMouseEnter={e => (e.currentTarget.style.borderColor = hoverBorder)}
-      onMouseLeave={e => (e.currentTarget.style.borderColor = border)}
+      whileHover={{ y: -2 }}
+      className={
+        "group relative cursor-pointer rounded-2xl border border-border bg-card shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-all hover:border-teal-200 hover:shadow-[0_12px_32px_-8px_rgba(20,184,166,0.18)] dark:hover:border-teal-800 " +
+        (menuOpen ? "z-30" : "z-0")
+      }
     >
       {/* Status stripe */}
-      <div className="absolute left-0 top-3 bottom-3 w-[3px] rounded-full pointer-events-none"
-        style={{ background: `linear-gradient(180deg, ${statusColor}, ${statusColor}50)` }} />
+      <div
+        className={"pointer-events-none absolute bottom-3 left-0 top-3 w-[3px] rounded-full " + stripeClass}
+        aria-hidden
+      />
 
-      <div className="flex items-start gap-4 px-5 py-4">
+      <div className="flex items-start gap-3 px-5 py-4 pl-6">
         {/* CT number badge */}
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
-          style={{ background: dark ? "rgba(124,58,237,0.15)" : "#f5f3ff", border: dark ? "1px solid rgba(124,58,237,0.25)" : "1px solid #ddd6fe" }}>
-          <span className="text-[12px] font-extrabold" style={{ color: "#7c3aed" }}>CT{ct.ctNumber}</span>
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-100 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300">
+          <span className="font-display text-[11px] font-extrabold">CT{ct.ctNumber}</span>
         </div>
 
-        <div className="flex-1 min-w-0 space-y-2">
-          {/* Title row */}
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="font-bold text-[14px] leading-snug line-clamp-1 group-hover:text-purple-400 transition-colors"
-              style={{ color: textMain }}>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <h3 className="line-clamp-2 font-display text-[14px] font-bold leading-snug text-foreground">
               {ct.title}
             </h3>
-            <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
-              {/* Status badge */}
-              <span className="text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5"
-                style={{ background: dark ? statusDark : statusLight, border: `1px solid ${statusBorder}`, color: statusColor }}>
+
+            <div className="flex shrink-0 items-center gap-1.5" onClick={e => e.stopPropagation()}>
+              <span className={"inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wider " + statusBadge}>
                 {isPublished
-                  ? <><CheckCircle2 style={{ width: 11, height: 11 }} strokeWidth={2.5} /> Published</>
-                  : <><Edit2 style={{ width: 11, height: 11 }} strokeWidth={2.5} /> Draft</>
+                  ? <><CheckCircle2 className="h-2.5 w-2.5" strokeWidth={2.5} /> Published</>
+                  : <><Edit2 className="h-2.5 w-2.5" strokeWidth={2.5} /> Draft</>
                 }
               </span>
 
-              {/* Menu */}
               {hasMenu && (
-                <div className="relative">
-                  <motion.button whileTap={{ scale: 0.9 }}
-                    onClick={e => { e.stopPropagation(); setMenuOpen(o => !o) }}
-                    className="w-8 h-8 rounded-xl flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
-                    style={{ color: textMuted, background: menuOpen ? (dark ? "rgba(124,58,237,0.15)" : "#f5f3ff") : "transparent" }}
-                    onMouseEnter={e => (e.currentTarget.style.background = dark ? "rgba(124,58,237,0.12)" : "#f5f3ff")}
-                    onMouseLeave={e => { if (!menuOpen) e.currentTarget.style.background = "transparent" }}>
-                    <MoreVertical style={{ width: 15, height: 15 }} />
+                <div className="relative" ref={menuRef}>
+                  <motion.button
+                    type="button"
+                    whileTap={{ scale: 0.9 }}
+                    onClick={e => { e.stopPropagation(); setMenuOpen(v => !v) }}
+                    aria-label="CT actions"
+                    aria-expanded={menuOpen}
+                    className={
+                      "flex h-7 w-7 items-center justify-center rounded-lg transition-colors " +
+                      (menuOpen
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-muted hover:text-foreground")
+                    }
+                  >
+                    <MoreVertical className="h-3.5 w-3.5" />
                   </motion.button>
 
                   <AnimatePresence>
                     {menuOpen && (
                       <motion.div
-                        initial={{ opacity: 0, scale: 0.94, y: -4 }}
-                        animate={{ opacity: 1, scale: 1,    y: 0   }}
-                        exit={{   opacity: 0, scale: 0.94, y: -4   }}
+                        initial={{ opacity: 0, scale: 0.96, y: -4 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.96, y: -4 }}
                         transition={{ duration: 0.12 }}
-                        className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl overflow-hidden p-1"
-                        style={{ background: menuBg, border: `1px solid ${menuBorder}`, boxShadow: dark ? "0 16px 40px rgba(0,0,0,0.5)" : "0 8px 24px rgba(0,0,0,0.12)" }}
-                        onClick={e => e.stopPropagation()}>
-                        <MenuBtn dark={dark} icon={Eye} label="View Details" color="#7c3aed"
-                          onClick={() => { onView(ct); setMenuOpen(false) }} />
+                        className="absolute right-0 top-9 z-50 w-52 overflow-hidden rounded-xl border border-border bg-card shadow-lg"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <MenuItem
+                          icon={Eye}
+                          label="View details"
+                          variant="default"
+                          onClick={() => { onView(ct); setMenuOpen(false) }}
+                        />
+
                         {onUploadKhata && (
-                          <MenuBtn dark={dark} icon={Upload} label={ct.khataUploaded ? "Re-upload Khata" : "Upload Khata"} color="#6366f1"
-                            onClick={() => { onUploadKhata(ct); setMenuOpen(false) }} />
+                          <MenuItem
+                            icon={Upload}
+                            label={ct.khataUploaded ? "Re-upload scripts" : "Upload scripts"}
+                            variant="default"
+                            onClick={() => { onUploadKhata(ct); setMenuOpen(false) }}
+                          />
                         )}
+
                         {ct.khataUploaded && onEnterMarks && (
-                          <MenuBtn dark={dark} icon={ClipboardList} label={isPublished ? "View / Edit Marks" : "Enter Marks"} color="#d97706"
-                            onClick={() => { onEnterMarks(ct); setMenuOpen(false) }} />
+                          <MenuItem
+                            icon={ClipboardList}
+                            label={isPublished ? "View / edit marks" : "Enter marks"}
+                            variant="default"
+                            onClick={() => { onEnterMarks(ct); setMenuOpen(false) }}
+                          />
                         )}
+
                         {isDraft && ct.khataUploaded && onPublish && (
-                          <MenuBtn dark={dark} icon={Send} label="Publish Results" color="#059669"
-                            onClick={() => { onPublish(ct.id); setMenuOpen(false) }} />
+                          <MenuItem
+                            icon={Send}
+                            label="Publish results"
+                            variant="default"
+                            onClick={() => { onPublish(ct.id); setMenuOpen(false) }}
+                          />
                         )}
+
                         {isPublished && onUnpublish && (
-                          <MenuBtn dark={dark} icon={EyeOff} label="Unpublish" color="#d97706"
-                            onClick={() => { onUnpublish(ct.id); setMenuOpen(false) }} />
+                          <MenuItem
+                            icon={EyeOff}
+                            label="Unpublish"
+                            variant="default"
+                            onClick={() => { onUnpublish(ct.id); setMenuOpen(false) }}
+                          />
                         )}
+
                         {onDelete && (
                           <>
-                            <div className="h-px mx-2 my-1" style={{ background: divider }} />
-                            <MenuBtn dark={dark} icon={Trash2} label="Delete" color="#ef4444"
-                              onClick={() => { onDelete(ct); setMenuOpen(false) }} />
+                            <div className="my-1 h-px bg-border" />
+                            <MenuItem
+                              icon={Trash2}
+                              label="Delete"
+                              variant="danger"
+                              onClick={() => { onDelete(ct); setMenuOpen(false) }}
+                            />
                           </>
                         )}
                       </motion.div>
@@ -155,28 +210,33 @@ export default function CTEventCard({ ct, index = 0, onView, onDelete, onPublish
           </div>
 
           {/* Meta row */}
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11.5px] text-muted-foreground">
             {ct.heldOn ? (
-              <span className="flex items-center gap-1.5 text-[12px]" style={{ color: textSub }}>
-                <Calendar style={{ width: 13, height: 13 }} /> {formatDate(ct.heldOn, "dd MMM yyyy")}
+              <span className="inline-flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                {formatDate(ct.heldOn, "dd MMM yyyy")}
               </span>
             ) : (
-              <span className="flex items-center gap-1.5 text-[12px]" style={{ color: "#d97706" }}>
-                <Calendar style={{ width: 13, height: 13 }} /> Date not set
+              <span className="inline-flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-300">
+                <Calendar className="h-3 w-3" />
+                Date not set
               </span>
             )}
-            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-              style={{ background: dark ? "rgba(124,58,237,0.12)" : "#f5f3ff", border: dark ? "1px solid rgba(124,58,237,0.2)" : "1px solid #ddd6fe", color: "#7c3aed" }}>
+
+            <span className="inline-flex items-center rounded-full border border-teal-200 bg-teal-50 px-1.5 py-0.5 text-[10px] font-bold text-teal-700 dark:border-teal-800 dark:bg-teal-950/40 dark:text-teal-300">
               {ct.maxMarks} marks
             </span>
+
             {teacher && (
               ct.khataUploaded
-                ? <span className="flex items-center gap-1 text-[12px] font-semibold" style={{ color: "#059669" }}>
-                    <CheckCircle2 style={{ width: 12, height: 12 }} /> Khata uploaded
-                  </span>
-                : <span className="flex items-center gap-1 text-[12px] font-semibold" style={{ color: "#d97706" }}>
-                    <Upload style={{ width: 12, height: 12 }} /> Khata pending
-                  </span>
+                ? <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-300">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Scripts uploaded
+                </span>
+                : <span className="inline-flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-300">
+                  <Upload className="h-3 w-3" />
+                  Scripts pending
+                </span>
             )}
           </div>
         </div>
