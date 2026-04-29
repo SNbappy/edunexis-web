@@ -1,112 +1,151 @@
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { motion } from 'framer-motion'
-import { Pencil } from 'lucide-react'
-import Modal from '@/components/ui/Modal'
-import type { AssignmentDto, UpdateAssignmentRequest } from '@/types/assignment.types'
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import { Pencil } from "lucide-react"
+import Modal from "@/components/ui/Modal"
+import Input from "@/components/ui/Input"
+import Button from "@/components/ui/Button"
+import type { AssignmentDto, UpdateAssignmentRequest } from "@/types/assignment.types"
 
 const schema = z.object({
-  title:               z.string().min(3, 'At least 3 characters'),
-  instructions:        z.string().optional(),
-  deadline:            z.string().min(1, 'Required'),
-  maxMarks:            z.coerce.number().min(1).max(1000),
+  title: z.string().min(3, "At least 3 characters"),
+  instructions: z.string().optional(),
+  deadline: z.string().min(1, "Required"),
+  maxMarks: z.coerce.number().min(1).max(1000),
   allowLateSubmission: z.boolean(),
-  rubricNotes:         z.string().optional(),
+  rubricNotes: z.string().optional(),
 })
 type FormData = z.infer<typeof schema>
-interface Props { isOpen: boolean; onClose: () => void; assignment: AssignmentDto; onSubmit: (d: UpdateAssignmentRequest) => void; isLoading?: boolean }
 
-function pad(n: number) { return String(n).padStart(2,'0') }
-function toLocal(iso: string) { const d = new Date(iso); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}` }
-
-const S = {
-  label:    { display:'block', fontSize:12, fontWeight:700, color:'#64748b', marginBottom:6 } as React.CSSProperties,
-  input:    { width:'100%', background:'rgba(6,13,31,0.7)', border:'1px solid rgba(99,102,241,0.2)', color:'#e2e8f0', borderRadius:12, padding:'10px 14px', fontSize:13, outline:'none', transition:'border-color 0.2s' } as React.CSSProperties,
-  textarea: { width:'100%', background:'rgba(6,13,31,0.7)', border:'1px solid rgba(99,102,241,0.2)', color:'#e2e8f0', borderRadius:12, padding:'10px 14px', fontSize:13, outline:'none', resize:'none' as const, transition:'border-color 0.2s' } as React.CSSProperties,
-  error:    { fontSize:11, color:'#f87171', marginTop:4, fontWeight:600 } as React.CSSProperties,
+interface EditAssignmentModalProps {
+  isOpen: boolean
+  onClose: () => void
+  assignment: AssignmentDto
+  onSubmit: (d: UpdateAssignmentRequest) => void
+  isLoading?: boolean
 }
-const focus = (e: React.FocusEvent<any>) => (e.target.style.borderColor = 'rgba(99,102,241,0.5)')
-const blur  = (e: React.FocusEvent<any>) => (e.target.style.borderColor = 'rgba(99,102,241,0.2)')
 
-export default function EditAssignmentModal({ isOpen, onClose, assignment, onSubmit, isLoading }: Props) {
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+function pad(n: number) { return String(n).padStart(2, "0") }
+function toLocal(iso: string) {
+  const d = new Date(iso)
+  return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) +
+    "T" + pad(d.getHours()) + ":" + pad(d.getMinutes())
+}
+
+export default function EditAssignmentModal({
+  isOpen, onClose, assignment, onSubmit, isLoading,
+}: EditAssignmentModalProps) {
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      title: assignment.title, instructions: assignment.instructions ?? '',
-      deadline: toLocal(assignment.deadline), maxMarks: assignment.maxMarks,
-      allowLateSubmission: assignment.allowLateSubmission, rubricNotes: assignment.rubricNotes ?? '',
+      title: assignment.title,
+      instructions: assignment.instructions ?? "",
+      deadline: toLocal(assignment.deadline),
+      maxMarks: assignment.maxMarks,
+      allowLateSubmission: assignment.allowLateSubmission,
+      rubricNotes: assignment.rubricNotes ?? "",
     },
   })
 
+  const allowLate = watch("allowLateSubmission")
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Edit Assignment" size="xl">
-      <form onSubmit={handleSubmit(d => onSubmit({ ...d, deadline: new Date(d.deadline).toISOString() }))} className="space-y-4">
-
-        <div className="flex items-center gap-3 p-3 rounded-xl mb-2"
-          style={{ background: 'rgba(251,191,36,0.07)', border: '1px solid rgba(251,191,36,0.15)' }}>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.25)' }}>
-            <Pencil className="w-5 h-5" style={{ color: '#fbbf24' }} />
+    <Modal isOpen={isOpen} onClose={onClose} title="Edit assignment" size="xl" scrollable>
+      <form
+        onSubmit={handleSubmit(d => onSubmit({ ...d, deadline: new Date(d.deadline).toISOString() }))}
+        className="space-y-4"
+      >
+        {/* Helper card */}
+        <div className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/40">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300">
+            <Pencil className="h-4 w-4" strokeWidth={2} />
           </div>
-          <div>
-            <p className="text-[13px] font-bold" style={{ color: '#e2e8f0' }}>Edit Assignment</p>
-            <p className="text-[11px] truncate max-w-xs" style={{ color: '#475569' }}>{assignment.title}</p>
+          <div className="min-w-0 flex-1">
+            <p className="font-display text-[13px] font-bold text-foreground">
+              Edit assignment
+            </p>
+            <p className="truncate text-[11.5px] text-muted-foreground">
+              {assignment.title}
+            </p>
           </div>
         </div>
 
+        <Input
+          {...register("title")}
+          label="Title"
+          placeholder="Assignment title"
+          error={errors.title?.message}
+          required
+        />
+
         <div>
-          <label style={S.label}>Title <span style={{ color:'#f87171' }}>*</span></label>
-          <input {...register('title')} placeholder="Assignment title" style={S.input} onFocus={focus} onBlur={blur} />
-          {errors.title && <p style={S.error}>{errors.title.message}</p>}
+          <label className="mb-1.5 block text-[13px] font-semibold text-foreground">
+            Instructions <span className="font-normal text-muted-foreground">(optional)</span>
+          </label>
+          <textarea
+            {...register("instructions")}
+            rows={4}
+            placeholder="Detailed instructions…"
+            className="w-full resize-none rounded-xl border border-border bg-muted/40 px-4 py-3 text-[13px] text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-teal-500 focus:bg-card focus:ring-2 focus:ring-teal-500/20"
+          />
         </div>
 
         <div>
-          <label style={S.label}>Instructions (optional)</label>
-          <textarea {...register('instructions')} rows={4} placeholder="Detailed instructions..." style={S.textarea} onFocus={focus} onBlur={blur} />
-        </div>
-
-        <div>
-          <label style={S.label}>Rubric / Grading Criteria (optional)</label>
-          <textarea {...register('rubricNotes')} rows={2} placeholder="Grading criteria..." style={S.textarea} onFocus={focus} onBlur={blur} />
+          <label className="mb-1.5 block text-[13px] font-semibold text-foreground">
+            Rubric / grading criteria <span className="font-normal text-muted-foreground">(optional)</span>
+          </label>
+          <textarea
+            {...register("rubricNotes")}
+            rows={2}
+            placeholder="Grading criteria…"
+            className="w-full resize-none rounded-xl border border-border bg-muted/40 px-4 py-3 text-[13px] text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-teal-500 focus:bg-card focus:ring-2 focus:ring-teal-500/20"
+          />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label style={S.label}>Deadline</label>
-            <input {...register('deadline')} type="datetime-local" style={S.input} onFocus={focus} onBlur={blur} />
-            {errors.deadline && <p style={S.error}>{errors.deadline.message}</p>}
-          </div>
-          <div>
-            <label style={S.label}>Max Marks</label>
-            <input {...register('maxMarks')} type="number" style={S.input} onFocus={focus} onBlur={blur} />
-            {errors.maxMarks && <p style={S.error}>{errors.maxMarks.message}</p>}
-          </div>
+          <Input
+            {...register("deadline")}
+            type="datetime-local"
+            label="Deadline"
+            error={errors.deadline?.message}
+            required
+          />
+          <Input
+            {...register("maxMarks")}
+            type="number"
+            label="Max marks"
+            error={errors.maxMarks?.message}
+            required
+          />
         </div>
 
-        <label className="flex items-center gap-3 cursor-pointer select-none p-3 rounded-xl"
-          style={{ background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.1)' }}>
-          <input type="checkbox" {...register('allowLateSubmission')} className="w-4 h-4 accent-indigo-500" />
-          <span className="text-[13px] font-semibold" style={{ color: '#94a3b8' }}>Allow late submission</span>
+        <label className="flex cursor-pointer select-none items-center gap-3 rounded-xl border border-teal-200 bg-teal-50 p-3 dark:border-teal-800 dark:bg-teal-950/40">
+          <input
+            type="checkbox"
+            {...register("allowLateSubmission")}
+            className="sr-only"
+          />
+          <div className={
+            "relative h-5 w-9 shrink-0 rounded-full transition-colors " +
+            (allowLate ? "bg-teal-600" : "bg-stone-300 dark:bg-stone-700")
+          }>
+            <div className={
+              "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all " +
+              (allowLate ? "left-[18px]" : "left-0.5")
+            } />
+          </div>
+          <span className="text-[13px] font-semibold text-foreground">
+            Allow late submission
+          </span>
         </label>
 
         <div className="flex gap-3 pt-1">
-          <motion.button type="button" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-            onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl text-sm font-bold"
-            style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.15)', color: '#818cf8' }}>
+          <Button type="button" variant="secondary" className="flex-1" onClick={onClose}>
             Cancel
-          </motion.button>
-          <motion.button type="submit"
-            whileHover={{ scale: 1.02, boxShadow: '0 6px 24px rgba(251,191,36,0.35)' }}
-            whileTap={{ scale: 0.97 }} disabled={!!isLoading}
-            className="flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
-            style={{ background: 'linear-gradient(135deg,rgba(251,191,36,0.9),rgba(245,158,11,0.9))', color: '#111', opacity: isLoading ? 0.7 : 1 }}>
-            {isLoading
-              ? <><span className="w-3.5 h-3.5 rounded-full border-2 border-black border-t-transparent animate-spin" /> Saving...</>
-              : 'Save Changes'
-            }
-          </motion.button>
+          </Button>
+          <Button type="submit" className="flex-1" loading={isLoading}>
+            Save changes
+          </Button>
         </div>
       </form>
     </Modal>

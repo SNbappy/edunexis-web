@@ -1,6 +1,6 @@
-import { motion } from 'framer-motion'
+﻿import { motion } from 'framer-motion'
 import {
-    Clock, Users, FileText, BookOpen,
+    Clock, Users, FileText, Award,
     Send, AlertCircle,
 } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
@@ -62,11 +62,11 @@ export default function AssignmentDetailModal({ isOpen, onClose, assignment, cou
                             Due: {formatDateTime(assignment.deadline)}
                         </span>
                         <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-                            <BookOpen className="w-3.5 h-3.5" />
+                            <Award className="w-3.5 h-3.5" />
                             {assignment.maxMarks} marks
                         </span>
                         {assignment.allowLateSubmission && (
-                            <Badge variant="muted">Late submission allowed</Badge>
+                            <Badge variant="muted">Late submission OK</Badge>
                         )}
                         {teacher && (
                             <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -102,7 +102,7 @@ export default function AssignmentDetailModal({ isOpen, onClose, assignment, cou
                             )}
                             {assignment.rubricNotes && (
                                 <div>
-                                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Rubric Notes</p>
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Rubric notes</p>
                                     <div className="p-4 rounded-xl bg-muted/50 border border-border">
                                         <p className="text-sm text-foreground whitespace-pre-wrap">{assignment.rubricNotes}</p>
                                     </div>
@@ -128,7 +128,7 @@ export default function AssignmentDetailModal({ isOpen, onClose, assignment, cou
                                 leftIcon={<Send className="w-4 h-4" />}
                                 onClick={() => setSubmitOpen(true)}
                             >
-                                Submit Assignment
+                                Submit assignment
                             </Button>
                         </div>
                     )}
@@ -157,3 +157,4 @@ export default function AssignmentDetailModal({ isOpen, onClose, assignment, cou
         </>
     )
 }
+

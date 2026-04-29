@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ShieldAlert, ShieldCheck, AlertTriangle, ChevronDown, ChevronUp, FileX, Clock } from 'lucide-react'
 import { cn } from '@/utils/cn'
@@ -129,7 +129,7 @@ function PairRow({ pair, index }: { pair: PlagiarismPair; index: number }) {
                         <div className="px-3 pb-3 space-y-3 border-t border-border/50 pt-3">
                             {pair.commonPhrases.length > 0 && (
                                 <div>
-                                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Common Phrases Detected</p>
+                                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Common phrases detected</p>
                                     <div className="flex flex-wrap gap-1.5">
                                         {pair.commonPhrases.map((ph, i) => (
                                             <span key={i} className="px-2 py-0.5 rounded-md bg-amber-400/20 text-amber-700 dark:text-amber-300 text-[11px] font-medium">
@@ -186,7 +186,7 @@ export default function PlagiarismReportModal({ isOpen, onClose, report, isCheck
                                 <ShieldAlert className="w-5 h-5" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <h2 className="font-bold text-foreground text-base">Plagiarism Report</h2>
+                                <h2 className="font-bold text-foreground text-base">Plagiarism report</h2>
                                 {report && (
                                     <p className="text-xs text-muted-foreground flex items-center gap-1">
                                         <Clock className="w-3 h-3" /> {formatDateTime(report.checkedAt)}
@@ -232,7 +232,7 @@ export default function PlagiarismReportModal({ isOpen, onClose, report, isCheck
                                             <p className="text-xl font-bold text-red-500">
                                                 {report.flaggedPairs.filter((p) => p.level === 'high').length}
                                             </p>
-                                            <p className="text-[11px] text-muted-foreground mt-0.5">High Risk</p>
+                                            <p className="text-[11px] text-muted-foreground mt-0.5">High risk</p>
                                         </div>
                                         <div className={cn('p-3 rounded-xl border text-center',
                                             report.flaggedPairs.filter(p => p.level === 'medium').length > 0
@@ -277,7 +277,7 @@ export default function PlagiarismReportModal({ isOpen, onClose, report, isCheck
                                         <div className="space-y-3">
                                             <div className="flex items-center justify-between">
                                                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                                    {showAll ? 'All Pairs' : 'Flagged Pairs'}
+                                                    {showAll ? 'All pairs' : 'Flagged pairs'}
                                                     {' '}({displayPairs.length})
                                                 </p>
                                                 <button
@@ -299,12 +299,12 @@ export default function PlagiarismReportModal({ isOpen, onClose, report, isCheck
 
                                     {/* Legend */}
                                     <div className="p-3 rounded-xl bg-muted/30 border border-border space-y-2">
-                                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Similarity Thresholds</p>
+                                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Similarity thresholds</p>
                                         <div className="space-y-1">
                                             {[
-                                                { label: '0–29%', desc: 'Low — likely original', color: 'bg-emerald-500' },
-                                                { label: '30–59%', desc: 'Medium — review recommended', color: 'bg-amber-400' },
-                                                { label: '60–100%', desc: 'High — likely plagiarized', color: 'bg-red-500' },
+                                                { label: '0â€“29%', desc: 'Low â€” likely original', color: 'bg-emerald-500' },
+                                                { label: '30â€“59%', desc: 'Medium â€” review recommended', color: 'bg-amber-400' },
+                                                { label: '60â€“100%', desc: 'High â€” likely plagiarized', color: 'bg-red-500' },
                                             ].map((t) => (
                                                 <div key={t.label} className="flex items-center gap-2">
                                                     <div className={`w-2 h-2 rounded-full ${t.color}`} />
@@ -325,3 +325,4 @@ export default function PlagiarismReportModal({ isOpen, onClose, report, isCheck
         </AnimatePresence>
     )
 }
+

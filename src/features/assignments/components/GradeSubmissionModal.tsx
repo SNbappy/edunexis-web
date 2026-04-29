@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { FileText, Star, ExternalLink } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
@@ -41,7 +41,7 @@ export default function GradeSubmissionModal({ isOpen, onClose, submission, maxM
     }
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Grade Submission" size="lg">
+        <Modal isOpen={isOpen} onClose={onClose} title="Grade submission" size="lg">
             <div className="space-y-5">
                 {/* Student info */}
                 <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/50 border border-border">
@@ -53,7 +53,7 @@ export default function GradeSubmissionModal({ isOpen, onClose, submission, maxM
                         </p>
                     </div>
                     {submission.isLate && (
-                        <span className="ml-auto text-xs font-semibold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-lg">
+                        <span className="ml-auto text-[10.5px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-800 px-2 py-0.5 rounded-full">
                             Late
                         </span>
                     )}
@@ -63,7 +63,7 @@ export default function GradeSubmissionModal({ isOpen, onClose, submission, maxM
                 {submission.textContent && (
                     <div className="space-y-2">
                         <p className="text-sm font-medium text-foreground flex items-center gap-2">
-                            <FileText className="w-4 h-4" /> Written Answer
+                            <FileText className="w-4 h-4" /> Written answer
                         </p>
                         <div className="p-4 rounded-xl bg-muted/50 border border-border max-h-48 overflow-y-auto">
                             <p className="text-sm text-foreground whitespace-pre-wrap">{submission.textContent}</p>
@@ -96,7 +96,7 @@ export default function GradeSubmissionModal({ isOpen, onClose, submission, maxM
                 {/* AI & Plagiarism Analysis */}
                 {submission.textContent && (
                     <div className="space-y-2">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Analysis Tools</p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Analysis tools</p>
                         <AnalysisPanel submission={submission} />
                     </div>
                 )}
@@ -146,10 +146,11 @@ export default function GradeSubmissionModal({ isOpen, onClose, submission, maxM
                         disabled={!marks || isNaN(parseFloat(marks))}
                         leftIcon={!isLoading ? <Star className="w-4 h-4" /> : undefined}
                     >
-                        Save Grade
+                        Save grade
                     </Button>
                 </div>
             </div>
         </Modal>
     )
 }
+

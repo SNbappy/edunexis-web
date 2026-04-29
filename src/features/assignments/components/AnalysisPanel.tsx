@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bot, Globe, ShieldAlert, ChevronDown, ChevronUp, Loader2, AlertTriangle, CheckCircle2, ExternalLink } from 'lucide-react'
 import { cn } from '@/utils/cn'
@@ -56,7 +56,7 @@ function AiResultCard({ result }: { result: AiDetectionResult }) {
                 </div>
                 <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-foreground">AI Generated Content</p>
+                        <p className="text-sm font-semibold text-foreground">AI-generated content</p>
                         <LevelBadge level={result.level} label={result.level === 'high' ? 'High' : result.level === 'medium' ? 'Medium' : 'Low'} />
                     </div>
                     <p className="text-xs text-muted-foreground">{result.feedback}</p>
@@ -130,14 +130,14 @@ export default function AnalysisPanel({ submission }: Props) {
                             <Bot className="w-3.5 h-3.5 text-violet-500" />
                         </div>
                         <div>
-                            <p className="text-sm font-semibold text-foreground">AI Content Detector</p>
+                            <p className="text-sm font-semibold text-foreground">AI content detector</p>
                             <p className="text-[11px] text-muted-foreground">Powered by ZeroGPT</p>
                         </div>
                     </div>
                     {!aiResult && (
                         <Button size="sm" variant="secondary" loading={aiLoading} onClick={runAiDetection}
                             leftIcon={!aiLoading ? <Bot className="w-3.5 h-3.5" /> : undefined}>
-                            {aiLoading ? 'Detecting...' : 'Run Detection'}
+                            {aiLoading ? 'Detecting…' : 'Run detection'}
                         </Button>
                     )}
                 </div>
@@ -173,14 +173,14 @@ export default function AnalysisPanel({ submission }: Props) {
                             <Globe className="w-3.5 h-3.5 text-blue-500" />
                         </div>
                         <div>
-                            <p className="text-sm font-semibold text-foreground">Web Plagiarism Check</p>
+                            <p className="text-sm font-semibold text-foreground">Web plagiarism check</p>
                             <p className="text-[11px] text-muted-foreground">Powered by Copyleaks</p>
                         </div>
                     </div>
                     {!webResult && (
                         <Button size="sm" variant="secondary" loading={webLoading} onClick={runWebPlagiarism}
                             leftIcon={!webLoading ? <Globe className="w-3.5 h-3.5" /> : undefined}>
-                            {webLoading ? 'Submitting...' : 'Check Web'}
+                            {webLoading ? 'Submitting…' : 'Check web'}
                         </Button>
                     )}
                     {!webResult && !webLoading && (
@@ -196,7 +196,7 @@ export default function AnalysisPanel({ submission }: Props) {
                                         <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/50 border border-border">
                                             <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
                                             <div>
-                                                <p className="text-sm font-medium text-muted-foreground">Copyleaks not configured yet</p>
+                                                <p className="text-sm font-medium text-muted-foreground">Copyleaks not configured</p>
                                                 <p className="text-xs text-muted-foreground">Add your API key in <code className="bg-muted px-1 rounded">appsettings.json</code> before deployment.</p>
                                             </div>
                                         </div>
@@ -219,7 +219,7 @@ export default function AnalysisPanel({ submission }: Props) {
                                         <a href={webResult.checkUrl} target="_blank" rel="noopener noreferrer">
                                             <Button size="sm" variant="secondary" className="w-full"
                                                 leftIcon={<ExternalLink className="w-3.5 h-3.5" />}>
-                                                View Full Report on Copyleaks
+                                                View full report on Copyleaks
                                             </Button>
                                         </a>
                                     </>
@@ -232,3 +232,4 @@ export default function AnalysisPanel({ submission }: Props) {
         </div>
     )
 }
+
