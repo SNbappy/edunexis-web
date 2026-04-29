@@ -85,7 +85,7 @@ export default function PresentationMarkEntryModal({ isOpen, onClose, presentati
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={`Enter Marks — ${presentation.title}`}
+            title={`Enter marks — ${presentation.title}`}
             description={`Total marks: ${totalMarks}`}
             size="xl"
         >
@@ -105,13 +105,13 @@ export default function PresentationMarkEntryModal({ isOpen, onClose, presentati
                             onClick={() => setAllAbsent(false)}
                             className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:bg-muted transition-all"
                         >
-                            Clear Absent
+                            Clear absent
                         </button>
                         <button
                             onClick={() => setAllAbsent(true)}
                             className="text-xs px-3 py-1.5 rounded-lg border border-destructive/30 text-destructive hover:bg-destructive/10 transition-all"
                         >
-                            All Absent
+                            Mark all absent
                         </button>
                     </div>
                 </div>
@@ -184,13 +184,13 @@ export default function PresentationMarkEntryModal({ isOpen, onClose, presentati
                                             {topicsAllowed && (
                                                 <input type="text" value={e.topic}
                                                     onChange={(ev) => setField(member.userId, 'topic', ev.target.value)}
-                                                    placeholder="Presentation topic..."
+                                                    placeholder="Topic…"
                                                     className="w-full h-8 px-3 rounded-lg border border-border bg-muted text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
                                                 />
                                             )}
                                             <input type="text" value={e.feedback}
                                                 onChange={(ev) => setField(member.userId, 'feedback', ev.target.value)}
-                                                placeholder="Feedback (optional)..."
+                                                placeholder="Feedback (optional)…"
                                                 className="w-full h-8 px-3 rounded-lg border border-border bg-muted text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
                                             />
                                         </div>
@@ -210,10 +210,11 @@ export default function PresentationMarkEntryModal({ isOpen, onClose, presentati
                     <Button className="flex-1" loading={isSaving} onClick={handleSave}
                         disabled={members.length === 0}
                         leftIcon={!isSaving ? <Save className="w-4 h-4" /> : undefined}>
-                        Save Marks
+                        Save marks
                     </Button>
                 </div>
             </div>
         </Modal>
     )
 }
+

@@ -1,5 +1,5 @@
 ﻿import { motion } from 'framer-motion'
-import { Calendar, Clock, MapPin, BookOpen, ClipboardList, Send, Star, XCircle, Mic } from 'lucide-react'
+import { Calendar, Clock, MapPin, Award, ClipboardList, Send, Star, XCircle, FileCheck2 } from "lucide-react"
 import Modal from '@/components/ui/Modal'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
@@ -35,10 +35,10 @@ export default function PresentationDetailModal({
         isCancelled ? 'danger'  : 'default'
 
     const infoCards = [
-        { icon: <Calendar className="w-3.5 h-3.5" />, label: 'Date & Time',    value: p.scheduledDate ? formatDateTime(p.scheduledDate) : 'Not set' },
-        { icon: <BookOpen  className="w-3.5 h-3.5" />, label: 'Total Marks',   value: `${p.totalMarks} marks` },
-        ...(p.venue                   ? [{ icon: <MapPin className="w-3.5 h-3.5" />, label: 'Venue',          value: p.venue }] : []),
-        ...(p.durationPerGroupMinutes ? [{ icon: <Clock  className="w-3.5 h-3.5" />, label: 'Duration/Group', value: `${p.durationPerGroupMinutes} min` }] : []),
+        { icon: <Calendar className="w-3.5 h-3.5" />, label: "Date & time",    value: p.scheduledDate ? formatDateTime(p.scheduledDate) : 'Not set' },
+        { icon: <Award className="w-3.5 h-3.5" />, label: "Total marks",   value: `${p.totalMarks} marks` },
+        ...(p.venue                   ? [{ icon: <MapPin className="w-3.5 h-3.5" />, label: "Venue",          value: p.venue }] : []),
+        ...(p.durationPerGroupMinutes ? [{ icon: <Clock  className="w-3.5 h-3.5" />, label: "Duration / group", value: `${p.durationPerGroupMinutes} min` }] : []),
     ]
 
     return (
@@ -47,7 +47,7 @@ export default function PresentationDetailModal({
                 <div className="flex items-center gap-2 flex-wrap">
                     <Badge variant={statusVariant} dot={isScheduled || isOngoing}>{p.status}</Badge>
                     {p.format && <Badge variant="muted">{p.format}</Badge>}
-                    {p.topicsAllowed && <Badge variant="muted"><Mic className="w-3 h-3 mr-1 inline" />Topics enabled</Badge>}
+                    {p.topicsAllowed && <Badge variant="muted"><FileCheck2 className="w-3 h-3 mr-1 inline" />Topic submission enabled</Badge>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -63,7 +63,7 @@ export default function PresentationDetailModal({
 
                 {p.description && (
                     <div>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Details & Guidelines</p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Details and guidelines</p>
                         <div className="p-4 rounded-xl bg-muted/50 border border-border">
                             <p className="text-sm text-foreground whitespace-pre-wrap">{p.description}</p>
                         </div>
@@ -80,7 +80,7 @@ export default function PresentationDetailModal({
                                 : 'bg-emerald-500/5 border-emerald-500/20'
                         }`}
                     >
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Your Result</p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Your result</p>
                         {result?.isAbsent ? (
                             <div className="flex items-center gap-2 text-destructive">
                                 <XCircle className="w-5 h-5" /><span className="font-semibold">Absent</span>
@@ -94,14 +94,14 @@ export default function PresentationDetailModal({
                         ) : (
                             <p className="text-sm text-muted-foreground">Marks not entered yet.</p>
                         )}
-                        {result?.topic    && <p className="text-xs text-violet-500 flex items-center gap-1"><Mic className="w-3.5 h-3.5" /> {result.topic}</p>}
+                        {result?.topic    && <p className="text-xs text-violet-500 flex items-center gap-1"><FileCheck2 className="w-3.5 h-3.5" /> {result.topic}</p>}
                         {result?.feedback && <p className="text-xs text-muted-foreground">Feedback: {result.feedback}</p>}
                     </motion.div>
                 )}
 
                 {!teacher && !isCompleted && (
                     <div className="p-4 rounded-xl bg-muted/50 border border-border text-sm text-muted-foreground text-center">
-                        Results will be visible once the presentation is completed.
+                        Results will be visible once the test is completed.
                     </div>
                 )}
 
@@ -114,26 +114,26 @@ export default function PresentationDetailModal({
                                 leftIcon={<ClipboardList className="w-4 h-4" />}
                                 onClick={() => { onClose(); onEnterMarks(p) }}
                             >
-                                {isCompleted ? 'Enter / Edit Marks' : 'Enter Marks'}
+                                {isCompleted ? 'Enter / edit marks' : 'Enter marks'}
                             </Button>
                         )}
                         {isScheduled && onUpdateStatus && (
                             <Button variant="secondary" className="w-full"
                                 leftIcon={<Send className="w-4 h-4" />}
                                 onClick={() => { onClose(); onUpdateStatus(p.id, 'Ongoing') }}>
-                                Start — Mark as Ongoing
+                                Start — mark as ongoing
                             </Button>
                         )}
                         {isOngoing && onUpdateStatus && (
                             <Button className="w-full"
                                 leftIcon={<Send className="w-4 h-4" />}
                                 onClick={() => { onClose(); onUpdateStatus(p.id, 'Completed') }}>
-                                Complete — Mark as Completed
+                                Complete — mark as completed
                             </Button>
                         )}
                         {isCompleted && (
                             <div className="p-3 rounded-xl bg-muted/50 border border-border text-xs text-muted-foreground text-center">
-                                Presentation completed. Students can view their results.
+                                Test completed. Students can view their results.
                             </div>
                         )}
                     </div>
@@ -142,3 +142,4 @@ export default function PresentationDetailModal({
         </Modal>
     )
 }
+
