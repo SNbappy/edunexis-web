@@ -1,4 +1,4 @@
-import { useState } from "react"
+﻿import { useState } from "react"
 import { motion } from "framer-motion"
 import { Plus, BookMarked } from "lucide-react"
 import CTEventsList from "./CTEventsList"
@@ -8,6 +8,7 @@ import CTMarkEntryModal from "./CTMarkEntryModal"
 import UploadKhataModal from "./UploadKhataModal"
 import ConfirmDialog from "@/components/ui/ConfirmDialog"
 import { useCTEvents } from "../hooks/useCTEvents"
+import { useAttendance } from "@/features/attendance/hooks/useAttendance"
 import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
 import type { CTEventDto, CreateCTEventRequest } from "@/types/ct.types"
@@ -85,7 +86,7 @@ export default function CTTab({ courseId, members = [] }: Props) {
               {ctEvents.length === 0
                 ? "Nothing posted yet"
                 : publishedCount > 0
-                  ? publishedCount + " published · " + ctEvents.length + " total"
+                  ? publishedCount + " published Â· " + ctEvents.length + " total"
                   : ctEvents.length + " total"
               }
             </p>
