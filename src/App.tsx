@@ -63,7 +63,7 @@ export default function App() {
                 element={<EnrollmentGuard><CourseDetailPage /></EnrollmentGuard>} />
               <Route path="/courses/:courseId/assignments/:assignmentId"
                 element={<EnrollmentGuard><AssignmentDetailPage /></EnrollmentGuard>} />
-              <Route path={ROUTES.PROFILE}       element={<ProfilePage />} />
+              <Route path={ROUTES.PROFILE}       element={<ProfilePage isOwnProfile />} />
               <Route path={ROUTES.PROFILE_EDIT}  element={<EditProfilePage />} />
               <Route path={ROUTES.NOTIFICATIONS} element={<NotificationsPage />} />
               <Route path="/users/:userId"        element={<UserProfilePage />} />
@@ -77,4 +77,5 @@ export default function App() {
     </Suspense>
   )
 }
+
 
