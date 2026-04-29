@@ -28,6 +28,9 @@ export default function CTTab({ courseId, members = [] }: Props) {
     publishCT, unpublishCT,
   } = useCTEvents(courseId)
 
+  const { members: courseMembers } = useAttendance(courseId)
+  const memberList = members.length > 0 ? members : courseMembers
+
   const [createOpen, setCreateOpen] = useState(false)
   const [selected, setSelected] = useState<CTEventDto | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
@@ -182,7 +185,7 @@ export default function CTTab({ courseId, members = [] }: Props) {
           onClose={() => setMarksTarget(null)}
           ct={marksTarget}
           courseId={courseId}
-          members={members}
+          members={memberList}
         />
       )}
 
@@ -191,7 +194,7 @@ export default function CTTab({ courseId, members = [] }: Props) {
           isOpen={!!khataTarget}
           onClose={() => setKhataTarget(null)}
           ct={khataTarget}
-          courseId={courseId}
+          members={memberList}
         />
       )}
 
@@ -213,3 +216,4 @@ export default function CTTab({ courseId, members = [] }: Props) {
     </div>
   )
 }
+
