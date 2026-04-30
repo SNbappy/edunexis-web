@@ -1,8 +1,8 @@
-﻿import { useState } from "react"
+import { useState } from "react"
 import { NavLink, useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import {
-  LayoutDashboard, BookOpen, Bell, User, LogOut,
+  LayoutDashboard, BookOpen, Bell, User, LogOut, Settings,
   ChevronLeft, ChevronRight,
 } from "lucide-react"
 import { useAuthStore } from "@/store/authStore"
@@ -18,7 +18,8 @@ const NAV_PRIMARY = [
 ]
 const NAV_PERSONAL = [
   { label: "Notifications", icon: Bell, to: "/notifications", exact: false, badge: true },
-  { label: "Profile",       icon: User, to: ROUTES.PROFILE,   exact: false },
+  { label: "Profile",       icon: User,     to: ROUTES.PROFILE,  exact: false },
+  { label: "Settings",      icon: Settings, to: ROUTES.SETTINGS, exact: false },
 ]
 
 function BrandMark({ className }: { className?: string }) {

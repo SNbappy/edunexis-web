@@ -1,5 +1,10 @@
 ﻿import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { profileService, type UpdateProfileRequest, type EducationRequest } from "../services/profileService"
+import {
+  profileService,
+  type UpdateProfileRequest,
+  type EducationRequest,
+  type PublicationRequest,
+} from "../services/profileService"
 import { useAuthStore } from "@/store/authStore"
 import toast from "react-hot-toast"
 
@@ -14,7 +19,7 @@ export function useProfile() {
 
   const query = useQuery({
     queryKey: ["profile"],
-    queryFn:  async () => {
+    queryFn: async () => {
       const res = await profileService.getProfile()
       return res.data
     },
@@ -87,28 +92,63 @@ export function useProfile() {
     onError: () => toast.error("Failed to remove education."),
   })
 
+  const addPublicationMutation = useMutation({
+    mutationFn: (data: PublicationRequest) => profileService.addPublication(data),
+    onSuccess: (res) => {
+      if (res.success) { invalidate(); toast.success("Publication added.") }
+      else toast.error(res.message)
+    },
+    onError: () => toast.error("Failed to add publication."),
+  })
+
+  const updatePublicationMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: PublicationRequest }) =>
+      profileService.updatePublication(id, data),
+    onSuccess: (res) => {
+      if (res.success) { invalidate(); toast.success("Publication updated.") }
+      else toast.error(res.message)
+    },
+    onError: () => toast.error("Failed to update publication."),
+  })
+
+  const deletePublicationMutation = useMutation({
+    mutationFn: (id: string) => profileService.deletePublication(id),
+    onSuccess: (res) => {
+      if (res.success) { invalidate(); toast.success("Publication removed.") }
+      else toast.error(res.message)
+    },
+    onError: () => toast.error("Failed to remove publication."),
+  })
+
   return {
-    profile:  query.data,
+    profile: query.data,
     isLoading: query.isLoading,
 
-    updateProfile:  updateMutation.mutate,
-    isUpdating:     updateMutation.isPending,
+    updateProfile: updateMutation.mutate,
+    isUpdating: updateMutation.isPending,
 
-    uploadPhoto:    photoMutation.mutate,
-    isUploading:    photoMutation.isPending,
-    removePhoto:    removePhotoMutation.mutate,
+    uploadPhoto: photoMutation.mutate,
+    isUploading: photoMutation.isPending,
+    removePhoto: removePhotoMutation.mutate,
     isRemovingPhoto: removePhotoMutation.isPending,
 
-    uploadCover:    coverMutation.mutate,
+    uploadCover: coverMutation.mutate,
     isUploadingCover: coverMutation.isPending,
-    removeCover:    removeCoverMutation.mutate,
+    removeCover: removeCoverMutation.mutate,
     isRemovingCover: removeCoverMutation.isPending,
 
-    addEducation:       addEducationMutation.mutate,
-    isAddingEducation:  addEducationMutation.isPending,
-    updateEducation:    updateEducationMutation.mutate,
+    addEducation: addEducationMutation.mutate,
+    isAddingEducation: addEducationMutation.isPending,
+    updateEducation: updateEducationMutation.mutate,
     isUpdatingEducation: updateEducationMutation.isPending,
-    deleteEducation:    deleteEducationMutation.mutate,
+    deleteEducation: deleteEducationMutation.mutate,
     isDeletingEducation: deleteEducationMutation.isPending,
+
+    addPublication: addPublicationMutation.mutate,
+    isAddingPublication: addPublicationMutation.isPending,
+    updatePublication: updatePublicationMutation.mutate,
+    isUpdatingPublication: updatePublicationMutation.isPending,
+    deletePublication: deletePublicationMutation.mutate,
+    isDeletingPublication: deletePublicationMutation.isPending,
   }
 }

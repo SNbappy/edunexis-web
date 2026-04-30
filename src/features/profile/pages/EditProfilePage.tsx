@@ -1,368 +1,568 @@
 ﻿import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { useNavigate } from "react-router-dom"
+import { AnimatePresence, motion } from "framer-motion"
 import {
-    User, MessageSquareQuote, Link2,
-    Linkedin, Github, Twitter, Facebook, Globe,
-    Building2, Shield, Camera,
+  User as UserIcon, FileText, Microscope, LinkIcon,
+  ChevronRight, ChevronLeft,
 } from "lucide-react"
 import toast from "react-hot-toast"
 
-import Avatar from "@/components/ui/Avatar"
 import Button from "@/components/ui/Button"
 import Select from "@/components/ui/Select"
-import Skeleton from "@/components/ui/Skeleton"
 import FormPageLayout from "@/components/forms/FormPageLayout"
 import FormSection from "@/components/forms/FormSection"
 import FormField from "@/components/forms/FormField"
+import FormStepper from "@/components/forms/FormStepper"
 import LivePreviewPanel from "@/components/forms/LivePreviewPanel"
+import BrandLoader from "@/components/ui/BrandLoader"
 
-import { useProfile } from "../hooks/useProfile"
-import { usePublicProfile } from "../hooks/usePublicProfile"
-import { useAuthStore } from "@/store/authStore"
 import { DEPARTMENTS } from "@/config/constants"
+import { useAuthStore } from "@/store/authStore"
+import { useProfile } from "../hooks/useProfile"
 import { isTeacher } from "@/utils/roleGuard"
 import type { UpdateProfileRequest } from "../services/profileService"
+import type { PublicProfileDto, UserRole } from "@/types/auth.types"
+import ProfileIdentityCard from "../components/ProfileIdentityCard"
 
-const schema = z.object({
-    fullName: z.string().min(2, "Full name is required"),
+/* ── Schema ──────────────────────────────────── */
+
+function buildSchema(teacher: boolean) {
+  return z.object({
+    fullName: z.string().min(2, "Full name must be at least 2 characters"),
     department: z.string().min(1, "Department is required"),
-    designation: z.string().optional(),
-    studentId: z.string().optional(),
-    phoneNumber: z.string().optional(),
-    bio: z.string().max(500, "Bio must be under 500 characters").optional(),
-    linkedInUrl: z.string().optional(),
-    gitHubUrl: z.string().optional(),
-    twitterUrl: z.string().optional(),
-    facebookUrl: z.string().optional(),
-    websiteUrl: z.string().optional(),
-})
-type FormData = z.infer<typeof schema>
+    designation: teacher
+      ? z.string().min(2, "Designation is required for teachers")
+      : z.string().optional(),
+    studentId: !teacher
+      ? z.string().min(2, "Student ID is required for students")
+      : z.string().optional(),
+    headline: z.string().max(160, "Keep headline under 160 characters").optional(),
 
-const SOCIAL_FIELDS = [
-    { key: "linkedInUrl" as const, icon: Linkedin, placeholder: "linkedin.com/in/yourname", label: "LinkedIn" },
-    { key: "gitHubUrl" as const, icon: Github, placeholder: "github.com/yourname", label: "GitHub" },
-    { key: "twitterUrl" as const, icon: Twitter, placeholder: "x.com/yourname", label: "X" },
-    { key: "facebookUrl" as const, icon: Facebook, placeholder: "facebook.com/yourname", label: "Facebook" },
-    { key: "websiteUrl" as const, icon: Globe, placeholder: "yourwebsite.com", label: "Website" },
-]
+    bio: z.string().max(1000, "Bio must be under 1000 characters").optional(),
+
+    officeLocation: z.string().max(120).optional(),
+    officeHours: z.string().max(160).optional(),
+    researchInterestsCsv: z.string().max(500).optional(),
+    fieldsOfWorkCsv: z.string().max(500).optional(),
+
+    phoneNumber: z.string().optional(),
+    linkedInUrl: z.string().url("Enter a valid URL").optional().or(z.literal("")),
+    gitHubUrl: z.string().url("Enter a valid URL").optional().or(z.literal("")),
+    twitterUrl: z.string().url("Enter a valid URL").optional().or(z.literal("")),
+    facebookUrl: z.string().url("Enter a valid URL").optional().or(z.literal("")),
+    websiteUrl: z.string().url("Enter a valid URL").optional().or(z.literal("")),
+  })
+}
+
+type FormData = {
+  fullName: string
+  department: string
+  designation?: string
+  studentId?: string
+  headline?: string
+  bio?: string
+  officeLocation?: string
+  officeHours?: string
+  researchInterestsCsv?: string
+  fieldsOfWorkCsv?: string
+  phoneNumber?: string
+  linkedInUrl?: string
+  gitHubUrl?: string
+  twitterUrl?: string
+  facebookUrl?: string
+  websiteUrl?: string
+}
+
+/* ── Page ────────────────────────────────────── */
 
 export default function EditProfilePage() {
-    const navigate = useNavigate()
-    const { user } = useAuthStore()
-    const own = useProfile()
-    const pub = usePublicProfile(user?.id)
-    const [saving, setSaving] = useState(false)
+  const navigate = useNavigate()
+  const { user } = useAuthStore()
+  const own = useProfile()
 
-    const p = pub.data
-    const teacher = isTeacher(user?.role ?? "Student")
+  const role: UserRole = user?.role ?? "Student"
+  const teacher = isTeacher(role)
 
-    const {
-        register, handleSubmit, reset, watch,
-        formState: { errors, isValid },
-    } = useForm<FormData>({
-        resolver: zodResolver(schema),
-        mode: "onBlur",
+  const STEPS = teacher
+    ? [{ label: "Identity" }, { label: "About" }, { label: "Office & research" }, { label: "Links" }]
+    : [{ label: "Identity" }, { label: "About" }, { label: "Links" }]
+
+  const STEP_FIELDS: ReadonlyArray<ReadonlyArray<keyof FormData>> = teacher
+    ? [
+        ["fullName", "department", "designation", "headline"],
+        ["bio"],
+        ["officeLocation", "officeHours", "researchInterestsCsv", "fieldsOfWorkCsv"],
+        ["phoneNumber", "linkedInUrl", "gitHubUrl", "twitterUrl", "facebookUrl", "websiteUrl"],
+      ]
+    : [
+        ["fullName", "department", "studentId", "headline"],
+        ["bio"],
+        ["phoneNumber", "linkedInUrl", "gitHubUrl", "twitterUrl", "facebookUrl", "websiteUrl"],
+      ]
+
+  const [step, setStep] = useState(0)
+
+  const schema = buildSchema(teacher)
+  const {
+    register, handleSubmit, watch, trigger, reset,
+    formState: { errors, isValid },
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    mode: "onBlur",
+    defaultValues: {
+      fullName: "",
+      department: "",
+      designation: "",
+      studentId: "",
+      headline: "",
+      bio: "",
+      officeLocation: "",
+      officeHours: "",
+      researchInterestsCsv: "",
+      fieldsOfWorkCsv: "",
+      phoneNumber: "",
+      linkedInUrl: "",
+      gitHubUrl: "",
+      twitterUrl: "",
+      facebookUrl: "",
+      websiteUrl: "",
+    },
+  })
+
+  // Hydrate form from existing profile
+  useEffect(() => {
+    const p = own.profile
+    if (!p) return
+    reset({
+      fullName: p.fullName ?? "",
+      department: p.department ?? "",
+      designation: p.designation ?? "",
+      studentId: p.studentId ?? "",
+      headline: p.headline ?? "",
+      bio: p.bio ?? "",
+      officeLocation: p.officeLocation ?? "",
+      officeHours: p.officeHours ?? "",
+      researchInterestsCsv: p.researchInterestsCsv ?? "",
+      fieldsOfWorkCsv: p.fieldsOfWorkCsv ?? "",
+      phoneNumber: p.phoneNumber ?? "",
+      linkedInUrl: p.linkedInUrl ?? "",
+      gitHubUrl: p.gitHubUrl ?? "",
+      twitterUrl: p.twitterUrl ?? "",
+      facebookUrl: p.facebookUrl ?? "",
+      websiteUrl: p.websiteUrl ?? "",
     })
+  }, [own.profile, reset])
 
-    useEffect(() => {
-        if (p) {
-            reset({
-                fullName: p.fullName ?? "",
-                department: p.department ?? "",
-                designation: p.designation ?? "",
-                studentId: p.studentId ?? "",
-                phoneNumber: p.phoneNumber ?? "",
-                bio: p.bio ?? "",
-                linkedInUrl: p.linkedInUrl ?? "",
-                gitHubUrl: p.gitHubUrl ?? "",
-                twitterUrl: p.twitterUrl ?? "",
-                facebookUrl: p.facebookUrl ?? "",
-                websiteUrl: p.websiteUrl ?? "",
-            })
-        }
-    }, [p, reset])
+  const values = watch()
 
-    const values = watch()
+  const nextStep = async () => {
+    const fields = STEP_FIELDS[step]
+    if (fields.length > 0) {
+      const ok = await trigger(fields)
+      if (!ok) return
+    }
+    setStep(s => Math.min(s + 1, STEPS.length - 1))
+  }
 
-    const submit = async (data: FormData) => {
-        setSaving(true)
-        try {
-            const payload: UpdateProfileRequest = {
-                fullName: data.fullName,
-                department: data.department,
-                designation: data.designation || undefined,
-                studentId: data.studentId || undefined,
-                phoneNumber: data.phoneNumber || undefined,
-                bio: data.bio || undefined,
-                linkedInUrl: data.linkedInUrl || undefined,
-                gitHubUrl: data.gitHubUrl || undefined,
-                twitterUrl: data.twitterUrl || undefined,
-                facebookUrl: data.facebookUrl || undefined,
-                websiteUrl: data.websiteUrl || undefined,
-            }
-            own.updateProfile(payload, {
-                onSuccess: (res: any) => {
-                    if (res?.success) {
-                        toast.success("Profile updated.")
-                        navigate("/profile")
-                    }
-                    setSaving(false)
-                },
-                onError: () => {
-                    toast.error("Failed to update profile.")
-                    setSaving(false)
-                },
-            } as any)
-        } catch {
-            setSaving(false)
-        }
+  const prevStep = () => setStep(s => Math.max(s - 1, 0))
+
+  const goToStep = async (target: number) => {
+    if (target <= step) {
+      setStep(target)
+      return
+    }
+    if (target === step + 1) await nextStep()
+  }
+
+  const submit = (data: FormData) => {
+    const payload: UpdateProfileRequest = {
+      fullName: data.fullName,
+      department: data.department,
+      designation: data.designation || undefined,
+      studentId: data.studentId || undefined,
+      bio: data.bio || undefined,
+      headline: data.headline || undefined,
+      officeLocation: data.officeLocation || undefined,
+      officeHours: data.officeHours || undefined,
+      researchInterestsCsv: data.researchInterestsCsv || undefined,
+      fieldsOfWorkCsv: data.fieldsOfWorkCsv || undefined,
+      phoneNumber: data.phoneNumber || undefined,
+      linkedInUrl: data.linkedInUrl || undefined,
+      gitHubUrl: data.gitHubUrl || undefined,
+      twitterUrl: data.twitterUrl || undefined,
+      facebookUrl: data.facebookUrl || undefined,
+      websiteUrl: data.websiteUrl || undefined,
     }
 
-    if (pub.isLoading || !p) {
-        return (
-            <div className="mx-auto max-w-6xl px-5 py-8 lg:px-8">
-                <Skeleton className="mb-6 h-5 w-32" />
-                <Skeleton className="mb-4 h-10 w-80" />
-                <Skeleton className="mb-8 h-5 w-96" />
-                <Skeleton className="h-96 w-full rounded-2xl" />
-            </div>
-        )
-    }
+    own.updateProfile(payload, {
+      onSuccess: () => {
+        toast.success("Profile saved.")
+        navigate("/profile")
+      },
+    } as any)
+  }
 
-    /* ─── Preview: a minimal profile hero that updates as they type ─── */
+  if (own.isLoading || !own.profile) {
+    return <BrandLoader variant="page" />
+  }
 
-    const preview = (
-        <LivePreviewPanel caption="This is what others see when they visit your profile.">
-            <div className="overflow-hidden rounded-2xl border border-border bg-card">
-                <div className="h-20 bg-gradient-to-br from-teal-500 via-teal-600 to-teal-700" />
-                <div className="-mt-10 px-5 pb-5">
-                    <div className="flex items-end gap-3">
-                        <div className="h-16 w-16 overflow-hidden rounded-2xl border-4 border-card">
-                            <Avatar
-                                src={p.profilePhotoUrl}
-                                name={values.fullName || p.fullName}
-                                size="lg"
-                                className="h-full w-full rounded-none"
-                            />
-                        </div>
-                    </div>
+  // ── Live preview built from current form values ──
+  const previewProfile: PublicProfileDto = {
+    userId: user?.id ?? "preview",
+    fullName: values.fullName?.trim() || "Your name",
+    department: values.department || null,
+    designation: values.designation || null,
+    studentId: values.studentId || null,
+    bio: values.bio || null,
+    headline: values.headline || null,
+    profilePhotoUrl: own.profile.profilePhotoUrl ?? null,
+    coverPhotoUrl: own.profile.coverPhotoUrl ?? null,
+    phoneNumber: values.phoneNumber || null,
+    officeLocation: values.officeLocation || null,
+    officeHours: values.officeHours || null,
+    researchInterestsCsv: values.researchInterestsCsv || null,
+    fieldsOfWorkCsv: values.fieldsOfWorkCsv || null,
+    linkedInUrl: values.linkedInUrl || null,
+    facebookUrl: values.facebookUrl || null,
+    twitterUrl: values.twitterUrl || null,
+    gitHubUrl: values.gitHubUrl || null,
+    websiteUrl: values.websiteUrl || null,
+    email: user?.email ?? null,
+    role,
+    education: [],
+    publications: [],
+    courses: [],
+    runningCoursesCount: 0,
+    archivedCoursesCount: 0,
+    viewerRelation: "Self",
+  }
 
-                    <div className="mt-3">
-                        <h3 className="font-display text-[17px] font-bold leading-tight text-foreground">
-                            {values.fullName?.trim() || "Your name"}
-                        </h3>
-                        <span
-                            className={
-                                "mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider " +
-                                (teacher
-                                    ? "border border-teal-200 bg-teal-50 text-teal-700"
-                                    : "border border-blue-200 bg-blue-50 text-blue-700")
-                            }
-                        >
-                            {teacher ? "Teacher" : "Student"}
-                        </span>
-                        {teacher && values.designation && (
-                            <p className="mt-1.5 text-[12px] font-semibold text-teal-700">
-                                {values.designation}
-                            </p>
-                        )}
-                    </div>
+  const preview = (
+    <LivePreviewPanel caption="This is how your profile card looks to others.">
+      <ProfileIdentityCard
+        profile={previewProfile}
+        isSelf={false}
+        canSeeContact={true}
+      />
+    </LivePreviewPanel>
+  )
 
-                    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] text-muted-foreground">
-                        {values.department && (
-                            <span className="inline-flex items-center gap-1">
-                                <Building2 className="h-3 w-3" />
-                                {values.department}
-                            </span>
-                        )}
-                        {!teacher && values.studentId && (
-                            <span className="inline-flex items-center gap-1 font-mono">
-                                <Shield className="h-3 w-3" />
-                                {values.studentId}
-                            </span>
-                        )}
-                    </div>
+  const isLastStep = step === STEPS.length - 1
 
-                    {values.bio && values.bio.trim().length > 0 && (
-                        <p className="mt-3 text-[12px] leading-relaxed text-muted-foreground line-clamp-3">
-                            {values.bio}
-                        </p>
-                    )}
-                </div>
-            </div>
-        </LivePreviewPanel>
-    )
+  // ── Per-step completion (for stepper checkmark visual) ──
+  const step1Complete = !!values.fullName && values.fullName.length >= 2
+    && !!values.department
+    && (teacher ? !!values.designation : !!values.studentId)
 
-    const footer = (
-        <>
-            <Button
-                type="button"
-                variant="secondary"
-                onClick={() => navigate("/profile")}
-                disabled={saving || own.isUpdating}
-            >
-                Cancel
-            </Button>
-            <Button
-                type="button"
-                onClick={handleSubmit(submit)}
-                loading={saving || own.isUpdating}
-                disabled={!isValid}
-            >
-                Save changes
-            </Button>
-        </>
-    )
+  const footer = (
+    <>
+      <Button
+        type="button"
+        variant="secondary"
+        onClick={() => navigate("/profile")}
+        disabled={own.isUpdating}
+      >
+        Cancel
+      </Button>
 
-    return (
-        <FormPageLayout
-            backLabel="Back to profile"
-            backTo="/profile"
-            title="Edit your profile"
-            subtitle="Make yourself discoverable. A complete profile helps students and teachers know who they're working with."
-            preview={preview}
-            footer={footer}
+      {step > 0 ? (
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={prevStep}
+          disabled={own.isUpdating}
         >
-            <form onSubmit={handleSubmit(submit)} className="space-y-6">
-                {/* Avatar panel — uses ProfilePage's existing photo controls.
-            Kept as a reminder card here; full avatar management stays on /profile. */}
-                <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-5">
-                    <Avatar
-                        src={p.profilePhotoUrl}
-                        name={p.fullName}
-                        size="lg"
+          <ChevronLeft className="h-3.5 w-3.5" />
+          Back
+        </Button>
+      ) : null}
+
+      {!isLastStep ? (
+        <Button type="button" onClick={nextStep} disabled={own.isUpdating}>
+          Next step
+          <ChevronRight className="h-3.5 w-3.5" />
+        </Button>
+      ) : (
+        <Button
+          type="button"
+          onClick={handleSubmit(submit)}
+          loading={own.isUpdating}
+          disabled={!isValid}
+        >
+          Save changes
+        </Button>
+      )}
+    </>
+  )
+
+  return (
+    <FormPageLayout
+      backLabel="Back to profile"
+      backTo="/profile"
+      title="Edit your profile"
+      subtitle="Polished, public-facing details. The right side shows a live preview of how others will see your profile card."
+      topSlot={
+        <FormStepper
+          steps={STEPS}
+          currentStep={step}
+          onStepClick={goToStep}
+        />
+      }
+      preview={preview}
+      footer={footer}
+    >
+      <form
+        onSubmit={handleSubmit(submit)}
+        onKeyDown={e => {
+          if (e.key === "Enter" && !isLastStep) e.preventDefault()
+        }}
+        className="space-y-6"
+      >
+        <AnimatePresence mode="wait">
+          {step === 0 ? (
+            <motion.div
+              key="step-identity"
+              initial={{ opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -12 }}
+              transition={{ duration: 0.2 }}
+            >
+              <FormSection
+                icon={UserIcon}
+                title="Identity"
+                subtitle="Your name, role, and how you describe yourself in one line."
+                tone="teal"
+                complete={step1Complete}
+              >
+                <FormField
+                  {...register("fullName")}
+                  label="Full name"
+                  placeholder="e.g. Dr. Mohammad Nowsin"
+                  error={errors.fullName?.message}
+                />
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-[13px] font-semibold text-foreground">
+                      Department
+                    </label>
+                    <Select
+                      {...register("department")}
+                      placeholder="Select department"
+                      options={DEPARTMENTS.map(d => ({ value: d, label: d }))}
                     />
-                    <div className="min-w-0 flex-1">
-                        <p className="font-display text-[14px] font-bold text-foreground">
-                            Profile photo
-                        </p>
-                        <p className="mt-0.5 text-[12px] text-muted-foreground">
-                            Manage your photo from the{" "}
-                            <button
-                                type="button"
-                                onClick={() => navigate("/profile")}
-                                className="font-semibold text-teal-700 underline-offset-2 hover:underline"
-                            >
-                                profile page
-                            </button>
-                            .
-                        </p>
-                    </div>
-                    <Camera className="h-4 w-4 text-muted-foreground" />
+                    {errors.department?.message ? (
+                      <p className="mt-1.5 text-[11.5px] font-semibold text-red-600">
+                        {errors.department.message}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  {teacher ? (
+                    <FormField
+                      {...register("designation")}
+                      label="Designation"
+                      placeholder="e.g. Assistant Professor"
+                      hint="Required for teachers. Shown to students."
+                      error={errors.designation?.message}
+                    />
+                  ) : (
+                    <FormField
+                      {...register("studentId")}
+                      label="Student ID"
+                      placeholder="e.g. 200109"
+                      hint="Used for attendance and marks."
+                      error={(errors as any).studentId?.message}
+                    />
+                  )}
                 </div>
 
-                <FormSection
-                    icon={User}
-                    title="Basics"
-                    subtitle="Your name and academic details."
-                    tone="teal"
-                >
-                    <FormField
-                        {...register("fullName")}
-                        label="Full name"
-                        error={errors.fullName?.message}
-                    />
+                <FormField
+                  {...register("headline")}
+                  label="Headline"
+                  optional
+                  placeholder={teacher
+                    ? "e.g. Researcher in distributed systems and ML"
+                    : "e.g. CSE final-year student, interested in AI"}
+                  help="One line shown under your name on your profile card."
+                  error={errors.headline?.message}
+                />
+              </FormSection>
+            </motion.div>
+          ) : null}
 
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div>
-                            <label className="mb-1.5 block text-[13px] font-semibold text-foreground">
-                                Department
-                            </label>
-                            <Select
-                                {...register("department")}
-                                placeholder="Select department"
-                                options={DEPARTMENTS.map(d => ({ value: d, label: d }))}
-                            />
-                            {errors.department?.message && (
-                                <p className="mt-1.5 text-[11.5px] font-semibold text-red-600">
-                                    {errors.department.message}
-                                </p>
-                            )}
-                        </div>
+          {step === 1 ? (
+            <motion.div
+              key="step-about"
+              initial={{ opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -12 }}
+              transition={{ duration: 0.2 }}
+            >
+              <FormSection
+                icon={FileText}
+                title="About"
+                subtitle="Tell others about your background, interests, and what you do. Take your time — students read this."
+                tone="stone"
+              >
+                <div>
+                  <label className="mb-1.5 block text-[13px] font-semibold text-foreground">
+                    Biography
+                    <span className="ml-1 font-normal text-muted-foreground">(optional)</span>
+                  </label>
+                  <textarea
+                    {...register("bio")}
+                    rows={12}
+                    placeholder={"Hello! I'm... I work on... My research focuses on... Outside of work I enjoy..."}
+                    className="w-full resize-y rounded-xl border border-border bg-card px-4 py-3 text-[14px] leading-7 text-foreground placeholder:text-muted-foreground transition-all focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/30"
+                  />
+                  <div className="mt-1.5 flex items-center justify-between">
+                    <p className="text-[11.5px] text-muted-foreground">
+                      Markdown not supported. Use plain text and paragraph breaks.
+                    </p>
+                    <p className="text-[11.5px] text-muted-foreground">
+                      {(values.bio?.length ?? 0)} / 1000
+                    </p>
+                  </div>
+                  {errors.bio?.message ? (
+                    <p className="mt-1.5 text-[11.5px] font-semibold text-red-600">
+                      {errors.bio.message}
+                    </p>
+                  ) : null}
+                </div>
+              </FormSection>
+            </motion.div>
+          ) : null}
 
-                        {teacher ? (
-                            <FormField
-                                {...register("designation")}
-                                label="Designation"
-                                placeholder="e.g. Assistant Professor"
-                                hint="This appears on your profile and in member lists."
-                            />
-                        ) : (
-                            <FormField
-                                {...register("studentId")}
-                                label="Student ID"
-                                placeholder="e.g. 200109"
-                                hint="Used for attendance and marks tracking."
-                            />
-                        )}
-                    </div>
+          {step === 2 && teacher ? (
+            <motion.div
+              key="step-research"
+              initial={{ opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -12 }}
+              transition={{ duration: 0.2 }}
+            >
+              <FormSection
+                icon={Microscope}
+                title="Office & research"
+                subtitle="Where students can find you, and what you study."
+                tone="amber"
+              >
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <FormField
+                    {...register("officeLocation")}
+                    label="Office location"
+                    optional
+                    placeholder="e.g. Room 304, CSE Building"
+                    error={errors.officeLocation?.message}
+                  />
+                  <FormField
+                    {...register("officeHours")}
+                    label="Office hours"
+                    optional
+                    placeholder="e.g. Sun\u2013Tue, 2\u20134 PM"
+                    error={errors.officeHours?.message}
+                  />
+                </div>
 
-                    <FormField
-                        {...register("phoneNumber")}
-                        label="Phone number"
-                        optional
-                        placeholder="+880 1X XX XXX XXX"
-                        help="Only visible to coursemates and teachers you share a course with."
-                    />
-                </FormSection>
+                <FormField
+                  {...register("researchInterestsCsv")}
+                  label="Research interests"
+                  optional
+                  placeholder="Machine learning, Distributed systems, NLP"
+                  help="Comma-separated. Topics you actively research."
+                  error={errors.researchInterestsCsv?.message}
+                />
 
-                <FormSection
-                    icon={MessageSquareQuote}
-                    title="Bio"
-                    subtitle="A few sentences about yourself, your research, or what you're studying."
-                    tone="amber"
-                >
-                    <div>
-                        <label className="mb-1.5 block text-[13px] font-semibold text-foreground">
-                            About you
-                            <span className="ml-1 font-normal text-muted-foreground">(optional)</span>
-                        </label>
-                        <textarea
-                            {...register("bio")}
-                            rows={5}
-                            placeholder="Tell others what you teach, research, or hope to learn."
-                            className="w-full resize-none rounded-xl border border-border bg-card px-4 py-3 text-[14px] text-foreground placeholder:text-muted-foreground transition-all focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/30"
-                        />
-                        {errors.bio?.message && (
-                            <p className="mt-1.5 text-[11.5px] font-semibold text-red-600">
-                                {errors.bio.message}
-                            </p>
-                        )}
-                        <p className="mt-1.5 text-[11.5px] text-muted-foreground">
-                            {(values.bio?.length ?? 0)} / 500 characters
-                        </p>
-                    </div>
-                </FormSection>
+                <FormField
+                  {...register("fieldsOfWorkCsv")}
+                  label="Fields of work"
+                  optional
+                  placeholder="Computer Vision, Software Engineering"
+                  help="Comma-separated. Broader fields you work in."
+                  error={errors.fieldsOfWorkCsv?.message}
+                />
+              </FormSection>
+            </motion.div>
+          ) : null}
 
-                <FormSection
-                    icon={Link2}
-                    title="Social links"
-                    subtitle="Where people can find you online. All optional."
-                    tone="stone"
-                >
-                    <div className="space-y-2.5">
-                        {SOCIAL_FIELDS.map(({ key, icon: Icon, placeholder, label }) => (
-                            <div key={key} className="flex items-center gap-2">
-                                <div
-                                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-stone-50 text-stone-600"
-                                    aria-label={label}
-                                >
-                                    <Icon className="h-4 w-4" />
-                                </div>
-                                <input
-                                    {...register(key)}
-                                    type="text"
-                                    placeholder={placeholder}
-                                    className="h-11 flex-1 rounded-xl border border-border bg-card px-4 text-[14px] text-foreground placeholder:text-muted-foreground transition-all focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/30"
-                                />
-                            </div>
-                        ))}
-                    </div>
-                </FormSection>
-            </form>
-        </FormPageLayout>
-    )
+          {((step === 3 && teacher) || (step === 2 && !teacher)) ? (
+            <motion.div
+              key="step-links"
+              initial={{ opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -12 }}
+              transition={{ duration: 0.2 }}
+            >
+              <FormSection
+                icon={LinkIcon}
+                title="Links & contact"
+                subtitle="How people can reach you and where they can find your work."
+                tone="teal"
+              >
+                <FormField
+                  {...register("phoneNumber")}
+                  label="Phone number"
+                  optional
+                  placeholder="+880 1X XX XXX XXX"
+                  error={errors.phoneNumber?.message}
+                />
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <FormField
+                    {...register("linkedInUrl")}
+                    label="LinkedIn"
+                    optional
+                    placeholder="https://linkedin.com/in/yourname"
+                    error={errors.linkedInUrl?.message}
+                  />
+                  <FormField
+                    {...register("gitHubUrl")}
+                    label="GitHub"
+                    optional
+                    placeholder="https://github.com/yourname"
+                    error={errors.gitHubUrl?.message}
+                  />
+                  <FormField
+                    {...register("twitterUrl")}
+                    label="X (Twitter)"
+                    optional
+                    placeholder="https://x.com/yourname"
+                    error={errors.twitterUrl?.message}
+                  />
+                  <FormField
+                    {...register("facebookUrl")}
+                    label="Facebook"
+                    optional
+                    placeholder="https://facebook.com/yourname"
+                    error={errors.facebookUrl?.message}
+                  />
+                </div>
+
+                <FormField
+                  {...register("websiteUrl")}
+                  label="Personal website"
+                  optional
+                  placeholder="https://yoursite.com"
+                  error={errors.websiteUrl?.message}
+                />
+              </FormSection>
+
+              <div className="mt-6 rounded-2xl border border-teal-200 bg-teal-50/60 p-5 dark:border-teal-800/50 dark:bg-teal-950/30">
+                <p className="text-[12px] font-bold uppercase tracking-widest text-teal-700 dark:text-teal-400">
+                  Ready to save
+                </p>
+                <p className="mt-1.5 text-[13px] text-teal-900/80 dark:text-teal-200/80">
+                  Take one last look at the live preview on the right. Changes save immediately to your public profile.
+                </p>
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </form>
+    </FormPageLayout>
+  )
 }

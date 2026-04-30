@@ -9,24 +9,26 @@ import AuthLayout from "@/components/layout/AuthLayout"
 import BrandLoader from "@/components/ui/BrandLoader"
 import { ROUTES } from "@/config/constants"
 
-const LoginPage             = lazy(() => import("@/features/auth/pages/LoginPage"))
-const RegisterPage          = lazy(() => import("@/features/auth/pages/RegisterPage"))
-const DashboardPage         = lazy(() => import("@/features/dashboard/pages/DashboardPage"))
-const CoursesListPage       = lazy(() => import("@/features/courses/pages/CoursesListPage"))
-const CreateCoursePage      = lazy(() => import("@/features/courses/pages/CreateCoursePage"))
-const EditCoursePage        = lazy(() => import("@/features/courses/pages/EditCoursePage"))
-const CourseDetailPage      = lazy(() => import("@/features/courses/pages/CourseDetailPage"))
-const AssignmentDetailPage  = lazy(() => import("@/features/assignments/pages/AssignmentDetailPage"))
-const JoinCoursePage        = lazy(() => import("@/features/courses/pages/JoinCoursePage"))
-const CTEventPage           = lazy(() => import("@/features/ct/pages/CTEventPage"))
+const LoginPage = lazy(() => import("@/features/auth/pages/LoginPage"))
+const RegisterPage = lazy(() => import("@/features/auth/pages/RegisterPage"))
+const DashboardPage = lazy(() => import("@/features/dashboard/pages/DashboardPage"))
+const CoursesListPage = lazy(() => import("@/features/courses/pages/CoursesListPage"))
+const CreateCoursePage = lazy(() => import("@/features/courses/pages/CreateCoursePage"))
+const EditCoursePage = lazy(() => import("@/features/courses/pages/EditCoursePage"))
+const CourseDetailPage = lazy(() => import("@/features/courses/pages/CourseDetailPage"))
+const AssignmentDetailPage = lazy(() => import("@/features/assignments/pages/AssignmentDetailPage"))
+const JoinCoursePage = lazy(() => import("@/features/courses/pages/JoinCoursePage"))
+const CTEventPage = lazy(() => import("@/features/ct/pages/CTEventPage"))
 const PresentationEventPage = lazy(() => import("@/features/presentations/pages/PresentationEventPage"))
-const CompleteProfilePage   = lazy(() => import("@/features/profile/pages/CompleteProfilePage"))
-const ProfilePage           = lazy(() => import("@/features/profile/pages/ProfilePage"))
-const EditProfilePage       = lazy(() => import("@/features/profile/pages/EditProfilePage"))
-const NotificationsPage     = lazy(() => import("@/features/notifications/pages/NotificationsPage"))
-const UserProfilePage       = lazy(() => import("@/features/profile/pages/UserProfilePage"))
-const NotFoundPage          = lazy(() => import("@/pages/NotFoundPage"))
-const UnauthorizedPage      = lazy(() => import("@/pages/UnauthorizedPage"))
+const CompleteProfilePage = lazy(() => import("@/features/profile/pages/CompleteProfilePage"))
+const ProfilePage = lazy(() => import("@/features/profile/pages/ProfilePage"))
+const EditProfilePage = lazy(() => import("@/features/profile/pages/EditProfilePage"))
+const NotificationsPage = lazy(() => import("@/features/notifications/pages/NotificationsPage"))
+const SettingsPage = lazy(() => import("@/features/settings/pages/SettingsPage"))
+const UserProfilePage = lazy(() => import("@/features/profile/pages/UserProfilePage"))
+const UserCoursesPage = lazy(() => import("@/features/profile/pages/UserCoursesPage"))
+const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"))
+const UnauthorizedPage = lazy(() => import("@/pages/UnauthorizedPage"))
 
 export default function App() {
   return (
@@ -36,7 +38,7 @@ export default function App() {
 
         <Route element={<GuestGuard />}>
           <Route element={<AuthLayout />}>
-            <Route path={ROUTES.LOGIN}    element={<LoginPage />} />
+            <Route path={ROUTES.LOGIN} element={<LoginPage />} />
             <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
           </Route>
         </Route>
@@ -49,12 +51,12 @@ export default function App() {
           <Route element={<ProfileGuard />}>
             <Route element={<DashboardLayout />}>
               <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
-              <Route path={ROUTES.COURSES}   element={<CoursesListPage />} />
-              <Route path="/courses/join"           element={<JoinCoursePage />} />
-              <Route path="/courses/create"         element={<CreateCoursePage />} />
+              <Route path={ROUTES.COURSES} element={<CoursesListPage />} />
+              <Route path="/courses/join" element={<JoinCoursePage />} />
+              <Route path="/courses/create" element={<CreateCoursePage />} />
               <Route path="/courses/:courseId/edit" element={<EditCoursePage />} />
               <Route path="/courses/:courseId/join" element={<JoinCoursePage />} />
-              <Route path="/courses/:courseId"      element={<Navigate to="stream" replace />} />
+              <Route path="/courses/:courseId" element={<Navigate to="stream" replace />} />
               <Route path="/courses/:courseId/presentations/:presentationId"
                 element={<EnrollmentGuard><PresentationEventPage /></EnrollmentGuard>} />
               <Route path="/courses/:courseId/ct/:ctId"
@@ -63,19 +65,19 @@ export default function App() {
                 element={<EnrollmentGuard><CourseDetailPage /></EnrollmentGuard>} />
               <Route path="/courses/:courseId/assignments/:assignmentId"
                 element={<EnrollmentGuard><AssignmentDetailPage /></EnrollmentGuard>} />
-              <Route path={ROUTES.PROFILE}       element={<ProfilePage isOwnProfile />} />
-              <Route path={ROUTES.PROFILE_EDIT}  element={<EditProfilePage />} />
+              <Route path={ROUTES.PROFILE} element={<ProfilePage isOwnProfile />} />
+              <Route path={ROUTES.PROFILE_EDIT} element={<EditProfilePage />} />
               <Route path={ROUTES.NOTIFICATIONS} element={<NotificationsPage />} />
-              <Route path="/users/:userId"        element={<UserProfilePage />} />
+              <Route path="/settings/*" element={<SettingsPage />} />
+              <Route path="/users/:userId" element={<UserProfilePage />} />
+              <Route path="/users/:userId/courses" element={<UserCoursesPage />} />
             </Route>
           </Route>
         </Route>
 
         <Route path={ROUTES.UNAUTHORIZED} element={<UnauthorizedPage />} />
-        <Route path="*"                   element={<NotFoundPage />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Suspense>
   )
 }
-
-

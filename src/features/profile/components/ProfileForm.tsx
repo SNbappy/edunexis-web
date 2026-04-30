@@ -1,151 +1,243 @@
-import { useEffect } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { motion } from "framer-motion"
-import Input from "@/components/ui/Input"
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import Button from "@/components/ui/Button"
+import Skeleton from "@/components/ui/Skeleton"
 import { useAuthStore } from "@/store/authStore"
-import { useThemeStore } from "@/store/themeStore"
-import { DEPARTMENTS } from "@/config/constants"
-import { isTeacher, isStudent } from "@/utils/roleGuard"
+import { useProfile } from "../hooks/useProfile"
+import { usePublicProfile } from "../hooks/usePublicProfile"
+import type {
+  UserEducationDto, UserPublicationDto, PublicProfileDto,
+} from "@/types/auth.types"
+import type { PublicationRequest, UpdateProfileRequest } from "../services/profileService"
+import { isTeacher } from "@/utils/roleGuard"
 
-// Role-aware schema
-function buildSchema(teacher: boolean) {
-  return z.object({
-    fullName:    z.string().min(2, "Full name is required"),
-    department:  z.string().min(1, "Department is required"),
-    designation: teacher
-      ? z.string().min(2, "Designation is required for teachers")
-      : z.string().optional(),
-    studentId: !teacher
-      ? z.string().min(2, "Student ID is required for students")
-      : z.string().optional(),
-    bio:          z.string().max(300, "Bio must be under 300 characters").optional(),
-    phoneNumber:  z.string().optional(),
-    linkedInUrl:  z.string().url("Enter a valid URL").optional().or(z.literal("")),
-  })
+import ProfileHero from "../components/ProfileHero"
+import ProfileTabs, { type ProfileTabKey } from "../components/ProfileTabs"
+import ProfileStatStrip from "../components/ProfileStatStrip"
+import OverviewTab from "../components/OverviewTab"
+import CoursesTab from "../components/CoursesTab"
+import ResearchTab from "../components/ResearchTab"
+import AboutTab from "../components/AboutTab"
+import EducationModal from "../components/EducationModal"
+import PublicationModal from "../components/PublicationModal"
+import EditProfileModal from "../components/EditProfileModal"
+
+interface ProfilePageProps {
+  userId?: string
+  isOwnProfile?: boolean
 }
 
-type FormData = {
-  fullName:    string
-  department:  string
-  designation?: string
-  studentId?:  string
-  bio?:        string
-  phoneNumber?: string
-  linkedInUrl?: string
-}
+export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePageProps) {
+  const { user } = useAuthStore()
+  const navigate = useNavigate()
 
-interface Props {
-  defaultValues?: Partial<FormData>
-  onSubmit:       (data: FormData) => void
-  isLoading?:     boolean
-  submitLabel?:   string
-}
+  const own = useProfile()
+  const pub = usePublicProfile(isOwnProfile ? user?.id : userId)
 
-export default function ProfileForm({ defaultValues, onSubmit, isLoading, submitLabel = "Save Profile" }: Props) {
-  const { user }  = useAuthStore()
-  const { dark }  = useThemeStore()
-  const role      = user?.role ?? "Student"
-  const teacher   = isTeacher(role)
+  const isLoading = isOwnProfile ? own.isLoading : pub.isLoading
+  const p: PublicProfileDto | null = pub.data ?? null
 
-  const schema = buildSchema(teacher)
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(schema),
-    defaultValues,
-  })
+  const [activeTab, setActiveTab] = useState<ProfileTabKey>("overview")
 
-  useEffect(() => {
-    if (defaultValues) reset(defaultValues)
-  }, [defaultValues, reset])
+  const [editOpen, setEditOpen] = useState(false)
+  const [eduModal, setEduModal] = useState<{ open: boolean; item?: UserEducationDto | null }>({ open: false })
+  const [pubModal, setPubModal] = useState<{ open: boolean; item?: UserPublicationDto | null }>({ open: false })
 
-  // Theme
-  const textMain    = dark ? "#e2e8f8" : "#111827"
-  const labelColor  = dark ? "#9ca3af" : "#374151"
-  const inputBg     = dark ? "rgba(255,255,255,0.05)" : "#f9fafb"
-  const inputBorder = dark ? "rgba(255,255,255,0.1)"  : "#e5e7eb"
-  const selectStyle: React.CSSProperties = {
-    width: "100%", height: 40, borderRadius: 12,
-    background: inputBg, border: `1px solid ${inputBorder}`,
-    color: textMain, fontSize: 13, paddingLeft: 16, paddingRight: 16,
-    outline: "none", appearance: "none" as any,
-    transition: "border-color 0.2s, box-shadow 0.2s",
+  if (isLoading) return <ProfilePageSkeleton />
+
+  if (!p) {
+    return (
+      <div className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center px-6 text-center">
+        <h2 className="font-display text-lg font-semibold text-foreground">Profile not found</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          This profile may not exist or you don't have permission to view it.
+        </p>
+        <Button className="mt-5" onClick={() => navigate(-1)}>Go back</Button>
+      </div>
+    )
+  }
+
+  const teacher = isTeacher(p.role)
+  const isSelf = isOwnProfile
+  const coursemate = p.viewerRelation === "CourseMate"
+  const canSeeContact = isSelf || coursemate
+
+  const tabs: { key: ProfileTabKey; label: string }[] = [
+    { key: "overview", label: "Overview" },
+    { key: "courses", label: "Courses" },
+    ...(teacher ? [{ key: "research" as const, label: "Research" }] : []),
+    { key: "about", label: "About" },
+  ]
+
+  /* ── Education handlers ────────────────────── */
+  const handleEduSubmit = (data: any) => {
+    if (eduModal.item) {
+      own.updateEducation(
+        { id: eduModal.item.id, data },
+        { onSuccess: () => setEduModal({ open: false }) } as any,
+      )
+    } else {
+      own.addEducation(data, { onSuccess: () => setEduModal({ open: false }) } as any)
+    }
+  }
+  const handleEduDelete = (id: string) =>
+    new Promise<void>(resolve =>
+      own.deleteEducation(id, { onSuccess: () => resolve() } as any),
+    )
+
+  /* ── Publication handlers ──────────────────── */
+  const handlePubSubmit = (data: PublicationRequest) => {
+    if (pubModal.item) {
+      own.updatePublication(
+        { id: pubModal.item.id, data },
+        { onSuccess: () => setPubModal({ open: false }) } as any,
+      )
+    } else {
+      own.addPublication(data, { onSuccess: () => setPubModal({ open: false }) } as any)
+    }
+  }
+
+  /* ── CSV chip handlers ─────────────────────── */
+  const updateCsvField = (field: "researchInterestsCsv" | "fieldsOfWorkCsv", csv: string) => {
+    if (!isSelf || !own.profile) return
+    const profile = own.profile
+    const payload: UpdateProfileRequest = {
+      fullName: profile.fullName,
+      department: profile.department ?? "",
+      designation: profile.designation ?? undefined,
+      studentId: profile.studentId ?? undefined,
+      bio: profile.bio ?? undefined,
+      headline: profile.headline ?? undefined,
+      phoneNumber: profile.phoneNumber ?? undefined,
+      officeLocation: profile.officeLocation ?? undefined,
+      officeHours: profile.officeHours ?? undefined,
+      researchInterestsCsv: profile.researchInterestsCsv ?? undefined,
+      fieldsOfWorkCsv: profile.fieldsOfWorkCsv ?? undefined,
+      linkedInUrl: profile.linkedInUrl ?? undefined,
+      facebookUrl: profile.facebookUrl ?? undefined,
+      twitterUrl: profile.twitterUrl ?? undefined,
+      gitHubUrl: profile.gitHubUrl ?? undefined,
+      websiteUrl: profile.websiteUrl ?? undefined,
+      [field]: csv || undefined,
+    }
+    own.updateProfile(payload)
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-
-      {/* Full Name + Department */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-          <Input {...register("fullName")} label="Full Name"
-            placeholder="Your full name" error={errors.fullName?.message} />
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
-          <label className="block text-[13px] font-semibold mb-1.5" style={{ color: labelColor }}>
-            Department <span style={{ color: "#ef4444" }}>*</span>
-          </label>
-          <select {...register("department")} style={selectStyle}
-            onFocus={e => { e.target.style.borderColor = "#6366f1"; e.target.style.boxShadow = "0 0 0 3px rgba(99,102,241,0.1)" }}
-            onBlur={e => { e.target.style.borderColor = inputBorder; e.target.style.boxShadow = "none" }}>
-            <option value="">Select department</option>
-            {DEPARTMENTS.map(d => (
-              <option key={d} value={d} style={{ background: dark ? "rgb(16,24,44)" : "white" }}>{d}</option>
-            ))}
-          </select>
-          {errors.department && <p className="text-[11px] font-semibold mt-1" style={{ color: "#ef4444" }}>{errors.department.message}</p>}
-        </motion.div>
+    <div className="mx-auto max-w-5xl px-4 pb-16 sm:px-6 lg:px-8">
+      <div className="mt-6">
+        <ProfileHero
+          profile={p}
+          isSelf={isSelf}
+          canSeeContact={canSeeContact}
+          onUploadPhoto={isSelf ? own.uploadPhoto : undefined}
+          onUploadCover={isSelf ? own.uploadCover : undefined}
+          onRemoveCover={isSelf ? own.removeCover : undefined}
+          isUploadingPhoto={own.isUploading}
+          isUploadingCover={own.isUploadingCover}
+          isRemovingPhoto={own.isRemovingPhoto}
+          isRemovingCover={own.isRemovingCover}
+          onEditClick={isSelf ? () => setEditOpen(true) : undefined}
+        />
       </div>
 
-      {/* Role-specific required field */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.11 }}>
-        {teacher ? (
-          <Input {...register("designation")} label="Designation"
-            placeholder="e.g. Assistant Professor, Lecturer"
-            error={errors.designation?.message}
-            hint="Required � shown to students"
-          />
-        ) : (
-          <Input {...register("studentId")} label="Student ID"
-            placeholder="e.g. 200109CSE"
-            error={(errors as any).studentId?.message}
-            hint="Required � used for attendance and marks"
+      <ProfileStatStrip profile={p} />
+
+      <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
+
+      <div className="mt-6">
+        {activeTab === "overview" && (
+          <OverviewTab
+            profile={p}
+            isSelf={isSelf}
+            onSeeAllCourses={() => setActiveTab("courses")}
+            onSeeResearch={teacher ? () => setActiveTab("research") : undefined}
           />
         )}
-      </motion.div>
+        {activeTab === "courses" && (
+          <CoursesTab profile={p} isSelf={isSelf} />
+        )}
+        {activeTab === "research" && teacher && (
+          <ResearchTab
+            profile={p}
+            isSelf={isSelf}
+            onChangeResearchInterests={isSelf ? csv => updateCsvField("researchInterestsCsv", csv) : undefined}
+            onChangeFieldsOfWork={isSelf ? csv => updateCsvField("fieldsOfWorkCsv", csv) : undefined}
+            onAddPublication={isSelf ? () => setPubModal({ open: true, item: null }) : undefined}
+            onEditPublication={isSelf ? (pub) => setPubModal({ open: true, item: pub }) : undefined}
+            onDeletePublication={isSelf ? (id) => own.deletePublication(id) : undefined}
+          />
+        )}
+        {activeTab === "about" && (
+          <AboutTab
+            profile={p}
+            isSelf={isSelf}
+            canSeeContact={canSeeContact}
+            onAddEducation={isSelf ? () => setEduModal({ open: true, item: null }) : undefined}
+            onEditEducation={isSelf ? (e) => setEduModal({ open: true, item: e }) : undefined}
+            onDeleteEducation={isSelf ? handleEduDelete : undefined}
+          />
+        )}
+      </div>
 
-      {/* Phone */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
-        <Input {...register("phoneNumber")} label="Phone Number"
-          placeholder="+880 1X XX XXX XXX" error={errors.phoneNumber?.message} />
-      </motion.div>
+      {/* Modals — owner only */}
+      {isSelf && (
+        <>
+          <EditProfileModal
+            isOpen={editOpen}
+            onClose={() => setEditOpen(false)}
+            profile={p}
+            role={p.role}
+            onSubmit={(data: UpdateProfileRequest) =>
+              own.updateProfile(data, { onSuccess: () => setEditOpen(false) } as any)
+            }
+            isLoading={own.isUpdating}
+          />
 
-      {/* LinkedIn */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.17 }}>
-        <Input {...register("linkedInUrl")} label="LinkedIn URL"
-          placeholder="https://linkedin.com/in/yourname" error={errors.linkedInUrl?.message} />
-      </motion.div>
+          <EducationModal
+            isOpen={eduModal.open}
+            onClose={() => setEduModal({ open: false })}
+            initial={eduModal.item}
+            onSubmit={handleEduSubmit}
+            isLoading={own.isAddingEducation || own.isUpdatingEducation}
+          />
 
-      {/* Bio */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-        <label className="block text-[13px] font-semibold mb-1.5" style={{ color: labelColor }}>
-          Bio <span className="font-normal" style={{ color: dark ? "#6b7280" : "#9ca3af" }}>(optional)</span>
-        </label>
-        <textarea {...register("bio")} rows={3}
-          placeholder="Tell others a bit about yourself..."
-          className="w-full rounded-xl text-[13px] px-4 py-3 outline-none transition-all resize-none"
-          style={{ background: inputBg, border: `1px solid ${inputBorder}`, color: textMain }}
-          onFocus={e => { e.target.style.borderColor = "#6366f1"; e.target.style.boxShadow = "0 0 0 3px rgba(99,102,241,0.1)" }}
-          onBlur={e => { e.target.style.borderColor = inputBorder; e.target.style.boxShadow = "none" }}
-        />
-        {errors.bio && <p className="text-[11px] font-semibold mt-1" style={{ color: "#ef4444" }}>{errors.bio.message}</p>}
-      </motion.div>
+          <PublicationModal
+            isOpen={pubModal.open}
+            onClose={() => setPubModal({ open: false })}
+            initial={pubModal.item}
+            onSubmit={handlePubSubmit}
+            isLoading={own.isAddingPublication || own.isUpdatingPublication}
+          />
+        </>
+      )}
+    </div>
+  )
+}
 
-      <Button type="submit" loading={isLoading} className="w-full">
-        {submitLabel}
-      </Button>
-    </form>
+/* ── Skeleton ────────────────────────────────── */
+
+function ProfilePageSkeleton() {
+  return (
+    <div className="mx-auto max-w-5xl px-4 pb-16 sm:px-6 lg:px-8">
+      <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card">
+        <Skeleton className="h-56 w-full rounded-none" />
+        <div className="px-5 pb-6 sm:px-7">
+          <Skeleton className="-mt-16 h-32 w-32 rounded-2xl sm:h-36 sm:w-36" />
+          <Skeleton className="mt-4 h-8 w-60" />
+          <Skeleton className="mt-2 h-4 w-40" />
+          <Skeleton className="mt-3 h-4 w-full max-w-md" />
+        </div>
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-border bg-card p-4 sm:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-12 rounded-xl" />
+        ))}
+      </div>
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
+        <Skeleton className="h-64 rounded-2xl" />
+        <Skeleton className="h-64 rounded-2xl" />
+      </div>
+    </div>
   )
 }

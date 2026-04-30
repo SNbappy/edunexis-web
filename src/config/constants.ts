@@ -1,7 +1,7 @@
-﻿// ───────────────── API ─────────────────
+// ----------------- API -----------------
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000/api"
 
-// ───────────────── App Info ─────────────────
+// ----------------- App Info -----------------
 export const APP_NAME        = "EduNexis"
 export const APP_TAGLINE     = "Smart Academic Management"
 export const APP_SUBTITLE    = "Academic Management Platform"
@@ -9,13 +9,13 @@ export const APP_UNIVERSITY  = "Jashore University of Science and Technology"
 export const APP_VERSION     = "1.0.0"
 export const APP_DESCRIPTION = "Streamline classroom management and automate academic workflows."
 
-// ───────────────── Auth ─────────────────
+// ----------------- Auth -----------------
 export const STUDENT_EMAIL_DOMAIN = "@student.just.edu.bd"
 export const TEACHER_EMAIL_DOMAIN = "@just.edu.bd"
 export const PASSWORD_MIN_LENGTH  = 8
 export const OTP_LENGTH           = 6
 
-// ───────────────── Routes ─────────────────
+// ----------------- Routes -----------------
 export const ROUTES = {
   HOME:              "/",
   LOGIN:             "/login",
@@ -29,11 +29,13 @@ export const ROUTES = {
   PROFILE_COMPLETE:  "/profile/complete",
   COMPLETE_PROFILE:  "/profile/complete",
   NOTIFICATIONS:     "/notifications",
+  SETTINGS:          "/settings",
+  SETTINGS_SECURITY: "/settings/security",
   UNAUTHORIZED:      "/unauthorized",
   ASSIGNMENT_DETAIL: "/courses/:courseId/assignments/:assignmentId",
 }
 
-// ───────────────── Course ─────────────────
+// ----------------- Course -----------------
 export const COURSE_TABS = {
   STREAM:        "stream",
   ATTENDANCE:    "attendance",
@@ -58,7 +60,7 @@ export const ACADEMIC_SESSIONS = [
   "2025-26", "2026-27", "2027-28", "2028-29", "2029-30", "2030-31",
 ]
 
-// ───────────────── Academic ─────────────────
+// ----------------- Academic -----------------
 export const DEPARTMENTS = [
   "Computer Science & Engineering",
   "Electrical & Electronic Engineering",
@@ -83,7 +85,7 @@ export const BATCHES = [
   "2022-23", "2023-24", "2024-25",
 ]
 
-// ───────────────── Grading ─────────────────
+// ----------------- Grading -----------------
 export const GRADE_SCALE = [
   { min: 90, grade: "A+", label: "Outstanding",    gpa: 4.0  },
   { min: 85, grade: "A",  label: "Excellent",      gpa: 3.75 },
@@ -97,11 +99,11 @@ export const GRADE_SCALE = [
   { min:  0, grade: "F",  label: "Fail",           gpa: 0.0  },
 ]
 
-// ───────────────── Attendance ─────────────────
+// ----------------- Attendance -----------------
 export const ATTENDANCE_MIN_PERCENT  = 75
 export const ATTENDANCE_WARN_PERCENT = 85
 
-// ───────────────── Files ─────────────────
+// ----------------- Files -----------------
 export const MAX_FILE_SIZE_MB    = 50
 export const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 export const ALLOWED_FILE_TYPES  = [
@@ -120,11 +122,11 @@ export const ALLOWED_FILE_TYPES  = [
   "application/zip",
 ]
 
-// ───────────────── Pagination ─────────────────
+// ----------------- Pagination -----------------
 export const DEFAULT_PAGE_SIZE = 20
 export const MAX_PAGE_SIZE     = 100
 
-// ───────────────── Misc ─────────────────
+// ----------------- Misc -----------------
 export const DEBOUNCE_MS       = 300
 export const TOAST_DURATION_MS = 3500
 export const POLL_INTERVAL_MS  = 30_000
