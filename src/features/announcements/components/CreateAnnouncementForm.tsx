@@ -1,3 +1,4 @@
+import InlineSpinner from "@/components/ui/InlineSpinner"
 import { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -67,7 +68,7 @@ export default function CreateAnnouncementForm({
             exit={{ opacity: 0 }}
             className="absolute inset-0 z-10 flex items-center justify-center gap-2.5 bg-card/90 backdrop-blur-sm"
           >
-            <Loader2 className="h-4 w-4 animate-spin text-teal-600" />
+            <InlineSpinner size={16} className="text-teal-600" />
             <span className="text-[13px] font-semibold text-foreground">Posting…</span>
           </motion.div>
         )}

@@ -1,4 +1,4 @@
-﻿import { StrictMode, useState } from "react"
+import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { BrowserRouter } from "react-router-dom"
 import { QueryClientProvider } from "@tanstack/react-query"
@@ -7,32 +7,13 @@ import { Toaster } from "react-hot-toast"
 import App from "./App"
 import { queryClient } from "./lib/queryClient"
 import ThemeProvider from "./components/ThemeProvider"
-import SplashScreen from "./components/ui/SplashScreen"
 import "./index.css"
 
-// Session key — splash shows once per browser-tab session.
-// Refreshes in the same tab skip it; closing and reopening the tab shows it again.
-const SPLASH_KEY = "edunexis-splash-seen"
-
 function Root() {
-  const [splashDone, setSplashDone] = useState(() => {
-    try {
-      return sessionStorage.getItem(SPLASH_KEY) === "1"
-    } catch {
-      return true  // if sessionStorage blocked, skip splash gracefully
-    }
-  })
-
-  const handleSplashDone = () => {
-    try { sessionStorage.setItem(SPLASH_KEY, "1") } catch { /* ignore */ }
-    setSplashDone(true)
-  }
-
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
         <ThemeProvider>
-          {!splashDone && <SplashScreen onDone={handleSplashDone} />}
           <App />
           <Toaster
             position="top-right"

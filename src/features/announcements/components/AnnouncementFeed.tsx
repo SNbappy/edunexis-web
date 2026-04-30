@@ -94,7 +94,7 @@ export default function AnnouncementFeed({ courseId }: AnnouncementFeedProps) {
               Pinned
             </h2>
             <span className="text-[11px] text-muted-foreground">
-              Â· {pinned.length} {pinned.length === 1 ? "post" : "posts"}
+              · {pinned.length} {pinned.length === 1 ? "post" : "posts"}
             </span>
           </header>
           <div className="space-y-3">
@@ -141,3 +141,5 @@ export default function AnnouncementFeed({ courseId }: AnnouncementFeedProps) {
     </div>
   )
 }
+
+

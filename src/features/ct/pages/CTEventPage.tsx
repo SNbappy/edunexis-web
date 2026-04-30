@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
-import Spinner from '@/components/ui/Spinner'
+import BrandLoader from '@/components/ui/BrandLoader'
 import { formatDate } from '@/utils/dateUtils'
 import { useAuthStore } from '@/store/authStore'
 import { isTeacher } from '@/utils/roleGuard'
@@ -90,9 +90,8 @@ export default function CTEventPage() {
     const backUrl = '/courses/' + courseId + '/ct'
 
     if (eventsLoading) return (
-        <div className="flex items-center justify-center h-64">
-            <Spinner size="lg" className="text-primary" />
-        </div>
+        <BrandLoader variant="page" />
+
     )
 
     if (!ct) return (
@@ -247,7 +246,7 @@ export default function CTEventPage() {
                         <div>
                             <h2 className="font-semibold text-foreground">Khata Scripts</h2>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                                {ct.khataUploaded ? 'Scripts uploaded — re-upload to replace' : 'Upload all 3 scripts to enable mark entry'}
+                                {ct.khataUploaded ? 'Scripts uploaded � re-upload to replace' : 'Upload all 3 scripts to enable mark entry'}
                             </p>
                         </div>
                         {ct.khataUploaded && (

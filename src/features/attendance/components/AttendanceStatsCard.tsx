@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion"
-import { TrendingUp, TrendingDown, Users, Calendar, Activity } from "lucide-react"
+import { TrendingUp, TrendingDown, Users, Calendar, Activity, ClipboardList } from "lucide-react"
 
 interface AttendanceStatsCardProps {
   totalSessions: number
@@ -21,28 +21,28 @@ function getAccent(avg: number): { bar: string; text: string; bg: string; ring: 
     text: "text-emerald-700 dark:text-emerald-300",
     bg: "bg-emerald-50 dark:bg-emerald-950/40",
     ring: "border-emerald-200 dark:border-emerald-800",
-    status: "Excellent — keep it up",
+    status: "Excellent class engagement",
   }
   if (avg >= 75) return {
     bar: "bg-teal-500",
     text: "text-teal-700 dark:text-teal-300",
     bg: "bg-teal-50 dark:bg-teal-950/40",
     ring: "border-teal-200 dark:border-teal-800",
-    status: "Good standing",
+    status: "Healthy attendance",
   }
   if (avg >= 60) return {
     bar: "bg-amber-500",
     text: "text-amber-700 dark:text-amber-300",
     bg: "bg-amber-50 dark:bg-amber-950/40",
     ring: "border-amber-200 dark:border-amber-800",
-    status: "At risk — below 75%",
+    status: "Below 75% target",
   }
   return {
     bar: "bg-red-500",
     text: "text-red-700 dark:text-red-300",
     bg: "bg-red-50 dark:bg-red-950/40",
     ring: "border-red-200 dark:border-red-800",
-    status: "Critical — below 60%",
+    status: "Significantly below target",
   }
 }
 
@@ -71,6 +71,34 @@ export default function AttendanceStatsCard({
   useEffect(() => {
     barWidth.set(Math.min(averageAttendance, 100))
   }, [averageAttendance, barWidth])
+
+  /* Empty state — no sessions taken yet */
+  if (totalSessions === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-2xl border border-dashed border-border bg-card p-6"
+      >
+        <div className="flex items-center gap-4">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted text-muted-foreground shrink-0">
+            <ClipboardList className="h-5 w-5" strokeWidth={2} />
+          </div>
+          <div className="min-w-0">
+            <p className="font-display text-[14px] font-bold text-foreground">
+              No attendance taken yet
+            </p>
+            <p className="mt-0.5 text-[12px] text-muted-foreground">
+              Take your first session to start tracking class attendance
+              {totalStudents !== undefined && totalStudents > 0
+                ? `. ${totalStudents} student${totalStudents === 1 ? "" : "s"} enrolled.`
+                : "."}
+            </p>
+          </div>
+        </div>
+      </motion.div>
+    )
+  }
 
   return (
     <div className="space-y-4">

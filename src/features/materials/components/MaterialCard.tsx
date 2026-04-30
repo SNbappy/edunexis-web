@@ -1,3 +1,4 @@
+import InlineSpinner from "@/components/ui/InlineSpinner"
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -181,7 +182,7 @@ export default function MaterialCard({
               }
             >
               {downloading ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <InlineSpinner />
               ) : isLink ? (
                 <ExternalLink className="h-3.5 w-3.5" />
               ) : canPreview ? (

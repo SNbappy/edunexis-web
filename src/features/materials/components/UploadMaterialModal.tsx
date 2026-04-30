@@ -1,3 +1,4 @@
+import InlineSpinner from "@/components/ui/InlineSpinner"
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Upload, CheckCircle2 } from "lucide-react"
@@ -141,7 +142,7 @@ export default function UploadMaterialModal({
           >
             {isUploading ? (
               <>
-                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                <InlineSpinner className="text-white" />
                 Uploading…
               </>
             ) : (

@@ -1,4 +1,5 @@
-ï»¿import { useState } from "react"
+import InlineSpinner from "@/components/ui/InlineSpinner"
+import { useState } from "react"
 import { motion } from "framer-motion"
 import { Calendar, Pencil, Trash2, Loader2, GraduationCap } from "lucide-react"
 import type { UserEducationDto } from "@/types/auth.types"
@@ -38,11 +39,11 @@ export default function ProfileEducationItem({
           {education.institution}
         </h3>
         <p className="mt-0.5 text-[13px] font-medium text-teal-700">
-          {education.degree} â€” {education.fieldOfStudy}
+          {education.degree} — {education.fieldOfStudy}
         </p>
         <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
           <Calendar className="h-3 w-3" />
-          {education.startYear} â€” {education.endYear ?? "Present"}
+          {education.startYear} — {education.endYear ?? "Present"}
         </p>
         {education.description && (
           <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">
@@ -69,7 +70,7 @@ export default function ProfileEducationItem({
             className="flex h-8 w-8 items-center justify-center rounded-lg text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50"
           >
             {deleting
-              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ? <InlineSpinner />
               : <Trash2  className="h-3.5 w-3.5" />
             }
           </button>

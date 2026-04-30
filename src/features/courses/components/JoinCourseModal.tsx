@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { KeyRound, Loader2 } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
@@ -24,12 +24,12 @@ export default function JoinCourseModal({ course, isOpen, onClose, onSubmit, isL
     }
 
     return (
-        <Modal isOpen={isOpen} onClose={handleClose} title="Join Course" description={course?.title ?? ''} size="sm">
+        <Modal isOpen={isOpen} onClose={handleClose} title="Join course" description={course?.title ?? ''} size="sm">
             <div className="space-y-4">
                 <div className="p-4 rounded-xl bg-muted/50 border border-border space-y-1">
                     <p className="text-xs text-muted-foreground">Course</p>
                     <p className="text-sm font-semibold text-foreground">{course?.title}</p>
-                    <p className="text-xs text-muted-foreground">{course?.department} � {course?.semester}</p>
+                    <p className="text-xs text-muted-foreground">{course?.department} · {course?.semester}</p>
                 </div>
 
                 <Input
@@ -59,3 +59,4 @@ export default function JoinCourseModal({ course, isOpen, onClose, onSubmit, isL
         </Modal>
     )
 }
+

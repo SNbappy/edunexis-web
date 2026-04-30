@@ -1,4 +1,5 @@
-﻿import { useState, useRef } from "react"
+import InlineSpinner from "@/components/ui/InlineSpinner"
+import { useState, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import { ArrowLeft, LogIn, Loader2, Hash, Sparkles, Search } from "lucide-react"
@@ -145,7 +146,7 @@ export default function JoinCoursePage() {
                     onKeyDown={handleKeyDown}
                   />
                 ))}
-                <span className="mx-1 text-[16px] font-bold text-muted-foreground">—</span>
+                <span className="mx-1 text-[16px] font-bold text-muted-foreground">�</span>
                 {code.slice(4).map((c, j) => {
                   const i = j + 4
                   return (
@@ -205,7 +206,7 @@ export default function JoinCoursePage() {
                 >
                   {lookingUp ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <InlineSpinner size={16} />
                       Looking up...
                     </>
                   ) : filled === CODE_LENGTH ? (
@@ -242,7 +243,7 @@ export default function JoinCoursePage() {
   )
 }
 
-/* ─── Code input box ─────────────────────────────────────────────── */
+/* --- Code input box ----------------------------------------------- */
 
 function CodeBox({
   i, value, refCb, onChange, onKeyDown,

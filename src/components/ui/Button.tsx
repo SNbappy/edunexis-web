@@ -1,6 +1,6 @@
-﻿import { forwardRef } from "react"
+import { forwardRef } from "react"
 import { cn } from "@/utils/cn"
-import Spinner from "./Spinner"
+import InlineSpinner from "./InlineSpinner"
 
 type Variant = "primary" | "secondary" | "ghost" | "outline" | "danger" | "success" | "warning" | "accent"
 type Size    = "sm" | "md" | "lg" | "xl" | "icon" | "icon-sm" | "icon-lg"
@@ -58,7 +58,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {loading ? (
-          <Spinner size="sm" className="text-current" />
+          <InlineSpinner className="text-current" />
         ) : leftIcon ? (
           <span className="shrink-0 inline-flex">{leftIcon}</span>
         ) : null}

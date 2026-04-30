@@ -1,3 +1,4 @@
+import InlineSpinner from "@/components/ui/InlineSpinner"
 import { useEffect, useState } from "react"
 import { createPortal } from "react-dom"
 import { motion, AnimatePresence } from "framer-motion"
@@ -258,7 +259,7 @@ function PreviewBody({ kind, previewUrl, rawUrl, fileName, onDownload }: Preview
 function PreviewLoader({ label }: { label: string }) {
   return (
     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-card/80 backdrop-blur-sm">
-      <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
+      <InlineSpinner size={24} className="text-teal-600" />
       <p className="text-[12px] font-semibold text-muted-foreground">{label}</p>
     </div>
   )

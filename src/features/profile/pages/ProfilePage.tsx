@@ -1,4 +1,5 @@
-﻿import { useState, useRef, useEffect } from "react"
+import InlineSpinner from "@/components/ui/InlineSpinner"
+import { useState, useRef, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { AnimatePresence } from "framer-motion"
 import {
@@ -100,9 +101,9 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
 
   return (
     <div className="mx-auto max-w-5xl px-4 pb-16 sm:px-6 lg:px-8">
-      {/* ────────────────────────────────────────────────────────── */}
-      {/*   Hero — cover band + avatar                                */}
-      {/* ────────────────────────────────────────────────────────── */}
+      {/* ---------------------------------------------------------- */}
+      {/*   Hero � cover band + avatar                                */}
+      {/* ---------------------------------------------------------- */}
       <section className="relative mt-6 overflow-hidden rounded-2xl border border-border bg-card">
         {/* Cover band */}
         <div className="group relative h-40 w-full sm:h-48">
@@ -119,7 +120,7 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
           {/* Teal accent stripe at the bottom of the cover */}
           <div className="absolute inset-x-0 bottom-0 h-[3px] bg-teal-600" aria-hidden />
 
-          {/* Cover actions — owner only */}
+          {/* Cover actions � owner only */}
           {isSelf && (
             <div className="absolute right-3 top-3" ref={menuRef}>
               <button
@@ -130,7 +131,7 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
                 aria-label="Cover photo options"
               >
                 {own.isUploadingCover || own.isRemovingCover
-                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  ? <InlineSpinner size={16} />
                   : <MoreHorizontal className="h-4 w-4" />
                 }
               </button>
@@ -180,7 +181,7 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
                 >
                   {own.isUploading || own.isRemovingPhoto ? (
                     <div className="flex h-full w-full items-center justify-center bg-stone-50">
-                      <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
+                      <InlineSpinner size={24} className="text-teal-600" />
                     </div>
                   ) : (
                     <Avatar
@@ -215,7 +216,7 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
               </div>
             </div>
 
-            {/* Edit button — self only */}
+            {/* Edit button � self only */}
             {isSelf && (
               <div className="flex items-center gap-2">
                 <Button variant="secondary" onClick={() => navigate("/profile/edit")}>
@@ -249,7 +250,7 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
               </p>
             )}
 
-            {/* Meta row — department + optional contact */}
+            {/* Meta row � department + optional contact */}
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-muted-foreground">
               {p.department && (
                 <span className="inline-flex items-center gap-1.5">
@@ -288,9 +289,9 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
         </div>
       </section>
 
-      {/* ────────────────────────────────────────────────────────── */}
+      {/* ---------------------------------------------------------- */}
       {/*   About (full width)                                        */}
-      {/* ────────────────────────────────────────────────────────── */}
+      {/* ---------------------------------------------------------- */}
       {p.bio && (
         <section className="mt-6 rounded-2xl border border-border bg-card p-6">
           <h2 className="mb-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -302,9 +303,9 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
         </section>
       )}
 
-      {/* ────────────────────────────────────────────────────────── */}
-      {/*   Body — Education (left, wider) + Courses (right)          */}
-      {/* ────────────────────────────────────────────────────────── */}
+      {/* ---------------------------------------------------------- */}
+      {/*   Body � Education (left, wider) + Courses (right)          */}
+      {/* ---------------------------------------------------------- */}
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
         {/* Education */}
         <section className="rounded-2xl border border-border bg-card p-6">
@@ -376,9 +377,9 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
         </section>
       </div>
 
-      {/* ────────────────────────────────────────────────────────── */}
+      {/* ---------------------------------------------------------- */}
       {/*   Modals                                                    */}
-      {/* ────────────────────────────────────────────────────────── */}
+      {/* ---------------------------------------------------------- */}
       {isSelf && (
         <>
           <EditProfileModal
@@ -405,7 +406,7 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
   )
 }
 
-/* ─── Skeleton ────────────────────────────────────────────── */
+/* --- Skeleton ---------------------------------------------- */
 
 function ProfilePageSkeleton() {
   return (

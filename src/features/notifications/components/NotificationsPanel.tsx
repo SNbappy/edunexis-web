@@ -1,4 +1,5 @@
-﻿import { motion, AnimatePresence } from "framer-motion"
+import InlineSpinner from "@/components/ui/InlineSpinner"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   Bell, BellOff, CheckCheck, Loader2,
   ClipboardList, Megaphone, Users, BookOpen,
@@ -95,8 +96,8 @@ export default function NotificationsPanel({ isOpen, onClose }: Props) {
             <div className="flex-1 overflow-y-auto p-2">
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-3">
-                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                  <span className="text-xs text-muted-foreground">Loading…</span>
+                  <InlineSpinner size={20} className="text-primary" />
+                  <span className="text-xs text-muted-foreground">Loading�</span>
                 </div>
               ) : notifications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-3 px-6 text-center">

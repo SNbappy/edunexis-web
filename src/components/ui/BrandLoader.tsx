@@ -1,4 +1,4 @@
-﻿import { motion } from "framer-motion"
+import { motion } from "framer-motion"
 import { cn } from "@/utils/cn"
 
 type Variant = "screen" | "page" | "inline"
@@ -87,7 +87,7 @@ export default function BrandLoader({
   label,
   className,
 }: BrandLoaderProps) {
-  // ─── inline — compact, next to text ───
+  // --- inline � compact, next to text ---
   if (variant === "inline") {
     const size = 18
     return (
@@ -104,14 +104,14 @@ export default function BrandLoader({
     )
   }
 
-  // ─── screen / page — branded moment ───
+  // --- screen / page � branded moment ---
   const ringSize = 96
   const markSize = 48
 
   const container =
     variant === "screen"
       ? "fixed inset-0 z-[100] bg-background"
-      : "min-h-[60vh]"
+      : "min-h-[calc(100vh-4rem)]"
 
   return (
     <div

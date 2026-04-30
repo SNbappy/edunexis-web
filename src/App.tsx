@@ -1,4 +1,4 @@
-﻿import { lazy, Suspense } from "react"
+import { lazy, Suspense } from "react"
 import { Routes, Route, Navigate } from "react-router-dom"
 import AuthGuard from "@/components/guards/AuthGuard"
 import GuestGuard from "@/components/guards/GuestGuard"
@@ -30,7 +30,7 @@ const UnauthorizedPage      = lazy(() => import("@/pages/UnauthorizedPage"))
 
 export default function App() {
   return (
-    <Suspense fallback={<BrandLoader variant="screen" />}>
+    <Suspense fallback={<BrandLoader variant="page" />}>
       <Routes>
         <Route index element={<Navigate to={ROUTES.DASHBOARD} replace />} />
 
