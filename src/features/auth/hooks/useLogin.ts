@@ -7,15 +7,6 @@ import toast from "react-hot-toast"
 import type { LoginRequest } from "@/types/auth.types"
 import axios from "axios"
 
-/**
- * Login flow:
- *   - `loading`     → true while the API call is in-flight (drives button spinner)
- *   - `showOverlay` → true only if loading lasts longer than SLOW_THRESHOLD_MS
- *                     (drives the fullscreen BrandLoader overlay)
- *
- * Fast logins never see the overlay. Slow logins (Render cold start, bad network)
- * get a branded moment that makes the wait feel intentional, not broken.
- */
 const SLOW_THRESHOLD_MS = 400
 
 export function useLogin() {
@@ -30,8 +21,6 @@ export function useLogin() {
     setShowOverlay(false)
     setError(null)
 
-    // Kick off the slow-loading timer: if we're still loading after the
-    // threshold, reveal the brand overlay.
     const overlayTimer = window.setTimeout(() => setShowOverlay(true), SLOW_THRESHOLD_MS)
 
     try {
@@ -41,14 +30,26 @@ export function useLogin() {
         toast.error(response.message)
         return
       }
-      const { accessToken, refreshToken, user } = response.data
-      setAuth(user, accessToken, refreshToken)
-      toast.success(`Welcome back, ${user.profile?.fullName ?? "there"}!`)
 
-      if (!user.isProfileComplete) {
-        navigate(ROUTES.COMPLETE_PROFILE)
-      } else {
-        navigate(ROUTES.DASHBOARD)
+      const payload = response.data
+
+      // Email not verified — redirect to verify page (server already sent fresh OTP)
+      if (payload.verificationRequired) {
+        toast("Verify your email to continue. We sent a new code.", { icon: "📧" })
+        const email = payload.pendingEmail ?? data.email
+        navigate(ROUTES.VERIFY_EMAIL + "?email=" + encodeURIComponent(email))
+        return
+      }
+
+      if (payload.user) {
+        setAuth(payload.user, payload.accessToken, payload.refreshToken)
+        toast.success("Welcome back, " + (payload.user.profile?.fullName ?? "there") + "!")
+
+        if (!payload.user.isProfileComplete) {
+          navigate(ROUTES.COMPLETE_PROFILE)
+        } else {
+          navigate(ROUTES.DASHBOARD)
+        }
       }
     } catch (err: unknown) {
       let msg = "Login failed. Please try again."

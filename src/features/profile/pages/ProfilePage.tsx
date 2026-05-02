@@ -1,4 +1,4 @@
-import { useState } from "react"
+﻿import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Pencil } from "lucide-react"
 import Button from "@/components/ui/Button"
@@ -20,7 +20,6 @@ import ResearchTab from "../components/ResearchTab"
 import AboutTab from "../components/AboutTab"
 import EducationModal from "../components/EducationModal"
 import PublicationModal from "../components/PublicationModal"
-import EditProfileModal from "../components/EditProfileModal"
 
 interface ProfilePageProps {
   userId?: string
@@ -38,7 +37,6 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
   const p: PublicProfileDto | null = pub.data ?? null
 
   const [activeTab, setActiveTab] = useState<ProfileTabKey>("overview")
-  const [editOpen, setEditOpen] = useState(false)
   const [eduModal, setEduModal] = useState<{ open: boolean; item?: UserEducationDto | null }>({ open: false })
   const [pubModal, setPubModal] = useState<{ open: boolean; item?: UserPublicationDto | null }>({ open: false })
 
@@ -68,7 +66,7 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
     { key: "about", label: "About" },
   ]
 
-  /* -- Education handlers ---------------------- */
+  /* ── Education handlers ────────────────────── */
   const handleEduSubmit = (data: any) => {
     if (eduModal.item) {
       own.updateEducation(
@@ -84,7 +82,7 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
       own.deleteEducation(id, { onSuccess: () => resolve() } as any),
     )
 
-  /* -- Publication handlers -------------------- */
+  /* ── Publication handlers ──────────────────── */
   const handlePubSubmit = (data: PublicationRequest) => {
     if (pubModal.item) {
       own.updatePublication(
@@ -96,7 +94,7 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
     }
   }
 
-  /* -- CSV chip handlers ----------------------- */
+  /* ── CSV chip handlers ─────────────────────── */
   const updateCsvField = (field: "researchInterestsCsv" | "fieldsOfWorkCsv", csv: string) => {
     if (!isSelf || !own.profile) return
     const profile = own.profile
@@ -124,7 +122,7 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-5 lg:px-6">
-      {/* Two-column body � identity card persists across all tabs */}
+      {/* Two-column body — identity card persists across all tabs */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[300px_1fr]">
         {/* Identity card (sticky on desktop) */}
         <div className="lg:sticky lg:top-5 lg:self-start">
@@ -138,9 +136,9 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
           />
         </div>
 
-        {/* Right column � tabs + tab content */}
+        {/* Right column — tabs + tab content */}
         <div className="min-w-0">
-          {/* Tab bar row � tabs on left, edit profile on right */}
+          {/* Tab bar row — tabs on left, edit profile on right */}
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
             {isSelf ? (
@@ -187,20 +185,9 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
         </div>
       </div>
 
-      {/* Modals � owner only */}
+      {/* Modals — owner only */}
       {isSelf ? (
         <>
-          <EditProfileModal
-            isOpen={editOpen}
-            onClose={() => setEditOpen(false)}
-            profile={p}
-            role={p.role}
-            onSubmit={(data: UpdateProfileRequest) =>
-              own.updateProfile(data, { onSuccess: () => setEditOpen(false) } as any)
-            }
-            isLoading={own.isUpdating}
-          />
-
           <EducationModal
             isOpen={eduModal.open}
             onClose={() => setEduModal({ open: false })}

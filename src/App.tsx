@@ -11,6 +11,7 @@ import { ROUTES } from "@/config/constants"
 
 const LoginPage = lazy(() => import("@/features/auth/pages/LoginPage"))
 const RegisterPage = lazy(() => import("@/features/auth/pages/RegisterPage"))
+const VerifyEmailPage = lazy(() => import("@/features/auth/pages/VerifyEmailPage"))
 const DashboardPage = lazy(() => import("@/features/dashboard/pages/DashboardPage"))
 const CoursesListPage = lazy(() => import("@/features/courses/pages/CoursesListPage"))
 const CreateCoursePage = lazy(() => import("@/features/courses/pages/CreateCoursePage"))
@@ -40,6 +41,7 @@ export default function App() {
           <Route element={<AuthLayout />}>
             <Route path={ROUTES.LOGIN} element={<LoginPage />} />
             <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+            <Route path={ROUTES.VERIFY_EMAIL} element={<VerifyEmailPage />} />
           </Route>
         </Route>
 

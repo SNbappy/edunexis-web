@@ -30,10 +30,23 @@ export function useRegister() {
         toast.error(response.message)
         return
       }
-      const { accessToken, refreshToken, user } = response.data
-      setAuth(user, accessToken, refreshToken)
-      toast.success("Account created. Let's complete your profile.")
-      navigate(ROUTES.COMPLETE_PROFILE)
+
+      const payload = response.data
+
+      // OTP verification required — redirect to verify page
+      if (payload.verificationRequired) {
+        toast.success("Account created. Check your email for a verification code.")
+        const email = payload.pendingEmail ?? data.email
+        navigate(ROUTES.VERIFY_EMAIL + "?email=" + encodeURIComponent(email))
+        return
+      }
+
+      // No verification (legacy path or feature flag disabled)
+      if (payload.user) {
+        setAuth(payload.user, payload.accessToken, payload.refreshToken)
+        toast.success("Account created. Let's complete your profile.")
+        navigate(ROUTES.COMPLETE_PROFILE)
+      }
     } catch (err: unknown) {
       let msg = "Registration failed. Please try again."
       if (axios.isAxiosError(err)) {
