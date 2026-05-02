@@ -1,4 +1,4 @@
-﻿import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
 import { courseService } from "../services/courseService"
@@ -17,7 +17,7 @@ export function useCourseMembers(courseId: string) {
       return res.data ?? []
     },
     enabled: !!courseId,
-    staleTime: 30_000,
+    refetchInterval: 8_000,
     refetchOnWindowFocus: true,
   })
 
@@ -29,6 +29,8 @@ export function useCourseMembers(courseId: string) {
       return res.data ?? []
     },
     enabled: !!courseId && teacher,
+    refetchInterval: 8_000,
+    refetchOnWindowFocus: true,
     // Treat requests as always-stale: any mount, navigation, or focus
     // event triggers a fresh fetch. Teachers clicking a notification
     // must see the new request without manually reloading.

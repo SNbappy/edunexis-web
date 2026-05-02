@@ -1,4 +1,4 @@
-﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { courseService } from '../services/courseService'
 import type { UpdateCourseRequest } from '@/types/course.types'
 import toast from 'react-hot-toast'
@@ -14,6 +14,7 @@ export function useCourseDetail(courseId: string) {
             return res.data
         },
         enabled: !!courseId,
+        refetchInterval: 8_000,
         refetchOnWindowFocus: true,
         staleTime: 15_000,
     })

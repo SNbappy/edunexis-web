@@ -1,4 +1,4 @@
-﻿import { Link } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { motion } from "framer-motion"
 import {
   BookOpen, Users, Bell, Plus, ArrowRight,
@@ -6,6 +6,8 @@ import {
 } from "lucide-react"
 import { useAuthStore } from "@/store/authStore"
 import { useDashboard } from "../hooks/useDashboard"
+import NotificationItem from "@/features/notifications/components/NotificationItem"
+import { useNotifications } from "@/features/notifications/hooks/useNotifications"
 import { isTeacher } from "@/utils/roleGuard"
 import { ROUTES } from "@/config/constants"
 import { formatDistanceToNow } from "date-fns"
@@ -222,6 +224,7 @@ function ActivityItem({ n }: { n: any }) {
 export default function DashboardPage() {
   const { user } = useAuthStore()
   const { courses, stats, recentActivity, isLoading } = useDashboard()
+  const { markRead, deleteNotification } = useNotifications()
   const teacher   = isTeacher(user?.role ?? "Student")
   const firstName = getFirstName(user?.profile?.fullName)
   const recentCourses = courses.filter((c: any) => !c.isArchived).slice(0, 4)
@@ -413,7 +416,7 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-0.5">
                 {recentActivity.map((n: any) => (
-                  <ActivityItem key={n.id} n={n} />
+                  <NotificationItem key={n.id} notification={n} onMarkRead={markRead} onDelete={deleteNotification} />
                 ))}
               </div>
             )}

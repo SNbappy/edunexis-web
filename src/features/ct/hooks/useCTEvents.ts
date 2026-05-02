@@ -1,4 +1,4 @@
-﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ctService } from '../services/ctService'
 import type { CreateCTEventRequest, UpdateCTEventRequest, GradeCTRequest } from '@/types/ct.types'
 import toast from 'react-hot-toast'
@@ -16,6 +16,7 @@ export function useCTEvents(courseId: string) {
             return res.data
         },
         enabled: !!courseId,
+        refetchInterval: 8_000,
         refetchOnWindowFocus: true,
         staleTime: 15_000,
     })
@@ -94,6 +95,7 @@ export function useCTMarks(ctEventId: string) {
             return res.data
         },
         enabled: !!ctEventId,
+        refetchInterval: 8_000,
         refetchOnWindowFocus: true,
         staleTime: 15_000,
     })

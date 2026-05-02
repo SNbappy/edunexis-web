@@ -1,4 +1,4 @@
-﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { presentationService } from '../services/presentationService'
 import type { CreatePresentationRequest, SavePresentationMarksRequest } from '@/types/presentation.types'
 import toast from 'react-hot-toast'
@@ -16,6 +16,7 @@ export function usePresentations(courseId: string) {
             return res.data ?? []
         },
         enabled: !!courseId,
+        refetchInterval: 8_000,
         refetchOnWindowFocus: true,
         staleTime: 15_000,
     })
@@ -72,6 +73,7 @@ export function usePresentationResults(courseId: string, presentationId: string)
             return res.data ?? []
         },
         enabled: !!presentationId,
+        refetchInterval: 8_000,
         refetchOnWindowFocus: true,
         staleTime: 15_000,
     })

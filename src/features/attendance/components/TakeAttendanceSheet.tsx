@@ -157,7 +157,7 @@ export default function TakeAttendanceSheet({
               type="text"
               value={topic}
               onChange={e => setTopic(e.target.value)}
-              placeholder="e.g. Linked lists — chapter 3"
+              placeholder={"e.g. Linked lists \u2014 chapter 3"}
               className="h-10 w-full rounded-xl border border-border bg-muted/40 px-3 text-[13px] text-foreground outline-none placeholder:text-muted-foreground focus:border-teal-500 focus:bg-card focus:ring-2 focus:ring-teal-500/20"
             />
           </div>
@@ -197,7 +197,7 @@ export default function TakeAttendanceSheet({
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search students by name or ID…"
+            placeholder={"Search students by name or ID\u2026"}
             className="h-10 w-full rounded-xl border border-border bg-muted/40 pl-10 pr-3 text-[13px] text-foreground outline-none placeholder:text-muted-foreground focus:border-teal-500 focus:bg-card focus:ring-2 focus:ring-teal-500/20"
           />
         </div>

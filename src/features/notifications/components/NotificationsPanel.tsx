@@ -97,7 +97,7 @@ export default function NotificationsPanel({ isOpen, onClose }: Props) {
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-3">
                   <InlineSpinner size={20} className="text-primary" />
-                  <span className="text-xs text-muted-foreground">Loading…</span>
+                  <span className="text-xs text-muted-foreground">{"Loading\u2026"}</span>
                 </div>
               ) : notifications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-3 px-6 text-center">

@@ -1,4 +1,4 @@
-﻿import { useState } from "react"
+import { useState } from "react"
 import { Building2, Shield, Mail, Phone, MapPin, Clock, BookOpen, FileText } from "lucide-react"
 import Avatar from "@/components/ui/Avatar"
 import InlineSpinner from "@/components/ui/InlineSpinner"
@@ -43,7 +43,7 @@ export default function ProfileIdentityCard(props: ProfileIdentityCardProps) {
   return (
     <>
       <aside className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm ring-1 ring-stone-200/50 dark:ring-white/5">
-        {/* Photo � square, fills card width */}
+        {/* Photo - square, fills card width */}
         <div className="relative aspect-square w-full overflow-hidden bg-muted">
           {(isUploadingPhoto || isRemovingPhoto) ? (
             <div className="flex h-full w-full items-center justify-center">
@@ -108,7 +108,7 @@ export default function ProfileIdentityCard(props: ProfileIdentityCardProps) {
             ) : null}
           </div>
 
-          {/* Stats � inline badges */}
+          {/* Stats - inline badges */}
           {(totalCourses > 0 || p.publications.length > 0) ? (
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {totalCourses > 0 ? (

@@ -108,7 +108,7 @@ export default function CourseDetailsModal({ isOpen, onClose, course, canManage,
                       <motion.div key="hid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                         className="px-4 py-3 rounded-xl bg-card border border-border">
                         <span className="text-2xl font-bold text-muted-foreground/25 tracking-widest select-none">
-                          {'•'.repeat(course.joiningCode.length)}
+                          {'\u2022'.repeat(course.joiningCode.length)}
                         </span>
                       </motion.div>
                     )}

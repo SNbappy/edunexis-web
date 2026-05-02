@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { materialService } from '../services/materialService'
 import toast from 'react-hot-toast'
@@ -37,6 +37,8 @@ export function useMaterials(courseId: string) {
                     if (!r.success) throw new Error(r.message)
                     return r.data ?? []
                 }),
+      refetchInterval: 8_000,
+      refetchOnWindowFocus: true,
         enabled: !!courseId,
         refetchOnWindowFocus: true,
         staleTime: 15_000,

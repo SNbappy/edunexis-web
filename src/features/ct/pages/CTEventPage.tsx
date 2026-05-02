@@ -246,7 +246,7 @@ export default function CTEventPage() {
                         <div>
                             <h2 className="font-semibold text-foreground">Khata Scripts</h2>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                                {ct.khataUploaded ? 'Scripts uploaded — re-upload to replace' : 'Upload all 3 scripts to enable mark entry'}
+                                {ct.khataUploaded ? 'Scripts uploaded \u2014 re-upload to replace' : 'Upload all 3 scripts to enable mark entry'}
                             </p>
                         </div>
                         {ct.khataUploaded && (

@@ -1,4 +1,4 @@
-﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { attendanceService } from '../services/attendanceService'
 import type { TakeAttendanceRequest } from '@/types/attendance.types'
 import toast from 'react-hot-toast'
@@ -15,6 +15,7 @@ export function useAttendance(courseId: string) {
             return res.data
         },
         enabled: !!courseId,
+        refetchInterval: 8_000,
         refetchOnWindowFocus: true,
         staleTime: 15_000,
     })
@@ -27,6 +28,7 @@ export function useAttendance(courseId: string) {
             return res.data
         },
         enabled: !!courseId,
+        refetchInterval: 8_000,
         refetchOnWindowFocus: true,
         staleTime: 15_000,
     })

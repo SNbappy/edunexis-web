@@ -1,4 +1,4 @@
-﻿import { isTeacher } from '@/utils/roleGuard'
+import { isTeacher } from '@/utils/roleGuard'
 import { useAuthStore } from '@/store/authStore'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -22,6 +22,7 @@ export function useAssignments(courseId: string) {
             return res.data ?? []
         },
         enabled: !!courseId,
+        refetchInterval: 8_000,
         refetchOnWindowFocus: true,
         staleTime: 15_000,
     })
@@ -107,6 +108,7 @@ export function useAssignment(courseId: string, assignmentId: string) {
             return res.data ?? null
         },
         enabled: !!courseId && !!assignmentId,
+        refetchInterval: 8_000,
         refetchOnWindowFocus: true,
         staleTime: 15_000,
     })
@@ -119,6 +121,7 @@ export function useAssignment(courseId: string, assignmentId: string) {
             return null
         },
         enabled: !!assignmentId && !!user && !teacher,
+        refetchInterval: 8_000,
         refetchOnWindowFocus: true,
         retry: false,
         staleTime: 0,

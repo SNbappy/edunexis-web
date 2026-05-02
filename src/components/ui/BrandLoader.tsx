@@ -87,7 +87,7 @@ export default function BrandLoader({
   label,
   className,
 }: BrandLoaderProps) {
-  // --- inline — compact, next to text ---
+  // --- inline - compact, next to text ---
   if (variant === "inline") {
     const size = 18
     return (
@@ -104,7 +104,7 @@ export default function BrandLoader({
     )
   }
 
-  // --- screen / page — branded moment ---
+  // --- screen / page - branded moment ---
   const ringSize = 96
   const markSize = 48
 

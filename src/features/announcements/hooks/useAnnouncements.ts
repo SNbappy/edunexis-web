@@ -1,4 +1,4 @@
-﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { announcementService } from '../services/announcementService'
 import type { CreateAnnouncementRequest } from '@/types/announcement.types'
 import toast from 'react-hot-toast'
@@ -15,6 +15,7 @@ export function useAnnouncements(courseId: string) {
             return res.data ?? []
         },
         enabled: !!courseId,
+        refetchInterval: 8_000,
         refetchOnWindowFocus: true,
         staleTime: 15_000,
     })

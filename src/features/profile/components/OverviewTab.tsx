@@ -55,7 +55,7 @@ export default function OverviewTab(props: OverviewTabProps) {
 
   return (
     <div className="space-y-5">
-      {/* Biography — first, full attention */}
+      {/* Biography - first, full attention */}
       {p.bio ? (
         <section className="rounded-2xl border border-border bg-card shadow-sm ring-1 ring-stone-200/50 dark:ring-white/5 p-6 sm:p-7">
           <SectionHeader title="Biography" />

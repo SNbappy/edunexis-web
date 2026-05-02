@@ -1,4 +1,4 @@
-﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { marksService } from '../services/marksService'
 import type { GradingFormulaRequest } from '@/types/marks.types'
 import toast from 'react-hot-toast'
@@ -16,6 +16,7 @@ export function useMarks(courseId: string) {
             return res.data ?? null
         },
         enabled: !!courseId,
+        refetchInterval: 8_000,
         refetchOnWindowFocus: true,
         staleTime: 15_000,
     })
@@ -28,6 +29,7 @@ export function useMarks(courseId: string) {
             return res.data ?? []
         },
         enabled: !!courseId,
+        refetchInterval: 8_000,
         refetchOnWindowFocus: true,
         staleTime: 15_000,
     })
