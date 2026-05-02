@@ -12,6 +12,8 @@ import { ROUTES } from "@/config/constants"
 const LoginPage = lazy(() => import("@/features/auth/pages/LoginPage"))
 const RegisterPage = lazy(() => import("@/features/auth/pages/RegisterPage"))
 const VerifyEmailPage = lazy(() => import("@/features/auth/pages/VerifyEmailPage"))
+const ForgotPasswordPage = lazy(() => import("@/features/auth/pages/ForgotPasswordPage"))
+const ResetPasswordPage = lazy(() => import("@/features/auth/pages/ResetPasswordPage"))
 const DashboardPage = lazy(() => import("@/features/dashboard/pages/DashboardPage"))
 const CoursesListPage = lazy(() => import("@/features/courses/pages/CoursesListPage"))
 const CreateCoursePage = lazy(() => import("@/features/courses/pages/CreateCoursePage"))
@@ -42,6 +44,8 @@ export default function App() {
             <Route path={ROUTES.LOGIN} element={<LoginPage />} />
             <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
             <Route path={ROUTES.VERIFY_EMAIL} element={<VerifyEmailPage />} />
+            <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
+            <Route path={ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
           </Route>
         </Route>
 

@@ -1,4 +1,4 @@
-import InlineSpinner from "@/components/ui/InlineSpinner"
+ï»¿import InlineSpinner from "@/components/ui/InlineSpinner"
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { Calendar, Pencil, Trash2, Loader2, GraduationCap } from "lucide-react"
@@ -28,9 +28,9 @@ export default function ProfileEducationItem({
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{    opacity: 0, x: -10 }}
-      className="group relative flex items-start gap-4 rounded-xl p-3 transition-colors hover:bg-stone-50"
+      className="group relative flex items-start gap-4 rounded-xl p-3 transition-colors hover:bg-muted"
     >
-      <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-600">
+      <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-600 dark:bg-teal-950/30 dark:text-teal-300">
         <GraduationCap className="h-5 w-5" strokeWidth={2} />
       </div>
 
@@ -39,11 +39,11 @@ export default function ProfileEducationItem({
           {education.institution}
         </h3>
         <p className="mt-0.5 text-[13px] font-medium text-teal-700">
-          {education.degree} — {education.fieldOfStudy}
+          {education.degree} â€” {education.fieldOfStudy}
         </p>
         <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
           <Calendar className="h-3 w-3" />
-          {education.startYear} — {education.endYear ?? "Present"}
+          {education.startYear} â€” {education.endYear ?? "Present"}
         </p>
         {education.description && (
           <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">
@@ -58,7 +58,7 @@ export default function ProfileEducationItem({
             type="button"
             onClick={() => onEdit?.(education)}
             aria-label="Edit education"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-stone-100 hover:text-foreground"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-stone-100 hover:text-foreground dark:hover:bg-stone-900"
           >
             <Pencil className="h-3.5 w-3.5" />
           </button>
@@ -67,7 +67,7 @@ export default function ProfileEducationItem({
             onClick={handleDelete}
             disabled={deleting}
             aria-label="Delete education"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50 dark:hover:bg-red-950/30"
           >
             {deleting
               ? <InlineSpinner />

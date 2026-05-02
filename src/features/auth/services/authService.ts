@@ -7,6 +7,10 @@ import type {
   SyncUserRequest,
   UserDto,
   ChangePasswordRequest,
+  VerifyEmailOtpRequest,
+  ResendOtpRequest,
+  ForgotPasswordRequest,
+  ResetPasswordRequest,
 } from '@/types/auth.types'
 
 export const authService = {
@@ -24,4 +28,12 @@ export const authService = {
     api.get<ApiResponse<UserDto>>('/auth/me').then((r) => r.data),
   changePassword: (data: ChangePasswordRequest) =>
     api.post<ApiResponse<boolean>>('/auth/change-password', data).then((r) => r.data),
+  verifyEmail: (data: VerifyEmailOtpRequest) =>
+    api.post<ApiResponse<AuthResponseDto>>('/auth/verify-email', data).then((r) => r.data),
+  resendOtp: (data: ResendOtpRequest) =>
+    api.post<ApiResponse>('/auth/resend-otp', data).then((r) => r.data),
+  forgotPassword: (data: ForgotPasswordRequest) =>
+    api.post<ApiResponse>('/auth/forgot-password', data).then((r) => r.data),
+  resetPassword: (data: ResetPasswordRequest) =>
+    api.post<ApiResponse>('/auth/reset-password', data).then((r) => r.data),
 }

@@ -27,7 +27,7 @@ export default function FormStepper({ steps, currentStep, onStepClick }: FormSte
             ? "bg-teal-600 text-white border-teal-600"
             : state === "current"
             ? "border-teal-600 text-teal-600 bg-white"
-            : "border-border text-muted-foreground bg-stone-50"
+            : "border-border text-muted-foreground bg-muted"
 
         const labelClasses =
           state === "done"
@@ -64,7 +64,7 @@ export default function FormStepper({ steps, currentStep, onStepClick }: FormSte
             </button>
 
             {!isLast && (
-              <div className="relative mx-2 h-0.5 flex-1 overflow-hidden rounded-full bg-stone-200">
+              <div className="relative mx-2 h-0.5 flex-1 overflow-hidden rounded-full bg-stone-200 dark:bg-stone-800">
                 <motion.div
                   initial={false}
                   animate={{ scaleX: i < currentStep ? 1 : 0 }}

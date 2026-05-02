@@ -17,9 +17,9 @@ interface FormSectionProps {
 }
 
 const TONE_CLASSES = {
-  teal:  "bg-teal-50 text-teal-600 border-teal-200",
-  amber: "bg-amber-50 text-amber-600 border-amber-200",
-  stone: "bg-stone-100 text-stone-600 border-stone-200",
+  teal:  "bg-teal-50 text-teal-600 dark:bg-teal-950/30 dark:text-teal-300 border-teal-200",
+  amber: "bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-900/50",
+  stone: "bg-stone-100 text-stone-600 border-stone-200 dark:bg-stone-900 dark:text-stone-300 dark:border-stone-800",
 } as const
 
 export default function FormSection({

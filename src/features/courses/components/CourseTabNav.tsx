@@ -58,7 +58,7 @@ export default function CourseTabNav({ courseId, tabs, activeTab }: CourseTabNav
                       "inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9.5px] font-bold leading-none " +
                       (active
                         ? "bg-teal-600 text-white"
-                        : "bg-stone-200 text-stone-700")
+                        : "bg-stone-200 text-stone-700 dark:bg-stone-800 dark:text-stone-300")
                     }
                     aria-label={t.badge + " pending"}
                   >

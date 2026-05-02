@@ -21,7 +21,7 @@ export default function JoinCoursePreview({
       className="w-full max-w-md"
     >
       <div className="rounded-3xl border border-border bg-card p-7 shadow-sm">
-        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-teal-200 bg-teal-50">
+        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-teal-200 bg-teal-50 dark:border-teal-900/50 dark:bg-teal-950/30">
           <Check className="h-7 w-7 text-teal-600" strokeWidth={2.5} />
         </div>
 
@@ -33,7 +33,7 @@ export default function JoinCoursePreview({
         </p>
 
         {/* Course card */}
-        <div className="mt-6 rounded-2xl border border-border bg-stone-50 p-5">
+        <div className="mt-6 rounded-2xl border border-border bg-muted p-5">
           <p className="mb-1 font-mono text-[11px] font-semibold uppercase tracking-wider text-teal-700">
             {course.courseCode}
           </p>
@@ -49,7 +49,7 @@ export default function JoinCoursePreview({
                 className="h-7 w-7 shrink-0 rounded-full object-cover"
               />
             ) : (
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-stone-200 text-[12px] font-bold text-stone-700">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-stone-200 text-[12px] font-bold text-stone-700 dark:bg-stone-800 dark:text-stone-300">
                 {course.teacherName.charAt(0).toUpperCase()}
               </div>
             )}

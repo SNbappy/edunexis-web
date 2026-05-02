@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+﻿import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -6,9 +6,9 @@ import { useNavigate } from "react-router-dom"
 import { AnimatePresence, motion } from "framer-motion"
 import {
   User, MessageSquareQuote, Link2,
-  Linkedin, Github, Twitter, Facebook, Globe,
   ChevronRight, ChevronLeft, LogOut, Sparkles,
 } from "lucide-react"
+import { FaLinkedinIn, FaGithub, FaXTwitter, FaFacebookF, FaGlobe } from "react-icons/fa6"
 
 import Button from "@/components/ui/Button"
 import Select from "@/components/ui/Select"
@@ -19,23 +19,42 @@ import FormStepper from "@/components/forms/FormStepper"
 
 import { useProfile } from "../hooks/useProfile"
 import { useAuthStore } from "@/store/authStore"
-import { DEPARTMENTS, ROUTES } from "@/config/constants"
+import { DEPARTMENT_GROUPS, ROUTES } from "@/config/constants"
 import { isTeacher } from "@/utils/roleGuard"
 
-const schema = z.object({
-  fullName: z.string().min(2, "Full name is required"),
-  department: z.string().min(1, "Department is required"),
-  designation: z.string().optional(),
-  studentId: z.string().optional(),
-  phoneNumber: z.string().optional(),
-  bio: z.string().max(500, "Bio must be under 500 characters").optional(),
-  linkedInUrl: z.string().optional(),
-  gitHubUrl: z.string().optional(),
-  twitterUrl: z.string().optional(),
-  facebookUrl: z.string().optional(),
-  websiteUrl: z.string().optional(),
-})
-type FormData = z.infer<typeof schema>
+function buildSchema(teacher: boolean) {
+  return z.object({
+    fullName: z.string().trim().min(2, "Full name is required"),
+    department: z.string().min(1, "Department is required"),
+    designation: teacher
+      ? z.string().trim().min(2, "Designation is required for teachers")
+      : z.string().optional(),
+    studentId: !teacher
+      ? z.string().trim().min(2, "Student ID is required for students")
+      : z.string().optional(),
+    phoneNumber: z.string().optional(),
+    bio: z.string().max(500, "Bio must be under 500 characters").optional(),
+    linkedInUrl: z.string().optional(),
+    gitHubUrl: z.string().optional(),
+    twitterUrl: z.string().optional(),
+    facebookUrl: z.string().optional(),
+    websiteUrl: z.string().optional(),
+  })
+}
+
+type FormData = {
+  fullName:     string
+  department:   string
+  designation?: string
+  studentId?:   string
+  phoneNumber?: string
+  bio?:         string
+  linkedInUrl?: string
+  gitHubUrl?:   string
+  twitterUrl?:  string
+  facebookUrl?: string
+  websiteUrl?:  string
+}
 
 const STEPS = [
   { label: "About you" },
@@ -44,11 +63,41 @@ const STEPS = [
 ]
 
 const SOCIAL_FIELDS = [
-  { key: "linkedInUrl" as const, icon: Linkedin, placeholder: "linkedin.com/in/yourname", label: "LinkedIn" },
-  { key: "gitHubUrl" as const, icon: Github, placeholder: "github.com/yourname", label: "GitHub" },
-  { key: "twitterUrl" as const, icon: Twitter, placeholder: "x.com/yourname", label: "X" },
-  { key: "facebookUrl" as const, icon: Facebook, placeholder: "facebook.com/yourname", label: "Facebook" },
-  { key: "websiteUrl" as const, icon: Globe, placeholder: "yourwebsite.com", label: "Website" },
+  {
+    key: "linkedInUrl" as const,
+    icon: FaLinkedinIn,
+    placeholder: "linkedin.com/in/yourname",
+    label: "LinkedIn",
+    bgClass: "bg-[#0A66C2] text-white",
+  },
+  {
+    key: "gitHubUrl" as const,
+    icon: FaGithub,
+    placeholder: "github.com/yourname",
+    label: "GitHub",
+    bgClass: "bg-[#181717] text-white dark:bg-[#2a2a2a]",
+  },
+  {
+    key: "twitterUrl" as const,
+    icon: FaXTwitter,
+    placeholder: "x.com/yourname",
+    label: "X",
+    bgClass: "bg-black text-white dark:bg-white dark:text-black",
+  },
+  {
+    key: "facebookUrl" as const,
+    icon: FaFacebookF,
+    placeholder: "facebook.com/yourname",
+    label: "Facebook",
+    bgClass: "bg-[#1877F2] text-white",
+  },
+  {
+    key: "websiteUrl" as const,
+    icon: FaGlobe,
+    placeholder: "yourwebsite.com",
+    label: "Website",
+    bgClass: "bg-teal-600 text-white",
+  },
 ]
 
 export default function CompleteProfilePage() {
@@ -67,6 +116,8 @@ export default function CompleteProfilePage() {
       if (ok) navigate(ROUTES.DASHBOARD, { replace: true })
     }
   }, [user, teacher, navigate])
+
+  const schema = buildSchema(teacher)
 
   const {
     register, handleSubmit, watch, trigger,
@@ -208,8 +259,8 @@ export default function CompleteProfilePage() {
       title={greeting}
       subtitle={
         teacher
-          ? "Let's set up your teacher profile. Takes about a minute — students will use this to find and trust your courses."
-          : "Let's set up your student profile. Takes about a minute — you'll need this to join courses, track attendance, and submit assignments."
+          ? "Let's set up your teacher profile. Takes about a minute â€” students will use this to find and trust your courses."
+          : "Let's set up your student profile. Takes about a minute â€” you'll need this to join courses, track attendance, and submit assignments."
       }
       topSlot={
         <FormStepper
@@ -245,7 +296,7 @@ export default function CompleteProfilePage() {
               >
                 <FormField
                   {...register("fullName")}
-                  label="Full name"
+                  label="Full name *"
                   placeholder="Your full name"
                   error={errors.fullName?.message}
                 />
@@ -253,12 +304,12 @@ export default function CompleteProfilePage() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label className="mb-1.5 block text-[13px] font-semibold text-foreground">
-                      Department
+                      Department *
                     </label>
                     <Select
                       {...register("department")}
                       placeholder="Select department"
-                      options={DEPARTMENTS.map(d => ({ value: d, label: d }))}
+                      optionGroups={DEPARTMENT_GROUPS}
                     />
                     {errors.department?.message && (
                       <p className="mt-1.5 text-[11.5px] font-semibold text-red-600">
@@ -270,18 +321,18 @@ export default function CompleteProfilePage() {
                   {teacher ? (
                     <FormField
                       {...register("designation")}
-                      label="Designation"
+                      label="Designation *"
                       placeholder="e.g. Assistant Professor"
                       error={errors.designation?.message}
-                      hint="Your academic role — students will see this."
+                      hint="Your academic role â€” students will see this."
                     />
                   ) : (
                     <FormField
                       {...register("studentId")}
-                      label="Student ID"
+                      label="Student ID *"
                       placeholder="e.g. 200109"
                       error={errors.studentId?.message}
-                      hint="Required — used for attendance and marks."
+                      hint="Required â€” used for attendance and marks."
                     />
                   )}
                 </div>
@@ -352,14 +403,14 @@ export default function CompleteProfilePage() {
               <FormSection
                 icon={Link2}
                 title="Connect"
-                subtitle="Where people can find you online. All optional — add what makes sense."
+                subtitle="Where people can find you online. All optional â€” add what makes sense."
                 tone="stone"
               >
                 <div className="space-y-2.5">
-                  {SOCIAL_FIELDS.map(({ key, icon: Icon, placeholder, label }) => (
+                  {SOCIAL_FIELDS.map(({ key, icon: Icon, placeholder, label, bgClass }) => (
                     <div key={key} className="flex items-center gap-2">
                       <div
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-stone-50 text-stone-600"
+                        className={"flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-sm " + bgClass}
                         aria-label={label}
                       >
                         <Icon className="h-4 w-4" />
@@ -375,7 +426,7 @@ export default function CompleteProfilePage() {
                 </div>
               </FormSection>
 
-              <div className="mt-6 flex items-start gap-3 rounded-2xl border border-teal-200 bg-teal-50/60 p-5">
+              <div className="mt-6 flex items-start gap-3 rounded-2xl border border-teal-200 bg-teal-50 dark:border-teal-900/50 dark:bg-teal-950/30/60 p-5 dark:border-teal-900/50 dark:bg-teal-950/20">
                 <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-600 text-white">
                   <Sparkles className="h-3.5 w-3.5" />
                 </div>

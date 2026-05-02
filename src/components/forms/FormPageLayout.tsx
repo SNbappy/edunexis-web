@@ -126,7 +126,7 @@ export default function FormPageLayout({
                       type="button"
                       onClick={() => setMobilePreviewOpen(false)}
                       aria-label="Close preview"
-                      className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-stone-100"
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-stone-100 dark:hover:bg-stone-900"
                     >
                       <X className="h-4 w-4" />
                     </button>

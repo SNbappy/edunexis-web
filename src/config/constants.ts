@@ -1,4 +1,4 @@
-// ----------------- API -----------------
+﻿// ----------------- API -----------------
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000/api"
 
 // ----------------- App Info -----------------
@@ -21,6 +21,8 @@ export const ROUTES = {
   LOGIN:             "/login",
   REGISTER:          "/register",
   VERIFY_EMAIL:      "/verify-email",
+  FORGOT_PASSWORD:   "/forgot-password",
+  RESET_PASSWORD:    "/reset-password",
   DASHBOARD:         "/dashboard",
   COURSES:           "/courses",
   COURSE_CREATE:     "/courses/create",
@@ -62,18 +64,88 @@ export const ACADEMIC_SESSIONS = [
 ]
 
 // ----------------- Academic -----------------
-export const DEPARTMENTS = [
-  "Computer Science & Engineering",
-  "Electrical & Electronic Engineering",
-  "Civil Engineering",
-  "Mechanical Engineering",
-  "Business Administration",
-  "English",
-  "Mathematics",
-  "Physics",
-  "Chemistry",
-  "Other",
+export const DEPARTMENT_GROUPS = [
+  {
+    label: "Faculty of Engineering and Technology",
+    options: [
+      { value: "Computer Science and Engineering", label: "Computer Science and Engineering" },
+      { value: "Industrial and Production Engineering", label: "Industrial and Production Engineering" },
+      { value: "Petroleum and Mining Engineering", label: "Petroleum and Mining Engineering" },
+      { value: "Chemical Engineering", label: "Chemical Engineering" },
+      { value: "Electrical and Electronic Engineering", label: "Electrical and Electronic Engineering" },
+      { value: "Biomedical Engineering", label: "Biomedical Engineering" },
+      { value: "Textile Engineering", label: "Textile Engineering" },
+    ],
+  },
+  {
+    label: "Faculty of Biological Science and Technology",
+    options: [
+      { value: "Microbiology", label: "Microbiology" },
+      { value: "Fisheries and Marine Bioscience", label: "Fisheries and Marine Bioscience" },
+      { value: "Genetic Engineering and Biotechnology", label: "Genetic Engineering and Biotechnology" },
+      { value: "Pharmacy", label: "Pharmacy" },
+      { value: "Biochemistry and Molecular Biology", label: "Biochemistry and Molecular Biology" },
+    ],
+  },
+  {
+    label: "Faculty of Applied Science and Technology",
+    options: [
+      { value: "Environmental Science and Technology", label: "Environmental Science and Technology" },
+      { value: "Nutrition and Food Technology", label: "Nutrition and Food Technology" },
+      { value: "Food Engineering", label: "Food Engineering" },
+      { value: "Climate and Disaster Management", label: "Climate and Disaster Management" },
+    ],
+  },
+  {
+    label: "Faculty of Health Science",
+    options: [
+      { value: "Physical Education and Sports Science", label: "Physical Education and Sports Science" },
+      { value: "Physiotherapy and Rehabilitation", label: "Physiotherapy and Rehabilitation" },
+      { value: "Nursing and Health Science", label: "Nursing and Health Science" },
+    ],
+  },
+  {
+    label: "Faculty of Arts and Social Science",
+    options: [
+      { value: "English", label: "English" },
+    ],
+  },
+  {
+    label: "Faculty of Science",
+    options: [
+      { value: "Physics", label: "Physics" },
+      { value: "Chemistry", label: "Chemistry" },
+      { value: "Mathematics", label: "Mathematics" },
+      { value: "Applied Statistics and Data Science", label: "Applied Statistics and Data Science" },
+    ],
+  },
+  {
+    label: "Faculty of Business Studies",
+    options: [
+      { value: "Accounting and Information Systems", label: "Accounting and Information Systems" },
+      { value: "Management", label: "Management" },
+      { value: "Finance and Banking", label: "Finance and Banking" },
+      { value: "Marketing", label: "Marketing" },
+    ],
+  },
+  {
+    label: "Faculty of Veterinary Medicine",
+    options: [
+      { value: "Medicine, Surgery and Theriogenology", label: "Medicine, Surgery and Theriogenology" },
+      { value: "Microbiology and Hygiene", label: "Microbiology and Hygiene" },
+      { value: "Anatomy and Histology", label: "Anatomy and Histology" },
+      { value: "Pharmacology", label: "Pharmacology" },
+      { value: "Physiology and Biochemistry", label: "Physiology and Biochemistry" },
+      { value: "Animal Breeding and Genetics", label: "Animal Breeding and Genetics" },
+      { value: "Dairy and Poultry Science", label: "Dairy and Poultry Science" },
+      { value: "Pathology and Parasitology", label: "Pathology and Parasitology" },
+      { value: "Animal Science and Nutrition", label: "Animal Science and Nutrition" },
+      { value: "Agricultural Economics", label: "Agricultural Economics" },
+    ],
+  },
 ]
+
+export const DEPARTMENTS = DEPARTMENT_GROUPS.flatMap(g => g.options.map(o => o.value))
 
 export const YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year"]
 

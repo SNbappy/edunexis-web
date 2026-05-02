@@ -34,7 +34,7 @@ export default function MiniCourseCardPreview({
   const isLab = courseType === "Lab"
   const TypeIcon = isLab ? FlaskConical : BookOpen
   const accentClass = isLab ? "bg-amber-500" : "bg-teal-500"
-  const accentBg    = isLab ? "bg-amber-50"  : "bg-teal-50"
+  const accentBg    = isLab ? "bg-amber-50 dark:bg-amber-950/30"  : "bg-teal-50 dark:bg-teal-950/30"
   const accentText  = isLab ? "text-amber-700" : "text-teal-700"
 
   const displayTitle = title && title.trim().length > 0 ? title : "Course title"

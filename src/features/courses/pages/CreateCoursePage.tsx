@@ -20,7 +20,7 @@ import LivePreviewPanel from "@/components/forms/LivePreviewPanel"
 import { ActiveCourseCard } from "../components/CourseCard"
 
 import {
-  DEPARTMENTS, YEARS, SEMESTERS, ACADEMIC_SESSIONS,
+  DEPARTMENT_GROUPS, YEARS, SEMESTERS, ACADEMIC_SESSIONS,
 } from "@/config/constants"
 import { useAuthStore } from "@/store/authStore"
 import { useCourses } from "../hooks/useCourses"
@@ -330,7 +330,7 @@ export default function CreateCoursePage() {
                     <Select
                       {...register("department")}
                       placeholder="Select department"
-                      options={DEPARTMENTS.map(d => ({ value: d, label: d }))}
+                      optionGroups={DEPARTMENT_GROUPS}
                     />
                     {errors.department?.message && (
                       <p className="mt-1.5 text-[11.5px] font-semibold text-red-600">
@@ -432,7 +432,7 @@ export default function CreateCoursePage() {
                 </div>
               </FormSection>
 
-              <div className="mt-6 rounded-2xl border border-teal-200 bg-teal-50/60 p-5">
+              <div className="mt-6 rounded-2xl border border-teal-200 bg-teal-50 dark:border-teal-900/50 dark:bg-teal-950/30/60 p-5 dark:border-teal-900/50 dark:bg-teal-950/20">
                 <p className="text-[12px] font-bold uppercase tracking-widest text-teal-700">
                   Ready to launch
                 </p>

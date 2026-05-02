@@ -100,9 +100,15 @@ export default function VerifyEmailPage() {
     inputsRef.current[lastFilled]?.focus()
   }
 
+  const verifyingRef = useRef(false)
+
   const verify = async (codeOverride?: string) => {
     const code = codeOverride ?? otp
     if (code.length !== 6 || !/^\d{6}$/.test(code)) return
+
+    // Guard against double-submit (StrictMode double-fire, manual click after auto-submit, etc.)
+    if (verifyingRef.current) return
+    verifyingRef.current = true
 
     setVerifying(true)
     setShowOverlay(false)
@@ -110,6 +116,7 @@ export default function VerifyEmailPage() {
 
     try {
       const res = await authService.verifyEmail({ email, otp: code })
+      console.log("[VERIFY] response:", res)
 
       if (!res.success) {
         toast.error(res.message || "Invalid code. Please try again.")
@@ -134,6 +141,11 @@ export default function VerifyEmailPage() {
         navigate(ROUTES.DASHBOARD)
       }
     } catch (err: unknown) {
+      console.error("[VERIFY] caught error:", err)
+      if (axios.isAxiosError(err)) {
+        console.error("[VERIFY] axios response status:", err.response?.status)
+        console.error("[VERIFY] axios response data:", err.response?.data)
+      }
       let msg = "Verification failed. Please try again."
       if (axios.isAxiosError(err)) {
         msg = err.response?.data?.message ?? msg
@@ -145,16 +157,12 @@ export default function VerifyEmailPage() {
       window.clearTimeout(overlayTimer)
       setVerifying(false)
       setShowOverlay(false)
+      verifyingRef.current = false
     }
   }
 
-  // Auto-submit when all 6 digits filled
-  useEffect(() => {
-    if (isComplete && !verifying) {
-      verify(otp)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isComplete])
+  // Auto-submit removed: user explicitly clicks "Verify and continue".
+  // Avoids double-submit and gives user a moment to review the code.
 
   const resend = async () => {
     if (resendIn > 0 || resending) return
@@ -232,7 +240,7 @@ export default function VerifyEmailPage() {
       </aside>
 
       {/* RIGHT — OTP form */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-10 bg-stone-50">
+      <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-10 bg-muted">
         <div className="w-full max-w-[400px] space-y-7">
           <div className="lg:hidden flex items-center gap-2.5">
             <BrandMark className="h-9 w-9 text-teal-600" />
@@ -284,7 +292,7 @@ export default function VerifyEmailPage() {
                     "h-14 w-12 sm:h-16 sm:w-14 rounded-xl border-2 bg-white text-center font-display text-2xl font-bold text-stone-900 outline-none transition-all " +
                     (d
                       ? "border-teal-600 shadow-sm ring-2 ring-teal-600/15"
-                      : "border-stone-200 focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20")
+                      : "border-stone-200 focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 dark:border-stone-800")
                   }
                 />
               ))}
@@ -304,7 +312,7 @@ export default function VerifyEmailPage() {
           </div>
 
           {/* Resend */}
-          <div className="rounded-xl border border-stone-200 bg-white p-4">
+          <div className="rounded-xl border border-stone-200 bg-white p-4 dark:border-stone-800 dark:bg-card">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <p className="text-[12.5px] font-semibold text-stone-900">

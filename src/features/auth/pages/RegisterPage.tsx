@@ -71,7 +71,7 @@ function PasswordStrength({ password }: { password: string }) {
             key={i}
             className={cn(
               "flex-1 h-1 rounded-full transition-colors",
-              i < score ? barColor : "bg-stone-200",
+              i < score ? barColor : "bg-stone-200 dark:bg-stone-800",
             )}
           />
         ))}
@@ -202,7 +202,7 @@ export default function RegisterPage() {
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-10 bg-stone-50 overflow-y-auto">
+      <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-10 bg-muted overflow-y-auto">
         <div className="w-full max-w-[400px] space-y-6 py-6">
           <div className="lg:hidden flex items-center gap-2.5">
             <BrandMark className="h-9 w-9 text-teal-600" />

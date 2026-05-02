@@ -66,7 +66,7 @@ export default function SecurityPage() {
     <div className="space-y-6">
       <section className="rounded-2xl border border-border bg-card p-6 shadow-sm ring-1 ring-stone-200/50 dark:ring-white/5 sm:p-7">
         <header className="mb-5 flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-teal-200 bg-teal-50 text-teal-600 dark:border-teal-800/50 dark:bg-teal-950/40 dark:text-teal-400">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-teal-200 bg-teal-50 text-teal-600 dark:bg-teal-950/30 dark:text-teal-300 dark:border-teal-900/50 dark:bg-teal-950/30 dark:text-teal-300 dark:border-teal-800/50 dark:bg-teal-950/40 dark:text-teal-400">
             <Lock className="h-4 w-4" strokeWidth={2.25} />
           </div>
           <div className="min-w-0 flex-1">

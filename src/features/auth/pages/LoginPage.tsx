@@ -100,7 +100,7 @@ export default function LoginPage() {
       </aside>
 
       {/* RIGHT — Sign-in form */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-10 bg-stone-50">
+      <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-10 bg-muted">
         <div className="w-full max-w-[380px] space-y-7">
           <div className="lg:hidden flex items-center gap-2.5">
             <BrandMark className="h-9 w-9 text-teal-600" />

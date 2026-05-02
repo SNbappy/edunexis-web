@@ -19,7 +19,7 @@ import FormStepper from "@/components/forms/FormStepper"
 import LivePreviewPanel from "@/components/forms/LivePreviewPanel"
 import BrandLoader from "@/components/ui/BrandLoader"
 
-import { DEPARTMENTS } from "@/config/constants"
+import { DEPARTMENT_GROUPS } from "@/config/constants"
 import { useAuthStore } from "@/store/authStore"
 import { useProfile } from "../hooks/useProfile"
 import { isTeacher } from "@/utils/roleGuard"
@@ -352,7 +352,7 @@ export default function EditProfilePage() {
                     <Select
                       {...register("department")}
                       placeholder="Select department"
-                      options={DEPARTMENTS.map(d => ({ value: d, label: d }))}
+                      optionGroups={DEPARTMENT_GROUPS}
                     />
                     {errors.department?.message ? (
                       <p className="mt-1.5 text-[11.5px] font-semibold text-red-600">
@@ -551,7 +551,7 @@ export default function EditProfilePage() {
                 />
               </FormSection>
 
-              <div className="mt-6 rounded-2xl border border-teal-200 bg-teal-50/60 p-5 dark:border-teal-800/50 dark:bg-teal-950/30">
+              <div className="mt-6 rounded-2xl border border-teal-200 bg-teal-50 dark:border-teal-900/50 dark:bg-teal-950/30/60 p-5 dark:border-teal-900/50 dark:bg-teal-950/20 dark:border-teal-800/50 dark:bg-teal-950/30">
                 <p className="text-[12px] font-bold uppercase tracking-widest text-teal-700 dark:text-teal-400">
                   Ready to save
                 </p>

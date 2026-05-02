@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+﻿import { useMemo } from "react"
 import { motion } from "framer-motion"
 import { ClipboardList } from "lucide-react"
 import AssignmentCard from "./AssignmentCard"
@@ -103,7 +103,7 @@ export default function AssignmentsList({
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-muted/30 px-6 py-16 text-center"
       >
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-teal-200 bg-teal-50 dark:border-teal-800 dark:bg-teal-950/50">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-teal-200 bg-teal-50 dark:border-teal-900/50 dark:bg-teal-950/30 dark:border-teal-800 dark:bg-teal-950/50">
           <ClipboardList className="h-7 w-7 text-teal-600 dark:text-teal-400" strokeWidth={1.5} />
         </div>
         <h3 className="mt-5 font-display text-[16px] font-bold text-foreground">

@@ -261,7 +261,7 @@ export default function CourseHeader({
                           <button
                             type="button"
                             onClick={() => { setMenuOpen(false); onUnarchive?.() }}
-                            className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium text-foreground transition-colors hover:bg-stone-50"
+                            className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium text-foreground transition-colors hover:bg-muted"
                           >
                             <ArchiveRestore className="h-4 w-4 text-teal-600" />
                             Restore course
@@ -270,7 +270,7 @@ export default function CourseHeader({
                           <button
                             type="button"
                             onClick={() => { setMenuOpen(false); onArchive?.() }}
-                            className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium text-foreground transition-colors hover:bg-stone-50"
+                            className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium text-foreground transition-colors hover:bg-muted"
                           >
                             <Archive className="h-4 w-4 text-stone-600" />
                             Archive course

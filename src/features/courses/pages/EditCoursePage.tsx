@@ -18,7 +18,7 @@ import LivePreviewPanel from "@/components/forms/LivePreviewPanel"
 import { ActiveCourseCard } from "../components/CourseCard"
 
 import {
-  DEPARTMENTS, YEARS, SEMESTERS, ACADEMIC_SESSIONS,
+  DEPARTMENT_GROUPS, YEARS, SEMESTERS, ACADEMIC_SESSIONS,
 } from "@/config/constants"
 import { useAuthStore } from "@/store/authStore"
 import { courseService } from "../services/courseService"
@@ -276,7 +276,7 @@ export default function EditCoursePage() {
               </label>
               <Select
                 {...register("department")}
-                options={DEPARTMENTS.map(d => ({ value: d, label: d }))}
+                optionGroups={DEPARTMENT_GROUPS}
               />
               {errors.department?.message && (
                 <p className="mt-1.5 text-[11.5px] font-semibold text-red-600">

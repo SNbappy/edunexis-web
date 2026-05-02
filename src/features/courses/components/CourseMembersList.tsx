@@ -230,7 +230,7 @@ export default function CourseMembersList({ courseId, course }: CourseMembersLis
                 role: "Teacher",
               })}
               whileHover={{ y: -1 }}
-              className="flex cursor-pointer items-center gap-3 rounded-2xl border border-teal-200 bg-teal-50 p-4 transition-shadow hover:shadow-md dark:border-teal-800 dark:bg-teal-950/40"
+              className="flex cursor-pointer items-center gap-3 rounded-2xl border border-teal-200 bg-teal-50 dark:border-teal-900/50 dark:bg-teal-950/30 p-4 transition-shadow hover:shadow-md dark:border-teal-800 dark:bg-teal-950/40"
             >
               <div className="relative shrink-0">
                 <div className="h-10 w-10 overflow-hidden rounded-xl border-2 border-teal-300 dark:border-teal-700">

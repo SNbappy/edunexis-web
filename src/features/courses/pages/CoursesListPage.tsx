@@ -118,7 +118,7 @@ export default function CoursesListPage() {
             className="h-11 w-full rounded-xl border border-border bg-card pl-11 pr-16 text-sm text-foreground placeholder:text-muted-foreground transition-all focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/30"
           />
           {!q && (
-            <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-border bg-stone-50 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground">
+            <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground">
               /
             </kbd>
           )}
@@ -219,7 +219,7 @@ function FilterChip({
       className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-all ${
         active
           ? "bg-teal-600 text-white"
-          : "bg-stone-100 text-stone-700 hover:bg-stone-200"
+          : "bg-stone-100 text-stone-700 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
       }`}
     >
       {children}
@@ -247,7 +247,7 @@ function EmptyState({
 }) {
   if (hasSearch) {
     return (
-      <div className="rounded-2xl border border-dashed border-border bg-stone-50/50 py-16 text-center">
+      <div className="rounded-2xl border border-dashed border-border bg-muted/30 py-16 text-center">
         <Search className="mx-auto h-10 w-10 text-muted-foreground" />
         <p className="mt-4 font-semibold text-foreground">No courses match your search</p>
         <p className="mt-1 text-sm text-muted-foreground">Try different keywords.</p>
@@ -257,7 +257,7 @@ function EmptyState({
 
   if (filter === "archived") {
     return (
-      <div className="rounded-2xl border border-dashed border-border bg-stone-50/50 py-16 text-center">
+      <div className="rounded-2xl border border-dashed border-border bg-muted/30 py-16 text-center">
         <ArchiveIcon className="mx-auto h-10 w-10 text-muted-foreground" />
         <p className="mt-4 font-semibold text-foreground">No archived courses</p>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -269,7 +269,7 @@ function EmptyState({
 
   // filter === "active", no courses
   return (
-    <div className="rounded-2xl border border-dashed border-border bg-stone-50/50 py-16 text-center">
+    <div className="rounded-2xl border border-dashed border-border bg-muted/30 py-16 text-center">
       {teacher ? (
         <>
           <BookOpen className="mx-auto h-10 w-10 text-muted-foreground" />

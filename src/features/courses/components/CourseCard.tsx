@@ -66,7 +66,7 @@ export function ActiveCourseCard({ course }: ActiveCardProps) {
           </div>
 
           {course.isArchived && (
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-stone-600">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-stone-600 dark:bg-stone-800 dark:text-stone-300">
               <Archive className="h-3 w-3" />
               Archived
             </span>
@@ -82,7 +82,7 @@ export function ActiveCourseCard({ course }: ActiveCardProps) {
               className="h-6 w-6 shrink-0 rounded-full object-cover"
             />
           ) : (
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-stone-100 text-[11px] font-bold text-stone-600">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-stone-100 text-[11px] font-bold text-stone-600 dark:bg-stone-800 dark:text-stone-300">
               {course.teacherName.charAt(0).toUpperCase()}
             </div>
           )}
@@ -139,7 +139,7 @@ export function PendingCourseCard({ course }: PendingCardProps) {
             </h3>
           </div>
 
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700">
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-300">
             <Clock className="h-3 w-3" />
             Pending
           </span>
@@ -153,7 +153,7 @@ export function PendingCourseCard({ course }: PendingCardProps) {
               className="h-6 w-6 shrink-0 rounded-full object-cover"
             />
           ) : (
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-stone-100 text-[11px] font-bold text-stone-600">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-stone-100 text-[11px] font-bold text-stone-600 dark:bg-stone-800 dark:text-stone-300">
               {course.teacherName.charAt(0).toUpperCase()}
             </div>
           )}
@@ -201,7 +201,7 @@ export function RejectedCourseCard({
         onClick={() => onDismiss(course.requestId)}
         disabled={isDismissing}
         aria-label="Dismiss rejected request"
-        className="absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-stone-100 text-stone-600 opacity-0 transition-all hover:bg-stone-200 hover:text-stone-900 group-hover:opacity-100 disabled:opacity-40"
+        className="absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-stone-100 text-stone-600 opacity-0 transition-all hover:bg-stone-200 hover:text-stone-900 group-hover:opacity-100 disabled:opacity-40 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700 dark:hover:text-stone-100"
       >
         <X className="h-3.5 w-3.5" />
       </button>
@@ -217,7 +217,7 @@ export function RejectedCourseCard({
             </h3>
           </div>
 
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-red-300 bg-red-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-700">
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-red-300 bg-red-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-700 dark:border-red-800/60 dark:bg-red-950/30 dark:text-red-300">
             <XCircle className="h-3 w-3" />
             Rejected
           </span>
@@ -231,7 +231,7 @@ export function RejectedCourseCard({
               className="h-6 w-6 shrink-0 rounded-full object-cover"
             />
           ) : (
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-stone-100 text-[11px] font-bold text-stone-600">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-stone-100 text-[11px] font-bold text-stone-600 dark:bg-stone-800 dark:text-stone-300">
               {course.teacherName.charAt(0).toUpperCase()}
             </div>
           )}

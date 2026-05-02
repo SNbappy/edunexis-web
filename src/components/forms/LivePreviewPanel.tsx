@@ -12,7 +12,7 @@ export default function LivePreviewPanel({ children, caption }: LivePreviewPanel
       <motion.div
         layout
         transition={{ layout: { duration: 0.2, ease: "easeOut" } }}
-        className="rounded-2xl border border-border bg-stone-50/60 p-4"
+        className="rounded-2xl border border-border bg-muted/60 p-4"
       >
         {children}
       </motion.div>

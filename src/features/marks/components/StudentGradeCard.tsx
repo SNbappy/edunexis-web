@@ -1,3 +1,4 @@
+﻿import { FileText, ClipboardList, Mic, CalendarDays } from "lucide-react"
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Search, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react'
@@ -102,7 +103,7 @@ export default function GradebookTable({ gradebook }: Props) {
                                 {/* Assignments */}
                                 {allAssignments.map((a) => (
                                     <th key={a.id} className="text-center px-3 py-3 font-medium text-muted-foreground min-w-[80px] whitespace-nowrap" title={a.title}>
-                                        <div className="text-xs">📝</div>
+                                        <FileText className="mx-auto h-3.5 w-3.5 text-muted-foreground" />
                                         <div className="text-xs truncate max-w-[72px]">{a.title.split(' ').slice(0, 2).join(' ')}</div>
                                         <div className="text-xs text-muted-foreground/70">/{a.totalMarks}</div>
                                     </th>
@@ -111,7 +112,7 @@ export default function GradebookTable({ gradebook }: Props) {
                                 {/* CTs */}
                                 {allCTs.map((ct) => (
                                     <th key={ct.id} className="text-center px-3 py-3 font-medium text-muted-foreground min-w-[80px] whitespace-nowrap" title={ct.title}>
-                                        <div className="text-xs">🧾</div>
+                                        <ClipboardList className="mx-auto h-3.5 w-3.5 text-muted-foreground" />
                                         <div className="text-xs truncate max-w-[72px]">{ct.title.split(' ').slice(0, 2).join(' ')}</div>
                                         <div className="text-xs text-muted-foreground/70">/{ct.totalMarks}</div>
                                     </th>
@@ -120,7 +121,7 @@ export default function GradebookTable({ gradebook }: Props) {
                                 {/* Presentations */}
                                 {allPresentations.map((p) => (
                                     <th key={p.id} className="text-center px-3 py-3 font-medium text-muted-foreground min-w-[80px] whitespace-nowrap" title={p.title}>
-                                        <div className="text-xs">🎤</div>
+                                        <Mic className="mx-auto h-3.5 w-3.5 text-muted-foreground" />
                                         <div className="text-xs truncate max-w-[72px]">{p.title.split(' ').slice(0, 2).join(' ')}</div>
                                         <div className="text-xs text-muted-foreground/70">/{p.totalMarks}</div>
                                     </th>
@@ -129,7 +130,7 @@ export default function GradebookTable({ gradebook }: Props) {
                                 {/* Attendance */}
                                 <th className="text-center px-3 py-3 font-medium text-muted-foreground min-w-[90px]">
                                     <button className="flex items-center gap-1.5 mx-auto hover:text-primary transition-colors" onClick={() => toggleSort('attendance')}>
-                                        <span className="text-xs">📅 Att.</span>
+                                        <CalendarDays className="h-3.5 w-3.5" /><span className="text-xs">Att.</span>
                                         <SortIcon field="attendance" active={sortField === 'attendance'} dir={sortDir} />
                                     </button>
                                 </th>

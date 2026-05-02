@@ -1,4 +1,4 @@
-import { useState } from "react"
+﻿import { useState } from "react"
 import { motion } from "framer-motion"
 import { Send, FileText, Paperclip, Clock, Award } from "lucide-react"
 import Modal from "@/components/ui/Modal"
@@ -39,7 +39,7 @@ export default function SubmitAssignmentModal({
     <Modal isOpen={isOpen} onClose={handleClose} title="Submit assignment" size="lg">
       <div className="space-y-4">
         {/* Assignment info card */}
-        <div className="space-y-2 rounded-2xl border border-teal-200 bg-teal-50 p-4 dark:border-teal-800 dark:bg-teal-950/40">
+        <div className="space-y-2 rounded-2xl border border-teal-200 bg-teal-50 dark:border-teal-900/50 dark:bg-teal-950/30 p-4 dark:border-teal-800 dark:bg-teal-950/40">
           <p className="font-display text-[13.5px] font-bold text-foreground">
             {assignment.title}
           </p>

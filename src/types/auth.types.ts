@@ -149,3 +149,20 @@ export interface ChangePasswordRequest {
   currentPassword: string
   newPassword:     string
 }
+export interface VerifyEmailOtpRequest {
+  email: string
+  otp:   string
+}
+
+export interface ResendOtpRequest {
+  email: string
+}
+
+export interface ForgotPasswordRequest {
+  email: string
+}
+
+export interface ResetPasswordRequest {
+  token:       string
+  newPassword: string
+}

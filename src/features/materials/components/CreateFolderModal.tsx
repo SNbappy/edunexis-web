@@ -1,4 +1,4 @@
-import InlineSpinner from "@/components/ui/InlineSpinner"
+﻿import InlineSpinner from "@/components/ui/InlineSpinner"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -38,7 +38,7 @@ export default function CreateFolderModal({
           <motion.div
             animate={{ rotate: [0, -8, 8, -4, 4, 0] }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="flex h-16 w-16 items-center justify-center rounded-2xl border border-teal-200 bg-teal-50 dark:border-teal-800 dark:bg-teal-950/50"
+            className="flex h-16 w-16 items-center justify-center rounded-2xl border border-teal-200 bg-teal-50 dark:border-teal-900/50 dark:bg-teal-950/30 dark:border-teal-800 dark:bg-teal-950/50"
           >
             <FolderPlus className="h-7 w-7 text-teal-600 dark:text-teal-400" />
           </motion.div>

@@ -35,7 +35,7 @@ export function useLogin() {
 
       // Email not verified — redirect to verify page (server already sent fresh OTP)
       if (payload.verificationRequired) {
-        toast("Verify your email to continue. We sent a new code.", { icon: "📧" })
+        toast("Verify your email to continue. We sent a new code.")
         const email = payload.pendingEmail ?? data.email
         navigate(ROUTES.VERIFY_EMAIL + "?email=" + encodeURIComponent(email))
         return
