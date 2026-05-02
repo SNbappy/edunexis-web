@@ -1,7 +1,8 @@
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { ClipboardList } from "lucide-react"
+import { ClipboardList, Paperclip, X as XIcon, Upload } from "lucide-react"
 import Modal from "@/components/ui/Modal"
 import Input from "@/components/ui/Input"
 import Button from "@/components/ui/Button"
@@ -15,6 +16,10 @@ const schema = z.object({
   maxMarks: z.coerce.number().min(1).max(1000),
   allowLateSubmission: z.boolean(),
   rubricNotes: z.string().optional(),
+  referenceFile: z
+    .instanceof(File)
+    .optional()
+    .refine(f => !f || f.size <= 10 * 1024 * 1024, "File must be 10 MB or less"),
 })
 type FormData = z.infer<typeof schema>
 
@@ -43,8 +48,9 @@ export default function CreateAssignmentModal({
     },
   })
 
+  const [file, setFile] = useState<File | null>(null)
   const allowLate = watch("allowLateSubmission")
-  const handleClose = () => { reset(); onClose() }
+  const handleClose = () => { reset(); setFile(null); onClose() }
 
   return (
     <Modal
@@ -55,7 +61,7 @@ export default function CreateAssignmentModal({
       scrollable
     >
       <form
-        onSubmit={handleSubmit(d => onSubmit({ ...d, deadline: new Date(d.deadline).toISOString() }))}
+        onSubmit={handleSubmit(d => onSubmit({ ...d, deadline: new Date(d.deadline).toISOString(), referenceFile: file ?? undefined }))}
         className="space-y-4"
       >
         {/* Helper card */}
@@ -143,6 +149,64 @@ export default function CreateAssignmentModal({
             Allow late submission
           </span>
         </label>
+
+        {/* Reference materials (optional) */}
+        <div>
+          <label className="mb-1.5 block text-[13px] font-semibold text-foreground">
+            Reference materials <span className="font-normal text-muted-foreground">(optional)</span>
+          </label>
+
+          {file ? (
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted/40 px-3 py-2.5">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <Paperclip className="h-4 w-4 shrink-0 text-teal-600 dark:text-teal-400" />
+                <div className="min-w-0">
+                  <p className="truncate text-[13px] font-semibold text-foreground">{file.name}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {(file.size / 1024).toFixed(1)} KB
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFile(null)}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+                aria-label="Remove file"
+              >
+                <XIcon className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <label
+              htmlFor="assignment-reference-file"
+              className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-border bg-muted/30 px-4 py-3 transition-colors hover:border-teal-300 hover:bg-teal-50/50 dark:hover:border-teal-700 dark:hover:bg-teal-950/20"
+            >
+              <Upload className="h-4 w-4 text-muted-foreground" />
+              <span className="text-[13px] font-semibold text-foreground">Choose file</span>
+              <span className="text-[12px] text-muted-foreground">PDF, DOCX, ZIP, or images. Max 10 MB.</span>
+            </label>
+          )}
+          <input
+            id="assignment-reference-file"
+            type="file"
+            accept=".pdf,.doc,.docx,.zip,image/*"
+            className="hidden"
+            onChange={e => {
+              const f = e.target.files?.[0]
+              if (f && f.size > 10 * 1024 * 1024) {
+                e.target.value = ""
+                return
+              }
+              setFile(f ?? null)
+              e.target.value = ""
+            }}
+          />
+          {errors.referenceFile?.message ? (
+            <p className="mt-1.5 text-[11.5px] font-semibold text-red-600 dark:text-red-400">
+              {errors.referenceFile.message}
+            </p>
+          ) : null}
+        </div>
 
         <div className="flex gap-3 pt-1">
           <Button type="button" variant="secondary" className="flex-1" onClick={handleClose}>

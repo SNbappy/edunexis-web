@@ -1,4 +1,4 @@
-﻿import { useQuery } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { courseService } from "@/features/courses/services/courseService"
 import { useAuthStore } from "@/store/authStore"
 
@@ -63,9 +63,18 @@ export function useCourseAccess(courseId: string) {
     }
   }
 
-  // No course data and no loading — treat as not-found
+  // No course data: only treat as not-found if the fetch genuinely returned
+  // null/empty. During a background refetch, `course` can be transiently
+  // undefined while data is in flight — fall back to loading in that case
+  // so we don't unmount the page mid-poll.
   if (!course) {
-    return { status: "not-found" as AccessStatus, course: null }
+    if (courseQuery.isFetching) {
+      return { status: "loading" as AccessStatus, course: null }
+    }
+    if (courseQuery.isSuccess && courseQuery.data === null) {
+      return { status: "not-found" as AccessStatus, course: null }
+    }
+    return { status: "loading" as AccessStatus, course: null }
   }
 
   if (isTeacherOrAdmin) {
