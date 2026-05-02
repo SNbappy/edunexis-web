@@ -131,6 +131,7 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
             isSelf={isSelf}
             canSeeContact={canSeeContact}
             onUploadPhoto={isSelf ? own.uploadPhoto : undefined}
+            onRemovePhoto={isSelf ? () => own.removePhoto() : undefined}
             isUploadingPhoto={own.isUploading}
             isRemovingPhoto={own.isRemovingPhoto}
           />

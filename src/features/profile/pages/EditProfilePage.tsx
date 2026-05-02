@@ -6,8 +6,7 @@ import { z } from "zod"
 import { AnimatePresence, motion } from "framer-motion"
 import {
   User as UserIcon, FileText, Microscope, LinkIcon,
-  ChevronRight, ChevronLeft,
-} from "lucide-react"
+  ChevronRight, ChevronLeft, Camera, Upload, Trash2} from "lucide-react"
 import toast from "react-hot-toast"
 
 import Button from "@/components/ui/Button"
@@ -17,6 +16,8 @@ import FormSection from "@/components/forms/FormSection"
 import FormField from "@/components/forms/FormField"
 import FormStepper from "@/components/forms/FormStepper"
 import LivePreviewPanel from "@/components/forms/LivePreviewPanel"
+import Avatar from "@/components/ui/Avatar"
+import InlineSpinner from "@/components/ui/InlineSpinner"
 import BrandLoader from "@/components/ui/BrandLoader"
 
 import { DEPARTMENT_GROUPS } from "@/config/constants"
@@ -330,6 +331,70 @@ export default function EditProfilePage() {
               exit={{ opacity: 0, x: -12 }}
               transition={{ duration: 0.2 }}
             >
+              <FormSection
+                icon={Camera}
+                title="Profile photo"
+                subtitle="A clear headshot helps students and colleagues recognise you."
+                tone="stone"
+                complete={Boolean(own.profile.profilePhotoUrl)}
+              >
+                <div className="flex items-center gap-5">
+                  <div className="relative h-20 w-20 shrink-0">
+                    {(own.isUploading || own.isRemovingPhoto) ? (
+                      <div className="flex h-full w-full items-center justify-center rounded-full bg-muted">
+                        <InlineSpinner size={24} className="text-teal-600" />
+                      </div>
+                    ) : (
+                      <Avatar
+                        src={own.profile.profilePhotoUrl}
+                        name={own.profile.fullName ?? "You"}
+                        size="xl"
+                        className="h-20 w-20 text-2xl"
+                      />
+                    )}
+                  </div>
+
+                  <div className="flex flex-1 flex-wrap items-center gap-2">
+                    <label
+                      htmlFor="edit-profile-photo-input"
+                      className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-[13px] font-bold text-white transition-colors hover:bg-teal-700"
+                    >
+                      <Upload className="h-4 w-4" />
+                      {own.profile.profilePhotoUrl ? "Change photo" : "Upload photo"}
+                    </label>
+                    <input
+                      id="edit-profile-photo-input"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={e => {
+                        const f = e.target.files?.[0]
+                        if (f) own.uploadPhoto(f)
+                        e.target.value = ""
+                      }}
+                    />
+
+                    {own.profile.profilePhotoUrl ? (
+                      <button
+                        type="button"
+                        onClick={() => own.removePhoto()}
+                        disabled={own.isRemovingPhoto}
+                        className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-[13px] font-bold text-red-600 transition-colors hover:border-red-300 hover:bg-red-50 disabled:opacity-50 dark:hover:border-red-800/60 dark:hover:bg-red-950/30 dark:text-red-400"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Remove
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+
+                <p className="mt-3 text-[12px] text-muted-foreground">
+                  JPG, PNG, or WebP. Maximum 5 MB.
+                </p>
+              </FormSection>
+
+              <div className="h-6" />
+
               <FormSection
                 icon={UserIcon}
                 title="Identity"

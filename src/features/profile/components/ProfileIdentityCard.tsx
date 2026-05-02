@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { Camera, Building2, Shield, Mail, Phone, MapPin, Clock, BookOpen, FileText } from "lucide-react"
+ï»¿import { useState } from "react"
+import { Building2, Shield, Mail, Phone, MapPin, Clock, BookOpen, FileText } from "lucide-react"
 import Avatar from "@/components/ui/Avatar"
 import InlineSpinner from "@/components/ui/InlineSpinner"
 import { isTeacher } from "@/utils/roleGuard"
@@ -12,6 +12,7 @@ interface ProfileIdentityCardProps {
   isSelf: boolean
   canSeeContact: boolean
   onUploadPhoto?: (file: File) => void
+  onRemovePhoto?: () => void
   isUploadingPhoto?: boolean
   isRemovingPhoto?: boolean
 }
@@ -19,7 +20,7 @@ interface ProfileIdentityCardProps {
 export default function ProfileIdentityCard(props: ProfileIdentityCardProps) {
   const {
     profile: p, isSelf, canSeeContact,
-    onUploadPhoto, isUploadingPhoto, isRemovingPhoto,
+    onUploadPhoto, onRemovePhoto, isUploadingPhoto, isRemovingPhoto,
   } = props
 
   const teacher = isTeacher(p.role)
@@ -39,18 +40,10 @@ export default function ProfileIdentityCard(props: ProfileIdentityCardProps) {
     if (p.email) window.location.href = "mailto:" + p.email
   }
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file && onUploadPhoto) onUploadPhoto(file)
-    e.target.value = ""
-  }
-
-  const fileInputId = "profile-photo-upload-" + p.userId
-
   return (
     <>
-      <aside className="overflow-hidden rounded-2xl border border-border bg-card">
-        {/* Photo — square, fills card width */}
+      <aside className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm ring-1 ring-stone-200/50 dark:ring-white/5">
+        {/* Photo ï¿½ square, fills card width */}
         <div className="relative aspect-square w-full overflow-hidden bg-muted">
           {(isUploadingPhoto || isRemovingPhoto) ? (
             <div className="flex h-full w-full items-center justify-center">
@@ -75,42 +68,11 @@ export default function ProfileIdentityCard(props: ProfileIdentityCardProps) {
             </button>
           )}
 
-          {/* Camera button (self only) */}
-          {isSelf ? (
-            <>
-              <label
-                htmlFor={fileInputId}
-                className="absolute bottom-3 right-3 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-2 border-card bg-teal-600 text-white shadow-md transition-colors hover:bg-teal-700"
-                aria-label="Change profile photo"
-              >
-                <Camera className="h-4 w-4" />
-              </label>
-              <input
-                id={fileInputId}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handlePhotoChange}
-              />
-            </>
-          ) : null}
-
-          {/* Role pill — top left of photo */}
-          <div className="absolute left-3 top-3">
-            <span className={
-              "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider backdrop-blur-sm " +
-              (teacher
-                ? "bg-teal-600/90 text-white"
-                : "bg-blue-600/90 text-white")
-            }>
-              {teacher ? "Teacher" : "Student"}
-            </span>
-          </div>
         </div>
 
         {/* Identity body */}
         <div className="p-5">
-          <h2 className="font-display text-xl font-bold leading-tight tracking-tight text-foreground">
+          <h2 className="font-display text-xl font-extrabold leading-tight tracking-tight text-foreground">
             {p.fullName}
           </h2>
 
@@ -146,7 +108,7 @@ export default function ProfileIdentityCard(props: ProfileIdentityCardProps) {
             ) : null}
           </div>
 
-          {/* Stats — inline badges */}
+          {/* Stats ï¿½ inline badges */}
           {(totalCourses > 0 || p.publications.length > 0) ? (
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {totalCourses > 0 ? (
@@ -224,6 +186,11 @@ export default function ProfileIdentityCard(props: ProfileIdentityCardProps) {
         onClose={() => setAvatarOpen(false)}
         src={p.profilePhotoUrl}
         name={p.fullName}
+        isSelf={isSelf}
+        onUpload={onUploadPhoto}
+        onRemove={onRemovePhoto}
+        isUploading={isUploadingPhoto}
+        isRemoving={isRemovingPhoto}
       />
     </>
   )
