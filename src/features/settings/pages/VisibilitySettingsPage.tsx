@@ -103,13 +103,22 @@ export default function VisibilitySettingsPage() {
             <div className="flex items-center gap-2">
               {isPublic ? <Globe className="h-4 w-4 text-teal-600" /> : <Lock className="h-4 w-4 text-muted-foreground" />}
               <span className="font-display text-[14px] font-bold text-foreground">
-                {isPublic ? "Profile is public" : "Profile is private"}
+                Show profile publicly
               </span>
+              {isPublic ? (
+                <span className="rounded-full bg-teal-100 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-teal-700 dark:bg-teal-950/60 dark:text-teal-300">
+                  Public
+                </span>
+              ) : (
+                <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-stone-600 dark:bg-stone-900/60 dark:text-stone-400">
+                  Private
+                </span>
+              )}
             </div>
             <p className="mt-1.5 text-[12.5px] text-muted-foreground">
               {isPublic
-                ? "Anyone with the URL can view your bio, research interests, education, and publications. Phone and email stay private."
-                : "Only course members can view your profile."}
+                ? "Anyone can view your bio, research interests, education, and publications at the URL below. Phone and email stay private."
+                : "Turn this on to be listed in the public faculty directory and have a shareable profile URL."}
             </p>
           </div>
           <button
