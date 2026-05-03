@@ -33,13 +33,11 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
   const own = useProfile()
   const pub = usePublicProfile(isOwnProfile ? user?.id : userId)
 
-  const isLoading = isOwnProfile ? own.isLoading : pub.isLoading
-  const isFetched = isOwnProfile ? own.isFetched : pub.isFetched
-  // For own profile: useProfile returns the profile DTO directly. Convert it
-  // to the shared PublicProfileDto shape used by the rest of this page.
-  const p: PublicProfileDto | null = isOwnProfile
-    ? (own.data ? ({ ...own.data, viewerRelation: "Self" } as unknown as PublicProfileDto) : null)
-    : (pub.data ?? null)
+  // Always render from the public profile DTO (it includes publications + education
+  // fields the page needs). useProfile is still used for mutations on own profile.
+  const isLoading = pub.isLoading
+  const isFetched = pub.isFetched
+  const p: PublicProfileDto | null = pub.data ?? null
 
   const [activeTab, setActiveTab] = useState<ProfileTabKey>("overview")
   const [eduModal, setEduModal] = useState<{ open: boolean; item?: UserEducationDto | null }>({ open: false })
