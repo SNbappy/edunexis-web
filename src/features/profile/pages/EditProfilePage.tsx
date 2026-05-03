@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -42,7 +42,7 @@ function buildSchema(teacher: boolean) {
       : z.string().optional(),
     headline: z.string().max(160, "Keep headline under 160 characters").optional(),
 
-    bio: z.string().max(1000, "Bio must be under 1000 characters").optional(),
+    bio: z.string().max(2000, "Bio must be under 2000 characters").optional(),
 
     officeLocation: z.string().max(120).optional(),
     officeHours: z.string().max(160).optional(),

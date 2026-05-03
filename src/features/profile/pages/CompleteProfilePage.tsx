@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -33,7 +33,7 @@ function buildSchema(teacher: boolean) {
       ? z.string().trim().min(2, "Student ID is required for students")
       : z.string().optional(),
     phoneNumber: z.string().optional(),
-    bio: z.string().max(500, "Bio must be under 500 characters").optional(),
+    bio: z.string().max(2000, "Bio must be under 2000 characters").optional(),
     linkedInUrl: z.string().optional(),
     gitHubUrl: z.string().optional(),
     twitterUrl: z.string().optional(),
@@ -385,7 +385,7 @@ export default function CompleteProfilePage() {
                     </p>
                   )}
                   <p className="mt-1.5 text-[11.5px] text-muted-foreground">
-                    {(values.bio?.length ?? 0)} / 500 characters
+                    {(values.bio?.length ?? 0)} / 2000 characters
                   </p>
                 </div>
               </FormSection>
