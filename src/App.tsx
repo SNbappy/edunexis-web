@@ -36,6 +36,7 @@ const UserProfilePage = lazy(() => import("@/features/profile/pages/UserProfileP
 const UserCoursesPage = lazy(() => import("@/features/profile/pages/UserCoursesPage"))
 const HomePage = lazy(() => import("@/features/public/pages/HomePage"))
 const FacultyDirectoryPage = lazy(() => import("@/features/public/pages/FacultyDirectoryPage"))
+const FacultyDetailPage = lazy(() => import("@/features/public/pages/FacultyDetailPage"))
 const AboutPage = lazy(() => import("@/features/public/pages/AboutPage"))
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"))
 const UnauthorizedPage = lazy(() => import("@/pages/UnauthorizedPage"))
@@ -49,6 +50,7 @@ export default function App() {
           <Route element={<PublicLayout />}>
             <Route index element={<HomePage />} />
             <Route path="/faculty" element={<FacultyDirectoryPage />} />
+            <Route path="/faculty/:slug" element={<FacultyDetailPage />} />
             <Route path="/about" element={<AboutPage />} />
           </Route>
         </Route>

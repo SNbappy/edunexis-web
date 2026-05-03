@@ -21,23 +21,24 @@ export default function FacultyDirectoryPage() {
     )
   }, [faculty, searchQuery])
 
+  // Hide department chips when only 0 or 1 departments — avoids looking like
+  // we're prioritizing one specific department.
+  const showChips = (departments?.length ?? 0) > 1
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-      {/* Hero */}
-      <div className="mx-auto max-w-3xl text-center">
-        <p className="text-[12px] font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400">
-          Faculty Directory
-        </p>
-        <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
-          Faculty using EduNexis
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+      {/* Compact hero */}
+      <div className="mx-auto max-w-2xl text-center">
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          Faculty
         </h1>
-        <p className="mt-4 text-[14.5px] leading-relaxed text-muted-foreground sm:text-base">
-          Discover teachers across departments running their courses with EduNexis.
+        <p className="mt-1.5 text-[13px] text-muted-foreground sm:text-[14px]">
+          Teachers across departments running their courses with EduNexis.
         </p>
       </div>
 
-      {/* Search */}
-      <div className="mx-auto mt-10 max-w-xl">
+      {/* Search + filter row */}
+      <div className="mx-auto mt-6 max-w-2xl">
         <div className="relative">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
@@ -50,28 +51,28 @@ export default function FacultyDirectoryPage() {
         </div>
       </div>
 
-      {/* Department chips */}
-      {departments && departments.length > 0 ? (
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
+      {/* Chips — only when 2+ departments */}
+      {showChips ? (
+        <div className="mx-auto mt-4 flex max-w-3xl flex-wrap justify-center gap-2">
           <button
             type="button"
             onClick={() => setDepartment(undefined)}
             className={
-              "rounded-full px-4 py-1.5 text-[12px] font-bold transition-colors " +
+              "rounded-full px-3.5 py-1.5 text-[12px] font-bold transition-colors " +
               (!department
                 ? "bg-teal-600 text-white"
                 : "border border-border bg-card text-foreground hover:bg-muted")
             }
           >
-            All departments
+            All
           </button>
-          {departments.map(d => (
+          {departments!.map(d => (
             <button
               key={d}
               type="button"
               onClick={() => setDepartment(d)}
               className={
-                "rounded-full px-4 py-1.5 text-[12px] font-bold transition-colors " +
+                "rounded-full px-3.5 py-1.5 text-[12px] font-bold transition-colors " +
                 (department === d
                   ? "bg-teal-600 text-white"
                   : "border border-border bg-card text-foreground hover:bg-muted")
@@ -84,13 +85,13 @@ export default function FacultyDirectoryPage() {
       ) : null}
 
       {/* Results */}
-      <div className="mt-10">
+      <div className="mt-8">
         {isLoading ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, i) => (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={i}
-                className="h-44 animate-pulse rounded-2xl border border-border bg-card"
+                className="aspect-[3/4] animate-pulse rounded-2xl border border-border bg-card"
               />
             ))}
           </div>
@@ -114,11 +115,11 @@ export default function FacultyDirectoryPage() {
           </div>
         ) : (
           <>
-            <div className="mb-4 text-[12.5px] text-muted-foreground">
+            <div className="mb-4 text-[12px] text-muted-foreground">
               {filtered.length} {filtered.length === 1 ? "teacher" : "teachers"}
               {department ? ` in ${department}` : ""}
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {filtered.map(t => (
                 <PublicTeacherCard key={t.slug} teacher={t} />
               ))}
