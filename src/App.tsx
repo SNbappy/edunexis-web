@@ -5,6 +5,8 @@ import GuestGuard from "@/components/guards/GuestGuard"
 import ProfileGuard from "@/components/guards/ProfileGuard"
 import EnrollmentGuard from "@/components/guards/EnrollmentGuard"
 import DashboardLayout from "@/components/layout/DashboardLayout"
+import PublicLayout from "@/components/layout/PublicLayout"
+import RedirectIfAuthed from "@/components/guards/RedirectIfAuthed"
 import AuthLayout from "@/components/layout/AuthLayout"
 import BrandLoader from "@/components/ui/BrandLoader"
 import { ROUTES } from "@/config/constants"
@@ -32,6 +34,8 @@ const NotificationsPage = lazy(() => import("@/features/notifications/pages/Noti
 const SettingsPage = lazy(() => import("@/features/settings/pages/SettingsPage"))
 const UserProfilePage = lazy(() => import("@/features/profile/pages/UserProfilePage"))
 const UserCoursesPage = lazy(() => import("@/features/profile/pages/UserCoursesPage"))
+const HomePage = lazy(() => import("@/features/public/pages/HomePage"))
+const AboutPage = lazy(() => import("@/features/public/pages/AboutPage"))
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"))
 const UnauthorizedPage = lazy(() => import("@/pages/UnauthorizedPage"))
 
@@ -39,7 +43,13 @@ export default function App() {
   return (
     <Suspense fallback={<BrandLoader variant="page" />}>
       <Routes>
-        <Route index element={<Navigate to={ROUTES.DASHBOARD} replace />} />
+        {/* Public routes — visible to logged-out users; redirect to dashboard if logged in */}
+        <Route element={<RedirectIfAuthed />}>
+          <Route element={<PublicLayout />}>
+            <Route index element={<HomePage />} />
+            <Route path="/about" element={<AboutPage />} />
+          </Route>
+        </Route>
 
         <Route element={<GuestGuard />}>
           <Route element={<AuthLayout />}>
