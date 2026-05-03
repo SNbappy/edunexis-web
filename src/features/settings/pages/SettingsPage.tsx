@@ -13,8 +13,8 @@ interface SettingsLink {
 }
 
 const LINKS: SettingsLink[] = [
-  { to: "security", label: "Security", icon: Shield },
-  { to: "visibility", label: "Public profile", icon: Globe },
+  { to: "/settings/security", label: "Security", icon: Shield },
+  { to: "/settings/visibility", label: "Public profile", icon: Globe },
 ]
 
 export default function SettingsPage() {
