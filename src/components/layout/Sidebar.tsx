@@ -162,7 +162,7 @@ export default function Sidebar() {
                 </p>
               </div>
               <button
-                onClick={e => { e.stopPropagation(); clearAuth(); navigate(ROUTES.LOGIN) }}
+                onClick={e => { e.stopPropagation(); window.location.replace("/"); clearAuth() }}
                 className="h-7 w-7 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive-soft transition-colors shrink-0"
                 title="Sign out"
                 aria-label="Sign out"

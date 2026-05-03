@@ -212,7 +212,7 @@ export default function CompleteProfilePage() {
       <Button
         type="button"
         variant="secondary"
-        onClick={() => { clearAuth(); navigate(ROUTES.LOGIN, { replace: true }) }}
+        onClick={() => { window.location.replace("/"); clearAuth() }}
         disabled={isUpdating}
       >
         <LogOut className="h-3.5 w-3.5" />
