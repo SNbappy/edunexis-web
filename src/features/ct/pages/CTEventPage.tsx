@@ -94,7 +94,7 @@ export default function CTEventPage() {
 
     )
 
-    if (!ct) return (
+    if (!eventsLoading && !ct) return (
         <div className="p-6 text-center text-muted-foreground">CT event not found.</div>
     )
 

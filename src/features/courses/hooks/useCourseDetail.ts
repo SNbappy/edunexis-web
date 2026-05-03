@@ -35,6 +35,7 @@ export function useCourseDetail(courseId: string) {
         course: query.data,
         isLoading: query.isLoading,
         isError: query.isError,
+        isFetched: query.isFetched,
         updateCourse: updateMutation.mutate,
         isUpdating: updateMutation.isPending,
     }

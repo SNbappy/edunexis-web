@@ -4,17 +4,11 @@ import { motion } from "framer-motion"
 import { Plus, ClipboardList } from "lucide-react"
 import AssignmentsList from "./AssignmentsList"
 import AssignmentUrgencyStrip from "./AssignmentUrgencyStrip"
-import CreateAssignmentModal from "./CreateAssignmentModal"
-import EditAssignmentModal from "./EditAssignmentModal"
 import ConfirmDialog from "@/components/ui/ConfirmDialog"
 import { useAssignments } from "../hooks/useAssignments"
 import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
-import type {
-  AssignmentDto,
-  CreateAssignmentRequest,
-  UpdateAssignmentRequest,
-} from "@/types/assignment.types"
+import type { AssignmentDto } from "@/types/assignment.types"
 
 interface AssignmentsTabProps {
   courseId: string
@@ -27,13 +21,9 @@ export default function AssignmentsTab({ courseId }: AssignmentsTabProps) {
 
   const {
     assignments, isLoading,
-    createAssignment, isCreating,
-    updateAssignment, isUpdating,
     deleteAssignment, isDeleting,
   } = useAssignments(courseId)
 
-  const [createOpen, setCreateOpen] = useState(false)
-  const [editing, setEditing] = useState<AssignmentDto | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
   const total = assignments.length
@@ -42,13 +32,19 @@ export default function AssignmentsTab({ courseId }: AssignmentsTabProps) {
   const handleView = (a: AssignmentDto) => {
     navigate("/courses/" + courseId + "/assignments/" + a.id)
   }
+  const handleEdit = (a: AssignmentDto) => {
+    navigate("/courses/" + courseId + "/assignments/" + a.id + "/edit")
+  }
+  const handleNew = () => {
+    navigate("/courses/" + courseId + "/assignments/new")
+  }
 
   const createButton = (
     <motion.button
       type="button"
       whileHover={{ scale: 1.03 }}
       whileTap={{ scale: 0.97 }}
-      onClick={() => setCreateOpen(true)}
+      onClick={handleNew}
       className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-[13px] font-bold text-white shadow-[0_4px_14px_-4px_rgba(20,184,166,0.6)] transition-colors hover:bg-teal-700"
     >
       <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
@@ -75,7 +71,7 @@ export default function AssignmentsTab({ courseId }: AssignmentsTabProps) {
               {total === 0
                 ? "Nothing posted yet"
                 : activeCount > 0
-                  ? activeCount + " active · " + total + " total"
+                  ? activeCount + " active \u00b7 " + total + " total"
                   : total + " total"
               }
             </p>
@@ -105,7 +101,7 @@ export default function AssignmentsTab({ courseId }: AssignmentsTabProps) {
         <AssignmentsList
           assignments={assignments}
           onView={handleView}
-          onEdit={teacher ? a => setEditing(a) : undefined}
+          onEdit={teacher ? handleEdit : undefined}
           onDelete={teacher ? id => setDeleteId(id) : undefined}
           emptyTitle="No assignments yet"
           emptyDescription={teacher
@@ -113,32 +109,6 @@ export default function AssignmentsTab({ courseId }: AssignmentsTabProps) {
             : "Your teacher hasn't posted anything yet. Check back later."
           }
           emptyAction={teacher ? createButton : undefined}
-        />
-      )}
-
-      <CreateAssignmentModal
-        isOpen={createOpen}
-        onClose={() => setCreateOpen(false)}
-        onSubmit={data =>
-          createAssignment(data as CreateAssignmentRequest, {
-            onSuccess: () => setCreateOpen(false),
-          })
-        }
-        isLoading={isCreating}
-      />
-
-      {editing && (
-        <EditAssignmentModal
-          isOpen={!!editing}
-          onClose={() => setEditing(null)}
-          assignment={editing}
-          onSubmit={data =>
-            updateAssignment(
-              { assignmentId: editing.id, data: data as UpdateAssignmentRequest },
-              { onSuccess: () => setEditing(null) },
-            )
-          }
-          isLoading={isUpdating}
         />
       )}
 

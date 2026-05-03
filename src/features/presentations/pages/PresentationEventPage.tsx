@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Save, Send, CheckCircle2, XCircle, Calendar, BookOpen, MapPin, Clock, Mic, Star } from 'lucide-react'
@@ -84,7 +84,7 @@ export default function PresentationEventPage() {
         </div>
     )
 
-    if (!presentation) return (
+    if (!eventsLoading && !presentation) return (
         <div className="p-6 text-center text-muted-foreground">Presentation not found.</div>
     )
 

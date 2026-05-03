@@ -59,7 +59,7 @@ export default function AssignmentDetailPage() {
     const [activeTab, setActiveTab] = useState<'details' | 'submissions'>('details')
     const [submitOpen, setSubmitOpen] = useState(false)
 
-    const { assignment, isLoading, isError, mySubmission, submitAssignment, isSubmitting } =
+    const { assignment, isLoading, isFetched, mySubmission, submitAssignment, isSubmitting } =
         useAssignment(courseId, assignmentId)
 
     const { submissions, isLoading: subsLoading } = useSubmissions(courseId, assignmentId)
@@ -74,7 +74,7 @@ export default function AssignmentDetailPage() {
         )
     }
 
-    if (isError || !assignment) {
+    if (isFetched && !assignment) {
         return (
             <div className="max-w-5xl mx-auto px-4 py-16 flex flex-col items-center gap-4 text-center">
                 <AlertCircle className="w-12 h-12 text-destructive" />

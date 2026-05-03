@@ -1,4 +1,4 @@
-﻿import { useState } from "react"
+import { useState } from "react"
 import { useParams, Navigate, Link, useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -35,7 +35,7 @@ export default function CourseDetailPage() {
   const { user } = useAuthStore()
   const teacher = isTeacher(user?.role ?? "Student")
 
-  const { course, isLoading, isError } = useCourseDetail(courseId!)
+  const { course, isLoading, isFetched } = useCourseDetail(courseId!)
   const { members, joinRequests } = useCourseMembers(courseId!)
 
   const { archiveCourse, unarchiveCourse, isArchiving, isUnarchiving } = useCourses()
@@ -46,7 +46,7 @@ export default function CourseDetailPage() {
 
   if (isLoading) return <BrandLoader variant="page" label="Loading course…" />
 
-  if (isError || !course) {
+  if (isFetched && !course) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
         <h2 className="font-display text-lg font-semibold text-foreground">Course not found</h2>

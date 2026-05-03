@@ -20,6 +20,8 @@ const CreateCoursePage = lazy(() => import("@/features/courses/pages/CreateCours
 const EditCoursePage = lazy(() => import("@/features/courses/pages/EditCoursePage"))
 const CourseDetailPage = lazy(() => import("@/features/courses/pages/CourseDetailPage"))
 const AssignmentDetailPage = lazy(() => import("@/features/assignments/pages/AssignmentDetailPage"))
+const CreateAssignmentPage = lazy(() => import("@/features/assignments/pages/CreateAssignmentPage"))
+const EditAssignmentPage = lazy(() => import("@/features/assignments/pages/EditAssignmentPage"))
 const JoinCoursePage = lazy(() => import("@/features/courses/pages/JoinCoursePage"))
 const CTEventPage = lazy(() => import("@/features/ct/pages/CTEventPage"))
 const PresentationEventPage = lazy(() => import("@/features/presentations/pages/PresentationEventPage"))
@@ -69,6 +71,10 @@ export default function App() {
                 element={<EnrollmentGuard><CTEventPage /></EnrollmentGuard>} />
               <Route path="/courses/:courseId/:tab"
                 element={<EnrollmentGuard><CourseDetailPage /></EnrollmentGuard>} />
+              <Route path="/courses/:courseId/assignments/new"
+                element={<EnrollmentGuard><CreateAssignmentPage /></EnrollmentGuard>} />
+              <Route path="/courses/:courseId/assignments/:assignmentId/edit"
+                element={<EnrollmentGuard><EditAssignmentPage /></EnrollmentGuard>} />
               <Route path="/courses/:courseId/assignments/:assignmentId"
                 element={<EnrollmentGuard><AssignmentDetailPage /></EnrollmentGuard>} />
               <Route path={ROUTES.PROFILE} element={<ProfilePage isOwnProfile />} />
