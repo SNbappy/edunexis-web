@@ -1,4 +1,4 @@
-﻿import api from '@/lib/axios'
+import api from '@/lib/axios'
 import type { ApiResponse } from '@/types/api.types'
 import type {
     UserProfileDto,
@@ -87,4 +87,12 @@ export const profileService = {
         const qs = status ? `?status=${status}` : ''
         return api.get<ApiResponse<UserCoursesDto>>(`/profile/${userId}/courses${qs}`).then((r) => r.data)
     },
+
+    updateVisibility: (isPublic: boolean, slug?: string) =>
+        api
+            .patch<ApiResponse<{ isPublic: boolean; slug: string | null }>>(
+                '/profile/visibility',
+                { isPublic, slug },
+            )
+            .then((r) => r.data),
 }

@@ -120,6 +120,18 @@ export function useProfile() {
     onError: () => toast.error("Failed to remove publication."),
   })
 
+
+  const visibilityMutation = useMutation({
+    mutationFn: ({ isPublic, slug }: { isPublic: boolean; slug?: string }) =>
+      profileService.updateVisibility(isPublic, slug),
+    onSuccess: (res) => {
+      if (res.success) {
+        invalidate()
+        toast.success(res.message || "Visibility updated.")
+      } else toast.error(res.message)
+    },
+    onError: () => toast.error("Failed to update visibility."),
+  })
   return {
     profile: query.data,
     data: query.data,
@@ -152,5 +164,8 @@ export function useProfile() {
     isUpdatingPublication: updatePublicationMutation.isPending,
     deletePublication: deletePublicationMutation.mutate,
     isDeletingPublication: deletePublicationMutation.isPending,
+
+    updateVisibility: visibilityMutation.mutate,
+    isUpdatingVisibility: visibilityMutation.isPending,
   }
 }

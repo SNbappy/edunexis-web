@@ -27,8 +27,9 @@ import { isTeacher } from "@/utils/roleGuard"
 import type { UpdateProfileRequest } from "../services/profileService"
 import type { PublicProfileDto, UserRole } from "@/types/auth.types"
 import ProfileIdentityCard from "../components/ProfileIdentityCard"
+import PublicVisibilityHeroCard from "../components/PublicVisibilityHeroCard"
 
-/* ── Schema ──────────────────────────────────── */
+/* â”€â”€ Schema â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 function buildSchema(teacher: boolean) {
   return z.object({
@@ -77,7 +78,7 @@ type FormData = {
   websiteUrl?: string
 }
 
-/* ── Page ────────────────────────────────────── */
+/* â”€â”€ Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 export default function EditProfilePage() {
   const navigate = useNavigate()
@@ -210,7 +211,7 @@ export default function EditProfilePage() {
     return <BrandLoader variant="page" />
   }
 
-  // ── Live preview built from current form values ──
+  // â”€â”€ Live preview built from current form values â”€â”€
   const previewProfile: PublicProfileDto = {
     userId: user?.id ?? "preview",
     fullName: values.fullName?.trim() || "Your name",
@@ -253,7 +254,7 @@ export default function EditProfilePage() {
 
   const isLastStep = step === STEPS.length - 1
 
-  // ── Per-step completion (for stepper checkmark visual) ──
+  // â”€â”€ Per-step completion (for stepper checkmark visual) â”€â”€
   const step1Complete = !!values.fullName && values.fullName.length >= 2
     && !!values.department
     && (teacher ? !!values.designation : !!values.studentId)
@@ -322,6 +323,12 @@ export default function EditProfilePage() {
         }}
         className="space-y-6"
       >
+            {teacher ? (
+              <PublicVisibilityHeroCard
+                isPublic={(own.profile as any)?.isPublicProfile ?? false}
+                slug={(own.profile as any)?.publicSlug ?? null}
+              />
+            ) : null}
         <AnimatePresence mode="wait">
           {step === 0 ? (
             <motion.div
@@ -470,7 +477,7 @@ export default function EditProfilePage() {
               <FormSection
                 icon={FileText}
                 title="About"
-                subtitle="Tell others about your background, interests, and what you do. Take your time — students read this."
+                subtitle="Tell others about your background, interests, and what you do. Take your time â€” students read this."
                 tone="stone"
               >
                 <div>

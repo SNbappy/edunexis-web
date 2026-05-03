@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom"
 import { AnimatePresence, motion } from "framer-motion"
 import {
   User, MessageSquareQuote, Link2,
-  ChevronRight, ChevronLeft, LogOut, Sparkles,
+  ChevronRight, ChevronLeft, LogOut, Sparkles, Globe,
 } from "lucide-react"
 import { FaLinkedinIn, FaGithub, FaXTwitter, FaFacebookF, FaGlobe } from "react-icons/fa6"
 
@@ -259,8 +259,8 @@ export default function CompleteProfilePage() {
       title={greeting}
       subtitle={
         teacher
-          ? "Let's set up your teacher profile. Takes about a minute â€” students will use this to find and trust your courses."
-          : "Let's set up your student profile. Takes about a minute â€” you'll need this to join courses, track attendance, and submit assignments."
+          ? "Let's set up your teacher profile. Takes about a minute Ã¢â‚¬â€ students will use this to find and trust your courses."
+          : "Let's set up your student profile. Takes about a minute Ã¢â‚¬â€ you'll need this to join courses, track attendance, and submit assignments."
       }
       topSlot={
         <FormStepper
@@ -271,6 +271,24 @@ export default function CompleteProfilePage() {
       }
       footer={footer}
     >
+          {teacher ? (
+            <div className="mb-4 rounded-2xl border border-teal-200 bg-gradient-to-r from-teal-50 to-emerald-50 p-4 dark:border-teal-800 dark:from-teal-950/40 dark:to-emerald-950/30">
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-600 text-white">
+                  <Globe className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[13px] font-bold text-foreground">
+                    Your faculty profile will be public after you save
+                  </p>
+                  <p className="mt-0.5 text-[12px] text-muted-foreground">
+                    EduNexis lists active teachers in a public faculty directory. You can change this anytime in Settings &rarr; Public profile.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
       <form
         onSubmit={handleSubmit(submit)}
         onKeyDown={e => {
@@ -324,7 +342,7 @@ export default function CompleteProfilePage() {
                       label="Designation *"
                       placeholder="e.g. Assistant Professor"
                       error={errors.designation?.message}
-                      hint="Your academic role â€” students will see this."
+                      hint="Your academic role Ã¢â‚¬â€ students will see this."
                     />
                   ) : (
                     <FormField
@@ -332,7 +350,7 @@ export default function CompleteProfilePage() {
                       label="Student ID *"
                       placeholder="e.g. 200109"
                       error={errors.studentId?.message}
-                      hint="Required â€” used for attendance and marks."
+                      hint="Required Ã¢â‚¬â€ used for attendance and marks."
                     />
                   )}
                 </div>
@@ -403,7 +421,7 @@ export default function CompleteProfilePage() {
               <FormSection
                 icon={Link2}
                 title="Connect"
-                subtitle="Where people can find you online. All optional â€” add what makes sense."
+                subtitle="Where people can find you online. All optional Ã¢â‚¬â€ add what makes sense."
                 tone="stone"
               >
                 <div className="space-y-2.5">

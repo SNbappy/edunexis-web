@@ -1,9 +1,10 @@
-﻿import { NavLink, Navigate, Routes, Route } from "react-router-dom"
-import { Shield } from "lucide-react"
+import { NavLink, Navigate, Routes, Route } from "react-router-dom"
+import { Shield, Globe } from "lucide-react"
 import { lazy, Suspense } from "react"
 import BrandLoader from "@/components/ui/BrandLoader"
 
 const SecurityPage = lazy(() => import("./SecurityPage"))
+const VisibilitySettingsPage = lazy(() => import("./VisibilitySettingsPage"))
 
 interface SettingsLink {
   to:    string
@@ -13,6 +14,7 @@ interface SettingsLink {
 
 const LINKS: SettingsLink[] = [
   { to: "security", label: "Security", icon: Shield },
+  { to: "visibility", label: "Public profile", icon: Globe },
 ]
 
 export default function SettingsPage() {
@@ -60,6 +62,7 @@ export default function SettingsPage() {
             <Routes>
               <Route index element={<Navigate to="security" replace />} />
               <Route path="security" element={<SecurityPage />} />
+              <Route path="visibility" element={<VisibilitySettingsPage />} />
             </Routes>
           </Suspense>
         </div>

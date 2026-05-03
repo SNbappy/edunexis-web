@@ -166,3 +166,61 @@ export interface ResetPasswordRequest {
   token:       string
   newPassword: string
 }
+
+/* ── Public faculty (visible without login) ─────────────────── */
+
+export interface PublicFacultyCardDto {
+  slug: string
+  fullName: string
+  department: string
+  designation: string | null
+  headline: string | null
+  profilePhotoUrl: string | null
+  coursesTaught: number
+}
+
+export interface PublicCourseDto {
+  id: string
+  title: string
+  courseCode: string
+  department: string
+  semester: string
+  courseType: string
+  isArchived: boolean
+}
+
+export interface PublicFacultyProfileDto {
+  slug: string
+  fullName: string
+  department: string
+  designation: string | null
+  bio: string | null
+  headline: string | null
+  profilePhotoUrl: string | null
+  coverPhotoUrl: string | null
+  officeLocation: string | null
+  officeHours: string | null
+  researchInterestsCsv: string | null
+  fieldsOfWorkCsv: string | null
+  linkedInUrl: string | null
+  facebookUrl: string | null
+  twitterUrl: string | null
+  gitHubUrl: string | null
+  websiteUrl: string | null
+  education: UserEducationDto[]
+  publications: UserPublicationDto[]
+  courses: PublicCourseDto[]
+  coursesTaught: number
+}
+
+export interface PublicStatsDto {
+  teacherCount: number
+  studentCount: number
+  courseCount: number
+  assignmentCount: number
+}
+
+export interface ProfileVisibilityDto {
+  isPublic: boolean
+  slug: string | null
+}
