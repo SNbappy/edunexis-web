@@ -528,7 +528,7 @@ export default function EditProfilePage() {
                     {...register("officeHours")}
                     label="Office hours"
                     optional
-                    placeholder="e.g. Sun\u2013Tue, 2\u20134 PM"
+                    placeholder="e.g. Sun-Tue, 2-4 PM"
                     error={errors.officeHours?.message}
                   />
                 </div>

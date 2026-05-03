@@ -1,4 +1,4 @@
-﻿import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   profileService,
   type UpdateProfileRequest,
@@ -122,7 +122,9 @@ export function useProfile() {
 
   return {
     profile: query.data,
+    data: query.data,
     isLoading: query.isLoading,
+    isFetched: query.isFetched,
 
     updateProfile: updateMutation.mutate,
     isUpdating: updateMutation.isPending,

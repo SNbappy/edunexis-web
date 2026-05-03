@@ -36,7 +36,6 @@ export function useCourseMembers(courseId: string) {
     // must see the new request without manually reloading.
     staleTime: 0,
     refetchOnMount: "always",
-    refetchOnWindowFocus: true,
   })
 
   const reviewMutation = useMutation({

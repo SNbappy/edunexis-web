@@ -1,4 +1,4 @@
-﻿import { useState } from "react"
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Pencil } from "lucide-react"
 import Button from "@/components/ui/Button"
@@ -34,7 +34,12 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
   const pub = usePublicProfile(isOwnProfile ? user?.id : userId)
 
   const isLoading = isOwnProfile ? own.isLoading : pub.isLoading
-  const p: PublicProfileDto | null = pub.data ?? null
+  const isFetched = isOwnProfile ? own.isFetched : pub.isFetched
+  // For own profile: useProfile returns the profile DTO directly. Convert it
+  // to the shared PublicProfileDto shape used by the rest of this page.
+  const p: PublicProfileDto | null = isOwnProfile
+    ? (own.data ? ({ ...own.data, viewerRelation: "Self" } as unknown as PublicProfileDto) : null)
+    : (pub.data ?? null)
 
   const [activeTab, setActiveTab] = useState<ProfileTabKey>("overview")
   const [eduModal, setEduModal] = useState<{ open: boolean; item?: UserEducationDto | null }>({ open: false })
@@ -42,7 +47,7 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
 
   if (isLoading) return <ProfilePageSkeleton />
 
-  if (!p) {
+  if (isFetched && !p) {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center px-6 text-center">
         <h2 className="font-display text-lg font-semibold text-foreground">Profile not found</h2>
