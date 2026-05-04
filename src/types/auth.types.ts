@@ -31,6 +31,8 @@ export interface UserProfileDto {
   gitHubUrl: string | null
   websiteUrl: string | null
   profileCompletionPercent: number
+  isPublicProfile: boolean
+  publicSlug: string | null
 }
 
 export interface UserEducationDto {
