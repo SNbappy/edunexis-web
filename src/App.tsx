@@ -30,6 +30,7 @@ const PresentationEventPage = lazy(() => import("@/features/presentations/pages/
 const CompleteProfilePage = lazy(() => import("@/features/profile/pages/CompleteProfilePage"))
 const ProfilePage = lazy(() => import("@/features/profile/pages/ProfilePage"))
 const EditProfilePage = lazy(() => import("@/features/profile/pages/EditProfilePage"))
+const PublicationFormPage = lazy(() => import("@/features/profile/pages/PublicationFormPage"))
 const NotificationsPage = lazy(() => import("@/features/notifications/pages/NotificationsPage"))
 const SettingsPage = lazy(() => import("@/features/settings/pages/SettingsPage"))
 const UserProfilePage = lazy(() => import("@/features/profile/pages/UserProfilePage"))
@@ -93,6 +94,8 @@ export default function App() {
                 element={<EnrollmentGuard><AssignmentDetailPage /></EnrollmentGuard>} />
               <Route path={ROUTES.PROFILE} element={<ProfilePage isOwnProfile />} />
               <Route path={ROUTES.PROFILE_EDIT} element={<EditProfilePage />} />
+              <Route path="/profile/publications/new" element={<PublicationFormPage />} />
+              <Route path="/profile/publications/:id/edit" element={<PublicationFormPage />} />
               <Route path={ROUTES.NOTIFICATIONS} element={<NotificationsPage />} />
               <Route path="/settings/*" element={<SettingsPage />} />
               <Route path="/users/:userId" element={<UserProfilePage />} />

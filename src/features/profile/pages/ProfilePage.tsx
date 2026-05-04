@@ -171,8 +171,8 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
               isSelf={isSelf}
               onChangeResearchInterests={isSelf ? csv => updateCsvField("researchInterestsCsv", csv) : undefined}
               onChangeFieldsOfWork={isSelf ? csv => updateCsvField("fieldsOfWorkCsv", csv) : undefined}
-              onAddPublication={isSelf ? () => setPubModal({ open: true, item: null }) : undefined}
-              onEditPublication={isSelf ? (pub) => setPubModal({ open: true, item: pub }) : undefined}
+              onAddPublication={isSelf ? () => navigate("/profile/publications/new") : undefined}
+              onEditPublication={isSelf ? (pub) => navigate(`/profile/publications/${pub.id}/edit`) : undefined}
               onDeletePublication={isSelf ? (id) => own.deletePublication(id) : undefined}
             />
           ) : null}

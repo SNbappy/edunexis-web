@@ -8,6 +8,10 @@ import {
 import { useAuthStore } from "@/store/authStore"
 import toast from "react-hot-toast"
 
+function isPublic_to_label(v: boolean): string {
+  return v ? "PDF is now public." : "PDF is now private."
+}
+
 export function useProfile() {
   const { setUser, user } = useAuthStore()
   const qc = useQueryClient()
@@ -120,6 +124,37 @@ export function useProfile() {
     onError: () => toast.error("Failed to remove publication."),
   })
 
+  const uploadPublicationPdfMutation = useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File }) =>
+      profileService.uploadPublicationPdf(id, file),
+    onSuccess: (res) => {
+      if (res.success) { invalidate(); toast.success("PDF uploaded.") }
+      else toast.error(res.message)
+    },
+    onError: () => toast.error("Failed to upload PDF."),
+  })
+
+  const removePublicationPdfMutation = useMutation({
+    mutationFn: (id: string) => profileService.removePublicationPdf(id),
+    onSuccess: (res) => {
+      if (res.success) { invalidate(); toast.success("PDF removed.") }
+      else toast.error(res.message)
+    },
+    onError: () => toast.error("Failed to remove PDF."),
+  })
+
+  const updatePublicationPdfVisibilityMutation = useMutation({
+    mutationFn: ({ id, isPublic }: { id: string; isPublic: boolean }) =>
+      profileService.updatePublicationPdfVisibility(id, isPublic),
+    onSuccess: (res) => {
+      if (res.success) {
+        invalidate()
+        toast.success(isPublic_to_label(res.data.isPdfPublic))
+      } else toast.error(res.message)
+    },
+    onError: () => toast.error("Failed to update PDF visibility."),
+  })
+
 
   const visibilityMutation = useMutation({
     mutationFn: ({ isPublic, slug }: { isPublic: boolean; slug?: string }) =>
@@ -164,6 +199,13 @@ export function useProfile() {
     isUpdatingPublication: updatePublicationMutation.isPending,
     deletePublication: deletePublicationMutation.mutate,
     isDeletingPublication: deletePublicationMutation.isPending,
+
+    uploadPublicationPdf: uploadPublicationPdfMutation.mutate,
+    isUploadingPublicationPdf: uploadPublicationPdfMutation.isPending,
+    removePublicationPdf: removePublicationPdfMutation.mutate,
+    isRemovingPublicationPdf: removePublicationPdfMutation.isPending,
+    updatePublicationPdfVisibility: updatePublicationPdfVisibilityMutation.mutate,
+    isUpdatingPublicationPdfVisibility: updatePublicationPdfVisibilityMutation.isPending,
 
     updateVisibility: visibilityMutation.mutate,
     isUpdatingVisibility: visibilityMutation.isPending,

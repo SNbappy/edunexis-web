@@ -52,6 +52,10 @@ export interface UserPublicationDto {
   url: string | null
   type: PublicationType
   orderIndex: number
+  pdfUrl: string | null
+  pdfSizeBytes: number | null
+  pdfUploadedAt: string | null
+  isPdfPublic: boolean
 }
 
 export interface PublicCourseDto {

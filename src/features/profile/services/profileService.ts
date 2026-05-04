@@ -83,6 +83,28 @@ export const profileService = {
     deletePublication: (id: string) =>
         api.delete<ApiResponse<boolean>>(`/profile/publications/${id}`).then((r) => r.data),
 
+    uploadPublicationPdf: (id: string, file: File) => {
+        const form = new FormData()
+        form.append('file', file)
+        return api
+            .post<ApiResponse<UserPublicationDto>>(
+                `/profile/publications/${id}/pdf`, form,
+                { headers: { 'Content-Type': 'multipart/form-data' } },
+            )
+            .then((r) => r.data)
+    },
+
+    removePublicationPdf: (id: string) =>
+        api.delete<ApiResponse<UserPublicationDto>>(
+            `/profile/publications/${id}/pdf`,
+        ).then((r) => r.data),
+
+    updatePublicationPdfVisibility: (id: string, isPublic: boolean) =>
+        api.patch<ApiResponse<UserPublicationDto>>(
+            `/profile/publications/${id}/pdf-visibility`,
+            { isPublic },
+        ).then((r) => r.data),
+
     getUserCourses: (userId: string, status?: 'running' | 'archived') => {
         const qs = status ? `?status=${status}` : ''
         return api.get<ApiResponse<UserCoursesDto>>(`/profile/${userId}/courses${qs}`).then((r) => r.data)
