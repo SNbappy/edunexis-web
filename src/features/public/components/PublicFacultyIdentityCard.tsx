@@ -25,9 +25,9 @@ export default function PublicFacultyIdentityCard({ profile: p }: Props) {
   const hasAnySocial = SOCIAL_LINKS.some(s => Boolean((p as any)[s.key])) || Boolean(p.websiteUrl)
 
   return (
-    <aside className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm ring-1 ring-stone-200/50 dark:ring-white/5">
+    <aside className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm ring-1 ring-stone-200/60">
       {/* Photo - square, fills card width */}
-      <div className="relative aspect-square w-full overflow-hidden bg-muted">
+      <div className="relative aspect-square w-full overflow-hidden bg-stone-100">
         {p.profilePhotoUrl ? (
           <img
             src={p.profilePhotoUrl}
@@ -36,7 +36,7 @@ export default function PublicFacultyIdentityCard({ profile: p }: Props) {
             loading="lazy"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-teal-100 text-5xl font-bold text-teal-700 dark:bg-teal-950/40 dark:text-teal-300">
+          <div className="flex h-full w-full items-center justify-center bg-teal-100 text-5xl font-bold text-teal-700">
             {initials || "T"}
           </div>
         )}
@@ -44,28 +44,28 @@ export default function PublicFacultyIdentityCard({ profile: p }: Props) {
 
       {/* Identity */}
       <div className="px-5 py-5">
-        <h1 className="font-display text-[17px] font-bold leading-tight text-foreground">
+        <h1 className="font-display text-[17px] font-bold leading-tight text-stone-900">
           {p.fullName}
         </h1>
         {p.designation ? (
-          <p className="mt-1 text-[12.5px] font-semibold text-muted-foreground">
+          <p className="mt-1 text-[12.5px] font-semibold text-stone-500">
             {p.designation}
           </p>
         ) : null}
         {p.headline ? (
-          <p className="mt-2.5 text-[12.5px] italic leading-relaxed text-muted-foreground">
+          <p className="mt-2.5 text-[12.5px] italic leading-relaxed text-stone-500">
             {p.headline}
           </p>
         ) : null}
 
         {/* Dept + courses badges */}
         <div className="mt-3.5 flex flex-wrap items-center gap-1.5">
-          <span className="inline-flex items-center gap-1.5 rounded-lg bg-teal-50 px-2 py-1 text-[11px] font-bold text-teal-700 dark:bg-teal-950/40 dark:text-teal-300">
+          <span className="inline-flex items-center gap-1.5 rounded-lg bg-teal-50 px-2 py-1 text-[11px] font-bold text-teal-700">
             <Building2 className="h-3 w-3" />
             {p.department}
           </span>
           {totalCourses > 0 ? (
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-700">
               <BookOpen className="h-3 w-3" />
               {totalCourses} {totalCourses === 1 ? "course" : "courses"}
             </span>
@@ -75,21 +75,21 @@ export default function PublicFacultyIdentityCard({ profile: p }: Props) {
 
       {/* Office */}
       {showOffice ? (
-        <div className="border-t border-border px-5 py-4">
-          <p className="text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
+        <div className="border-t border-stone-200 px-5 py-4">
+          <p className="text-[10.5px] font-bold uppercase tracking-wider text-stone-500">
             Office
           </p>
           <div className="mt-2.5 space-y-2">
             {p.officeLocation ? (
               <div className="flex items-start gap-2.5">
-                <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <p className="text-[12px] text-foreground">{p.officeLocation}</p>
+                <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-stone-500" />
+                <p className="text-[12px] text-stone-900">{p.officeLocation}</p>
               </div>
             ) : null}
             {p.officeHours ? (
               <div className="flex items-start gap-2.5">
-                <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <p className="text-[12px] text-foreground">{p.officeHours}</p>
+                <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-stone-500" />
+                <p className="text-[12px] text-stone-900">{p.officeHours}</p>
               </div>
             ) : null}
           </div>
@@ -98,8 +98,8 @@ export default function PublicFacultyIdentityCard({ profile: p }: Props) {
 
       {/* Social */}
       {hasAnySocial ? (
-        <div className="border-t border-border px-5 py-4">
-          <p className="text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
+        <div className="border-t border-stone-200 px-5 py-4">
+          <p className="text-[10.5px] font-bold uppercase tracking-wider text-stone-500">
             On the web
           </p>
           <div className="mt-2.5 flex flex-wrap gap-1.5">
@@ -116,17 +116,17 @@ export default function PublicFacultyIdentityCard({ profile: p }: Props) {
       ) : null}
 
       {/* Contact private CTA */}
-      <div className="border-t border-border px-5 py-4">
+      <div className="border-t border-stone-200 px-5 py-4">
         <div className="flex items-start gap-2.5">
-          <Lock className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground" />
+          <Lock className="mt-0.5 h-3 w-3 shrink-0 text-stone-500" />
           <div className="min-w-0 flex-1">
-            <p className="text-[11.5px] font-bold text-foreground">Contact details are private</p>
-            <p className="mt-0.5 text-[10.5px] text-muted-foreground">
+            <p className="text-[11.5px] font-bold text-stone-900">Contact details are private</p>
+            <p className="mt-0.5 text-[10.5px] text-stone-500">
               Only course members see email and phone.
             </p>
             <Link
               to="/login"
-              className="mt-2 inline-flex text-[11px] font-bold text-teal-700 hover:underline dark:text-teal-300"
+              className="mt-2 inline-flex text-[11px] font-bold text-teal-700 hover:underline"
             >
               Sign in to contact
             </Link>

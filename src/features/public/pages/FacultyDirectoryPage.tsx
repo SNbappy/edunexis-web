@@ -26,13 +26,22 @@ export default function FacultyDirectoryPage() {
   const showChips = (departments?.length ?? 0) > 1
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-      {/* Compact hero */}
-      <div className="mx-auto max-w-2xl text-center">
-        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Faculty
-        </h1>
-        <p className="mt-1.5 text-[13px] text-muted-foreground sm:text-[14px]">
+    <div className="relative -mt-16 pt-16">
+      {/* Soft hero background blobs */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-80 overflow-hidden">
+        <div className="absolute -top-32 left-1/4 h-[400px] w-[400px] rounded-full bg-teal-100/60 blur-3xl" />
+        <div className="absolute -top-20 right-1/4 h-[350px] w-[350px] rounded-full bg-blue-100/50 blur-3xl" />
+      </div>
+
+      <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-teal-700">
+            Faculty Directory
+          </p>
+          <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-stone-900 sm:text-4xl md:text-5xl">
+            Faculty using EduNexis
+          </h1>
+        <p className="mt-1.5 text-[13px] text-stone-500 sm:text-[14px]">
           Teachers across departments running their courses with EduNexis.
         </p>
       </div>
@@ -40,13 +49,13 @@ export default function FacultyDirectoryPage() {
       {/* Search + filter row */}
       <div className="mx-auto mt-6 max-w-2xl">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
           <input
             type="search"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search by name, designation, or headline..."
-            className="w-full rounded-xl border border-border bg-card py-3 pl-11 pr-4 text-[13.5px] text-foreground placeholder:text-muted-foreground/70 outline-none transition-colors focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+            className="w-full rounded-xl border border-stone-200 bg-white py-3 pl-11 pr-4 text-[13.5px] text-stone-900 placeholder:text-stone-500/70 outline-none transition-colors focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
           />
         </div>
       </div>
@@ -61,7 +70,7 @@ export default function FacultyDirectoryPage() {
               "rounded-full px-3.5 py-1.5 text-[12px] font-bold transition-colors " +
               (!department
                 ? "bg-teal-600 text-white"
-                : "border border-border bg-card text-foreground hover:bg-muted")
+                : "border border-stone-200 bg-white text-stone-900 hover:bg-stone-100")
             }
           >
             All
@@ -75,7 +84,7 @@ export default function FacultyDirectoryPage() {
                 "rounded-full px-3.5 py-1.5 text-[12px] font-bold transition-colors " +
                 (department === d
                   ? "bg-teal-600 text-white"
-                  : "border border-border bg-card text-foreground hover:bg-muted")
+                  : "border border-stone-200 bg-white text-stone-900 hover:bg-stone-100")
               }
             >
               {d}
@@ -91,23 +100,23 @@ export default function FacultyDirectoryPage() {
             {Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={i}
-                className="aspect-[3/4] animate-pulse rounded-2xl border border-border bg-card"
+                className="aspect-[3/4] animate-pulse rounded-2xl border border-stone-200 bg-white"
               />
             ))}
           </div>
         ) : isError ? (
-          <div className="rounded-2xl border border-border bg-card p-12 text-center">
-            <p className="text-[14px] text-muted-foreground">
+          <div className="rounded-2xl border border-stone-200 bg-white p-12 text-center">
+            <p className="text-[14px] text-stone-500">
               Could not load faculty. Try refreshing.
             </p>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="rounded-2xl border border-border bg-card p-12 text-center">
-            <Users className="mx-auto h-10 w-10 text-muted-foreground" />
-            <h2 className="mt-4 font-display text-lg font-bold text-foreground">
+          <div className="rounded-2xl border border-stone-200 bg-white p-12 text-center">
+            <Users className="mx-auto h-10 w-10 text-stone-500" />
+            <h2 className="mt-4 font-display text-lg font-bold text-stone-900">
               {searchQuery || department ? "No matches" : "Faculty directory is empty"}
             </h2>
-            <p className="mt-1.5 text-[13px] text-muted-foreground">
+            <p className="mt-1.5 text-[13px] text-stone-500">
               {searchQuery || department
                 ? "Try a different search term or department."
                 : "Be the first to make your profile public from Settings."}
@@ -115,7 +124,7 @@ export default function FacultyDirectoryPage() {
           </div>
         ) : (
           <>
-            <div className="mb-4 text-[12px] text-muted-foreground">
+            <div className="mb-4 text-[12px] text-stone-500">
               {filtered.length} {filtered.length === 1 ? "teacher" : "teachers"}
               {department ? ` in ${department}` : ""}
             </div>
@@ -126,6 +135,7 @@ export default function FacultyDirectoryPage() {
             </div>
           </>
         )}
+        </div>
       </div>
     </div>
   )
