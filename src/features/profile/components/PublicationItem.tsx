@@ -11,12 +11,11 @@ interface PublicationItemProps {
 }
 
 const TYPE_LABEL: Record<string, string> = {
-  JournalArticle: "Journal article",
-  ConferencePaper: "Conference paper",
-  Book: "Book",
+  Journal: "Journal article",
+  Conference: "Conference paper",
+  Workshop: "Workshop",
   BookChapter: "Book chapter",
   Thesis: "Thesis",
-  Preprint: "Preprint",
   Other: "Other",
 }
 

@@ -13,12 +13,11 @@ import { useProfile } from "../hooks/useProfile"
 import type { UserPublicationDto, PublicationType } from "@/types/auth.types"
 
 const PUBLICATION_TYPES: { value: PublicationType; label: string }[] = [
-  { value: "JournalArticle", label: "Journal article" },
-  { value: "ConferencePaper", label: "Conference paper" },
-  { value: "Book", label: "Book" },
+  { value: "Journal", label: "Journal article" },
+  { value: "Conference", label: "Conference paper" },
+  { value: "Workshop", label: "Workshop" },
   { value: "BookChapter", label: "Book chapter" },
   { value: "Thesis", label: "Thesis" },
-  { value: "Preprint", label: "Preprint" },
   { value: "Other", label: "Other" },
 ]
 
@@ -33,8 +32,8 @@ const schema = z.object({
     .max(new Date().getFullYear() + 1, "Year too far in future"),
   url: z.string().url("Invalid URL").optional().or(z.literal("")),
   type: z.enum([
-    "JournalArticle", "ConferencePaper", "Book",
-    "BookChapter", "Thesis", "Preprint", "Other",
+    "Journal", "Conference", "Workshop",
+    "BookChapter", "Thesis", "Other",
   ]),
 })
 
@@ -85,7 +84,7 @@ export default function PublicationFormPage() {
     defaultValues: {
       title: "", authors: "", venue: "",
       year: new Date().getFullYear(),
-      url: "", type: "JournalArticle",
+      url: "", type: "Journal",
     },
   })
 
