@@ -65,10 +65,10 @@ function Hero() {
           className="flex flex-col justify-center"
         >
           {/* Eyebrow */}
-          {/* <div className="inline-flex w-fit items-center gap-2 rounded-full border border-teal-200 bg-white px-3 py-1.5 text-[11.5px] font-semibold text-teal-700 shadow-sm">
-            <Sparkles className="h-3 w-3" />
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-teal-200 bg-white px-3 py-1.5 text-[11.5px] font-semibold text-teal-700 shadow-sm">
+            {/* <Sparkles className="h-3 w-3" /> */}
             Built at JUST CSE for South Asian universities
-          </div> */}
+          </div>
 
           {/* Headline */}
           <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-stone-900 sm:text-5xl md:text-6xl lg:text-7xl">
