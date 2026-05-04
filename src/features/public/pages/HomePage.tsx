@@ -65,13 +65,13 @@ function Hero() {
           className="flex flex-col justify-center"
         >
           {/* Eyebrow */}
-          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-teal-200 bg-white px-3 py-1.5 text-[11.5px] font-semibold text-teal-700 shadow-sm">
+          {/* <div className="inline-flex w-fit items-center gap-2 rounded-full border border-teal-200 bg-white px-3 py-1.5 text-[11.5px] font-semibold text-teal-700 shadow-sm">
             <Sparkles className="h-3 w-3" />
             Built at JUST CSE for South Asian universities
-          </div>
+          </div> */}
 
           {/* Headline */}
-          <h1 className="mt-5 font-display text-5xl font-extrabold leading-[1.05] tracking-tight text-stone-900 sm:text-6xl lg:text-7xl">
+          <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-stone-900 sm:text-5xl md:text-6xl lg:text-7xl">
             The LMS{" "}
             <span className="block">built for</span>
             <span className="block bg-gradient-to-r from-teal-600 via-cyan-600 to-blue-700 bg-clip-text text-transparent">
@@ -85,7 +85,7 @@ function Hero() {
           </p>
 
           {/* CTAs */}
-          <div className="mt-9 flex flex-wrap items-center gap-3">
+          <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <Link
               to="/register"
               className="group inline-flex items-center gap-2 rounded-xl bg-stone-900 px-6 py-3.5 text-[14px] font-bold text-white shadow-[0_8px_24px_-8px_rgba(0,0,0,0.4)] transition-all hover:bg-stone-800 hover:shadow-[0_12px_32px_-8px_rgba(0,0,0,0.5)]"
@@ -131,7 +131,7 @@ function Hero() {
 
 function HeroIllustration() {
   return (
-    <div className="relative aspect-square w-full max-w-md" style={{ perspective: "1200px" }}>
+    <div className="relative mx-auto aspect-square w-full max-w-sm sm:max-w-md" style={{ perspective: "1200px" }}>
       {/* Card 1 — Attendance */}
       <motion.div
         animate={{ y: [0, -12, 0] }}
@@ -257,7 +257,7 @@ function WhyPanel() {
           <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-teal-300">
             Why EduNexis
           </p>
-          <h2 className="mt-3 font-display text-4xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-6xl">
+          <h2 className="mt-3 font-display text-3xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
             Generic tools dont fit
             <br />
             <span className="bg-gradient-to-r from-teal-300 to-cyan-300 bg-clip-text text-transparent">
@@ -325,7 +325,7 @@ function FeaturesPanel() {
           <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-teal-700">
             Built for the classroom
           </p>
-          <h2 className="mt-3 font-display text-4xl font-extrabold tracking-tight text-stone-900 sm:text-5xl">
+          <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-stone-900 sm:text-4xl md:text-5xl">
             Everything you need
             <br />
             to run a course.
@@ -423,7 +423,7 @@ function StatsStrip() {
           <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-teal-700">
             By the numbers
           </p>
-          <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-stone-900 sm:text-4xl">
+          <h2 className="mt-3 font-display text-2xl font-extrabold tracking-tight text-stone-900 sm:text-3xl md:text-4xl">
             Real classrooms, real activity.
           </h2>
         </div>
@@ -438,7 +438,7 @@ function StatsStrip() {
               transition={{ duration: 0.5, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] }}
               className="rounded-2xl border border-stone-200 bg-white p-6 text-center"
             >
-              <CountUp target={s.value} className={"font-display text-4xl font-extrabold tracking-tight sm:text-5xl " + s.color} />
+              <CountUp target={s.value} className={"font-display text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl " + s.color} />
               <p className="mt-2 text-[12px] font-semibold uppercase tracking-wider text-stone-500">
                 {s.label}
               </p>
@@ -491,7 +491,7 @@ function ForWhomPanel() {
           <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-teal-700">
             One platform, two perspectives
           </p>
-          <h2 className="mt-3 font-display text-4xl font-extrabold tracking-tight text-stone-900 sm:text-5xl">
+          <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-stone-900 sm:text-4xl md:text-5xl">
             Designed for both sides
             <br />
             <span className="bg-gradient-to-r from-teal-600 to-blue-700 bg-clip-text text-transparent">
@@ -564,7 +564,7 @@ function PersonaCard(props: PersonaCardProps) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className={"rounded-3xl border bg-gradient-to-br p-8 sm:p-10 " + props.border + " " + props.gradient}
+      className={"rounded-3xl border bg-gradient-to-br p-6 sm:p-8 lg:p-10 " + props.border + " " + props.gradient}
     >
       <div className="flex items-center gap-3">
         <div className={"flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-md " + props.iconBg}>
@@ -628,7 +628,7 @@ function FinalCta() {
           <p className="text-[12px] font-bold uppercase tracking-[0.2em] text-teal-300">
             Get started today
           </p>
-          <h2 className="mt-4 font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
+          <h2 className="mt-4 font-display text-3xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
             Ready to transform
             <br />
             <span className="bg-gradient-to-r from-teal-300 via-cyan-300 to-blue-300 bg-clip-text text-transparent">
