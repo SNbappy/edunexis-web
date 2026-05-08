@@ -25,6 +25,16 @@ export default function VisibilitySettingsPage() {
   const [slugError, setSlugError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
+  // Sync local toggle state with the live profile from backend.
+  // Without this, the toggle always shows 'private' on refresh because
+  // useState(false) is the default and never reads the actual saved value.
+  useEffect(() => {
+    if (profile) {
+      setIsPublic(profile.isPublicProfile === true)
+      if (profile.publicSlug) setSlug(profile.publicSlug)
+    }
+  }, [profile?.isPublicProfile, profile?.publicSlug])
+
   useEffect(() => {
     if (!profile?.fullName || slug) return
     const seed = profile.fullName
