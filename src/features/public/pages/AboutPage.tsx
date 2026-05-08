@@ -1,4 +1,3 @@
-import { useEffect } from "react"
 import { Link } from "react-router-dom"
 import { motion } from "framer-motion"
 import {
@@ -6,17 +5,7 @@ import {
   Building2, Heart, Lightbulb,
 } from "lucide-react"
 
-function useForceLight() {
-  useEffect(() => {
-    const html = document.documentElement
-    const had = html.classList.contains("dark")
-    html.classList.remove("dark")
-    return () => { if (had) html.classList.add("dark") }
-  }, [])
-}
-
 export default function AboutPage() {
-  useForceLight()
   return (
     <div className="bg-white text-stone-900">
       <Hero />

@@ -16,22 +16,7 @@ function useStats() {
 }
 import { ArrowRight, Sparkles, BookOpen, ClipboardCheck, ClipboardList, BarChart3, Bell, Shield, Users, Layers, GraduationCap } from "lucide-react"
 
-/**
- * Force light theme on this page regardless of user's dark-mode toggle.
- * The homepage is a marketing surface — light works for first-impression
- * branding and matches our design reference.
- */
-function useForceLight() {
-  useEffect(() => {
-    const html = document.documentElement
-    const had = html.classList.contains("dark")
-    html.classList.remove("dark")
-    return () => { if (had) html.classList.add("dark") }
-  }, [])
-}
-
 export default function HomePage() {
-  useForceLight()
   return (
     <div className="bg-white text-stone-900">
       <Hero />
@@ -48,7 +33,7 @@ export default function HomePage() {
 
 function Hero() {
   return (
-    <section className="relative -mt-16 overflow-hidden pt-16">
+    <section className="relative -mt-20 overflow-hidden pt-20">
       {/* Soft background blobs — set the visual tone, extend behind transparent navbar */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className="absolute -top-32 -left-32 h-[600px] w-[600px] rounded-full bg-teal-100/60 blur-3xl" />
