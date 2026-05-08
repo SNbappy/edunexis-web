@@ -202,7 +202,7 @@ function StoryPanel() {
           className="mt-12 space-y-6 rounded-3xl border border-stone-200 bg-white p-8 sm:p-12"
         >
           <p className="text-[15px] leading-relaxed text-stone-700">
-            EduNexis was created by <strong className="font-bold text-stone-900">Md. Sabbir Hossain Bappy</strong> as part of his final-year project at Jashore University of Science and Technology, under the supervision of <strong className="font-bold text-stone-900">Dr. Mohammad Nowsin Amin Sheikh</strong>.
+            EduNexis was created by <strong className="font-bold text-stone-900">Md. Sabbir Hossain Bappy</strong> as part of his final-year thesis project at Jashore University of Science and Technology, under the supervision of <strong className="font-bold text-stone-900">Dr. Mohammad Nowsin Amin Sheikh</strong>.
           </p>
           <p className="text-[15px] leading-relaxed text-stone-700">
             The goal was simple: most universities in the region rely on Google Classroom or no LMS at all. Generic tools don&apos;t handle local realities &mdash; class tests as a separate construct from assignments, presentation grading rubrics, attendance taken on paper. EduNexis was designed around those workflows from day one.

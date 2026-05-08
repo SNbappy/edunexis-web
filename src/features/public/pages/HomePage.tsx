@@ -641,7 +641,7 @@ function FinalCta() {
           </div>
 
           <p className="mt-8 text-[12px] font-semibold uppercase tracking-wider text-slate-400">
-            Built at JUST CSE · Designed for South Asia
+            Built at JUST CSE · Designed for South Asian Universities
           </p>
         </motion.div>
       </div>
