@@ -49,6 +49,22 @@ export function usePresentations(courseId: string) {
         onError: () => toast.error('Failed to update status.'),
     })
 
+    const publishMutation = useMutation({
+        mutationFn: (id: string) => presentationService.publish(id),
+        onSuccess: (res) => {
+            if (res.success) { invalidate(); toast.success(res.message ?? 'Published.') }
+            else toast.error(res.message)
+        },
+        onError: () => toast.error('Failed to publish.'),
+    })
+    const unpublishMutation = useMutation({
+        mutationFn: (id: string) => presentationService.unpublish(id),
+        onSuccess: (res) => {
+            if (res.success) { invalidate(); toast.success(res.message ?? 'Unpublished.') }
+            else toast.error(res.message)
+        },
+        onError: () => toast.error('Failed to unpublish.'),
+    })
     return {
         presentations:      query.data ?? [],
         isLoading:          query.isLoading,
@@ -58,6 +74,10 @@ export function usePresentations(courseId: string) {
         isDeleting:         deleteMutation.isPending,
         updateStatus:       updateStatusMutation.mutate,
         isUpdatingStatus:   updateStatusMutation.isPending,
+        publishPresentation:   publishMutation.mutate,
+        isPublishing:          publishMutation.isPending,
+        unpublishPresentation: unpublishMutation.mutate,
+        isUnpublishing:        unpublishMutation.isPending,
     }
 }
 

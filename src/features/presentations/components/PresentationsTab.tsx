@@ -3,7 +3,6 @@ import { motion } from "framer-motion"
 import { Plus, FileCheck2 } from "lucide-react"
 import PresentationsList from "./PresentationsList"
 import CreatePresentationModal from "./CreatePresentationModal"
-import PresentationDetailModal from "./PresentationDetailModal"
 import PresentationMarkEntryModal from "./PresentationMarkEntryModal"
 import ConfirmDialog from "@/components/ui/ConfirmDialog"
 import { usePresentations } from "../hooks/usePresentations"
@@ -13,7 +12,6 @@ import { isTeacher } from "@/utils/roleGuard"
 import type { PresentationDto } from "@/types/presentation.types"
 
 interface Props { courseId: string }
-type FilterTab = "all" | "upcoming" | "completed" | "cancelled"
 
 export default function PresentationsTab({ courseId }: Props) {
   const { user } = useAuthStore()
@@ -23,33 +21,16 @@ export default function PresentationsTab({ courseId }: Props) {
     presentations, isLoading,
     createPresentation, isCreating,
     deletePresentation, isDeleting,
-    updateStatus,
+    publishPresentation,
+    unpublishPresentation,
   } = usePresentations(courseId)
   const { members } = useAttendance(courseId)
 
   const [createOpen, setCreateOpen] = useState(false)
-  const [selected, setSelected] = useState<PresentationDto | null>(null)
   const [markEntry, setMarkEntry] = useState<PresentationDto | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [filter, setFilter] = useState<FilterTab>("all")
 
-  const upcomingCount = presentations.filter((p: any) => p.status === "Scheduled" || p.status === "Ongoing").length
-  const completedCount = presentations.filter((p: any) => p.status === "Completed").length
-  const cancelledCount = presentations.filter((p: any) => p.status === "Cancelled").length
-
-  const filtered = presentations.filter((p: any) => {
-    if (filter === "upcoming") return p.status === "Scheduled" || p.status === "Ongoing"
-    if (filter === "completed") return p.status === "Completed"
-    if (filter === "cancelled") return p.status === "Cancelled"
-    return true
-  })
-
-  const FILTERS = [
-    { key: "all" as FilterTab, label: "All", count: presentations.length },
-    { key: "upcoming" as FilterTab, label: "Upcoming", count: upcomingCount },
-    { key: "completed" as FilterTab, label: "Completed", count: completedCount },
-    { key: "cancelled" as FilterTab, label: "Cancelled", count: cancelledCount },
-  ]
+  const publishedCount = presentations.filter((p: any) => p.isPublished).length
 
   const createButton = (
     <motion.button
@@ -66,7 +47,6 @@ export default function PresentationsTab({ courseId }: Props) {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
-      {/* Toolbar */}
       <motion.div
         initial={{ opacity: 0, y: -6 }}
         animate={{ opacity: 1, y: 0 }}
@@ -82,74 +62,32 @@ export default function PresentationsTab({ courseId }: Props) {
             </h2>
             <p className="text-[11.5px] text-muted-foreground">
               {presentations.length === 0
-                ? "Nothing scheduled yet"
-                : upcomingCount > 0
-                  ? upcomingCount + " upcoming · " + presentations.length + " total"
-                  : presentations.length + " total"
-              }
+                ? "No tests yet"
+                : publishedCount + " published \u00b7 " + presentations.length + " total"}
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Filter chips */}
-          <div className="flex items-center gap-1 rounded-xl border border-border bg-muted p-1">
-            {FILTERS.map(tab => {
-              const active = filter === tab.key
-              return (
-                <motion.button
-                  key={tab.key}
-                  type="button"
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setFilter(tab.key)}
-                  className={
-                    "inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11.5px] font-semibold transition-colors sm:gap-1.5 sm:px-3 sm:text-[12px] " +
-                    (active
-                      ? "bg-card text-teal-700 shadow-sm dark:text-teal-300"
-                      : "text-muted-foreground hover:text-foreground")
-                  }
-                >
-                  {tab.label}
-                  {tab.count > 0 && (
-                    <span className={
-                      "rounded-full px-1.5 py-0.5 text-[10px] font-bold " +
-                      (active
-                        ? "bg-teal-100 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300"
-                        : "bg-card text-muted-foreground")
-                    }>
-                      {tab.count}
-                    </span>
-                  )}
-                </motion.button>
-              )
-            })}
-          </div>
-
-          {teacher && createButton}
-        </div>
+        {teacher && createButton}
       </motion.div>
 
-      {/* List */}
       {isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
-            <div
-              key={i}
-              className="h-24 animate-pulse rounded-2xl border border-border bg-muted/40"
-            />
+            <div key={i} className="h-24 animate-pulse rounded-2xl border border-border bg-muted/40" />
           ))}
         </div>
       ) : (
         <PresentationsList
-          presentations={filtered}
-          onView={setSelected}
+          presentations={presentations}
+          onView={teacher ? (p: PresentationDto) => setMarkEntry(p) : undefined}
           onDelete={teacher ? (id: string) => setDeleteId(id) : undefined}
-          onUpdateStatus={teacher ? (id: string, status: any) => updateStatus({ id, status }) : undefined}
-          emptyTitle={filter === "all" ? "No tests scheduled yet" : "No " + filter + " tests"}
+          onPublish={teacher ? (id: string) => publishPresentation(id) : undefined}
+          onUnpublish={teacher ? (id: string) => unpublishPresentation(id) : undefined}
+          emptyTitle="No tests yet"
           emptyDescription={teacher
-            ? "Schedule any kind of marked event — oral tests, vivas, lab tests, presentations, or pop quizzes."
-            : "Your teacher hasn't scheduled any tests yet. Check back later."
-          }
+            ? "Create a test \u2014 oral tests, vivas, lab tests, presentations, or pop quizzes."
+            : "Your teacher hasn't created any tests yet."}
           emptyAction={teacher ? createButton : undefined}
         />
       )}
@@ -164,13 +102,6 @@ export default function PresentationsTab({ courseId }: Props) {
         isLoading={isCreating}
       />
 
-      <PresentationDetailModal
-        isOpen={!!selected && !markEntry}
-        onClose={() => setSelected(null)}
-        presentation={selected}
-        onEnterMarks={(p: any) => { setSelected(null); setMarkEntry(p) }}
-      />
-
       <PresentationMarkEntryModal
         isOpen={!!markEntry}
         onClose={() => setMarkEntry(null)}
@@ -183,11 +114,7 @@ export default function PresentationsTab({ courseId }: Props) {
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}
         onConfirm={() => {
-          if (deleteId) {
-            deletePresentation(deleteId, {
-              onSuccess: () => setDeleteId(null),
-            })
-          }
+          if (deleteId) deletePresentation(deleteId, { onSuccess: () => setDeleteId(null) })
         }}
         title="Delete test"
         description="This permanently deletes the test and all associated marks. This cannot be undone."

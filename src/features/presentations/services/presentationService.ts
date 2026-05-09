@@ -1,4 +1,4 @@
-﻿import api from '@/lib/axios'
+import api from '@/lib/axios'
 import type { ApiResponse } from '@/types/api.types'
 import type {
     PresentationDto,
@@ -33,4 +33,8 @@ export const presentationService = {
 
     grade: (presentationId: string, data: GradePresentationRequest) =>
         api.post<ApiResponse>(`${pres(presentationId)}/grade`, data).then(r => r.data),
+    publish: (presentationId: string) =>
+        api.post<ApiResponse>(`${pres(presentationId)}/publish`).then(r => r.data),
+    unpublish: (presentationId: string) =>
+        api.post<ApiResponse>(`${pres(presentationId)}/unpublish`).then(r => r.data),
 }

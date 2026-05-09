@@ -26,7 +26,6 @@ const CreateAssignmentPage = lazy(() => import("@/features/assignments/pages/Cre
 const EditAssignmentPage = lazy(() => import("@/features/assignments/pages/EditAssignmentPage"))
 const JoinCoursePage = lazy(() => import("@/features/courses/pages/JoinCoursePage"))
 const CTEventPage = lazy(() => import("@/features/ct/pages/CTEventPage"))
-const PresentationEventPage = lazy(() => import("@/features/presentations/pages/PresentationEventPage"))
 const CompleteProfilePage = lazy(() => import("@/features/profile/pages/CompleteProfilePage"))
 const ProfilePage = lazy(() => import("@/features/profile/pages/ProfilePage"))
 const EditProfilePage = lazy(() => import("@/features/profile/pages/EditProfilePage"))
@@ -80,8 +79,6 @@ export default function App() {
               <Route path="/courses/:courseId/edit" element={<EditCoursePage />} />
               <Route path="/courses/:courseId/join" element={<JoinCoursePage />} />
               <Route path="/courses/:courseId" element={<Navigate to="stream" replace />} />
-              <Route path="/courses/:courseId/presentations/:presentationId"
-                element={<EnrollmentGuard><PresentationEventPage /></EnrollmentGuard>} />
               <Route path="/courses/:courseId/ct/:ctId"
                 element={<EnrollmentGuard><CTEventPage /></EnrollmentGuard>} />
               <Route path="/courses/:courseId/:tab"

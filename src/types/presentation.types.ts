@@ -1,4 +1,4 @@
-﻿export type PresentationStatus = 'Scheduled' | 'Ongoing' | 'Completed' | 'Cancelled'
+export type PresentationStatus = 'Scheduled' | 'Ongoing' | 'Completed' | 'Cancelled'
 export type PresentationFormat = 'Individual' | 'Group'
 
 export interface PresentationDto {
@@ -16,6 +16,8 @@ export interface PresentationDto {
     createdAt: string
     myResult?: PresentationResultDto | null
     submittedCount?: number
+    isPublished: boolean
+    publishedAt?: string | null
 }
 
 export interface PresentationResultDto {

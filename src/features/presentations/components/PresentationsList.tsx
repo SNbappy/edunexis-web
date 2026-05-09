@@ -1,4 +1,4 @@
-﻿import { motion } from "framer-motion"
+import { motion } from "framer-motion"
 import { FileCheck2 } from "lucide-react"
 import PresentationCard from "./PresentationCard"
 import type { PresentationDto } from "@/types/presentation.types"
@@ -6,18 +6,18 @@ import type { ReactNode } from "react"
 
 interface Props {
     presentations: PresentationDto[]
-    onView: (p: PresentationDto) => void
+    onView?: (p: PresentationDto) => void
     onDelete?: (id: string) => void
-    onUpdateStatus?: (id: string, status: string) => void
-    onEnterMarks?: (p: PresentationDto) => void
+    onPublish?: (id: string) => void
+    onUnpublish?: (id: string) => void
     emptyTitle?: string
     emptyDescription?: string
     emptyAction?: ReactNode
 }
 
 export default function PresentationsList({
-    presentations, onView, onDelete, onUpdateStatus, onEnterMarks,
-    emptyTitle = "No tests scheduled yet", emptyDescription, emptyAction,
+    presentations, onView, onDelete, onPublish, onUnpublish,
+    emptyTitle = "No tests yet", emptyDescription, emptyAction,
 }: Props) {
     if (presentations.length === 0) {
         return (
@@ -29,19 +29,14 @@ export default function PresentationsList({
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-teal-300 bg-teal-100 dark:border-teal-700 dark:bg-teal-900/60">
                     <FileCheck2 className="h-7 w-7 text-teal-700 dark:text-teal-200" strokeWidth={1.75} />
                 </div>
-                <h3 className="mt-5 font-display text-[16px] font-bold text-foreground">
-                    {emptyTitle}
-                </h3>
+                <h3 className="mt-5 font-display text-[16px] font-bold text-foreground">{emptyTitle}</h3>
                 {emptyDescription && (
-                    <p className="mt-1 max-w-sm text-[13px] text-muted-foreground">
-                        {emptyDescription}
-                    </p>
+                    <p className="mt-1 max-w-sm text-[13px] text-muted-foreground">{emptyDescription}</p>
                 )}
                 {emptyAction && <div className="mt-5">{emptyAction}</div>}
             </motion.div>
         )
     }
-
     return (
         <div className="space-y-3">
             {presentations.map((p, i) => (
@@ -51,8 +46,8 @@ export default function PresentationsList({
                     index={i}
                     onView={onView}
                     onDelete={onDelete ? () => onDelete(p.id) : undefined}
-                    onUpdateStatus={onUpdateStatus}
-                    onEnterMarks={onEnterMarks}
+                    onPublish={onPublish ? () => onPublish(p.id) : undefined}
+                    onUnpublish={onUnpublish ? () => onUnpublish(p.id) : undefined}
                 />
             ))}
         </div>
