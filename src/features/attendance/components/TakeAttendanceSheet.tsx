@@ -165,7 +165,7 @@ export default function TakeAttendanceSheet({
 
         {/* Stats + bulk actions */}
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-muted/30 p-3">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Stat label="Present" value={counts.present} tone="emerald" icon={CheckCircle2} />
             <Stat label="Absent" value={counts.absent} tone="red" icon={XCircle} />
             <Stat label="Unmarked" value={counts.unmarked} tone="amber" icon={HelpCircle} />
@@ -314,12 +314,12 @@ function Stat({ label, value, tone, icon: Icon }: StatProps) {
         : "text-amber-700 dark:text-amber-300"
 
   return (
-    <div className="inline-flex items-center gap-1.5">
+    <div className="inline-flex items-center gap-1 sm:gap-1.5">
       <Icon className={"h-3.5 w-3.5 " + colorClass} strokeWidth={2} />
       <span className={"font-display text-[13px] font-extrabold tabular-nums " + colorClass}>
         {value}
       </span>
-      <span className="text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
+      <span className="text-[10.5px] font-bold uppercase tracking-normal text-muted-foreground sm:tracking-wider">
         {label}
       </span>
     </div>

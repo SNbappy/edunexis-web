@@ -1,4 +1,4 @@
-﻿import { useMemo } from "react"
+import { useMemo } from "react"
 import { Link } from "react-router-dom"
 import { motion } from "framer-motion"
 import type { LucideIcon } from "lucide-react"
@@ -40,7 +40,7 @@ export default function CourseTabNav({ courseId, tabs, activeTab }: CourseTabNav
                 key={t.key}
                 to={"/courses/" + courseId + "/" + t.key}
                 className={
-                  "relative inline-flex h-12 shrink-0 items-center gap-2 whitespace-nowrap px-4 text-[13px] font-semibold transition-colors " +
+                  "relative inline-flex h-12 shrink-0 items-center gap-1.5 whitespace-nowrap px-2.5 text-[12px] font-semibold transition-colors sm:gap-2 sm:px-4 sm:text-[13px] " +
                   (active
                     ? "text-teal-700"
                     : "text-muted-foreground hover:text-foreground")

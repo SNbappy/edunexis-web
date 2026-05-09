@@ -169,7 +169,7 @@ export default function CreateAnnouncementForm({
                 )}
               </AnimatePresence>
 
-              <div className="flex items-center justify-between gap-3 border-t border-border pt-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
@@ -199,7 +199,7 @@ export default function CreateAnnouncementForm({
                     whileTap={{ scale: 0.97 }}
                     onClick={handleSubmit}
                     disabled={!content.trim() || isLoading}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-4 py-2 text-[12.5px] font-bold text-white shadow-sm transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-2 text-[12px] font-bold text-white sm:px-4 sm:text-[12.5px] shadow-sm transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Send className="h-3.5 w-3.5" />
                     Post announcement

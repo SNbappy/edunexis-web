@@ -103,7 +103,7 @@ export default function PresentationsTab({ courseId }: Props) {
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setFilter(tab.key)}
                   className={
-                    "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-colors " +
+                    "inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11.5px] font-semibold transition-colors sm:gap-1.5 sm:px-3 sm:text-[12px] " +
                     (active
                       ? "bg-card text-teal-700 shadow-sm dark:text-teal-300"
                       : "text-muted-foreground hover:text-foreground")
