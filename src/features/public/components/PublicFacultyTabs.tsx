@@ -16,7 +16,7 @@ export default function PublicFacultyTabs({ tabs, active, onChange }: Props) {
     <nav
       role="tablist"
       aria-label="Faculty profile sections"
-      className="inline-flex items-center gap-1 rounded-xl border border-stone-200 bg-white p-1 shadow-sm ring-1 ring-stone-200/60"
+      className="flex w-full items-center gap-1 rounded-xl border border-stone-200 bg-white p-1 shadow-sm ring-1 ring-stone-200/60 sm:inline-flex sm:w-auto"
     >
       {tabs.map(t => {
         const isActive = active === t.key
@@ -29,7 +29,10 @@ export default function PublicFacultyTabs({ tabs, active, onChange }: Props) {
             role="tab"
             aria-selected={isActive}
             onClick={() => onChange(t.key)}
-            className={"whitespace-nowrap rounded-lg px-4 py-2 text-[13px] font-bold transition-colors " + tabClass}
+            className={
+              "flex-1 whitespace-nowrap rounded-lg px-3 py-2 text-[12.5px] font-bold transition-colors sm:flex-initial sm:px-4 sm:text-[13px] " +
+              tabClass
+            }
           >
             {t.label}
           </button>

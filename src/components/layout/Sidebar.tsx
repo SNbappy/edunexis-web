@@ -34,12 +34,13 @@ function BrandMark({ className }: { className?: string }) {
 }
 
 function NavItem({
-  label, icon: Icon, to, exact, collapsed, badge,
+  label, icon: Icon, to, exact, collapsed, badge, onItemClick,
 }: {
-  label: string; icon: any; to: string; exact?: boolean; collapsed: boolean; badge?: number
+  label: string; icon: any; to: string; exact?: boolean; collapsed: boolean; badge?: number;
+  onItemClick?: () => void
 }) {
   return (
-    <NavLink to={to} end={exact} className="block">
+    <NavLink to={to} end={exact} onClick={onItemClick} className="block">
       {({ isActive }) => (
         <div
           className={cn(
@@ -77,7 +78,7 @@ function NavItem({
   )
 }
 
-export default function Sidebar() {
+export default function Sidebar({ onItemClick }: { onItemClick?: () => void } = {}) {
   const [collapsed, setCollapsed] = useState(false)
   const { user, clearAuth } = useAuthStore()
   const { badgeCount } = useNotifications()
@@ -115,7 +116,7 @@ export default function Sidebar() {
             </p>
           )}
           {NAV_PRIMARY.map(item => (
-            <NavItem key={item.label} {...item} collapsed={collapsed} />
+            <NavItem key={item.label} {...item} collapsed={collapsed} onItemClick={onItemClick} />
           ))}
         </div>
 
@@ -131,6 +132,7 @@ export default function Sidebar() {
               {...item}
               collapsed={collapsed}
               badge={item.badge ? badgeCount : undefined}
+              onItemClick={onItemClick}
             />
           ))}
         </div>

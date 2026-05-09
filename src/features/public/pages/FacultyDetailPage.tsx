@@ -88,7 +88,7 @@ export default function FacultyDetailPage() {
 
         {/* Right column: tabs + tab content */}
         <div className="min-w-0">
-          <div className="mb-5 overflow-x-auto">
+          <div className="mb-5">
             <PublicFacultyTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
           </div>
 
