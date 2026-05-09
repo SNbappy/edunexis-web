@@ -1,4 +1,4 @@
-﻿import { useState, useRef } from "react"
+import { useState, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import { LogIn, Search, Sparkles, Hash, Info } from "lucide-react"
@@ -160,7 +160,7 @@ export default function JoinCoursePage() {
         <div className="space-y-5">
           {/* Code input row */}
           <div
-            className="flex items-center justify-center gap-1.5"
+            className="flex items-center justify-center gap-1 sm:gap-1.5"
             onPaste={handlePaste}
           >
             {code.slice(0, 4).map((c, i) => (
@@ -173,7 +173,7 @@ export default function JoinCoursePage() {
                 onKeyDown={handleKeyDown}
               />
             ))}
-            <span className="mx-1 select-none text-[18px] font-bold text-muted-foreground">
+            <span className="mx-0.5 sm:mx-1 select-none text-[14px] sm:text-[18px] font-bold text-muted-foreground">
               {"\u2014"}
             </span>
             {code.slice(4).map((c, j) => {
@@ -252,7 +252,7 @@ function CodeBox({
       autoComplete="off"
       spellCheck={false}
       className={
-        "h-[52px] w-11 rounded-xl border-2 text-center font-display text-[18px] font-bold outline-none transition-colors " +
+        "h-[52px] w-8 sm:w-11 rounded-xl border-2 text-center font-display text-[16px] sm:text-[18px] font-bold outline-none transition-colors " +
         (value
           ? "border-teal-600 bg-teal-50 text-teal-700 dark:bg-teal-600/15 dark:text-teal-300"
           : "border-border bg-card text-foreground focus:border-teal-600")
