@@ -57,7 +57,7 @@ export default function EditAssignmentPage() {
   }, [assignment, reset])
 
   if (isLoading) {
-    return <BrandLoader variant="page" label="Loading assignment\u2026" />
+    return <BrandLoader variant="page" label="Loading assignment…" />
   }
 
   if (isFetched && !assignment) {
@@ -104,7 +104,7 @@ export default function EditAssignmentPage() {
       backLabel="Back to assignment"
       backTo={"/courses/" + courseId + "/assignments/" + assignment.id}
       title="Edit assignment"
-      subtitle="Update the title, deadline, marks, or instructions. Reference materials can\u2019t be changed here yet."
+      subtitle="Update the title, deadline, marks, or instructions. Reference materials can’t be changed here yet."
       footer={footer}
     >
       <form
@@ -146,7 +146,7 @@ export default function EditAssignmentPage() {
             <textarea
               {...register("rubricNotes")}
               rows={3}
-              placeholder="Grading criteria\u2026"
+              placeholder="Grading criteria…"
               className="w-full resize-none rounded-xl border border-border bg-muted/40 px-4 py-3 text-[13px] text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-teal-500 focus:bg-card focus:ring-2 focus:ring-teal-500/20"
             />
           </div>

@@ -56,7 +56,7 @@ export default function CreatePresentationModal({
         <Input
           {...register("title")}
           label="Title"
-          placeholder="e.g. Oral test \u2014 Chapter 3"
+          placeholder="e.g. Oral test — Chapter 3"
           error={errors.title?.message}
         />
 
@@ -80,7 +80,7 @@ export default function CreatePresentationModal({
             id="presentation-description"
             {...register("description")}
             rows={3}
-            placeholder="Notes for students about this test\u2026"
+            placeholder="Notes for students about this test…"
             className="w-full resize-none rounded-xl border border-border bg-muted/40 px-4 py-3 text-[13px] text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-teal-500 focus:bg-card focus:ring-2 focus:ring-teal-500/20"
           />
         </div>

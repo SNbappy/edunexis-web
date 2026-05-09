@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useNavigate, useSearchParams, Link } from "react-router-dom"
 import { motion } from "framer-motion"
 import { Mail, ArrowRight, ArrowLeft, RefreshCw, CheckCircle2 } from "lucide-react"
@@ -348,7 +348,7 @@ export default function VerifyEmailPage() {
         </div>
       </div>
 
-      {showOverlay && <BrandLoader variant="screen" label="Verifying your email\u2026" />}
+      {showOverlay && <BrandLoader variant="screen" label="Verifying your email…" />}
     </div>
   )
 }

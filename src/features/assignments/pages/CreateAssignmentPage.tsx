@@ -172,7 +172,7 @@ export default function CreateAssignmentPage() {
         <FormSection
           icon={Paperclip}
           title="Reference materials"
-          subtitle="Optional file students can download \u2014 a PDF, problem set, dataset, or starter code."
+          subtitle="Optional file students can download — a PDF, problem set, dataset, or starter code."
           tone="stone"
           complete={Boolean(file)}
         >
