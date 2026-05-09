@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -234,7 +234,7 @@ export default function NotificationsPage() {
                       />
                     )}
 
-                    <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity self-center">
+                    <div className="flex items-center gap-1 shrink-0 focus-within:opacity-100 transition-opacity self-center">
                       {isUnread && (
                         <button
                           onClick={e => { e.stopPropagation(); markRead?.(n.id) }}

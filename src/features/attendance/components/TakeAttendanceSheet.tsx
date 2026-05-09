@@ -91,9 +91,13 @@ export default function TakeAttendanceSheet({
   }, [isOpen, members, initialDate, initialTopic, initialStatuses])
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return members
+    const sorted = [...members].sort((a, b) =>
+      (a.studentId ?? "").localeCompare(b.studentId ?? "", undefined, { numeric: true }) ||
+      a.fullName.localeCompare(b.fullName)
+    )
+    if (!search.trim()) return sorted
     const q = search.toLowerCase()
-    return members.filter(m =>
+    return sorted.filter(m =>
       m.fullName.toLowerCase().includes(q) ||
       m.studentId?.toLowerCase().includes(q)
     )
@@ -235,12 +239,18 @@ export default function TakeAttendanceSheet({
                     size="sm"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-semibold text-foreground">
-                      {member.fullName}
-                    </p>
-                    {member.studentId && (
-                      <p className="truncate font-mono text-[11px] text-muted-foreground">
-                        {member.studentId}
+                    {member.studentId ? (
+                      <>
+                        <p className="font-mono text-[13px] font-bold text-foreground leading-tight">
+                          {member.studentId}
+                        </p>
+                        <p className="truncate text-[11.5px] text-muted-foreground">
+                          {member.fullName}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="truncate text-[13px] font-semibold text-foreground">
+                        {member.fullName}
                       </p>
                     )}
                   </div>

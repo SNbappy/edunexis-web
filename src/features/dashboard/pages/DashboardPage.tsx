@@ -74,7 +74,7 @@ function StatCard({ label, value, hint, icon: Icon, loading, href }: StatCardPro
           <Icon className="h-5 w-5" strokeWidth={2} />
         </div>
         {href && (
-          <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+          <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-opacity" />
         )}
       </div>
 

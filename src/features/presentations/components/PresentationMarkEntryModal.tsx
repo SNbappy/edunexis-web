@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Save, XCircle, CheckCircle2 } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
@@ -122,7 +122,7 @@ export default function PresentationMarkEntryModal({ isOpen, onClose, presentati
                     </div>
                 ) : (
                     <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1 no-scrollbar">
-                        {members.map((member, i) => {
+                        {[...members].sort((a, b) => (a.studentId ?? "").localeCompare(b.studentId ?? "", undefined, { numeric: true }) || a.fullName.localeCompare(b.fullName)).map((member, i) => {
                             const e = entries[member.userId] ?? { marks: '', absent: false, topic: '', feedback: '' }
                             const marksNum = parseFloat(e.marks)
                             const pct = !isNaN(marksNum) && totalMarks > 0 ? (marksNum / totalMarks) * 100 : 0
@@ -140,14 +140,21 @@ export default function PresentationMarkEntryModal({ isOpen, onClose, presentati
                                             : 'border-border bg-card hover:border-primary/20'
                                     )}
                                 >
-                                    <div className="flex items-center gap-3">
-                                        <Avatar src={member.profilePhotoUrl} name={member.fullName} size="sm" />
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-foreground truncate">{member.fullName}</p>
-                                            {member.studentId && (
-                                                <p className="text-xs text-muted-foreground font-mono">{member.studentId}</p>
-                                            )}
+                                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                                            <Avatar src={member.profilePhotoUrl} name={member.fullName} size="sm" />
+                                            <div className="min-w-0">
+                                                {member.studentId ? (
+                                                    <>
+                                                        <p className="font-mono text-[13px] font-bold text-foreground leading-tight">{member.studentId}</p>
+                                                        <p className="text-[11.5px] text-muted-foreground truncate">{member.fullName}</p>
+                                                    </>
+                                                ) : (
+                                                    <p className="text-sm font-medium text-foreground truncate">{member.fullName}</p>
+                                                )}
+                                            </div>
                                         </div>
+                                        <div className="flex items-center gap-2 shrink-0">
                                         <button
                                             onClick={() => setField(member.userId, 'absent', !e.absent)}
                                             className={cn(
@@ -171,6 +178,7 @@ export default function PresentationMarkEntryModal({ isOpen, onClose, presentati
                                         ) : (
                                             <div className="w-16 h-9 flex items-center justify-center text-destructive text-sm font-bold">ABS</div>
                                         )}
+                                        </div>
                                     </div>
 
                                     {!e.absent && (

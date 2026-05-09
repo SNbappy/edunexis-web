@@ -66,7 +66,7 @@ export default function NotificationItem({ notification: n, onMarkRead, onDelete
                 )}
                 <button
                     onClick={(e) => { e.stopPropagation(); onDelete(n.id) }}
-                    className="p-1 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all opacity-0 group-hover:opacity-100"
+                    className="p-1 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
                 >
                     <X className="w-3 h-3" />
                 </button>
