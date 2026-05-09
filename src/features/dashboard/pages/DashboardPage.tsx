@@ -92,7 +92,7 @@ function StatCard({ label, value, hint, icon: Icon, loading, href }: StatCardPro
     </div>
   )
 
-  return href ? <Link to={href} className="block h-[148px]">{content}</Link> : <div className="h-[148px]">{content}</div>
+  return href ? <Link to={href} className="block min-h-[148px]">{content}</Link> : <div className="min-h-[148px]">{content}</div>
 }
 
 // ═════════════════════════════════════════════════════════════
@@ -100,7 +100,7 @@ function ActionCard({ to, title, subtitle, icon: Icon }: {
   to: string; title: string; subtitle: string; icon: React.ElementType
 }) {
   return (
-    <Link to={to} className="block h-[148px]">
+    <Link to={to} className="block min-h-[148px]">
       <div className="group flex flex-col gap-5 h-full p-5 rounded-2xl bg-primary text-primary-foreground hover:brightness-105 transition-all">
         <div className="flex items-start justify-between">
           <div className="h-10 w-10 rounded-xl bg-white/15 inline-flex items-center justify-center">
@@ -295,12 +295,14 @@ export default function DashboardPage() {
               loading={isLoading}
               href="/notifications"
             />
-            <ActionCard
-              to="/courses/join"
-              title="Join a course"
-              subtitle="Enter your teacher's code"
-              icon={Plus}
-            />
+            <div className="col-span-2 lg:col-span-1">
+              <ActionCard
+                to="/courses/join"
+                title="Join a course"
+                subtitle="Enter your teacher's code"
+                icon={Plus}
+              />
+            </div>
           </>
         )}
       </motion.div>
