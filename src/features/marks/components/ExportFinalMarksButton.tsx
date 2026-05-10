@@ -1,43 +1,71 @@
-﻿import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { Download, FileText, FileImage, Printer } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Button from '@/components/ui/Button'
 import type { FinalMarkDto, FormulaDto } from '@/types/marks.types'
+import {
+    getCsvLetterheadRows,
+    getHtmlLetterhead,
+    type LetterheadOpts,
+} from '@/utils/exportLetterhead'
 
 interface Props {
     marks: FinalMarkDto[]
     formula: FormulaDto
     courseTitle?: string
+    courseCode?: string | null
+    semester?: string | null
+    department?: string | null
+    members?: Array<{ userId: string; studentId?: string; fullName: string }>
 }
 
-export default function ExportFinalMarksButton({ marks, formula, courseTitle }: Props) {
+export default function ExportFinalMarksButton({
+    marks, formula, courseTitle, courseCode, semester, department, members = [],
+}: Props) {
     const [open, setOpen] = useState(false)
     const title = courseTitle ?? 'Course'
-    const date  = new Date().toISOString().split('T')[0]
+    const date = new Date().toISOString().split('T')[0]
 
     const getBreakdown = (json: string) => {
         try { return JSON.parse(json) as Record<string, { earned: number }> }
         catch { return {} }
     }
 
+    // Marks DTO uses studentId = user GUID. Real roll numbers live on members[].studentId.
+    const rollByUserId = new Map(members.map(m => [m.userId, m.studentId ?? '']))
+    const enriched = marks.map(m => ({ ...m, rollNumber: rollByUserId.get(m.studentId) ?? '' }))
+    const sorted = [...enriched].sort((a, b) =>
+        (a.rollNumber ?? '').localeCompare(b.rollNumber ?? '', undefined, { numeric: true }) ||
+        a.studentName.localeCompare(b.studentName)
+    )
+
+    const letterhead: LetterheadOpts = {
+        reportTitle: 'Final Marks',
+        courseCode, courseTitle: title, semester, department,
+        studentCount: sorted.length,
+    }
+
     // ── CSV ──────────────────────────────────────────────────────────────────
     const exportCSV = () => {
         const compHeaders = formula.components.map(c => `"${c.componentType} (/${c.maxMarks})"`)
-        const headers = ['Student', ...compHeaders, `"Total (/${formula.totalMarks})"`].join(',')
+        const headers = ['Student ID', 'Name', ...compHeaders, `"Total (/${formula.totalMarks})"`].join(',')
 
-        const rows = marks.map(m => {
+        const rows = sorted.map(m => {
             const bd = getBreakdown(m.breakdownJson)
             const cols = formula.components.map(c =>
-                bd[c.componentType] != null ? bd[c.componentType].earned.toFixed(2) : '—'
+                bd[c.componentType] != null ? bd[c.componentType].earned.toFixed(2) : '\u2014'
             )
-            return [`"${m.studentName}"`, ...cols, m.finalMark.toFixed(2)].join(',')
+            return [`"${m.rollNumber}"`, `"${m.studentName}"`, ...cols, m.finalMark.toFixed(2)].join(',')
         })
 
-        const csv  = [headers, ...rows].join('\n')
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-        const url  = URL.createObjectURL(blob)
-        const a    = document.createElement('a')
-        a.href     = url
+        const headerRows = getCsvLetterheadRows(letterhead)
+            .map(r => r.map(c => '"' + c.replace(/"/g, '""') + '"').join(','))
+
+        const csv = [...headerRows, headers, ...rows].join('\n')
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
         a.download = `marks-${title}-${date}.csv`
         document.body.appendChild(a)
         a.click()
@@ -46,108 +74,118 @@ export default function ExportFinalMarksButton({ marks, formula, courseTitle }: 
         setOpen(false)
     }
 
-    // ── PDF ──────────────────────────────────────────────────────────────────
-    const exportPDF = async () => {
-        setOpen(false)
-        const html2pdf = (await import('html2pdf.js')).default
-
+    // Shared HTML body (used by PDF and Print)
+    const buildBodyHtml = () => {
         const compCols = formula.components.map(c =>
-            `<th style="padding:6px 10px;text-align:center;font-size:11px;border-bottom:1px solid #e2e8f0;white-space:nowrap">
+            `<th style="padding:6px 10px;text-align:center;font-size:11px;border:1px solid #e2e8f0;background:#f1f5f9;white-space:nowrap">
                 ${c.componentType}<br/><span style="font-weight:400;color:#64748b">/${c.maxMarks}</span>
              </th>`
         ).join('')
 
-        const dataRows = marks.map((m, i) => {
-            const bd   = getBreakdown(m.breakdownJson)
+        const dataRows = sorted.map((m, i) => {
+            const bd = getBreakdown(m.breakdownJson)
             const cols = formula.components.map(c =>
-                `<td style="padding:6px 10px;text-align:center;font-size:12px">${
-                    bd[c.componentType] != null ? bd[c.componentType].earned.toFixed(2) : '—'
+                `<td style="padding:6px 10px;text-align:center;font-size:12px;border:1px solid #e2e8f0">${
+                    bd[c.componentType] != null ? bd[c.componentType].earned.toFixed(2) : '\u2014'
                 }</td>`
             ).join('')
             const bg = i % 2 === 0 ? '#f8fafc' : '#fff'
             return `<tr style="background:${bg}">
-                <td style="padding:6px 12px;font-size:12px;font-weight:500">${m.studentName}</td>
+                <td style="padding:6px 12px;font-size:12px;font-weight:700;font-family:ui-monospace,monospace;border:1px solid #e2e8f0">${m.rollNumber}</td>
+                <td style="padding:6px 12px;font-size:12px;border:1px solid #e2e8f0">${m.studentName}</td>
                 ${cols}
-                <td style="padding:6px 10px;text-align:center;font-weight:700;font-size:12px">${m.finalMark.toFixed(2)}</td>
+                <td style="padding:6px 10px;text-align:center;font-weight:700;font-size:12px;border:1px solid #e2e8f0">${m.finalMark.toFixed(2)}</td>
             </tr>`
         }).join('')
 
-        const el = document.createElement('div')
-        el.innerHTML = `
-            <div style="font-family:Inter,sans-serif;padding:32px;color:#0f172a">
-                <h2 style="margin:0 0 4px;font-size:18px;font-weight:700">${title} — Final Marks</h2>
-                <p style="margin:0 0 20px;font-size:12px;color:#64748b">Generated on ${new Date().toLocaleDateString()}</p>
-                <table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
-                    <thead style="background:#f1f5f9">
-                        <tr>
-                            <th style="padding:8px 12px;text-align:left;font-size:11px;border-bottom:1px solid #e2e8f0">Student</th>
-                            ${compCols}
-                            <th style="padding:6px 10px;text-align:center;font-size:11px;border-bottom:1px solid #e2e8f0">
-                                Total<br/><span style="font-weight:400;color:#64748b">/${formula.totalMarks}</span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>${dataRows}</tbody>
-                </table>
-                <p style="margin-top:16px;font-size:10px;color:#94a3b8;text-align:right">EduNexis · ${date}</p>
-            </div>`
+        return `
+            <table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0">
+                <thead>
+                    <tr>
+                        <th style="padding:8px 12px;text-align:left;font-size:11px;background:#f1f5f9;border:1px solid #e2e8f0">Student ID</th>
+                        <th style="padding:8px 12px;text-align:left;font-size:11px;background:#f1f5f9;border:1px solid #e2e8f0">Name</th>
+                        ${compCols}
+                        <th style="padding:6px 10px;text-align:center;font-size:11px;background:#f1f5f9;border:1px solid #e2e8f0">
+                            Total<br/><span style="font-weight:400;color:#64748b">/${formula.totalMarks}</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>${dataRows}</tbody>
+            </table>`
+    }
 
-        document.body.appendChild(el)
-        await html2pdf().set({
-            margin:      [8, 8, 8, 8],
-            filename:    `marks-${title}-${date}.pdf`,
-            image:       { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF:       { unit: 'mm', format: 'a4', orientation: 'landscape' },
-        }).from(el).save()
-        document.body.removeChild(el)
+    // ── PDF (jsPDF + autoTable; reliable, no html2canvas image issues) ──────
+    const exportPDF = async () => {
+        setOpen(false)
+        try {
+            const [{ default: jsPDF }, { default: autoTable }, { addPdfLetterhead }] = await Promise.all([
+                import('jspdf'),
+                import('jspdf-autotable'),
+                import('@/utils/exportLetterhead'),
+            ])
+
+            const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+            const startY = await addPdfLetterhead(doc, letterhead, 297)
+
+            const head = [[
+                'Student ID',
+                'Name',
+                ...formula.components.map(c => `${c.componentType}\n/${c.maxMarks}`),
+                `Total\n/${formula.totalMarks}`,
+            ]]
+            const body = sorted.map(m => {
+                const bd = getBreakdown(m.breakdownJson)
+                const cols = formula.components.map(c =>
+                    bd[c.componentType] != null ? bd[c.componentType].earned.toFixed(2) : '\u2014'
+                )
+                return [m.rollNumber, m.studentName, ...cols, m.finalMark.toFixed(2)]
+            })
+
+            autoTable(doc, {
+                head, body, startY,
+                theme: 'grid',
+                headStyles: { fillColor: [13, 148, 136], textColor: 255, fontSize: 9, fontStyle: 'bold', halign: 'center' },
+                bodyStyles: { fontSize: 9, cellPadding: 2.2 },
+                columnStyles: {
+                    0: { halign: 'left', fontStyle: 'bold', cellWidth: 28 },
+                    1: { halign: 'left', cellWidth: 60 },
+                },
+                didParseCell: (data) => {
+                    if (data.section === 'body' && data.column.index >= 2) {
+                        data.cell.styles.halign = 'center'
+                        if (data.column.index === head[0].length - 1) {
+                            data.cell.styles.fontStyle = 'bold'
+                        }
+                    }
+                },
+                alternateRowStyles: { fillColor: [248, 250, 252] },
+                margin: { left: 14, right: 14 },
+            })
+
+            doc.save(`marks-${title}-${date}.pdf`)
+        } catch (e) {
+            console.error('PDF export failed:', e)
+            alert('PDF export failed. Try the Print option instead.')
+        }
     }
 
     // ── Print ─────────────────────────────────────────────────────────────────
     const handlePrint = () => {
         setOpen(false)
-        const compCols = formula.components.map(c =>
-            `<th>${c.componentType} (/${c.maxMarks})</th>`
-        ).join('')
-
-        const dataRows = marks.map((m, i) => {
-            const bd   = getBreakdown(m.breakdownJson)
-            const cols = formula.components.map(c =>
-                `<td>${bd[c.componentType] != null ? bd[c.componentType].earned.toFixed(2) : '—'}</td>`
-            ).join('')
-            return `<tr class="${i % 2 === 0 ? 'alt' : ''}">
-                <td><strong>${m.studentName}</strong></td>
-                ${cols}
-                <td><strong>${m.finalMark.toFixed(2)}</strong></td>
-            </tr>`
-        }).join('')
-
-        const win = window.open('', '_blank')!
-        win.document.write(`<!DOCTYPE html><html><head><title>${title} — Marks</title>
+        const win = window.open('', '_blank')
+        if (!win) return
+        win.document.write(`<!DOCTYPE html><html><head><title>${title} - Marks</title>
         <style>
-            body { font-family: Inter, sans-serif; padding: 24px; color: #0f172a; }
-            h2   { margin: 0 0 4px; font-size: 18px; }
-            p.sub{ margin: 0 0 16px; font-size: 12px; color: #64748b; }
-            table{ width: 100%; border-collapse: collapse; font-size: 12px; }
-            th   { background: #f1f5f9; padding: 7px 10px; text-align: center; border: 1px solid #e2e8f0; font-size: 11px; }
-            th:first-child { text-align: left; }
-            td   { padding: 6px 10px; border: 1px solid #e2e8f0; text-align: center; }
-            td:first-child { text-align: left; }
-            tr.alt td { background: #f8fafc; }
-            .footer { margin-top: 16px; font-size: 10px; color: #94a3b8; text-align: right; }
-            @media print { body { padding: 0; } }
+            *{box-sizing:border-box;margin:0;padding:0}
+            body{font-family:Inter,system-ui,sans-serif;padding:24px;color:#0f172a}
+            @media print { body{padding:0} @page { size: A4 landscape; margin: 12mm } }
         </style></head><body>
-            <h2>${title} — Final Marks</h2>
-            <p class="sub">Generated on ${new Date().toLocaleDateString()} · Total: ${formula.totalMarks} marks</p>
-            <table>
-                <thead><tr><th>Student</th>${compCols}<th>Total (/${formula.totalMarks})</th></tr></thead>
-                <tbody>${dataRows}</tbody>
-            </table>
-            <div class="footer">EduNexis · ${date}</div>
+            ${getHtmlLetterhead(letterhead)}
+            ${buildBodyHtml()}
         </body></html>`)
         win.document.close()
         win.focus()
-        setTimeout(() => { win.print(); win.close() }, 400)
+        setTimeout(() => { win.print() }, 600)
     }
 
     return (

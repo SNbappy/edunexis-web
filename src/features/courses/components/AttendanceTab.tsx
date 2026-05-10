@@ -1,4 +1,4 @@
-﻿import { useState } from "react"
+import { useState } from "react"
 import { motion } from "framer-motion"
 import { Plus, GraduationCap, LayoutList, Calendar as CalendarIcon } from "lucide-react"
 import { useAuthStore } from "@/store/authStore"
@@ -13,9 +13,9 @@ import { useAttendance } from "@/features/attendance/hooks/useAttendance"
 import { useAttendanceStats } from "@/features/attendance/hooks/useAttendanceStats"
 import { cn } from "@/utils/cn"
 
-interface Props { courseId: string; courseName?: string }
+interface Props { courseId: string; courseName?: string; courseCode?: string; semester?: string; department?: string }
 
-export default function AttendanceTab({ courseId, courseName }: Props) {
+export default function AttendanceTab({ courseId, courseName, courseCode, semester, department }: Props) {
   const { user } = useAuthStore()
   const teacher  = isTeacher(user?.role ?? "Student")
 
@@ -82,7 +82,7 @@ export default function AttendanceTab({ courseId, courseName }: Props) {
             ))}
           </div>
 
-          <AttendanceExportButton courseId={courseId} courseName={courseName ?? "Course"} />
+          <AttendanceExportButton courseId={courseId} courseName={courseName ?? "Course"} courseCode={courseCode} semester={semester} department={department} members={members} />
 
           <button
             onClick={() => setTakeOpen(true)}

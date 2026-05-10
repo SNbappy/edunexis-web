@@ -3,13 +3,14 @@ import { motion } from "framer-motion"
 import { CheckCircle2, RefreshCw, Send, BarChart3 } from "lucide-react"
 import toast from "react-hot-toast"
 import { useMarks } from "../hooks/useMarks"
+import { useAttendance } from "@/features/attendance/hooks/useAttendance"
 import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
 import MyGradesView from "./MyGradesView"
 import ExportFinalMarksButton from "./ExportFinalMarksButton"
 import type { FormulaComponentType, SelectionRule } from "@/types/marks.types"
 
-interface MarksTabProps { courseId: string; courseTitle?: string }
+interface MarksTabProps { courseId: string; courseTitle?: string; courseCode?: string; semester?: string; department?: string }
 interface ComponentConfig { enabled: boolean; selectionRule: SelectionRule; maxMarks: string }
 interface FormulaState {
   ct: ComponentConfig; assignment: ComponentConfig
@@ -95,7 +96,7 @@ function getScoreClass(percent: number): string {
   return "text-red-600 dark:text-red-400"
 }
 
-export default function MarksTab({ courseId, courseTitle }: MarksTabProps) {
+export default function MarksTab({ courseId, courseTitle, courseCode, semester, department }: MarksTabProps) {
   const { user } = useAuthStore()
   const teacher = isTeacher(user?.role ?? "Student")
 
@@ -106,6 +107,7 @@ export default function MarksTab({ courseId, courseTitle }: MarksTabProps) {
     calculate, isCalculating,
     publish, isPublishing,
   } = useMarks(courseId)
+  const { members } = useAttendance(courseId)
 
   const [config, setConfig] = useState<FormulaState>(DEFAULT_FORMULA)
   const [loaded, setLoaded] = useState(false)
@@ -206,7 +208,7 @@ export default function MarksTab({ courseId, courseTitle }: MarksTabProps) {
           )}
 
           {isPublished && formula && (
-            <ExportFinalMarksButton marks={marks} formula={formula} courseTitle={courseTitle} />
+            <ExportFinalMarksButton marks={marks} formula={formula} courseTitle={courseTitle} courseCode={courseCode} semester={semester} department={department} members={members} />
           )}
         </div>
       </motion.div>

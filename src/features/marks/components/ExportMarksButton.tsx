@@ -3,14 +3,18 @@ import { Download, FileSpreadsheet, FileText } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Button from '@/components/ui/Button'
 import type { GradebookDto } from '@/types/marks.types'
+import { getCsvLetterheadRows, type LetterheadOpts } from '@/utils/exportLetterhead'
 
 interface Props {
     gradebook: GradebookDto
     onExportExcel?: () => void
     courseTitle?: string
+    courseCode?: string | null
+    semester?: string | null
+    department?: string | null
 }
 
-export default function ExportMarksButton({ gradebook, onExportExcel, courseTitle }: Props) {
+export default function ExportMarksButton({ gradebook, onExportExcel, courseTitle, courseCode, semester, department }: Props) {
     const [open, setOpen] = useState(false)
 
     const exportCSV = () => {
@@ -47,7 +51,14 @@ export default function ExportMarksButton({ gradebook, onExportExcel, courseTitl
             ].join(',')
         })
 
-        const csv = [headers, ...dataRows].join('\n')
+        const letterhead: LetterheadOpts = {
+            reportTitle: 'Gradebook',
+            courseCode, courseTitle, semester, department,
+            studentCount: rows.length,
+        }
+        const headerRows = getCsvLetterheadRows(letterhead)
+            .map(r => r.map(c => '"' + c.replace(/"/g, '""') + '"').join(','))
+        const csv = [...headerRows, headers, ...dataRows].join('\n')
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')

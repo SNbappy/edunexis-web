@@ -104,12 +104,12 @@ export default function CourseDetailPage() {
   const renderTab = () => {
     switch (tab) {
       case COURSE_TABS.STREAM: return <AnnouncementFeed courseId={courseId!} />
-      case COURSE_TABS.ATTENDANCE: return <AttendanceTab courseId={courseId!} courseName={course.title} />
+      case COURSE_TABS.ATTENDANCE: return <AttendanceTab courseId={courseId!} courseName={course.title} courseCode={course.courseCode} semester={course.semester} department={course.department} />
       case COURSE_TABS.MATERIALS: return <MaterialsTab courseId={courseId!} />
       case COURSE_TABS.ASSIGNMENTS: return <AssignmentsTab courseId={courseId!} />
       case COURSE_TABS.CT: return <CTTab courseId={courseId!} />
       case COURSE_TABS.PRESENTATIONS: return <PresentationsTab courseId={courseId!} />
-      case COURSE_TABS.MARKS: return <MarksTab courseId={courseId!} courseTitle={course.title} />
+      case COURSE_TABS.MARKS: return <MarksTab courseId={courseId!} courseTitle={course.title} courseCode={course.courseCode} semester={course.semester} department={course.department} />
       case COURSE_TABS.MEMBERS: return <CourseMembersList courseId={courseId!} course={course} />
       default: return <Navigate to={"/courses/" + courseId + "/" + COURSE_TABS.STREAM} replace />
     }

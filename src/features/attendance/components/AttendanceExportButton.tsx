@@ -5,15 +5,28 @@ import { Download, Printer, FileText, ChevronDown, FileSpreadsheet } from "lucid
 import { useAttendanceStats } from "../hooks/useAttendanceStats"
 import { formatDate } from "@/utils/dateUtils"
 import { cn } from "@/utils/cn"
+import {
+  addPdfLetterhead,
+  getCsvLetterheadRows,
+  getHtmlLetterhead,
+  type LetterheadOpts,
+} from "@/utils/exportLetterhead"
 import type { AttendanceSessionDto } from "@/types/attendance.types"
 
-interface Props { courseId: string; courseName: string }
+interface Props {
+  courseId: string
+  courseName: string
+  courseCode?: string | null
+  semester?: string | null
+  department?: string | null
+  members?: Array<{ userId: string; studentId?: string; fullName: string }>
+}
 
 function getStudentStatus(s: AttendanceSessionDto, studentId: string) {
   return s.records.find(r => r.studentId === studentId)?.status?.[0] ?? "U"
 }
 
-function buildPrintHTML(courseName: string, sessions: AttendanceSessionDto[], studentSummaries: any[]) {
+function buildPrintHTML(letterheadHtml: string, sessions: AttendanceSessionDto[], studentSummaries: any[]) {
   const sessionHeaders = sessions.map((s, i) =>
     `<th style="padding:7px 8px;border:1px solid #ddd;font-size:11px;background:#f0fdfa;white-space:nowrap">
       ${s.topic ? `S${i + 1} - ${s.topic}` : `S${i + 1}<br/><small style="color:#888">${formatDate(s.date)}</small>`}
@@ -30,7 +43,8 @@ function buildPrintHTML(courseName: string, sessions: AttendanceSessionDto[], st
     const pctColor = s.attendancePercent >= 75 ? "#059669" : s.attendancePercent >= 50 ? "#d97706" : "#dc2626"
     const rowBg = ri % 2 === 0 ? "#ffffff" : "#f9fafb"
     return `<tr style="background:${rowBg}">
-      <td style="padding:8px 12px;border:1px solid #e5e7eb;font-size:12px;font-weight:600;white-space:nowrap">${s.studentName}</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;font-size:12px;font-weight:700;white-space:nowrap;font-family:ui-monospace,monospace">${s.rollNumber}</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;font-size:12px;white-space:nowrap">${s.studentName}</td>
       ${statusCells}
       <td style="text-align:center;color:#059669;font-weight:700;padding:7px;border:1px solid #e5e7eb;font-size:12px">${s.presentCount}</td>
       <td style="text-align:center;color:#dc2626;font-weight:700;padding:7px;border:1px solid #e5e7eb;font-size:12px">${s.absentCount}</td>
@@ -41,19 +55,12 @@ function buildPrintHTML(courseName: string, sessions: AttendanceSessionDto[], st
 
   return `
     <div style="font-family:system-ui,-apple-system,sans-serif;color:#111;padding:24px">
-      <div style="margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #e5e7eb">
-        <h1 style="font-size:20px;font-weight:700;margin:0 0 4px 0;color:#111">Attendance report</h1>
-        <h2 style="font-size:15px;font-weight:600;margin:0 0 8px 0;color:#0d9488">${courseName}</h2>
-        <p style="font-size:12px;color:#6b7280;margin:0">
-          Generated: ${new Date().toLocaleString()} &nbsp;&middot;&nbsp;
-          Total sessions: ${sessions.length} &nbsp;&middot;&nbsp;
-          Total students: ${studentSummaries.length}
-        </p>
-      </div>
+      ${letterheadHtml}
       <table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead>
           <tr>
-            <th style="text-align:left;padding:9px 12px;border:1px solid #ddd;font-size:12px;background:#f0fdfa;min-width:160px">Student</th>
+            <th style="text-align:left;padding:9px 12px;border:1px solid #ddd;font-size:12px;background:#f0fdfa;min-width:80px">Student ID</th>
+            <th style="text-align:left;padding:9px 12px;border:1px solid #ddd;font-size:12px;background:#f0fdfa;min-width:160px">Name</th>
             ${sessionHeaders}
             <th style="padding:8px;border:1px solid #ddd;font-size:11px;background:#dcfce7;color:#059669">P</th>
             <th style="padding:8px;border:1px solid #ddd;font-size:11px;background:#fee2e2;color:#dc2626">A</th>
@@ -66,7 +73,9 @@ function buildPrintHTML(courseName: string, sessions: AttendanceSessionDto[], st
     </div>`
 }
 
-export default function AttendanceExportButton({ courseId, courseName }: Props) {
+export default function AttendanceExportButton({
+  courseId, courseName, courseCode, semester, department, members = [],
+}: Props) {
   const { data: stats, isLoading } = useAttendanceStats(courseId)
   const [open, setOpen] = useState(false)
   const [exporting, setExporting] = useState(false)
@@ -74,18 +83,42 @@ export default function AttendanceExportButton({ courseId, courseName }: Props) 
   if (isLoading || !stats?.sessions?.length || !stats?.studentSummaries?.length) return null
   const { sessions, studentSummaries } = stats
 
+  // The DTO's `studentId` is actually the user's DB GUID. Real academic roll
+  // numbers come from `members[].studentId`. Join them here so exports show
+  // the roll teachers actually call out.
+  const rollByUserId = new Map(members.map(m => [m.userId, m.studentId ?? ""]))
+  const enriched = studentSummaries.map((s: any) => ({
+    ...s,
+    rollNumber: rollByUserId.get(s.studentId) ?? "",
+  }))
+  const sorted = [...enriched].sort((a: any, b: any) =>
+    (a.rollNumber ?? "").localeCompare(b.rollNumber ?? "", undefined, { numeric: true }) ||
+    a.studentName.localeCompare(b.studentName)
+  )
+
+  const letterhead: LetterheadOpts = {
+    reportTitle: "Attendance report",
+    courseCode, courseTitle: courseName, semester, department,
+    studentCount: sorted.length,
+    sessionCount: sessions.length,
+  }
+
   const exportCSV = () => {
+    const headerRows = getCsvLetterheadRows(letterhead)
+      .map(r => r.map(cell => `"${cell.replace(/"/g, '""')}"`).join(","))
+
     const headers = [
-      "Student",
+      "Student ID", "Name",
       ...sessions.map((s, i) => s.topic ? `S${i + 1}-${s.topic}` : `S${i + 1}-${formatDate(s.date)}`),
-      "Present", "Absent", "Unmarked", "Attendance%"
+      "Present", "Absent", "Unmarked", "Attendance%",
     ]
-    const rows = studentSummaries.map(s => [
+    const rows = sorted.map((s: any) => [
+      `"${s.rollNumber}"`,
       `"${s.studentName}"`,
       ...sessions.map(session => getStudentStatus(session, s.id)),
-      s.presentCount, s.absentCount, s.unmarkedCount, `${s.attendancePercent}%`
+      s.presentCount, s.absentCount, s.unmarkedCount, `${s.attendancePercent}%`,
     ])
-    const csv = [headers, ...rows].map(r => r.join(",")).join("\n")
+    const csv = [...headerRows, headers.join(","), ...rows.map(r => r.join(","))].join("\n")
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
@@ -106,35 +139,29 @@ export default function AttendanceExportButton({ courseId, courseName }: Props) 
       ])
 
       const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" })
-
-      doc.setFontSize(16)
-      doc.setTextColor(31, 31, 31)
-      doc.text("Attendance report", 14, 16)
-      doc.setFontSize(11)
-      doc.setTextColor(13, 148, 136)
-      doc.text(courseName, 14, 23)
-      doc.setFontSize(8)
-      doc.setTextColor(107, 114, 128)
-      doc.text(`Generated: ${new Date().toLocaleString()}  -  Sessions: ${sessions.length}  -  Students: ${studentSummaries.length}`, 14, 29)
+      const startY = await addPdfLetterhead(doc, letterhead, 297)
 
       const head = [
-        ["Student", ...sessions.map((s, i) => s.topic ? `S${i + 1}\n${s.topic}` : `S${i + 1}\n${formatDate(s.date)}`), "P", "A", "U", "%"],
+        ["ID", "Name",
+          ...sessions.map((s, i) => s.topic ? `S${i + 1}\n${s.topic}` : `S${i + 1}\n${formatDate(s.date)}`),
+          "P", "A", "U", "%"],
       ]
-      const body = studentSummaries.map(s => [
+      const body = sorted.map((s: any) => [
+        s.rollNumber,
         s.studentName,
         ...sessions.map(session => getStudentStatus(session, s.id)),
-        s.presentCount, s.absentCount, s.unmarkedCount, `${s.attendancePercent}%`
+        s.presentCount, s.absentCount, s.unmarkedCount, `${s.attendancePercent}%`,
       ])
 
       autoTable(doc, {
-        head,
-        body,
-        startY: 34,
+        head, body,
+        startY,
         theme: "grid",
         headStyles: { fillColor: [13, 148, 136], textColor: 255, fontSize: 8, fontStyle: "bold", halign: "center" },
         bodyStyles: { fontSize: 8, cellPadding: 2 },
         columnStyles: {
-          0: { halign: "left", fontStyle: "bold", cellWidth: 40 },
+          0: { halign: "left", fontStyle: "bold", cellWidth: 28 },
+          1: { halign: "left", cellWidth: 50 },
         },
         didParseCell: (data) => {
           if (data.section === "body") {
@@ -173,34 +200,19 @@ export default function AttendanceExportButton({ courseId, courseName }: Props) 
         body{font-family:system-ui,-apple-system,sans-serif;background:#fff;color:#111}
         @media print{@page{size:A4 landscape;margin:15mm} button{display:none!important}}
       </style>
-    </head><body>${buildPrintHTML(courseName, sessions, studentSummaries)}</body></html>`)
+    </head><body>${buildPrintHTML(getHtmlLetterhead(letterhead), sessions, sorted)}</body></html>`)
     w.document.close()
-    setTimeout(() => w.print(), 600)
+    setTimeout(() => w.print(), 700)
     setOpen(false)
   }
 
   const ACTIONS = [
-    {
-      label: "Export CSV",
-      icon: FileSpreadsheet,
-      action: exportCSV,
-      desc: "Spreadsheet (.csv)",
-      iconWrap: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400",
-    },
-    {
-      label: "Export PDF",
-      icon: Download,
-      action: exportPDF,
-      desc: "Styled PDF file",
-      iconWrap: "bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400",
-    },
-    {
-      label: "Print",
-      icon: Printer,
-      action: handlePrint,
-      desc: "Browser print dialog",
-      iconWrap: "bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400",
-    },
+    { label: "Export CSV", icon: FileSpreadsheet, action: exportCSV, desc: "Spreadsheet (.csv)",
+      iconWrap: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400" },
+    { label: "Export PDF", icon: Download, action: exportPDF, desc: "Styled PDF file",
+      iconWrap: "bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400" },
+    { label: "Print", icon: Printer, action: handlePrint, desc: "Browser print dialog",
+      iconWrap: "bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400" },
   ]
 
   return (
@@ -219,10 +231,7 @@ export default function AttendanceExportButton({ courseId, courseName }: Props) 
           <>
             <FileText className="h-3.5 w-3.5" strokeWidth={2.5} />
             Export
-            <ChevronDown
-              className={cn("h-3 w-3 transition-transform", open && "rotate-180")}
-              strokeWidth={2.5}
-            />
+            <ChevronDown className={cn("h-3 w-3 transition-transform", open && "rotate-180")} strokeWidth={2.5} />
           </>
         )}
       </button>
@@ -245,10 +254,7 @@ export default function AttendanceExportButton({ courseId, courseName }: Props) 
                     onClick={a.action}
                     className="flex items-center gap-3 w-full px-2.5 py-2 rounded-lg hover:bg-muted transition-colors text-left"
                   >
-                    <div className={cn(
-                      "h-8 w-8 rounded-lg inline-flex items-center justify-center shrink-0",
-                      a.iconWrap,
-                    )}>
+                    <div className={cn("h-8 w-8 rounded-lg inline-flex items-center justify-center shrink-0", a.iconWrap)}>
                       <a.icon className="h-4 w-4" strokeWidth={2.25} />
                     </div>
                     <div className="min-w-0">
