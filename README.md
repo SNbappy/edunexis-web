@@ -1,4 +1,4 @@
-# EduNexis — Smart Learning & Course Management Platform (Frontend)
+# EduNexis - University Course Management Platform
 
 EduNexis is a production-deployed, modern course management platform built specifically to streamline academic workflows for university students and teachers. Designed for **Jashore University of Science and Technology (JUST)**, it models real-world classroom mechanics—from formula-based grading systems and session attendance registers to secure course entries.
 
