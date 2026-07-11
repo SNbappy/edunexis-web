@@ -6,12 +6,17 @@ EduNexis is a production-deployed, modern course management platform built speci
 
 ## 📸 Screenshots & Previews
 
-To showcase the platform on GitHub, please take screenshots of the frontend, save them with the filenames below, and add them to the `public/` directory:
+### Dashboard & Course Streams
+![Dashboard & Streams](./public/edunexis-hero-preview.png)
 
-1. **Dashboard & Streams**: `edunexis-hero-preview.png`
-2. **8-Digit Join Code Flow**: `edunexis-join-flow.png`
-3. **Formula-Based Gradebook**: `edunexis-gradebook-formula.png`
-4. **Attendance Management Sheet**: `edunexis-attendance-register.png`
+### Course Join Code Flow
+![8-Digit Join Code Entry](./public/edunexis-join-flow.png)
+
+### Formula-Based Gradebook
+![Gradebook Formula Builder](./public/edunexis-gradebook-formula.png)
+
+### Attendance Management Sheet
+![Attendance Register](./public/edunexis-attendance-register.png)
 
 ---
 
