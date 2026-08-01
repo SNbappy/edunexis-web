@@ -1,0 +1,1680 @@
+﻿%=====================================================================
+%  OOP INTERVIEW PREPARATION NOTES — PART 1
+%  Compile with: pdfLaTeX
+%  Required Overleaf packages are all standard.
+%=====================================================================
+\documentclass[11pt,a4paper]{article}
+
+%================ PACKAGES ================
+\usepackage[margin=2.2cm,headheight=15pt]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{fontawesome5}
+\usepackage{parskip}
+
+%================ COLORS ================
+\definecolor{defnBlue}{HTML}{1E40AF}
+\definecolor{defnBg}{HTML}{EFF6FF}
+\definecolor{intqRed}{HTML}{B91C1C}
+\definecolor{intqBg}{HTML}{FEF2F2}
+\definecolor{codeBg}{HTML}{F8F8F8}
+\definecolor{codeText}{HTML}{1F2937}
+\definecolor{tipGreen}{HTML}{047857}
+\definecolor{tipBg}{HTML}{ECFDF5}
+\definecolor{gotchaOrange}{HTML}{C2410C}
+\definecolor{gotchaBg}{HTML}{FEF3C7}
+\definecolor{comparePurple}{HTML}{6D28D9}
+\definecolor{compareBg}{HTML}{F5F3FF}
+\definecolor{headerDark}{HTML}{0F172A}
+\definecolor{keywordBlue}{HTML}{0066CC}
+\definecolor{stringGreen}{HTML}{16A34A}
+\definecolor{commentGray}{HTML}{6B7280}
+\definecolor{tableHead}{HTML}{1E3A8A}
+\definecolor{tableAlt}{HTML}{F1F5F9}
+
+%================ HYPERREF ================
+\hypersetup{
+    colorlinks=true,
+    linkcolor=defnBlue,
+    urlcolor=defnBlue,
+    citecolor=defnBlue,
+    pdftitle={OOP Interview Preparation Notes},
+    pdfauthor={CSE Student},
+    bookmarksnumbered=true
+}
+
+%================ HEADER / FOOTER ================
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textbf{\textcolor{headerDark}{OOP Interview Notes}}}
+\fancyhead[R]{\textcolor{headerDark}{\thepage}}
+\fancyfoot[L]{\textcolor{commentGray}{\small Prepared by: \textbf{Md. Sabbir Hossain Bappy}}}
+\fancyfoot[R]{\textcolor{commentGray}{\small CSE, JUST}}\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\footrulewidth}{0.3pt}
+
+%================ SECTION STYLING ================
+\titleformat{\section}
+{\Large\bfseries\color{headerDark}}
+{\thesection}{1em}{}
+[\vspace{2pt}{\color{defnBlue}\titlerule[1.2pt]}]
+
+\titleformat{\subsection}
+{\large\bfseries\color{defnBlue}}
+{\thesubsection}{1em}{}
+
+\titleformat{\subsubsection}
+{\normalsize\bfseries\color{intqRed}}
+{\thesubsubsection}{1em}{}
+
+%================ CODE LISTING STYLE ================
+\lstdefinestyle{csharp}{
+    language=[Sharp]C,
+    backgroundcolor=\color{codeBg},
+    basicstyle=\ttfamily\small\color{codeText},
+    keywordstyle=\color{keywordBlue}\bfseries,
+    stringstyle=\color{stringGreen},
+    commentstyle=\color{commentGray}\itshape,
+    numbers=left,
+    numberstyle=\tiny\color{commentGray},
+    numbersep=8pt,
+    frame=single,
+    framerule=0.4pt,
+    rulecolor=\color{defnBlue!40},
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=2,
+    columns=fullflexible,
+    keepspaces=true,
+    captionpos=b,
+    morekeywords={var,async,await,record,init,nameof,when,with,dynamic,yield,partial,
+                  get,set,value,Console,WriteLine,List,String,Int32,Object,sealed,
+                  override,virtual,abstract,interface,delegate,event,readonly,
+                  unsafe,fixed,stackalloc,checked,unchecked,operator,implicit,
+                  explicit,extern,volatile,lock,using}
+}
+\lstset{style=csharp}
+
+\lstdefinestyle{output}{
+    backgroundcolor=\color{headerDark},
+    basicstyle=\ttfamily\small\color{white},
+    frame=single,
+    framerule=0pt,
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=2,
+    columns=fullflexible,
+}
+
+%================ CUSTOM BOXES ================
+\newtcolorbox{defnBox}[1]{
+    enhanced,colback=defnBg,colframe=defnBlue,boxrule=0.6pt,arc=2mm,
+    left=8pt,right=8pt,top=8pt,bottom=6pt,
+    title={\textbf{\faBookmark~~Definition: #1}},
+    fonttitle=\bfseries\color{white},colbacktitle=defnBlue,
+    attach boxed title to top left={xshift=4mm,yshift=-2.5mm},
+    boxed title style={colframe=defnBlue,arc=1mm,boxrule=0pt}
+}
+
+\newtcolorbox{intqBox}[1]{
+    enhanced,colback=intqBg,colframe=intqRed,boxrule=0.6pt,arc=2mm,
+    left=8pt,right=8pt,top=8pt,bottom=6pt,
+    title={\textbf{\faQuestionCircle~~Interview Question: #1}},
+    fonttitle=\bfseries\color{white},colbacktitle=intqRed,
+    attach boxed title to top left={xshift=4mm,yshift=-2.5mm},
+    boxed title style={colframe=intqRed,arc=1mm,boxrule=0pt}
+}
+
+\newtcolorbox{tipBox}{
+    enhanced,colback=tipBg,colframe=tipGreen,boxrule=0.6pt,arc=2mm,
+    left=8pt,right=8pt,top=8pt,bottom=6pt,
+    title={\textbf{\faLightbulb~~Pro Tip}},
+    fonttitle=\bfseries\color{white},colbacktitle=tipGreen,
+    attach boxed title to top left={xshift=4mm,yshift=-2.5mm},
+    boxed title style={colframe=tipGreen,arc=1mm,boxrule=0pt}
+}
+
+\newtcolorbox{gotchaBox}{
+    enhanced,colback=gotchaBg,colframe=gotchaOrange,boxrule=0.6pt,arc=2mm,
+    left=8pt,right=8pt,top=8pt,bottom=6pt,
+    title={\textbf{\faExclamationTriangle~~Gotcha / Watch Out}},
+    fonttitle=\bfseries\color{white},colbacktitle=gotchaOrange,
+    attach boxed title to top left={xshift=4mm,yshift=-2.5mm},
+    boxed title style={colframe=gotchaOrange,arc=1mm,boxrule=0pt}
+}
+
+\newtcolorbox{compareBox}[1]{
+    enhanced,colback=compareBg,colframe=comparePurple,boxrule=0.6pt,arc=2mm,
+    left=8pt,right=8pt,top=8pt,bottom=6pt,
+    title={\textbf{\faBalanceScale~~Comparison: #1}},
+    fonttitle=\bfseries\color{white},colbacktitle=comparePurple,
+    attach boxed title to top left={xshift=4mm,yshift=-2.5mm},
+    boxed title style={colframe=comparePurple,arc=1mm,boxrule=0pt}
+}
+
+\newtcolorbox{keyBox}[1]{
+    enhanced,colback=headerDark!5,colframe=headerDark,boxrule=0.6pt,arc=2mm,
+    left=8pt,right=8pt,top=8pt,bottom=6pt,
+    title={\textbf{\faKey~~Key Points: #1}},
+    fonttitle=\bfseries\color{white},colbacktitle=headerDark,
+    attach boxed title to top left={xshift=4mm,yshift=-2.5mm},
+    boxed title style={colframe=headerDark,arc=1mm,boxrule=0pt}
+}
+
+%================ TABLE COMMAND ================
+\newcommand{\rowcolortop}{\rowcolor{tableHead}\color{white}\bfseries}
+\newcommand{\rowcolorlight}{\rowcolor{tableAlt}}
+
+%================ BEGIN DOCUMENT ================
+\begin{document}
+
+%================ TITLE PAGE ================
+\begin{titlepage}
+\centering
+\vspace*{1.5cm}
+
+{\Huge\bfseries\color{defnBlue} Object-Oriented \\[0.3cm] Programming \par}
+\vspace{0.7cm}
+{\LARGE\bfseries\color{headerDark} Complete Interview Preparation Notes \par}
+
+\vspace{1.5cm}
+{\color{defnBlue}\rule{0.75\textwidth}{1.2pt}}\par
+\vspace{0.5cm}
+{\Large \textit{Theory + C\# Code + Interview Q\&A} \par}
+\vspace{0.4cm}
+{\color{defnBlue}\rule{0.75\textwidth}{1.2pt}}\par
+
+\vspace{2.5cm}
+
+\begin{tcolorbox}[colback=defnBg,colframe=defnBlue,arc=3mm,width=0.7\textwidth]
+\centering
+\textbf{\large What's Inside:}\\[6pt]
+\faCheckCircle~~All 4 Pillars of OOP\\
+\faCheckCircle~~SOLID Principles in Depth\\
+\faCheckCircle~~40+ Common Interview Questions\\
+\faCheckCircle~~C\# Code Examples for Every Concept\\
+\faCheckCircle~~Comparison Tables \& Cheat Sheet
+\end{tcolorbox}
+
+\vfill
+\begin{tcolorbox}[colback=defnBg,colframe=defnBlue,arc=2mm,width=0.7\textwidth,boxrule=1pt]
+\centering
+{\large \textbf{Prepared by} \par}
+\vspace{0.25cm}
+{\LARGE\bfseries\color{defnBlue} Md. Sabbir Hossain Bappy \par}
+\vspace{0.15cm}
+{\normalsize \textit{Department of CSE} \par}
+{\normalsize \textit{Jashore University of Science and Technology} \par}
+\end{tcolorbox}
+\vspace{0.7cm}
+{\large \textbf{Target:} Top Software Companies of Bangladesh \par}
+\vspace{0.3cm}
+{\large \today \par}
+\end{titlepage}
+
+%================ TABLE OF CONTENTS ================
+\tableofcontents
+\clearpage
+
+%=====================================================================
+\section{Introduction to Object-Oriented Programming}
+%=====================================================================
+
+\subsection{What is OOP?}
+
+\begin{defnBox}{Object-Oriented Programming}
+\textbf{Object-Oriented Programming (OOP)} is a programming paradigm based on the concept of ``objects'', which contain \textbf{data} (fields/properties) and \textbf{behavior} (methods). It is a way of modeling real-world entities in code so that programs become easier to design, maintain, and extend.
+\end{defnBox}
+
+In simple words: instead of writing a long sequence of instructions, OOP organizes code into reusable \textit{objects}, each one similar to a real-world thing — like a \textit{Student}, a \textit{Car}, or a \textit{BankAccount} — that has \textit{properties} (data) and can \textit{do things} (methods).
+
+\subsection{Why Was OOP Created?}
+
+Before OOP, programmers used \textbf{procedural programming} (like C), where data and functions were separate. As software grew larger, this caused problems:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Code duplication} — same logic written again and again.
+    \item \textbf{Tight coupling} — changing one function broke many others.
+    \item \textbf{Hard maintenance} — global data made debugging painful.
+    \item \textbf{Poor reusability} — functions could not be easily extended.
+\end{itemize}
+
+OOP solved these by \textbf{binding data and behavior together} inside an object, and by allowing \textbf{reuse} through inheritance and polymorphism.
+
+\subsection{Real-World Analogy}
+
+Think of a \textbf{Car}:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Properties (data):} color, brand, model, speed, fuel level.
+    \item \textbf{Behaviors (methods):} start(), accelerate(), brake(), stop().
+\end{itemize}
+Each car you see on the road is a different \textit{object}, but all of them are based on the same general blueprint (the \textit{class} ``Car'').
+
+\subsection{The 4 Pillars of OOP}
+
+\begin{keyBox}{The 4 Pillars}
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Encapsulation} — Wrapping data and behavior together; hiding internal details.
+    \item \textbf{Inheritance} — A class deriving features from another class.
+    \item \textbf{Polymorphism} — One name, many forms (same method, different behavior).
+    \item \textbf{Abstraction} — Showing only essential features; hiding complexity.
+\end{enumerate}
+\end{keyBox}
+
+We will cover each in deep detail in later sections.
+
+\subsection{Procedural vs Object-Oriented Programming}
+
+\begin{compareBox}{Procedural vs OOP}
+\begin{tabularx}{\linewidth}{|>{\bfseries}p{3.5cm}|X|X|}
+\hline
+\rowcolortop \color{white}Aspect & \color{white}Procedural & \color{white}Object-Oriented \\
+\hline
+Focus & Functions / procedures & Objects \\
+\rowcolorlight
+Data Access & Global, shared & Encapsulated inside objects \\
+Reusability & Limited & High (via inheritance, composition) \\
+\rowcolorlight
+Maintainability & Hard at scale & Much easier \\
+Security & Low (data exposed) & High (data hidden) \\
+\rowcolorlight
+Real-world Mapping & Weak & Strong \\
+Example Languages & C, Pascal, FORTRAN & C\#, Java, C++, Python \\
+\hline
+\end{tabularx}
+\end{compareBox}
+
+\subsection{Languages That Support OOP}
+
+\textbf{Pure OOP languages} (almost everything is an object): Smalltalk, Ruby. \\
+\textbf{Multi-paradigm with strong OOP support:} C\#, Java, C++, Python, Kotlin, Swift. \\
+\textbf{Procedural-first:} C, Go (Go uses structs and interfaces, but lacks classical inheritance).
+
+\begin{intqBox}{What is OOP and why do we use it?}
+\textbf{Answer:} OOP is a programming paradigm that organizes code around \textit{objects} which combine \textit{data} (state) and \textit{behavior} (methods). We use OOP because it provides four key advantages — \textbf{encapsulation} (security), \textbf{inheritance} (reusability), \textbf{polymorphism} (flexibility), and \textbf{abstraction} (simplicity). It makes large software systems easier to design, maintain, extend, and debug by closely mirroring real-world entities.
+\end{intqBox}
+
+\begin{tipBox}
+When answering ``What is OOP?'' in an interview, always close with the \textbf{4 pillars}. Interviewers expect to hear them — leaving them out signals shallow understanding.
+\end{tipBox}
+
+\clearpage
+%=====================================================================
+\section{Classes and Objects}
+%=====================================================================
+
+\subsection{What is a Class?}
+
+\begin{defnBox}{Class}
+A \textbf{class} is a \textit{blueprint} or \textit{template} for creating objects. It defines what data the object will hold (fields/properties) and what actions it can perform (methods). A class itself occupies no memory until an object is created from it.
+\end{defnBox}
+
+\subsection{What is an Object?}
+
+\begin{defnBox}{Object}
+An \textbf{object} is an \textit{instance} of a class — a real, concrete entity in memory built using the class blueprint. Each object has its own copy of the data defined by the class.
+\end{defnBox}
+
+\subsection{Simple Analogy}
+
+Think of a \textbf{class} as the \textit{architectural plan} of a house, and an \textbf{object} as an \textit{actual house} built from that plan. From one plan, you can build many houses (objects), each with slightly different paint colors (different field values), but all sharing the same overall structure.
+
+\subsection{Anatomy of a Class}
+
+A C\# class typically contains:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Fields} — variables holding the object's data.
+    \item \textbf{Properties} — controlled access to fields.
+    \item \textbf{Constructors} — special methods that initialize objects.
+    \item \textbf{Methods} — actions/behaviors the object can perform.
+    \item \textbf{Events} — notifications the object can send.
+    \item \textbf{Nested types} — classes/enums inside the class.
+\end{itemize}
+
+\subsection{Code Example: Defining a Class and Creating Objects}
+
+\begin{lstlisting}[caption={A complete Car class in C\#}]
+using System;
+
+public class Car
+{
+    // ----- Fields (data) -----
+    private string brand;
+    private string model;
+    private int speed;
+
+    // ----- Constructor -----
+    public Car(string brand, string model)
+    {
+        this.brand = brand;
+        this.model = model;
+        this.speed = 0;
+    }
+
+    // ----- Property -----
+    public int Speed
+    {
+        get { return speed; }
+    }
+
+    // ----- Methods (behavior) -----
+    public void Accelerate(int amount)
+    {
+        speed += amount;
+        Console.WriteLine($"{brand} {model} accelerated to {speed} km/h");
+    }
+
+    public void Brake()
+    {
+        speed = 0;
+        Console.WriteLine($"{brand} {model} has stopped.");
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        // Creating objects (instances) from the Car class
+        Car car1 = new Car("Toyota", "Corolla");
+        Car car2 = new Car("Honda", "Civic");
+
+        car1.Accelerate(60);
+        car2.Accelerate(80);
+        car1.Brake();
+    }
+}
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{lstlisting}[style=output]
+Toyota Corolla accelerated to 60 km/h
+Honda Civic accelerated to 80 km/h
+Toyota Corolla has stopped.
+\end{lstlisting}
+
+\subsection{Class vs Object — Quick Difference}
+
+\begin{compareBox}{Class vs Object}
+\begin{tabularx}{\linewidth}{|>{\bfseries}p{3.5cm}|X|X|}
+\hline
+\rowcolortop \color{white}Aspect & \color{white}Class & \color{white}Object \\
+\hline
+Nature & Logical entity (blueprint) & Physical entity (real instance) \\
+\rowcolorlight
+Memory & Allocates no memory by itself & Allocates memory when created \\
+Creation & Declared once & Many can be created from one class \\
+\rowcolorlight
+Keyword & \texttt{class} & \texttt{new} \\
+Example & \texttt{class Car \{ \}} & \texttt{Car c = new Car();} \\
+\hline
+\end{tabularx}
+\end{compareBox}
+
+\subsection{Memory: Where Do Objects Live?}
+
+In C\#, \textbf{objects} (reference types) live on the \textbf{heap}, while the \textbf{reference} (a pointer-like variable) lives on the \textbf{stack}. When you write:
+
+\begin{lstlisting}
+Car c = new Car("Toyota", "Corolla");
+\end{lstlisting}
+
+\begin{itemize}[leftmargin=*]
+    \item The variable \texttt{c} is on the stack.
+    \item The actual \texttt{Car} object is created on the heap.
+    \item \texttt{c} stores the address (reference) of the object.
+\end{itemize}
+We will cover this in detail in the ``Value vs Reference Types'' section.
+
+\subsection{Common Interview Questions on Classes \& Objects}
+
+\begin{intqBox}{What is the difference between a class and an object?}
+\textbf{Answer:} A \textbf{class} is a blueprint that defines the structure and behavior, while an \textbf{object} is a concrete instance of that class in memory. A class itself takes no memory, but each object does. You can create many objects from a single class.
+\end{intqBox}
+
+\begin{intqBox}{Can a class exist without any object?}
+\textbf{Answer:} Yes. A class definition exists independently — it is just a blueprint stored in metadata. However, to actually \textit{use} its non-static members, you must create an object. Static classes can be used without creating objects.
+\end{intqBox}
+
+\begin{intqBox}{Can we create an object without a class?}
+\textbf{Answer:} In strict C\#, no — every object must be an instance of some class (even anonymous types are backed by compiler-generated classes). In dynamic languages like JavaScript, objects can exist without a formal class.
+\end{intqBox}
+
+\begin{intqBox}{What is the difference between a class and a struct in C\#?}
+\textbf{Answer:} A \textbf{class} is a \textit{reference type} stored on the heap; a \textbf{struct} is a \textit{value type} stored on the stack (usually). Classes support inheritance; structs do not (they can only implement interfaces). Structs are best for small, lightweight, immutable data; classes are for everything else.
+\end{intqBox}
+
+\begin{tipBox}
+Naming conventions in C\#:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Classes, methods, properties:} \texttt{PascalCase} (e.g., \texttt{BankAccount}, \texttt{GetBalance}).
+    \item \textbf{Local variables, parameters:} \texttt{camelCase} (e.g., \texttt{accountNumber}).
+    \item \textbf{Private fields:} \texttt{\_camelCase} (e.g., \texttt{\_balance}).
+    \item \textbf{Constants:} \texttt{PascalCase} or \texttt{UPPER\_CASE} (team-dependent).
+\end{itemize}
+\end{tipBox}
+
+\clearpage
+%=====================================================================
+\section{Constructors and Destructors}
+%=====================================================================
+
+\subsection{What is a Constructor?}
+
+\begin{defnBox}{Constructor}
+A \textbf{constructor} is a special method of a class that is automatically called when an object is created. Its main job is to \textbf{initialize the object's state} (its fields). It has the \textbf{same name as the class} and \textbf{no return type} (not even \texttt{void}).
+\end{defnBox}
+
+\subsection{Key Characteristics of Constructors}
+
+\begin{itemize}[leftmargin=*]
+    \item Same name as the class.
+    \item No return type.
+    \item Called automatically when \texttt{new} keyword is used.
+    \item Can be \textbf{overloaded} (multiple constructors with different parameters).
+    \item Cannot be \textbf{inherited}, but the base class constructor can be called using \texttt{base()}.
+    \item Cannot be \texttt{virtual}, \texttt{abstract}, or \texttt{final}.
+\end{itemize}
+
+\subsection{Types of Constructors in C\#}
+
+\subsubsection{1. Default Constructor}
+
+A constructor with \textbf{no parameters}. If you don't define any constructor, the compiler creates one automatically (called the \textit{implicit default constructor}).
+
+\begin{lstlisting}[caption={Default constructor}]
+public class Student
+{
+    public string Name;
+    public int Age;
+
+    // Default constructor
+    public Student()
+    {
+        Name = "Unknown";
+        Age = 0;
+    }
+}
+
+// Usage
+Student s = new Student();
+Console.WriteLine(s.Name); // Output: Unknown
+\end{lstlisting}
+
+\subsubsection{2. Parameterized Constructor}
+
+A constructor that \textbf{takes parameters} to initialize the object with custom values.
+
+\begin{lstlisting}[caption={Parameterized constructor}]
+public class Student
+{
+    public string Name;
+    public int Age;
+
+    // Parameterized constructor
+    public Student(string name, int age)
+    {
+        Name = name;
+        Age = age;
+    }
+}
+
+// Usage
+Student s = new Student("Rahim", 22);
+Console.WriteLine(s.Name); // Output: Rahim
+\end{lstlisting}
+
+\subsubsection{3. Copy Constructor}
+
+A constructor that creates a new object by \textbf{copying values from another object} of the same class. C\# does not provide a built-in copy constructor — you write one manually.
+
+\begin{lstlisting}[caption={Copy constructor}]
+public class Student
+{
+    public string Name;
+    public int Age;
+
+    public Student(string name, int age)
+    {
+        Name = name;
+        Age = age;
+    }
+
+    // Copy constructor
+    public Student(Student other)
+    {
+        Name = other.Name;
+        Age = other.Age;
+    }
+}
+
+// Usage
+Student s1 = new Student("Karim", 21);
+Student s2 = new Student(s1); // copy
+Console.WriteLine(s2.Name); // Output: Karim
+\end{lstlisting}
+
+\subsubsection{4. Static Constructor}
+
+A constructor used to \textbf{initialize static members} of a class. It is called \textbf{automatically only once}, before any object is created or any static member is accessed.
+
+\begin{lstlisting}[caption={Static constructor}]
+public class AppConfig
+{
+    public static string DatabaseUrl;
+
+    // Static constructor
+    static AppConfig()
+    {
+        DatabaseUrl = "localhost:5432";
+        Console.WriteLine("Static constructor called.");
+    }
+}
+
+// Usage
+Console.WriteLine(AppConfig.DatabaseUrl);
+// Output:
+// Static constructor called.
+// localhost:5432
+\end{lstlisting}
+
+\begin{keyBox}{Rules for Static Constructors}
+\begin{itemize}[leftmargin=*]
+    \item Cannot have any \textbf{access modifier} (no \texttt{public}, \texttt{private}, etc.).
+    \item Cannot take any \textbf{parameters}.
+    \item Called \textbf{automatically by the runtime}, never manually.
+    \item Runs \textbf{only once} per application domain.
+\end{itemize}
+\end{keyBox}
+
+\subsubsection{5. Private Constructor}
+
+A constructor marked \texttt{private}, which \textbf{prevents object creation from outside the class}. Used in \textbf{Singleton pattern} and for utility/static-only classes.
+
+\begin{lstlisting}[caption={Private constructor (Singleton example)}]
+public class Logger
+{
+    private static Logger _instance;
+
+    // Private constructor — prevents external instantiation
+    private Logger() { }
+
+    public static Logger GetInstance()
+    {
+        if (_instance == null)
+            _instance = new Logger();
+        return _instance;
+    }
+
+    public void Log(string msg)
+    {
+        Console.WriteLine($"LOG: {msg}");
+    }
+}
+
+// Usage
+Logger log = Logger.GetInstance();
+log.Log("App started");
+\end{lstlisting}
+
+\subsection{Constructor Overloading}
+
+You can define \textbf{multiple constructors} in one class as long as their parameter lists differ. The right one is chosen based on the arguments passed.
+
+\begin{lstlisting}[caption={Constructor overloading}]
+public class Book
+{
+    public string Title;
+    public string Author;
+    public double Price;
+
+    public Book() { Title = "Untitled"; }
+    public Book(string title) { Title = title; }
+    public Book(string title, string author)
+    {
+        Title = title; Author = author;
+    }
+    public Book(string title, string author, double price)
+    {
+        Title = title; Author = author; Price = price;
+    }
+}
+\end{lstlisting}
+
+\subsection{Constructor Chaining}
+
+\begin{defnBox}{Constructor Chaining}
+\textbf{Constructor chaining} means calling one constructor from another — either within the \textit{same class} using \texttt{this()}, or from a \textit{base class} using \texttt{base()}. This avoids code duplication when initializing objects.
+\end{defnBox}
+
+\subsubsection{Chaining within Same Class (\texttt{this})}
+
+\begin{lstlisting}[caption={Constructor chaining using this()}]
+public class Employee
+{
+    public string Name;
+    public string Department;
+    public double Salary;
+
+    public Employee() : this("Unknown") { }
+
+    public Employee(string name) : this(name, "General") { }
+
+    public Employee(string name, string dept) : this(name, dept, 0) { }
+
+    public Employee(string name, string dept, double salary)
+    {
+        Name = name;
+        Department = dept;
+        Salary = salary;
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Chaining with Base Class (\texttt{base})}
+
+\begin{lstlisting}[caption={Constructor chaining using base()}]
+public class Person
+{
+    public string Name;
+    public Person(string name)
+    {
+        Name = name;
+        Console.WriteLine("Person constructor called.");
+    }
+}
+
+public class Student : Person
+{
+    public int Roll;
+    public Student(string name, int roll) : base(name)
+    {
+        Roll = roll;
+        Console.WriteLine("Student constructor called.");
+    }
+}
+
+// Usage
+Student s = new Student("Rahim", 101);
+// Output:
+// Person constructor called.
+// Student constructor called.
+\end{lstlisting}
+
+\subsection{Destructors / Finalizers}
+
+\begin{defnBox}{Destructor (Finalizer)}
+A \textbf{destructor} (also called \textbf{finalizer} in C\#) is a special method called by the \textbf{Garbage Collector} just before an object is destroyed. It is used to release \textbf{unmanaged resources} (like file handles, database connections). In C\#, the destructor has the same name as the class prefixed with a tilde (\texttt{\textasciitilde}).
+\end{defnBox}
+
+\begin{lstlisting}[caption={Destructor in C\#}]
+public class FileManager
+{
+    public FileManager() { Console.WriteLine("Constructor called."); }
+
+    // Destructor / Finalizer
+    ~FileManager()
+    {
+        Console.WriteLine("Destructor called. Cleaning up...");
+    }
+}
+\end{lstlisting}
+
+\begin{gotchaBox}
+In C\#, you \textbf{cannot manually call} the destructor. The Garbage Collector decides when to run it — and the timing is non-deterministic. For deterministic cleanup (closing files, DB connections), use the \textbf{\texttt{IDisposable}} pattern with \texttt{using} blocks instead.
+\end{gotchaBox}
+
+\subsection{IDisposable Pattern (Recommended over Destructor)}
+
+\begin{lstlisting}[caption={IDisposable pattern}]
+public class DatabaseConnection : IDisposable
+{
+    public DatabaseConnection() { Console.WriteLine("DB opened."); }
+
+    public void Dispose()
+    {
+        Console.WriteLine("DB closed (deterministic cleanup).");
+    }
+}
+
+// Usage
+using (var db = new DatabaseConnection())
+{
+    // do work
+} // Dispose() automatically called here
+\end{lstlisting}
+
+\subsection{Common Interview Questions on Constructors}
+
+\begin{intqBox}{Can a constructor be private?}
+\textbf{Answer:} Yes. A \textbf{private constructor} prevents the class from being instantiated externally. It is commonly used in the \textbf{Singleton design pattern}, utility classes (like \texttt{Math}), or factory-based object creation.
+\end{intqBox}
+
+\begin{intqBox}{Can a constructor be static? Why?}
+\textbf{Answer:} Yes, but with restrictions. A static constructor is used to initialize \textbf{static members} of the class. It is called \textit{only once} automatically by the runtime, before any object is created or any static member is accessed. It cannot take parameters and cannot have any access modifier.
+\end{intqBox}
+
+\begin{intqBox}{Can a constructor return a value?}
+\textbf{Answer:} No. A constructor has \textbf{no return type} (not even \texttt{void}). Its sole purpose is to initialize an object. However, the \texttt{new} expression as a whole evaluates to the newly created object reference.
+\end{intqBox}
+
+\begin{intqBox}{Are constructors inherited?}
+\textbf{Answer:} No, constructors are \textbf{not inherited}. However, the constructor of the base class \textit{can be called} from the derived class using \texttt{base(...)} during constructor chaining.
+\end{intqBox}
+
+\begin{intqBox}{What is the order of execution of constructors in inheritance?}
+\textbf{Answer:} The \textbf{base class constructor runs first}, then the derived class constructor. This ensures the base part of the object is fully initialized before the derived part begins.
+\end{intqBox}
+
+\begin{intqBox}{What is the difference between a constructor and a method?}
+\textbf{Answer:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Name:} Constructor has the same name as the class; methods have any name.
+    \item \textbf{Return type:} Constructor has none; methods have a return type.
+    \item \textbf{Call:} Constructor is called automatically with \texttt{new}; methods are called explicitly.
+    \item \textbf{Purpose:} Constructor initializes objects; methods perform behavior.
+    \item \textbf{Inheritance:} Constructors aren't inherited; methods are.
+\end{itemize}
+\end{intqBox}
+
+\begin{intqBox}{What happens if you don't define any constructor?}
+\textbf{Answer:} The C\# compiler automatically provides an \textbf{implicit default constructor} with no parameters that initializes fields to their default values (0, null, false, etc.). However, the moment you define \textit{any} constructor, the compiler stops providing the implicit default one.
+\end{intqBox}
+
+\begin{tipBox}
+A very common interview trap: ``If I define only a parameterized constructor, can I still write \texttt{new MyClass();} without arguments?'' \textbf{Answer: No.} Once you define any constructor, the implicit default constructor disappears. You must add one explicitly if you still want it.
+\end{tipBox}
+
+\begin{gotchaBox}
+\textbf{Static constructors don't have access modifiers.} Writing \texttt{public static MyClass()} will give a compile error. The correct form is just \texttt{static MyClass() \{ \}}.
+\end{gotchaBox}
+
+\vspace{0.5cm}
+\noindent\hrulefill\\[-4pt]
+\textit{\small End of Part 1. Continue compilation — Part 2 covers Access Modifiers, Static, Properties, Value/Reference Types, \texttt{this} keyword, and Method Parameters.}
+
+% NOTE: Do NOT add \end{document} yet — more parts coming.
+\clearpage
+%=====================================================================
+\section{Access Modifiers}
+%=====================================================================
+
+\subsection{What are Access Modifiers?}
+
+\begin{defnBox}{Access Modifier}
+\textbf{Access modifiers} are keywords used to control the \textbf{visibility} and \textbf{accessibility} of classes, methods, fields, properties, and other members. They are the foundation of \textbf{encapsulation} — they decide \textit{who can access what}.
+\end{defnBox}
+
+C\# provides \textbf{six} access modifiers:
+
+\begin{enumerate}[leftmargin=*]
+    \item \texttt{public}
+    \item \texttt{private}
+    \item \texttt{protected}
+    \item \texttt{internal}
+    \item \texttt{protected internal}
+    \item \texttt{private protected}
+\end{enumerate}
+
+\subsection{1. \texttt{public} — Accessible Everywhere}
+
+A \texttt{public} member is accessible from \textbf{anywhere} — same class, derived classes, same assembly, other assemblies. It is the \textbf{most open} access level.
+
+\begin{lstlisting}[caption={public modifier}]
+public class Student
+{
+    public string Name; // accessible from anywhere
+
+    public void Display()
+    {
+        Console.WriteLine($"Name: {Name}");
+    }
+}
+
+// Anywhere in the program:
+Student s = new Student();
+s.Name = "Rahim";  // OK
+s.Display();       // OK
+\end{lstlisting}
+
+\subsection{2. \texttt{private} — Accessible Only Within the Same Class}
+
+A \texttt{private} member is accessible \textbf{only within the class where it is declared}. It is the \textbf{default} for class members in C\# (if no modifier is specified, it is private).
+
+\begin{lstlisting}[caption={private modifier}]
+public class BankAccount
+{
+    private double balance;   // only accessible inside this class
+
+    public void Deposit(double amount)
+    {
+        balance += amount;    // OK - same class
+    }
+
+    public double GetBalance()
+    {
+        return balance;       // OK - same class
+    }
+}
+
+// Outside the class:
+BankAccount acc = new BankAccount();
+// acc.balance = 1000;   // ERROR: not accessible
+acc.Deposit(1000);       // OK
+\end{lstlisting}
+
+\subsection{3. \texttt{protected} — Same Class + Derived Classes}
+
+A \texttt{protected} member is accessible inside its own class \textbf{and any derived class}, even across assemblies. Mainly used in inheritance.
+
+\begin{lstlisting}[caption={protected modifier}]
+public class Animal
+{
+    protected string name;   // accessible in Animal and its children
+}
+
+public class Dog : Animal
+{
+    public void SetName(string n)
+    {
+        name = n;            // OK - inherited protected member
+    }
+}
+
+// Outside any class:
+Dog d = new Dog();
+// d.name = "Tommy";   // ERROR: not accessible from outside
+d.SetName("Tommy");    // OK
+\end{lstlisting}
+
+\subsection{4. \texttt{internal} — Same Assembly Only}
+
+An \texttt{internal} member is accessible \textbf{anywhere within the same assembly (project)} but not from another assembly. It is the \textbf{default for top-level classes} in C\#.
+
+\begin{lstlisting}[caption={internal modifier}]
+internal class Logger    // accessible only inside same project
+{
+    internal void Log(string msg)
+    {
+        Console.WriteLine(msg);
+    }
+}
+\end{lstlisting}
+
+\subsection{5. \texttt{protected internal} — Assembly OR Derived}
+
+Accessible from the \textbf{same assembly} \textbf{OR} from \textbf{any derived class} (even outside the assembly). It is the \textit{union} of \texttt{protected} and \texttt{internal}.
+
+\begin{lstlisting}[caption={protected internal modifier}]
+public class Vehicle
+{
+    protected internal int wheels;
+    // Accessible from:
+    //   - same assembly (any code)
+    //   - derived class in any assembly
+}
+\end{lstlisting}
+
+\subsection{6. \texttt{private protected} — Assembly AND Derived (C\# 7.2+)}
+
+Accessible only when both conditions are true: the access is from a derived class \textbf{AND} that derived class is in the same assembly. It is the \textit{intersection} of \texttt{private} and \texttt{protected}.
+
+\begin{lstlisting}[caption={private protected modifier}]
+public class Engine
+{
+    private protected int horsepower;
+    // Accessible only from:
+    //   - derived class declared in same assembly
+}
+\end{lstlisting}
+
+\subsection{Access Modifier Summary Table}
+
+\begin{compareBox}{All 6 Access Modifiers}
+\begin{tabularx}{\linewidth}{|>{\bfseries}p{3.3cm}|>{\centering\arraybackslash}X|>{\centering\arraybackslash}X|>{\centering\arraybackslash}X|>{\centering\arraybackslash}X|}
+\hline
+\rowcolortop \color{white}Modifier & \color{white}Same Class & \color{white}Derived (Same Asm) & \color{white}Same Asm (Non-derived) & \color{white}Different Asm \\
+\hline
+public            & \checkmark & \checkmark & \checkmark & \checkmark \\
+\rowcolorlight
+protected internal & \checkmark & \checkmark & \checkmark & only via derived \\
+internal          & \checkmark & \checkmark & \checkmark & $\times$ \\
+\rowcolorlight
+protected         & \checkmark & \checkmark & $\times$  & only via derived \\
+private protected & \checkmark & \checkmark & $\times$  & $\times$ \\
+\rowcolorlight
+private           & \checkmark & $\times$  & $\times$  & $\times$ \\
+\hline
+\end{tabularx}
+\end{compareBox}
+
+\subsection{Default Access Levels}
+
+\begin{keyBox}{What Are the Defaults?}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Top-level class:} \texttt{internal} (if no modifier given).
+    \item \textbf{Class members (fields, methods, properties):} \texttt{private}.
+    \item \textbf{Interface members:} \texttt{public} (cannot have other modifiers in classic interfaces).
+    \item \textbf{Struct members:} \texttt{private}.
+    \item \textbf{Enum members:} \texttt{public}.
+\end{itemize}
+\end{keyBox}
+
+\subsection{Common Interview Questions}
+
+\begin{intqBox}{What is the default access modifier of a class in C\#?}
+\textbf{Answer:} For a \textbf{top-level class}, the default is \texttt{internal} (accessible only within the same assembly). For a \textbf{nested class} (class inside another class), the default is \texttt{private}.
+\end{intqBox}
+
+\begin{intqBox}{What is the difference between \texttt{protected} and \texttt{internal}?}
+\textbf{Answer:}
+\begin{itemize}[leftmargin=*]
+    \item \texttt{protected} — accessible in the class and its derived classes, even across assemblies.
+    \item \texttt{internal} — accessible anywhere within the same assembly, but not by derived classes in other assemblies.
+\end{itemize}
+\textit{Protected is about inheritance, internal is about assembly boundaries.}
+\end{intqBox}
+
+\begin{intqBox}{Difference between \texttt{protected internal} and \texttt{private protected}?}
+\textbf{Answer:}
+\begin{itemize}[leftmargin=*]
+    \item \texttt{protected internal} = same assembly \textbf{OR} derived class (union).
+    \item \texttt{private protected} = same assembly \textbf{AND} derived class (intersection).
+\end{itemize}
+\texttt{private protected} is more restrictive than \texttt{protected internal}.
+\end{intqBox}
+
+\begin{intqBox}{Can a class be declared as \texttt{private}?}
+\textbf{Answer:} A \textbf{top-level class} cannot be \texttt{private}. Only \textbf{nested classes} (classes inside another class) can be \texttt{private}, \texttt{protected}, etc.
+\end{intqBox}
+
+\begin{tipBox}
+Always default to the \textbf{most restrictive} modifier that still allows the code to work. Start with \texttt{private}, widen only as needed. This is a core principle of encapsulation.
+\end{tipBox}
+
+\clearpage
+%=====================================================================
+\section{Static Members}
+%=====================================================================
+
+\subsection{What Does \texttt{static} Mean?}
+
+\begin{defnBox}{Static Member}
+A \texttt{static} member belongs to the \textbf{class itself}, not to any specific object. There is \textbf{only one copy} of a static member, shared across all instances. You access it using the \textbf{class name}, not an object reference.
+\end{defnBox}
+
+\subsection{Static Fields}
+
+A \texttt{static} field is shared by \textbf{all objects} of the class. Changing it through any object changes it for all.
+
+\begin{lstlisting}[caption={Static field shared across instances}]
+public class Counter
+{
+    public static int Count = 0;   // shared by all objects
+
+    public Counter()
+    {
+        Count++;                   // increment shared counter
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        new Counter();
+        new Counter();
+        new Counter();
+        Console.WriteLine(Counter.Count); // Output: 3
+    }
+}
+\end{lstlisting}
+
+\subsection{Static Methods}
+
+A \texttt{static} method belongs to the class and can be called \textbf{without creating an object}. It \textbf{cannot access non-static members directly} (because it has no reference to any specific instance).
+
+\begin{lstlisting}[caption={Static method}]
+public class MathHelper
+{
+    public static int Square(int x)
+    {
+        return x * x;
+    }
+
+    public static int Cube(int x)
+    {
+        return x * x * x;
+    }
+}
+
+// Usage - no object needed:
+int result = MathHelper.Square(5); // 25
+\end{lstlisting}
+
+\subsection{Static Class}
+
+A class declared with \texttt{static} keyword:
+\begin{itemize}[leftmargin=*]
+    \item Cannot be \textbf{instantiated} (no \texttt{new}).
+    \item All members \textbf{must be static}.
+    \item Cannot be \textbf{inherited} (implicitly sealed).
+    \item Cannot contain \textbf{instance constructors}.
+\end{itemize}
+
+\begin{lstlisting}[caption={Static class}]
+public static class StringUtils
+{
+    public static string Reverse(string s)
+    {
+        char[] arr = s.ToCharArray();
+        Array.Reverse(arr);
+        return new string(arr);
+    }
+}
+
+// Usage
+string r = StringUtils.Reverse("Hello"); // "olleH"
+\end{lstlisting}
+
+\subsection{Instance vs Static Members}
+
+\begin{compareBox}{Instance vs Static}
+\begin{tabularx}{\linewidth}{|>{\bfseries}p{4cm}|X|X|}
+\hline
+\rowcolortop \color{white}Aspect & \color{white}Instance Member & \color{white}Static Member \\
+\hline
+Belongs to & Each object & The class itself \\
+\rowcolorlight
+Memory   & One copy per object & One copy total \\
+Accessed via & Object reference & Class name \\
+\rowcolorlight
+Uses \texttt{new}? & Yes & No \\
+Lifetime  & Until object is garbage-collected & Until program ends \\
+\rowcolorlight
+Can access non-static? & Yes & No (directly) \\
+\hline
+\end{tabularx}
+\end{compareBox}
+
+\subsection{When to Use Static}
+
+\textbf{Use \texttt{static} when:}
+\begin{itemize}[leftmargin=*]
+    \item Data is shared across all instances (e.g., a counter, a config value).
+    \item Method does not depend on object state (e.g., \texttt{Math.Sqrt()}, utility helpers).
+    \item Implementing the \textbf{Singleton pattern}.
+    \item Creating \textbf{extension methods} (must be in a static class).
+\end{itemize}
+
+\begin{gotchaBox}
+Static members can hurt \textbf{testability} and \textbf{thread safety}. Multiple threads accessing the same static field can cause race conditions. Static state is hard to mock in unit tests. Use static only when truly stateless or properly synchronized.
+\end{gotchaBox}
+
+\subsection{Common Interview Questions}
+
+\begin{intqBox}{Can a static method access non-static members directly?}
+\textbf{Answer:} No. A static method has no reference to a specific instance (\texttt{this} doesn't exist in a static context), so it cannot directly access instance fields or methods. It \textit{can} access them by creating an instance: \texttt{var obj = new MyClass(); obj.NonStaticMethod();}
+\end{intqBox}
+
+\begin{intqBox}{Can we override a static method?}
+\textbf{Answer:} No. Static methods belong to the class, not the instance, so polymorphism doesn't apply. However, you can \textbf{hide} a static method in a derived class using the \texttt{new} keyword — but this is method hiding, not overriding.
+\end{intqBox}
+
+\begin{intqBox}{Can a static class have a non-static constructor?}
+\textbf{Answer:} No. A static class can only have a \textbf{static constructor}. Instance constructors are not allowed because a static class cannot be instantiated.
+\end{intqBox}
+
+\begin{intqBox}{Can a static class be inherited?}
+\textbf{Answer:} No. A static class is implicitly \textbf{sealed}, meaning it cannot be inherited or used as a base class.
+\end{intqBox}
+
+\clearpage
+%=====================================================================
+\section{Properties in C\#}
+%=====================================================================
+
+\subsection{What is a Property?}
+
+\begin{defnBox}{Property}
+A \textbf{property} is a class member that provides controlled access to a private field through special \texttt{get} (read) and \texttt{set} (write) accessors. Properties look like fields when used but behave like methods internally, making them perfect for \textbf{encapsulation}.
+\end{defnBox}
+
+\subsection{Why Properties? Why Not Just Public Fields?}
+
+A \texttt{public} field exposes data directly with no control. A property lets you:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Validate} values before assignment.
+    \item Make members \textbf{read-only} or \textbf{write-only}.
+    \item Trigger side effects (logging, events) on access.
+    \item Change the internal storage later without breaking callers.
+\end{itemize}
+
+\subsection{Full Property (with Backing Field)}
+
+\begin{lstlisting}[caption={Property with private backing field and validation}]
+public class Student
+{
+    private int age;   // backing field
+
+    public int Age
+    {
+        get { return age; }
+        set
+        {
+            if (value < 0)
+                throw new ArgumentException("Age cannot be negative.");
+            age = value;
+        }
+    }
+}
+
+// Usage
+Student s = new Student();
+s.Age = 22;            // calls 'set' with value=22
+Console.WriteLine(s.Age); // calls 'get'
+\end{lstlisting}
+
+\begin{keyBox}{The \texttt{value} Keyword}
+Inside a property \texttt{set} accessor, the implicit parameter \texttt{value} represents the new value being assigned. It is a special contextual keyword.
+\end{keyBox}
+
+\subsection{Auto-Implemented Properties}
+
+When you don't need custom logic, C\# can auto-generate the backing field for you. Shorter and cleaner.
+
+\begin{lstlisting}[caption={Auto-properties}]
+public class Student
+{
+    public string Name { get; set; }
+    public int Age { get; set; }
+}
+\end{lstlisting}
+
+\subsection{Read-Only and Write-Only Properties}
+
+\begin{lstlisting}[caption={Read-only / write-only properties}]
+public class Person
+{
+    public string Name { get; private set; }   // read-only externally
+    public string Secret { private get; set; } // write-only externally
+
+    public Person(string name)
+    {
+        Name = name;     // can set inside the class
+    }
+}
+\end{lstlisting}
+
+\subsection{Init-Only Properties (C\# 9.0+)}
+
+The \texttt{init} accessor allows assignment \textbf{only during object initialization}. Perfect for immutable objects.
+
+\begin{lstlisting}[caption={init-only property}]
+public class Book
+{
+    public string Title { get; init; }
+    public string Author { get; init; }
+}
+
+// Usage
+Book b = new Book { Title = "OOP Notes", Author = "Bappy" };
+// b.Title = "New";   // ERROR: cannot assign after init
+\end{lstlisting}
+
+\subsection{Expression-Bodied Properties (Computed)}
+
+For simple read-only computations.
+
+\begin{lstlisting}[caption={Expression-bodied (computed) properties}]
+public class Rectangle
+{
+    public double Width { get; set; }
+    public double Height { get; set; }
+
+    // computed - no backing field
+    public double Area => Width * Height;
+}
+\end{lstlisting}
+
+\subsection{Properties vs Fields}
+
+\begin{compareBox}{Property vs Field}
+\begin{tabularx}{\linewidth}{|>{\bfseries}p{3.5cm}|X|X|}
+\hline
+\rowcolortop \color{white}Aspect & \color{white}Field & \color{white}Property \\
+\hline
+Storage    & Stores data directly & Wraps a field with accessors \\
+\rowcolorlight
+Validation & Not possible & Possible in set \\
+Encapsulation & Weak & Strong \\
+\rowcolorlight
+Used in data binding & No (mostly) & Yes (WPF/Forms/EF need them) \\
+Syntax & Like a variable & Like a variable (but is a method internally) \\
+\hline
+\end{tabularx}
+\end{compareBox}
+
+\begin{intqBox}{What is the difference between a property and a field?}
+\textbf{Answer:} A \textbf{field} is a variable that stores data directly inside an object. A \textbf{property} provides controlled access to a field (or computed value) through \texttt{get} and \texttt{set} accessors, allowing validation, computed values, side effects, and read-only/write-only behavior. Properties are preferred for \textbf{public-facing data} because they preserve encapsulation, while fields should usually be \texttt{private}.
+\end{intqBox}
+
+\begin{intqBox}{What is an auto-implemented property?}
+\textbf{Answer:} An auto-property is shorthand syntax: \texttt{public int Age \{ get; set; \}}. The compiler automatically creates a hidden private backing field. It's used when no custom logic is needed in the accessors.
+\end{intqBox}
+
+\clearpage
+%=====================================================================
+\section{Value Types vs Reference Types}
+%=====================================================================
+
+\subsection{The Two Major Type Categories}
+
+\begin{defnBox}{Value Type}
+A \textbf{value type} directly stores its data in the memory location where the variable is declared (typically on the \textbf{stack}). Assigning a value-type variable to another \textbf{copies the data}. Examples: \texttt{int, float, double, char, bool, struct, enum, decimal, DateTime}.
+\end{defnBox}
+
+\begin{defnBox}{Reference Type}
+A \textbf{reference type} stores a \textbf{reference (memory address)} to the actual data, which lives on the \textbf{heap}. Assigning a reference-type variable copies only the reference, so both variables point to the same object. Examples: \texttt{class, interface, delegate, string, array, object}.
+\end{defnBox}
+
+\subsection{Visualizing Stack vs Heap}
+
+For value types — entire data lives on the stack:
+\begin{verbatim}
+int x = 10;
+int y = x;     // y gets a COPY of 10
+y = 20;
+// x is still 10
+\end{verbatim}
+
+For reference types — reference on stack, object on heap:
+\begin{verbatim}
+Person p1 = new Person("Rahim");
+Person p2 = p1;       // p2 gets a COPY of the reference
+p2.Name = "Karim";
+// p1.Name is now also "Karim" — same object!
+\end{verbatim}
+
+\subsection{Code Example}
+
+\begin{lstlisting}[caption={Value vs Reference behavior}]
+class Box { public int Value; }
+
+class Program
+{
+    static void Main()
+    {
+        // Value type
+        int a = 5;
+        int b = a;
+        b = 100;
+        Console.WriteLine($"a={a}, b={b}");  // a=5, b=100
+
+        // Reference type
+        Box x = new Box { Value = 5 };
+        Box y = x;          // y points to same object as x
+        y.Value = 100;
+        Console.WriteLine($"x.Value={x.Value}, y.Value={y.Value}");
+        // x.Value=100, y.Value=100
+    }
+}
+\end{lstlisting}
+
+\subsection{Struct vs Class}
+
+\begin{compareBox}{struct vs class}
+\begin{tabularx}{\linewidth}{|>{\bfseries}p{3.5cm}|X|X|}
+\hline
+\rowcolortop \color{white}Aspect & \color{white}struct & \color{white}class \\
+\hline
+Type       & Value type & Reference type \\
+\rowcolorlight
+Memory     & Stack (usually) & Heap \\
+Inheritance & Cannot inherit from another struct/class (but can implement interfaces) & Can inherit \\
+\rowcolorlight
+Default constructor & Provided implicitly (sets defaults) & Provided unless you define one \\
+Nullable directly? & No (use \texttt{int?}) & Yes \\
+\rowcolorlight
+Performance & Faster for small data & Better for large objects \\
+Use case & Small, immutable data (Point, Date) & Most general-purpose objects \\
+\hline
+\end{tabularx}
+\end{compareBox}
+
+\subsection{Boxing and Unboxing}
+
+\begin{defnBox}{Boxing}
+\textbf{Boxing} is the process of \textbf{converting a value type to a reference type} by wrapping it inside an \texttt{object} on the heap. It happens \textit{implicitly}.
+\end{defnBox}
+
+\begin{defnBox}{Unboxing}
+\textbf{Unboxing} is the reverse — extracting the value type back from the object. It requires an \textbf{explicit cast} and is more expensive.
+\end{defnBox}
+
+\begin{lstlisting}[caption={Boxing and Unboxing}]
+int x = 42;
+object obj = x;       // Boxing: int -> object (heap allocation)
+int y = (int)obj;     // Unboxing: object -> int (explicit cast)
+
+Console.WriteLine(y); // 42
+\end{lstlisting}
+
+\begin{gotchaBox}
+\textbf{Boxing is expensive.} It allocates heap memory and increases GC pressure. Avoid boxing in performance-critical code — e.g., don't put primitives into non-generic collections (\texttt{ArrayList}). Use generic collections (\texttt{List<int>}) instead.
+\end{gotchaBox}
+
+\subsection{Common Interview Questions}
+
+\begin{intqBox}{What's the difference between value type and reference type?}
+\textbf{Answer:} A \textbf{value type} stores actual data directly (usually on stack), and assignment creates a copy. A \textbf{reference type} stores a memory address pointing to an object on the heap, and assignment copies only the reference — both variables then point to the same object.
+\end{intqBox}
+
+\begin{intqBox}{Is \texttt{string} a value type or a reference type?}
+\textbf{Answer:} \texttt{string} is a \textbf{reference type} in C\#. However, it behaves like a value type in some ways because strings are \textbf{immutable} — any modification creates a new string object rather than changing the existing one.
+\end{intqBox}
+
+\begin{intqBox}{What is boxing and unboxing? Why is it costly?}
+\textbf{Answer:} \textbf{Boxing} wraps a value type in an \texttt{object} (allocated on the heap). \textbf{Unboxing} extracts the value back. They are costly because boxing causes heap allocation and GC pressure, and unboxing requires type checking and a cast. Both should be minimized.
+\end{intqBox}
+
+\begin{intqBox}{Can a struct inherit from another struct or class?}
+\textbf{Answer:} No. Structs cannot inherit from another struct or class (other than implicit \texttt{System.ValueType}). However, structs \textbf{can implement interfaces}.
+\end{intqBox}
+
+\clearpage
+%=====================================================================
+\section{The \texttt{this} Keyword}
+%=====================================================================
+
+\subsection{What is \texttt{this}?}
+
+\begin{defnBox}{this keyword}
+\texttt{this} is a special reference that refers to the \textbf{current instance} of the class. It is implicitly available inside any non-static method, constructor, or property of a class.
+\end{defnBox}
+
+\subsection{Uses of \texttt{this}}
+
+\subsubsection{1. Disambiguating Field and Parameter}
+
+\begin{lstlisting}
+public class Student
+{
+    private string name;
+    public Student(string name)
+    {
+        this.name = name;   // 'this.name' = field, 'name' = parameter
+    }
+}
+\end{lstlisting}
+
+\subsubsection{2. Calling Another Constructor in Same Class}
+
+\begin{lstlisting}
+public class Book
+{
+    public Book() : this("Untitled") { }
+    public Book(string title) { /* ... */ }
+}
+\end{lstlisting}
+
+\subsubsection{3. Passing the Current Object as a Parameter}
+
+\begin{lstlisting}
+public void Save()
+{
+    Database.Save(this);   // pass current object
+}
+\end{lstlisting}
+
+\subsubsection{4. Declaring Indexers}
+
+\begin{lstlisting}
+public class Roster
+{
+    private string[] names = new string[10];
+    public string this[int index]
+    {
+        get { return names[index]; }
+        set { names[index] = value; }
+    }
+}
+
+// Usage
+Roster r = new Roster();
+r[0] = "Rahim";
+Console.WriteLine(r[0]); // Rahim
+\end{lstlisting}
+
+\subsubsection{5. Declaring Extension Methods}
+
+\begin{lstlisting}
+public static class StringExtensions
+{
+    public static int WordCount(this string s)
+    {
+        return s.Split(' ').Length;
+    }
+}
+
+// Usage
+int count = "Hello World".WordCount(); // 2
+\end{lstlisting}
+
+\begin{gotchaBox}
+\texttt{this} cannot be used inside \textbf{static methods} or \textbf{static constructors} — they don't belong to any instance.
+\end{gotchaBox}
+
+\clearpage
+%=====================================================================
+\section{Method Parameters}
+%=====================================================================
+
+\subsection{Pass by Value (Default)}
+
+By default, C\# passes arguments \textbf{by value} — a \textbf{copy} of the value is sent to the method. Changes inside the method do not affect the caller.
+
+\begin{lstlisting}[caption={Pass by value}]
+void Increment(int x) { x++; }
+
+int n = 5;
+Increment(n);
+Console.WriteLine(n);  // 5 - unchanged
+\end{lstlisting}
+
+\begin{gotchaBox}
+For \textbf{reference types}, ``pass by value'' means the \textit{reference} is copied, not the object. The method still operates on the \textbf{same object}, so mutations inside the method \textit{are} visible to the caller — but reassigning the parameter to a new object is not.
+\end{gotchaBox}
+
+\subsection{The \texttt{ref} Keyword}
+
+Passes the variable \textbf{by reference}. The variable \textbf{must be initialized} before being passed.
+
+\begin{lstlisting}[caption={ref parameter}]
+void Increment(ref int x) { x++; }
+
+int n = 5;
+Increment(ref n);
+Console.WriteLine(n);  // 6 - changed
+\end{lstlisting}
+
+\subsection{The \texttt{out} Keyword}
+
+Like \texttt{ref}, but the variable \textbf{does not need to be initialized} before being passed. However, the method \textbf{must assign} a value to it before returning.
+
+\begin{lstlisting}[caption={out parameter}]
+bool TryDivide(int a, int b, out int result)
+{
+    if (b == 0) { result = 0; return false; }
+    result = a / b;
+    return true;
+}
+
+int answer;
+if (TryDivide(10, 2, out answer))
+    Console.WriteLine(answer);  // 5
+\end{lstlisting}
+
+\subsection{The \texttt{in} Keyword (C\# 7.2+)}
+
+Passes by reference, but the value is \textbf{read-only} inside the method. Useful for performance when passing large structs.
+
+\begin{lstlisting}[caption={in parameter}]
+void Print(in int x)
+{
+    Console.WriteLine(x);
+    // x = 10;  // ERROR: cannot modify
+}
+\end{lstlisting}
+
+\subsection{The \texttt{params} Keyword}
+
+Allows a method to accept a \textbf{variable number of arguments} of the same type.
+
+\begin{lstlisting}[caption={params parameter}]
+int Sum(params int[] nums)
+{
+    int total = 0;
+    foreach (var n in nums) total += n;
+    return total;
+}
+
+Sum(1, 2, 3);          // 6
+Sum(1, 2, 3, 4, 5);    // 15
+Sum();                 // 0
+\end{lstlisting}
+
+\subsection{Optional and Named Parameters}
+
+\begin{lstlisting}[caption={Optional and named arguments}]
+void Greet(string name, string greeting = "Hello", bool loud = false)
+{
+    string msg = $"{greeting}, {name}!";
+    if (loud) msg = msg.ToUpper();
+    Console.WriteLine(msg);
+}
+
+Greet("Rahim");                       // Hello, Rahim!
+Greet("Karim", "Hi");                 // Hi, Karim!
+Greet("Salma", loud: true);           // HELLO, SALMA!
+Greet(name: "Bappy", greeting: "Welcome");
+\end{lstlisting}
+
+\subsection{Comparison: ref vs out vs in}
+
+\begin{compareBox}{ref vs out vs in}
+\begin{tabularx}{\linewidth}{|>{\bfseries}p{2.5cm}|X|X|X|}
+\hline
+\rowcolortop \color{white}Aspect & \color{white}ref & \color{white}out & \color{white}in \\
+\hline
+Init before pass? & Required & Not required & Required \\
+\rowcolorlight
+Must assign in method? & No & Yes & Cannot modify \\
+Direction & In + Out & Out only & In only \\
+\rowcolorlight
+Modifiable inside? & Yes & Yes & No (read-only) \\
+\hline
+\end{tabularx}
+\end{compareBox}
+
+\begin{intqBox}{Difference between \texttt{ref} and \texttt{out} parameters?}
+\textbf{Answer:}
+\begin{itemize}[leftmargin=*]
+    \item \texttt{ref} — variable must be \textit{initialized before} passing; method may or may not modify it.
+    \item \texttt{out} — variable need \textit{not} be initialized before passing; method \textit{must} assign a value before returning.
+\end{itemize}
+Both pass by reference. Use \texttt{out} when the method's job is to \textit{produce} the value; use \texttt{ref} when the method needs to \textit{read and modify} an existing value.
+\end{intqBox}
+
+\begin{intqBox}{Why use \texttt{out} parameters when you could just return a value?}
+\textbf{Answer:} \texttt{out} parameters let a method effectively return \textbf{multiple values}. Classic example: \texttt{int.TryParse(string, out int result)} returns a \texttt{bool} indicating success while also producing the parsed integer. (Modern C\# can use \textbf{tuples} for similar purposes.)
+\end{intqBox}
+
+\clearpage
+%=====================================================================
+\section{const vs readonly}
+%=====================================================================
+
+\subsection{\texttt{const} — Compile-Time Constant}
+
+A \texttt{const} field's value is fixed at \textbf{compile time}. It must be initialized at declaration and can never change.
+
+\begin{lstlisting}
+public class MathConstants
+{
+    public const double Pi = 3.14159;
+    public const int Year = 2026;
+}
+\end{lstlisting}
+
+\subsection{\texttt{readonly} — Runtime Constant}
+
+A \texttt{readonly} field can be assigned \textbf{at declaration} or \textbf{inside a constructor}, and is fixed after that.
+
+\begin{lstlisting}
+public class AppConfig
+{
+    public readonly string DbUrl;
+    public readonly DateTime StartedAt;
+
+    public AppConfig(string url)
+    {
+        DbUrl = url;                     // OK in constructor
+        StartedAt = DateTime.Now;        // OK
+    }
+}
+\end{lstlisting}
+
+\subsection{Comparison Table}
+
+\begin{compareBox}{const vs readonly}
+\begin{tabularx}{\linewidth}{|>{\bfseries}p{3.5cm}|X|X|}
+\hline
+\rowcolortop \color{white}Aspect & \color{white}const & \color{white}readonly \\
+\hline
+Evaluated at  & Compile time & Runtime \\
+\rowcolorlight
+Initialization & At declaration only & At declaration OR constructor \\
+Implicit static? & Yes & No (can be either) \\
+\rowcolorlight
+Allowed types & Primitives, string, enum, null & Any type \\
+Memory   & Inlined at usage sites & Stored normally \\
+\rowcolorlight
+Use case & True constants (Pi, MaxRetries) & Values fixed after construction (DB URL, current time) \\
+\hline
+\end{tabularx}
+\end{compareBox}
+
+\begin{intqBox}{What's the difference between \texttt{const} and \texttt{readonly}?}
+\textbf{Answer:}
+\begin{itemize}[leftmargin=*]
+    \item \texttt{const} is a \textit{compile-time} constant; must be initialized at declaration; implicitly static; only for primitive/string/enum types.
+    \item \texttt{readonly} is a \textit{runtime} constant; can be initialized at declaration or in a constructor; can be instance or static; works with any type.
+\end{itemize}
+Use \texttt{const} for values that are truly fixed (math constants); use \texttt{readonly} for values determined when the object is created (configuration, dates).
+\end{intqBox}
+
+\begin{gotchaBox}
+\textbf{Versioning issue with \texttt{const}:} Because \texttt{const} values are inlined into the calling assembly at compile time, changing a public \texttt{const} in a library requires \textbf{recompiling all dependent assemblies}. With \texttt{static readonly}, the value is fetched at runtime — no recompilation needed.
+\end{gotchaBox}
+
+\vspace{0.5cm}
+\noindent\hrulefill\\[-4pt]
+\textit{\small End of Part 2. Part 3 will cover the first two Pillars of OOP: Encapsulation and Inheritance — in deep detail with code, diagrams, and many interview questions.}
+
+% NOTE: Add \end{document} at the very bottom while testing, but remove it before pasting Part 3.
+
+\end{document}

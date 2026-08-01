@@ -4,6 +4,7 @@ import Sidebar from "./Sidebar"
 import Topbar from "./Topbar"
 import MobileSidebar from "./MobileSidebar"
 import BrandLoader from "@/components/ui/BrandLoader"
+import Footer from "./Footer"
 
 export default function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -28,9 +29,14 @@ export default function DashboardLayout() {
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Topbar onMenuClick={() => setMobileOpen(true)} />
         <main className="flex-1 overflow-y-auto">
-          <Suspense fallback={<BrandLoader variant="page" />}>
-            <Outlet />
-          </Suspense>
+          <div className="flex min-h-full flex-col">
+            <div className="flex-1">
+              <Suspense fallback={<BrandLoader variant="page" />}>
+                <Outlet />
+              </Suspense>
+            </div>
+            <Footer />
+          </div>
         </main>
       </div>
     </div>

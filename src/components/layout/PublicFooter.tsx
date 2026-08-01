@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom"
 import { GraduationCap } from "lucide-react"
-
 export default function PublicFooter() {
   return (
     <footer className="border-t border-white/10 bg-slate-950">
@@ -19,7 +18,6 @@ export default function PublicFooter() {
               A modern learning management system designed for South Asian universities.
             </p>
           </div>
-
           <div>
             <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">
               Product
@@ -29,7 +27,6 @@ export default function PublicFooter() {
               <li><Link to="/about" className="text-[13px] font-medium text-slate-300 transition-colors hover:text-white">About</Link></li>
             </ul>
           </div>
-
           <div>
             <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">
               Account
@@ -40,13 +37,12 @@ export default function PublicFooter() {
             </ul>
           </div>
         </div>
-
         <div className="mt-10 flex flex-col items-start justify-between gap-2 border-t border-white/10 pt-6 sm:flex-row sm:items-center">
           <p className="text-[12px] text-slate-500">
             &copy; {new Date().getFullYear()} EduNexis. All rights reserved.
           </p>
-          <p className="text-[12px] font-semibold text-slate-500">
-            Built at JUST CSE
+          <p className="text-[12px] text-slate-500">
+            Developed by <a href="https://www.linkedin.com/in/snbappy/" target="_blank" rel="noopener noreferrer" className="font-semibold text-slate-300 transition-colors hover:text-white">Md. Sabbir Hossain Bappy</a> at <a href="https://nowsin.me/" target="_blank" rel="noopener noreferrer" className="font-semibold text-slate-300 transition-colors hover:text-white">CyberSecurity Lab</a>
           </p>
         </div>
       </div>
