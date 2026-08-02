@@ -1,4 +1,4 @@
-﻿export type CourseType = "Theory" | "Lab"
+export type CourseType = "Theory" | "Lab"
 
 /**
  * Viewer's relationship to a course.
@@ -159,4 +159,13 @@ export interface JoinRequest {
   profilePhotoUrl:  string | null
   requestedAt:      string
   status:           "Pending" | "Approved" | "Rejected"
+}
+export interface TeacherQuotaDto {
+  totalQuota:      number
+  usedQuota:       number
+  remainingQuota:  number
+  accessStartDate: string
+  accessEndDate:   string
+  isAccessActive:  boolean
+  isStarterQuota:  boolean
 }

@@ -1,14 +1,18 @@
-﻿import api from "@/lib/axios"
+import api from "@/lib/axios"
 import type { ApiResponse } from "@/types/api.types"
 import type {
   CourseDto, CourseMemberDto, MyCoursesDto, CourseByCodeDto,
-  CreateCourseRequest, UpdateCourseRequest,
+  CreateCourseRequest, UpdateCourseRequest, TeacherQuotaDto,
 } from "@/types/course.types"
 
 export const courseService = {
   /** Returns caller's enrolled + pending + rejected courses. */
   getMyCourses: () =>
     api.get<ApiResponse<MyCoursesDto>>("/Courses/my-courses").then(r => r.data),
+
+  /** Returns caller's current course-creation quota. */
+  getMyQuota: () =>
+    api.get<ApiResponse<TeacherQuotaDto>>("/Courses/my-quota").then(r => r.data),
 
   getById: (id: string) =>
     api.get<ApiResponse<CourseDto>>(`/Courses/${id}`).then(r => r.data),

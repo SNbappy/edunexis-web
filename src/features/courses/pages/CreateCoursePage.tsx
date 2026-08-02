@@ -1,4 +1,4 @@
-﻿import { useForm } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useNavigate } from "react-router-dom"
@@ -24,6 +24,8 @@ import {
 } from "@/config/constants"
 import { useAuthStore } from "@/store/authStore"
 import { useCourses } from "../hooks/useCourses"
+import { useMyQuota } from "../hooks/useMyQuota"
+import QuotaBanner from "../components/QuotaBanner"
 import { courseService } from "../services/courseService"
 import type { CourseSummaryDto } from "@/types/course.types"
 
@@ -59,6 +61,8 @@ export default function CreateCoursePage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const { isCreating } = useCourses()
+  const { data: quota, isLoading: quotaLoading } = useMyQuota()
+  const quotaExhausted = !!quota && quota.remainingQuota <= 0
   const [submitting, setSubmitting] = useState(false)
   const [step, setStep] = useState(0)
 
@@ -204,9 +208,9 @@ export default function CreateCoursePage() {
           type="button"
           onClick={handleSubmit(submit)}
           loading={submitting || isCreating}
-          disabled={!isValid}
+          disabled={!isValid || quotaExhausted}
         >
-          Create course
+          {quotaExhausted ? "Quota exhausted" : "Create course"}
         </Button>
       )}
     </>
@@ -219,11 +223,14 @@ export default function CreateCoursePage() {
       title="Launch a new course"
       subtitle="Set this up once. Students join with a code, and you get tools for attendance, assignments, and announcements."
       topSlot={
-        <FormStepper
-          steps={STEPS}
-          currentStep={step}
-          onStepClick={goToStep}
-        />
+        <div className="space-y-4">
+          <QuotaBanner quota={quota} loading={quotaLoading} />
+          <FormStepper
+            steps={STEPS}
+            currentStep={step}
+            onStepClick={goToStep}
+          />
+        </div>
       }
       preview={preview}
       footer={footer}
