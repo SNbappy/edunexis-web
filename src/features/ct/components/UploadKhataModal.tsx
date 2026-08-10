@@ -127,6 +127,7 @@ export default function UploadKhataModal({ isOpen, onClose, ct, members = [] }: 
       title={"Upload scripts - CT " + ct.ctNumber}
       description="Upload all 3 answer-script copies (best, worst, average) before entering marks."
       size="lg"
+      scrollable
     >
       <div className="space-y-3">
         {/* Progress indicator */}

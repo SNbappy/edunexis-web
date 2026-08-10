@@ -97,7 +97,7 @@ function ModalContent({
               </div>
             )}
 
-            <div className={cn("px-6 py-5", scrollable && "flex-1 overflow-y-auto")}>
+            <div className={cn("px-6 py-5", scrollable && "flex-1 overflow-y-auto scrollbar-hide")}>
               {children}
             </div>
           </motion.div>

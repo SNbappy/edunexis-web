@@ -1,4 +1,4 @@
-﻿@import "@fontsource-variable/inter";
+@import "@fontsource-variable/inter";
 @import "@fontsource-variable/plus-jakarta-sans";
 @import "@fontsource/jetbrains-mono/400.css";
 @import "@fontsource/jetbrains-mono/500.css";
@@ -166,3 +166,12 @@
       radial-gradient(ellipse 50% 35% at 85% 100%, rgb(var(--accent) / 0.06), transparent 60%);
   }
 }
+
+  /* Utility: visually hide scrollbar while keeping scroll functional */
+  .scrollbar-hide {
+    scrollbar-width: none;       /* Firefox */
+    -ms-overflow-style: none;    /* IE/Edge legacy */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;               /* Chrome/Safari/Edge */
+  }
