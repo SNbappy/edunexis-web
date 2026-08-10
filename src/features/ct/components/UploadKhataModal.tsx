@@ -101,6 +101,7 @@ export default function UploadKhataModal({ isOpen, onClose, ct, members = [] }: 
   const setFile = (key: KhataSlot["fileKey"], file: File | undefined) => {
     if (file && file.size > MAX_SIZE_BYTES) {
       setSizeError(`"${file.name}" is ${(file.size / (1024 * 1024)).toFixed(1)}MB, which exceeds the 10MB limit.`)
+      window.setTimeout(() => setSizeError(null), 5000)
       return
     }
     setSizeError(null)
@@ -140,7 +141,7 @@ export default function UploadKhataModal({ isOpen, onClose, ct, members = [] }: 
     >
       <div className="space-y-3">
         {sizeError && (
-          <p className="sticky top-0 z-10 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[11.5px] font-semibold text-red-700 shadow-md dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+          <p className="sticky top-0 z-10 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[11.5px] font-semibold text-red-700 shadow-md transition-opacity duration-300 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
             {sizeError}
           </p>
         )}
