@@ -139,6 +139,11 @@ export default function UploadKhataModal({ isOpen, onClose, ct, members = [] }: 
       scrollable
     >
       <div className="space-y-3">
+        {sizeError && (
+          <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[11.5px] font-semibold text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+            {sizeError}
+          </p>
+        )}
         {/* Progress indicator */}
         <div className="flex items-center justify-between gap-1 rounded-xl border border-teal-200 bg-teal-50 p-3 dark:border-teal-800 dark:bg-teal-950/40">
           {SLOTS.map((slot, i) => {
@@ -270,11 +275,6 @@ export default function UploadKhataModal({ isOpen, onClose, ct, members = [] }: 
         })}
 
         {/* Hint */}
-        {sizeError && (
-          <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[11.5px] font-semibold text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
-            {sizeError}
-          </p>
-        )}
 
         <p className="rounded-xl border border-border bg-muted/40 px-3 py-2.5 text-[11.5px] text-muted-foreground">
           Accepted: PDF, JPG, PNG, DOC, DOCX. Max 10MB each. All 3 files required before entering marks.
