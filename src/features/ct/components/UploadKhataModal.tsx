@@ -270,8 +270,14 @@ export default function UploadKhataModal({ isOpen, onClose, ct, members = [] }: 
         })}
 
         {/* Hint */}
+        {sizeError && (
+          <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[11.5px] font-semibold text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+            {sizeError}
+          </p>
+        )}
+
         <p className="rounded-xl border border-border bg-muted/40 px-3 py-2.5 text-[11.5px] text-muted-foreground">
-          Accepted: PDF, JPG, PNG, DOC, DOCX Â· All 3 files required before entering marks.
+          Accepted: PDF, JPG, PNG, DOC, DOCX. Max 10MB each. All 3 files required before entering marks.
         </p>
 
         <div className="flex gap-3 pt-1">
