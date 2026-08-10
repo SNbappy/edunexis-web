@@ -124,7 +124,7 @@ export default function UploadKhataModal({ isOpen, onClose, ct, members = [] }: 
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={"Upload scripts â€” CT " + ct.ctNumber}
+      title={"Upload scripts - CT " + ct.ctNumber}
       description="Upload all 3 answer-script copies (best, worst, average) before entering marks."
       size="lg"
     >
@@ -246,7 +246,7 @@ export default function UploadKhataModal({ isOpen, onClose, ct, members = [] }: 
                     }))}
                     className="h-8 flex-1 rounded-lg border border-border bg-card px-2 text-[12px] text-foreground outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
                   >
-                    <option value="">Select studentâ€¦</option>
+                    <option value="">Select student...</option>
                     {members.map(m => (
                       <option key={m.userId} value={m.userId}>
                         {m.fullName}{m.studentId ? " (" + m.studentId + ")" : ""}

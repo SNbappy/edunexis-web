@@ -38,7 +38,6 @@ export function useMaterials(courseId: string) {
                     return r.data ?? []
                 }),
       refetchInterval: 8_000,
-      refetchOnWindowFocus: true,
         enabled: !!courseId,
         refetchOnWindowFocus: true,
         staleTime: 15_000,
