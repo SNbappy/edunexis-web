@@ -198,7 +198,17 @@ export default function CreateAnnouncementForm({
                   ref={fileRef}
                   type="file"
                   className="hidden"
-                  onChange={e => setAttachment(e.target.files?.[0] ?? null)}
+                  onChange={e => {
+                    const file = e.target.files?.[0] ?? null
+                    if (file && file.size > MAX_ATTACHMENT_BYTES) {
+                      setAttachError(`"${file.name}" is ${(file.size / (1024 * 1024)).toFixed(1)}MB, which exceeds the 10MB limit.`)
+                      setAttachment(null)
+                      e.target.value = ""
+                      return
+                    }
+                    setAttachError(null)
+                    setAttachment(file)
+                  }}
                 />
 
                 <div className="flex items-center gap-2">
