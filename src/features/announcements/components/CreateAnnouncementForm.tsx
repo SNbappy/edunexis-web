@@ -15,6 +15,7 @@ interface CreateAnnouncementFormProps {
 }
 
 const CHAR_LIMIT = 2000
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024 // 10 MB, matches Cloudinary raw-upload cap
 
 export default function CreateAnnouncementForm({
   courseId, onSubmit, isLoading,
@@ -23,6 +24,7 @@ export default function CreateAnnouncementForm({
   const [expanded, setExpanded] = useState(false)
   const [content, setContent] = useState("")
   const [attachment, setAttachment] = useState<File | null>(null)
+  const [attachError, setAttachError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const handleSubmit = () => {
@@ -168,6 +170,20 @@ export default function CreateAnnouncementForm({
                   </motion.div>
                 )}
               </AnimatePresence>
+
+              {attachError && (
+                <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[12px] font-semibold text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+                  <span className="flex-1">{attachError}</span>
+                  <button
+                    type="button"
+                    onClick={() => setAttachError(null)}
+                    aria-label="Dismiss"
+                    className="shrink-0 rounded-full p-0.5 text-red-600 transition-colors hover:bg-red-200 dark:text-red-300 dark:hover:bg-red-900/60"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
 
               <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
                 <button
