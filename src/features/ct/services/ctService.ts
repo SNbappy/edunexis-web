@@ -1,4 +1,4 @@
-﻿import api from '@/lib/axios'
+import api from '@/lib/axios'
 import type { ApiResponse } from '@/types/api.types'
 import type {
     CTEventDto,
@@ -28,7 +28,7 @@ export const ctService = {
         api.get<ApiResponse<CTMarksResultDto>>(evt(ctEventId) + '/marks').then(r => r.data),
 
     uploadKhata: (ctEventId: string, formData: FormData) =>
-        api.postForm<ApiResponse>(evt(ctEventId) + '/upload-khata', formData).then(r => r.data),
+        api.post<ApiResponse>(evt(ctEventId) + '/upload-khata', formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data),
 
     grade: (ctEventId: string, data: GradeCTRequest) =>
         api.post<ApiResponse>(evt(ctEventId) + '/grade', data).then(r => r.data),

@@ -1,4 +1,4 @@
-﻿import { useState, useRef } from "react"
+import { useState, useRef } from "react"
 import { motion } from "framer-motion"
 import {
   FileText, X, Upload, CheckCircle2,
