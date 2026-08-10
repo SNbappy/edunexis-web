@@ -141,9 +141,17 @@ export default function UploadKhataModal({ isOpen, onClose, ct, members = [] }: 
     >
       <div className="space-y-3">
         {sizeError && (
-          <p className="sticky top-0 z-10 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[11.5px] font-semibold text-red-700 shadow-md transition-opacity duration-300 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
-            {sizeError}
-          </p>
+          <div className="sticky top-0 z-10 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[11.5px] font-semibold text-red-700 shadow-md transition-opacity duration-300 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+            <span className="flex-1">{sizeError}</span>
+            <button
+              type="button"
+              onClick={() => setSizeError(null)}
+              aria-label="Dismiss"
+              className="shrink-0 rounded-full p-0.5 text-red-600 transition-colors hover:bg-red-200 dark:text-red-300 dark:hover:bg-red-900/60"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
         )}
         {/* Progress indicator */}
         <div className="flex items-center justify-between gap-1 rounded-xl border border-teal-200 bg-teal-50 p-3 dark:border-teal-800 dark:bg-teal-950/40">
