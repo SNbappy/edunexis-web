@@ -50,7 +50,7 @@ export default function UploadMaterialModal({
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Upload file" size="md">
       <div className="space-y-4">
-        <FileDropzone onFilesSelected={setFiles} />
+        <FileDropzone onFilesSelected={setFiles} maxSizeMB={10} />
 
         {/* Title + description for single-file uploads */}
         <AnimatePresence>

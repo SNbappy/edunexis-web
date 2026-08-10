@@ -11,6 +11,8 @@ import type { CTEventDto } from "@/types/ct.types"
 
 interface Member { userId: string; fullName: string; studentId?: string }
 
+const MAX_SIZE_BYTES = 10 * 1024 * 1024 // 10 MB, matches Cloudinary raw-upload cap
+
 interface UploadKhataModalProps {
   isOpen: boolean
   onClose: () => void
@@ -86,6 +88,7 @@ export default function UploadKhataModal({ isOpen, onClose, ct, members = [] }: 
 
   const [files, setFiles] = useState<Partial<Record<KhataSlot["fileKey"], File>>>({})
   const [students, setStudents] = useState<Partial<Record<KhataSlot["studentKey"], string>>>({})
+  const [sizeError, setSizeError] = useState<string | null>(null)
 
   const refs = {
     bestCopy: useRef<HTMLInputElement>(null),
@@ -93,15 +96,21 @@ export default function UploadKhataModal({ isOpen, onClose, ct, members = [] }: 
     avgCopy: useRef<HTMLInputElement>(null),
   }
 
-  const handleClose = () => { setFiles({}); setStudents({}); onClose() }
+  const handleClose = () => { setFiles({}); setStudents({}); setSizeError(null); onClose() }
 
-  const setFile = (key: KhataSlot["fileKey"], file: File | undefined) =>
+  const setFile = (key: KhataSlot["fileKey"], file: File | undefined) => {
+    if (file && file.size > MAX_SIZE_BYTES) {
+      setSizeError(`"${file.name}" is ${(file.size / (1024 * 1024)).toFixed(1)}MB, which exceeds the 10MB limit.`)
+      return
+    }
+    setSizeError(null)
     setFiles(prev => {
       const n = { ...prev }
       if (file) n[key] = file
       else delete n[key]
       return n
     })
+  }
 
   const handleSubmit = () => {
     if (!files.bestCopy || !files.worstCopy || !files.avgCopy) return

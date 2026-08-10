@@ -1,4 +1,4 @@
-﻿import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Upload, X, File, CheckCircle2 } from 'lucide-react'
 import { formatFileSize, ACCEPTED_MATERIAL_TYPES } from '@/utils/fileUtils'
@@ -16,7 +16,7 @@ export default function FileDropzone({
     onFilesSelected,
     accept = ACCEPTED_MATERIAL_TYPES,
     multiple = true,
-    maxSizeMB = 50,
+    maxSizeMB = 10,
     className,
 }: FileDropzoneProps) {
     const inputRef = useRef<HTMLInputElement>(null)
