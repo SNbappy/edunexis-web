@@ -1,5 +1,5 @@
-﻿import { useState, useRef, useEffect } from "react"
-import { Search, Menu, Bell, X, LayoutDashboard, BookOpen, User } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import { Search, Menu, Bell, X, LayoutDashboard, BookOpen, User, ChevronDown, Globe, LogOut, Settings } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { useAuthStore } from "@/store/authStore"
@@ -20,7 +20,7 @@ const SEARCH_LINKS = [
 interface Props { onMenuClick: () => void }
 
 export default function Topbar({ onMenuClick }: Props) {
-  const { user } = useAuthStore()
+  const { user, clearAuth } = useAuthStore()
   const { badgeCount, markBadgeSeen } = useNotifications()
   const navigate = useNavigate()
 
@@ -29,6 +29,7 @@ export default function Topbar({ onMenuClick }: Props) {
   const [searchVal,  setSearchVal]  = useState("")
   const [scrolled,   setScrolled]   = useState(false)
   const [bellShake,  setBellShake]  = useState(false)
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const prevBadge  = useRef(0)
   const searchRef  = useRef<HTMLInputElement>(null)
 
@@ -53,7 +54,7 @@ export default function Topbar({ onMenuClick }: Props) {
         e.preventDefault()
         setSearchOpen(p => !p)
       }
-      if (e.key === "Escape") { setSearchOpen(false); setNotifOpen(false) }
+      if (e.key === "Escape") { setSearchOpen(false); setNotifOpen(false); setProfileMenuOpen(false) }
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
@@ -136,17 +137,91 @@ export default function Topbar({ onMenuClick }: Props) {
             )}
           </motion.button>
 
-          <Link
-            to={ROUTES.PROFILE}
-            aria-label="Profile"
-            className="h-10 w-10 inline-flex items-center justify-center rounded-xl hover:bg-muted focus-ring transition-colors"
-          >
-            <Avatar
-              src={user?.profile?.profilePhotoUrl ?? undefined}
-              name={user?.profile?.fullName ?? user?.email ?? "U"}
-              size="sm"
-            />
-          </Link>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setProfileMenuOpen(p => !p)}
+              aria-label="Account menu"
+              aria-expanded={profileMenuOpen}
+              className={cn(
+                "flex items-center gap-1.5 h-10 pl-1.5 pr-2 rounded-xl transition-colors focus-ring",
+                "hover:bg-muted",
+                profileMenuOpen && "bg-muted",
+              )}
+            >
+              <Avatar
+                src={user?.profile?.profilePhotoUrl ?? undefined}
+                name={user?.profile?.fullName ?? user?.email ?? "U"}
+                size="sm"
+              />
+              <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground transition-transform hidden sm:block", profileMenuOpen && "rotate-180")} />
+            </button>
+
+            <AnimatePresence>
+              {profileMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40 cursor-default"
+                    onClick={() => setProfileMenuOpen(false)}
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-12 z-50 w-56 rounded-xl border border-border bg-card shadow-lg overflow-hidden"
+                  >
+                    <div className="px-4 py-3 border-b border-border">
+                      <p className="text-[13px] font-semibold text-foreground truncate">
+                        {user?.profile?.fullName ?? "User"}
+                      </p>
+                      <p className="text-[12px] text-muted-foreground truncate">
+                        {user?.email}
+                      </p>
+                    </div>
+
+                    <div className="p-1.5">
+                      <Link
+                        to={ROUTES.PROFILE}
+                        onClick={() => setProfileMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium text-foreground hover:bg-muted transition-colors"
+                      >
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        View profile
+                      </Link>
+                      <Link
+                        to="/"
+                        onClick={() => setProfileMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium text-foreground hover:bg-muted transition-colors"
+                      >
+                        <Globe className="h-4 w-4 text-muted-foreground" />
+                        Public homepage
+                      </Link>
+                      <Link
+                        to={ROUTES.SETTINGS}
+                        onClick={() => setProfileMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium text-foreground hover:bg-muted transition-colors"
+                      >
+                        <Settings className="h-4 w-4 text-muted-foreground" />
+                        Settings
+                      </Link>
+                    </div>
+
+                    <div className="p-1.5 border-t border-border">
+                      <button
+                        type="button"
+                        onClick={() => { setProfileMenuOpen(false); window.location.replace("/"); clearAuth() }}
+                        className="flex w-full items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30 transition-colors"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Sign out
+                      </button>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </header>
 
