@@ -55,6 +55,9 @@ export const courseService = {
   restoreCourse: (id: string) =>
     api.post<ApiResponse>(`/Courses/${id}/restore`).then(r => r.data),
 
+  permanentlyDeleteCourse: (id: string) =>
+    api.delete<ApiResponse>(`/Courses/${id}/permanent`).then(r => r.data),
+
   getMembers: (id: string) =>
     api.get<ApiResponse<CourseMemberDto[]>>(`/Courses/${id}/members`).then(r => r.data),
 

@@ -23,7 +23,7 @@ export default function CoursesListPage() {
   const {
     enrolled, pending, rejected,
     isLoading, dismissRequest, isDismissing,
-    restoreCourse, isRestoring,
+    restoreCourse, isRestoring, permanentlyDeleteCourse, isPermanentlyDeleting,
   } = useCourses()
   const { data: deletedCourses = [], isLoading: isDeletedLoading } = useDeletedCourses()
 
@@ -61,7 +61,7 @@ export default function CoursesListPage() {
     })
   }, [enrolled, filter, q])
 
-  const showingEnrolled = filter !== "requests"
+  const showingEnrolled = filter !== "requests" && filter !== "deleted"
   const showingRequests = filter === "requests"
   const showingDeleted  = filter === "deleted"
 
@@ -233,6 +233,8 @@ export default function CoursesListPage() {
               course={course}
               onRestore={restoreCourse}
               isRestoring={isRestoring}
+              onPermanentlyDelete={permanentlyDeleteCourse}
+              isPermanentlyDeleting={isPermanentlyDeleting}
             />
           ))}
         </motion.div>

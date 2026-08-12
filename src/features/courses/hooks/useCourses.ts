@@ -85,6 +85,17 @@ export function useCourses() {
     onError: () => toast.error("Failed to restore course."),
   })
 
+  const permanentDeleteMutation = useMutation({
+    mutationFn: (id: string) => courseService.permanentlyDeleteCourse(id),
+    onSuccess: (res) => {
+      if (res.success) {
+        qc.invalidateQueries({ queryKey: ["courses", "deleted"] })
+        toast.success("Course permanently deleted.")
+      } else toast.error(res.message)
+    },
+    onError: () => toast.error("Failed to permanently delete course."),
+  })
+
   const deleteMutation = useMutation({
     mutationFn: (
       { id, password, courseCodeConfirmation }:
@@ -129,6 +140,8 @@ export function useCourses() {
     isDeleting:      deleteMutation.isPending,
     restoreCourse:   restoreMutation.mutate,
     isRestoring:     restoreMutation.isPending,
+    permanentlyDeleteCourse: permanentDeleteMutation.mutate,
+    isPermanentlyDeleting:   permanentDeleteMutation.isPending,
   }
 }
 
