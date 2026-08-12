@@ -8,7 +8,7 @@ import {
 import { useAuthStore } from "@/store/authStore"
 import { ROUTES } from "@/config/constants"
 import Avatar from "@/components/ui/Avatar"
-import { isTeacher } from "@/utils/roleGuard"
+import { isTeacher, isAdmin } from "@/utils/roleGuard"
 import { useNotifications } from "@/features/notifications/hooks/useNotifications"
 import { cn } from "@/utils/cn"
 
@@ -84,6 +84,7 @@ export default function Sidebar({ onItemClick }: { onItemClick?: () => void } = 
   const { badgeCount } = useNotifications()
   const navigate = useNavigate()
   const teacher = isTeacher(user?.role ?? "Student")
+  const admin = isAdmin(user?.role ?? "Student")
 
   const W = collapsed ? 68 : 260
 
@@ -136,6 +137,24 @@ export default function Sidebar({ onItemClick }: { onItemClick?: () => void } = 
             />
           ))}
         </div>
+
+        {admin && (
+          <div className="space-y-1">
+            {!collapsed && (
+              <p className="px-3 pb-1.5 text-[10px] font-semibold tracking-wider uppercase text-muted-foreground/70">
+                Admin
+              </p>
+            )}
+            <NavItem
+              label="Admin"
+              icon={Shield}
+              to="/admin"
+              exact={false}
+              collapsed={collapsed}
+              onItemClick={onItemClick}
+            />
+          </div>
+        )}
       </nav>
 
       <div className="shrink-0 p-3 border-t border-border space-y-1">

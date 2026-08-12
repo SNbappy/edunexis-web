@@ -4,6 +4,7 @@ import AuthGuard from "@/components/guards/AuthGuard"
 import GuestGuard from "@/components/guards/GuestGuard"
 import ProfileGuard from "@/components/guards/ProfileGuard"
 import EnrollmentGuard from "@/components/guards/EnrollmentGuard"
+import AdminGuard from "@/components/guards/AdminGuard"
 import DashboardLayout from "@/components/layout/DashboardLayout"
 import PublicLayout from "@/components/layout/PublicLayout"
 import RedirectIfAuthed from "@/components/guards/RedirectIfAuthed"
@@ -35,6 +36,7 @@ const SettingsPage = lazy(() => import("@/features/settings/pages/SettingsPage")
 const UserProfilePage = lazy(() => import("@/features/profile/pages/UserProfilePage"))
 const UserCoursesPage = lazy(() => import("@/features/profile/pages/UserCoursesPage"))
 const HomePage = lazy(() => import("@/features/public/pages/HomePage"))
+const AdminSettingsPage = lazy(() => import("@/features/admin/pages/AdminSettingsPage"))
 const FacultyDirectoryPage = lazy(() => import("@/features/public/pages/FacultyDirectoryPage"))
 const FacultyDetailPage = lazy(() => import("@/features/public/pages/FacultyDetailPage"))
 const AboutPage = lazy(() => import("@/features/public/pages/AboutPage"))
@@ -97,6 +99,9 @@ export default function App() {
               <Route path="/settings/*" element={<SettingsPage />} />
               <Route path="/users/:userId" element={<UserProfilePage />} />
               <Route path="/users/:userId/courses" element={<UserCoursesPage />} />
+              <Route element={<AdminGuard />}>
+                <Route path="/admin" element={<AdminSettingsPage />} />
+              </Route>
             </Route>
           </Route>
         </Route>
