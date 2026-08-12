@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import {
   LayoutDashboard, BookOpen, Bell, User, LogOut, Settings,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Shield,
 } from "lucide-react"
 import { useAuthStore } from "@/store/authStore"
 import { ROUTES } from "@/config/constants"
