@@ -2,7 +2,7 @@ import api from "@/lib/axios"
 import type { ApiResponse } from "@/types/api.types"
 import type {
   CourseDto, CourseMemberDto, MyCoursesDto, CourseByCodeDto,
-  CreateCourseRequest, UpdateCourseRequest, TeacherQuotaDto,
+  CreateCourseRequest, UpdateCourseRequest, TeacherQuotaDto, DeletedCourseDto,
 } from "@/types/course.types"
 
 export const courseService = {
@@ -47,6 +47,13 @@ export const courseService = {
 
   unarchiveCourse: (id: string) =>
     api.patch<ApiResponse>(`/Courses/${id}/unarchive`).then(r => r.data),
+
+  /** Returns the caller's soft-deleted courses (Recently Deleted list). */
+  getDeletedCourses: () =>
+    api.get<ApiResponse<DeletedCourseDto[]>>(`/Courses/deleted`).then(r => r.data),
+
+  restoreCourse: (id: string) =>
+    api.post<ApiResponse>(`/Courses/${id}/restore`).then(r => r.data),
 
   getMembers: (id: string) =>
     api.get<ApiResponse<CourseMemberDto[]>>(`/Courses/${id}/members`).then(r => r.data),

@@ -169,3 +169,13 @@ export interface TeacherQuotaDto {
   isAccessActive:  boolean
   isStarterQuota:  boolean
 }
+export interface DeletedCourseDto {
+  id:              string
+  title:           string
+  courseCode:      string
+  department:      string
+  semester:        string
+  deletedAt:       string
+  restoreDeadline: string
+  canRestore:      boolean
+}

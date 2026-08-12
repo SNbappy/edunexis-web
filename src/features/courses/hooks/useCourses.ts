@@ -73,6 +73,18 @@ export function useCourses() {
     },
   })
 
+  const restoreMutation = useMutation({
+    mutationFn: (id: string) => courseService.restoreCourse(id),
+    onSuccess: (res) => {
+      if (res.success) {
+        qc.invalidateQueries({ queryKey: ["courses"] })
+        qc.invalidateQueries({ queryKey: ["courses", "deleted"] })
+        toast.success("Course restored.")
+      } else toast.error(res.message)
+    },
+    onError: () => toast.error("Failed to restore course."),
+  })
+
   const deleteMutation = useMutation({
     mutationFn: (
       { id, password, courseCodeConfirmation }:
@@ -81,7 +93,8 @@ export function useCourses() {
     onSuccess: (res) => {
       if (res.success) {
         qc.invalidateQueries({ queryKey: ["courses"] })
-        toast.success("Course deleted.")
+        qc.invalidateQueries({ queryKey: ["courses", "deleted"] })
+        toast.success("Course moved to Recently Deleted.")
       } else toast.error(res.message)
     },
     onError: () => toast.error("Failed to delete course."),
@@ -114,6 +127,8 @@ export function useCourses() {
     isUnarchiving:   unarchiveMutation.isPending,
     deleteCourse:    deleteMutation.mutate,
     isDeleting:      deleteMutation.isPending,
+    restoreCourse:   restoreMutation.mutate,
+    isRestoring:     restoreMutation.isPending,
   }
 }
 

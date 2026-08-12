@@ -1,17 +1,19 @@
-﻿import { useState, useMemo, useEffect, useRef } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
-import { Plus, LogIn, Search, BookOpen, Archive as ArchiveIcon, Inbox } from "lucide-react"
+import { Plus, LogIn, Search, BookOpen, Archive as ArchiveIcon, Inbox, Trash2 } from "lucide-react"
 import Button from "@/components/ui/Button"
 import Skeleton from "@/components/ui/Skeleton"
 import {
   ActiveCourseCard, PendingCourseCard, RejectedCourseCard,
 } from "../components/CourseCard"
+import DeletedCourseCard from "../components/DeletedCourseCard"
 import { useCourses } from "../hooks/useCourses"
+import { useDeletedCourses } from "../hooks/useDeletedCourses"
 import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
 
-type FilterKey = "active" | "archived" | "requests"
+type FilterKey = "active" | "archived" | "requests" | "deleted"
 
 export default function CoursesListPage() {
   const navigate = useNavigate()
@@ -21,7 +23,9 @@ export default function CoursesListPage() {
   const {
     enrolled, pending, rejected,
     isLoading, dismissRequest, isDismissing,
+    restoreCourse, isRestoring,
   } = useCourses()
+  const { data: deletedCourses = [], isLoading: isDeletedLoading } = useDeletedCourses()
 
   const [filter, setFilter] = useState<FilterKey>("active")
   const [q, setQ] = useState("")
@@ -59,6 +63,7 @@ export default function CoursesListPage() {
 
   const showingEnrolled = filter !== "requests"
   const showingRequests = filter === "requests"
+  const showingDeleted  = filter === "deleted"
 
   // Loading state
   if (isLoading) {
@@ -140,6 +145,15 @@ export default function CoursesListPage() {
               Requests
             </FilterChip>
           )}
+          {teacher && deletedCourses.length > 0 && (
+            <FilterChip
+              active={filter === "deleted"}
+              onClick={() => setFilter("deleted")}
+              badge={deletedCourses.length}
+            >
+              Deleted
+            </FilterChip>
+          )}
         </div>
       </div>
 
@@ -198,6 +212,30 @@ export default function CoursesListPage() {
             </section>
           )}
         </div>
+      )}
+      {showingDeleted && !isDeletedLoading && deletedCourses.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-border bg-muted/30 py-16 text-center">
+          <Trash2 className="mx-auto h-10 w-10 text-muted-foreground" />
+          <p className="mt-4 font-semibold text-foreground">Nothing in Recently Deleted</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Courses you delete stay here for 30 days before permanent removal.
+          </p>
+        </div>
+      )}
+      {showingDeleted && deletedCourses.length > 0 && (
+        <motion.div
+          layout
+          className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3"
+        >
+          {deletedCourses.map(course => (
+            <DeletedCourseCard
+              key={course.id}
+              course={course}
+              onRestore={restoreCourse}
+              isRestoring={isRestoring}
+            />
+          ))}
+        </motion.div>
       )}
     </div>
   )

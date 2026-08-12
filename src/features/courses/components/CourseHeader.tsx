@@ -28,14 +28,13 @@ interface CourseHeaderProps {
   course: CourseDto
   isOwner: boolean
   memberCount: number
-  isAdmin?: boolean
   onArchive?: () => void
   onUnarchive?: () => void
   onDelete?: () => void
 }
 
 export default function CourseHeader({
-  course, isOwner, memberCount, isAdmin, onArchive, onUnarchive, onDelete,
+  course, isOwner, memberCount, onArchive, onUnarchive, onDelete,
 }: CourseHeaderProps) {
   const accent = pickAccent(course.id)
   const isLab = course.courseType === "Lab"
@@ -278,7 +277,7 @@ export default function CourseHeader({
                             Archive course
                           </button>
                         )}
-                        {isAdmin && (
+                        {isOwner && (
                           <>
                             <div className="my-1 border-t border-border" />
                             <button

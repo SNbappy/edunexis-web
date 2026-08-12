@@ -138,7 +138,6 @@ export default function CourseDetailPage() {
         course={course}
         isOwner={!!isOwner}
         memberCount={members.length || course.memberCount}
-        isAdmin={isUserAdmin}
         onArchive={() => setPendingAction("archive")}
         onUnarchive={() => setPendingAction("unarchive")}
         onDelete={() => setPendingAction("delete")}
