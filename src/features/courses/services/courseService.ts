@@ -37,8 +37,10 @@ export const courseService = {
       .then(r => r.data)
   },
 
-  deleteCourse: (id: string) =>
-    api.delete<ApiResponse>(`/Courses/${id}`).then(r => r.data),
+  deleteCourse: (id: string, password: string, courseCodeConfirmation: string) =>
+    api.delete<ApiResponse>(`/Courses/${id}`, {
+      data: { password, courseCodeConfirmation },
+    }).then(r => r.data),
 
   archiveCourse: (id: string) =>
     api.patch<ApiResponse>(`/Courses/${id}/archive`).then(r => r.data),

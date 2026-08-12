@@ -12,11 +12,12 @@ import CourseTabNav, { type CourseTabItem } from "../components/CourseTabNav"
 import CourseMembersList from "../components/CourseMembersList"
 import AttendanceTab from "../components/AttendanceTab"
 import ConfirmActionModal from "../components/ConfirmActionModal"
+import DeleteCourseModal from "../components/DeleteCourseModal"
 import { useCourseDetail } from "../hooks/useCourseDetail"
 import { useCourseMembers } from "../hooks/useCourseMembers"
 import { useCourses } from "../hooks/useCourses"
 import { useAuthStore } from "@/store/authStore"
-import { isTeacher } from "@/utils/roleGuard"
+import { isTeacher, isAdmin } from "@/utils/roleGuard"
 import { COURSE_TABS } from "@/config/constants"
 import BrandLoader from "@/components/ui/BrandLoader"
 
@@ -27,18 +28,19 @@ import CTTab from "@/features/ct/components/CTTab"
 import PresentationsTab from "@/features/presentations/components/PresentationsTab"
 import MarksTab from "@/features/marks/components/MarksTab"
 
-type PendingAction = "archive" | "unarchive" | null
+type PendingAction = "archive" | "unarchive" | "delete" | null
 
 export default function CourseDetailPage() {
   const { courseId, tab } = useParams()
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const teacher = isTeacher(user?.role ?? "Student")
+  const isUserAdmin = isAdmin(user?.role ?? "Student")
 
   const { course, isLoading, isFetched } = useCourseDetail(courseId!)
   const { members, joinRequests } = useCourseMembers(courseId!)
 
-  const { archiveCourse, unarchiveCourse, isArchiving, isUnarchiving } = useCourses()
+  const { archiveCourse, unarchiveCourse, isArchiving, isUnarchiving, deleteCourse, isDeleting } = useCourses()
 
   const [pendingAction, setPendingAction] = useState<PendingAction>(null)
 
@@ -101,6 +103,20 @@ export default function CourseDetailPage() {
     } as any)
   }
 
+  const handleDelete = (password: string, courseCodeConfirmation: string) => {
+    deleteCourse(
+      { id: course.id, password, courseCodeConfirmation },
+      {
+        onSuccess: (res: any) => {
+          if (res?.success !== false) {
+            setPendingAction(null)
+            navigate("/courses")
+          }
+        },
+      } as any
+    )
+  }
+
   const renderTab = () => {
     switch (tab) {
       case COURSE_TABS.STREAM: return <AnnouncementFeed courseId={courseId!} />
@@ -122,8 +138,10 @@ export default function CourseDetailPage() {
         course={course}
         isOwner={!!isOwner}
         memberCount={members.length || course.memberCount}
+        isAdmin={isUserAdmin}
         onArchive={() => setPendingAction("archive")}
         onUnarchive={() => setPendingAction("unarchive")}
+        onDelete={() => setPendingAction("delete")}
       />
 
       {/* Sticky tab navigation */}
@@ -169,6 +187,15 @@ export default function CourseDetailPage() {
         confirmLabel="Restore course"
         tone="primary"
         isLoading={isUnarchiving}
+      />
+
+      <DeleteCourseModal
+        isOpen={pendingAction === "delete"}
+        onClose={() => setPendingAction(null)}
+        onConfirm={handleDelete}
+        courseTitle={course.title}
+        courseCode={course.courseCode}
+        isLoading={isDeleting}
       />
     </div>
   )

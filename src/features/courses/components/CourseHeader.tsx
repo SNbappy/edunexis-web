@@ -1,10 +1,10 @@
-﻿import { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { motion, useScroll, useTransform } from "framer-motion"
 import {
   ChevronLeft, Settings, MoreHorizontal,
   Archive, ArchiveRestore, Users, Copy, Check,
-  FlaskConical, BookOpen,
+  FlaskConical, BookOpen, Trash2,
 } from "lucide-react"
 import Avatar from "@/components/ui/Avatar"
 import toast from "react-hot-toast"
@@ -28,12 +28,14 @@ interface CourseHeaderProps {
   course: CourseDto
   isOwner: boolean
   memberCount: number
+  isAdmin?: boolean
   onArchive?: () => void
   onUnarchive?: () => void
+  onDelete?: () => void
 }
 
 export default function CourseHeader({
-  course, isOwner, memberCount, onArchive, onUnarchive,
+  course, isOwner, memberCount, isAdmin, onArchive, onUnarchive, onDelete,
 }: CourseHeaderProps) {
   const accent = pickAccent(course.id)
   const isLab = course.courseType === "Lab"
@@ -275,6 +277,19 @@ export default function CourseHeader({
                             <Archive className="h-4 w-4 text-stone-600" />
                             Archive course
                           </button>
+                        )}
+                        {isAdmin && (
+                          <>
+                            <div className="my-1 border-t border-border" />
+                            <button
+                              type="button"
+                              onClick={() => { setMenuOpen(false); onDelete?.() }}
+                              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Delete permanently
+                            </button>
+                          </>
                         )}
                       </motion.div>
                     </>

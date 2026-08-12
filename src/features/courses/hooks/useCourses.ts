@@ -1,4 +1,4 @@
-﻿import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { courseService } from "../services/courseService"
 import { useAuthStore } from "@/store/authStore"
 import type { CreateCourseRequest } from "@/types/course.types"
@@ -74,7 +74,10 @@ export function useCourses() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => courseService.deleteCourse(id),
+    mutationFn: (
+      { id, password, courseCodeConfirmation }:
+      { id: string; password: string; courseCodeConfirmation: string }
+    ) => courseService.deleteCourse(id, password, courseCodeConfirmation),
     onSuccess: (res) => {
       if (res.success) {
         qc.invalidateQueries({ queryKey: ["courses"] })
