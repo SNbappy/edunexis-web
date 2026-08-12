@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link, NavLink, useLocation } from "react-router-dom"
-import { GraduationCap, ArrowRight, Menu, X } from "lucide-react"
+import { GraduationCap, ArrowRight, Menu, X, LayoutDashboard } from "lucide-react"
+import { useAuthStore } from "@/store/authStore"
 import { cn } from "@/utils/cn"
 
 const navLinks = [
@@ -9,6 +10,7 @@ const navLinks = [
 ]
 
 export default function PublicNavbar() {
+  const { user } = useAuthStore()
   const { pathname } = useLocation()
   const isHome = pathname === "/"
   const [scrolled, setScrolled] = useState(false)
@@ -87,26 +89,41 @@ export default function PublicNavbar() {
               ))}
             </nav>
 
-            <Link
-              to="/login"
-              className={cn(
-                "rounded-lg px-3 py-2 font-display font-bold text-stone-700 transition-all hover:text-stone-900",
-                scrolled ? "text-[13.5px]" : "text-[15px]"
-              )}
-            >
-              Sign in
-            </Link>
+            {user ? (
+              <Link
+                to="/dashboard"
+                className={cn(
+                  "group inline-flex items-center gap-1.5 rounded-xl bg-stone-900 font-display font-bold text-white transition-all hover:bg-stone-800 hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.4)]",
+                  scrolled ? "px-3.5 py-2 text-[13px]" : "px-5 py-3 text-[14.5px]"
+                )}
+              >
+                <LayoutDashboard className={cn("transition-all", scrolled ? "h-3 w-3" : "h-4 w-4")} />
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className={cn(
+                    "rounded-lg px-3 py-2 font-display font-bold text-stone-700 transition-all hover:text-stone-900",
+                    scrolled ? "text-[13.5px]" : "text-[15px]"
+                  )}
+                >
+                  Sign in
+                </Link>
 
-            <Link
-              to="/register"
-              className={cn(
-                "group inline-flex items-center gap-1.5 rounded-xl bg-stone-900 font-display font-bold text-white transition-all hover:bg-stone-800 hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.4)]",
-                scrolled ? "px-3.5 py-2 text-[13px]" : "px-5 py-3 text-[14.5px]"
-              )}
-            >
-              Get started
-              <ArrowRight className={cn("transition-all", scrolled ? "h-3 w-3" : "h-4 w-4")} />
-            </Link>
+                <Link
+                  to="/register"
+                  className={cn(
+                    "group inline-flex items-center gap-1.5 rounded-xl bg-stone-900 font-display font-bold text-white transition-all hover:bg-stone-800 hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.4)]",
+                    scrolled ? "px-3.5 py-2 text-[13px]" : "px-5 py-3 text-[14.5px]"
+                  )}
+                >
+                  Get started
+                  <ArrowRight className={cn("transition-all", scrolled ? "h-3 w-3" : "h-4 w-4")} />
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile hamburger */}
@@ -142,19 +159,31 @@ export default function PublicNavbar() {
             </nav>
 
             <div className="mt-8 flex flex-col gap-3">
-              <Link
-                to="/login"
-                className="rounded-xl border border-stone-300 bg-white px-5 py-3.5 text-center font-display text-[15px] font-bold text-stone-900 transition-colors hover:bg-stone-50"
-              >
-                Sign in
-              </Link>
-              <Link
-                to="/register"
-                className="group inline-flex items-center justify-center gap-2 rounded-xl bg-stone-900 px-5 py-3.5 font-display text-[15px] font-bold text-white transition-colors hover:bg-stone-800"
-              >
-                Get started
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+              {user ? (
+                <Link
+                  to="/dashboard"
+                  className="group inline-flex items-center justify-center gap-2 rounded-xl bg-stone-900 px-5 py-3.5 font-display text-[15px] font-bold text-white transition-colors hover:bg-stone-800"
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className="rounded-xl border border-stone-300 bg-white px-5 py-3.5 text-center font-display text-[15px] font-bold text-stone-900 transition-colors hover:bg-stone-50"
+                  >
+                    Sign in
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="group inline-flex items-center justify-center gap-2 rounded-xl bg-stone-900 px-5 py-3.5 font-display text-[15px] font-bold text-white transition-colors hover:bg-stone-800"
+                  >
+                    Get started
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </>
+              )}
             </div>
 
             <p className="mt-12 text-center text-[12px] font-semibold uppercase tracking-wider text-stone-400">
