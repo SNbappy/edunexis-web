@@ -1,4 +1,4 @@
-export type UserRole = "SuperAdmin" | "Admin" | "Teacher" | "Student"
+export type UserRole = "SuperAdmin" | "DepartmentAdmin" | "Teacher" | "Student"
 
 export type ProfileViewerRelation = "Self" | "CourseMate" | "Stranger"
 
