@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react"
-import { Search, Menu, Bell, X, LayoutDashboard, BookOpen, User, ChevronDown, Globe, LogOut, Settings } from "lucide-react"
+import { Search, Menu, Bell, X, LayoutDashboard, BookOpen, User, Globe, LogOut, Settings } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { useAuthStore } from "@/store/authStore"
@@ -154,7 +154,6 @@ export default function Topbar({ onMenuClick }: Props) {
                 name={user?.profile?.fullName ?? user?.email ?? "U"}
                 size="sm"
               />
-              <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground transition-transform hidden sm:block", profileMenuOpen && "rotate-180")} />
             </button>
 
             <AnimatePresence>
