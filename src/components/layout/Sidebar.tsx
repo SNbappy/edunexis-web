@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { NavLink, useNavigate } from "react-router-dom"
+import { NavLink, Link, useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import {
   LayoutDashboard, BookOpen, Bell, User, LogOut, Settings,
@@ -95,9 +95,10 @@ export default function Sidebar({ onItemClick }: { onItemClick?: () => void } = 
       className="relative flex flex-col h-full shrink-0 bg-card border-r border-border"
       style={{ minWidth: W, maxWidth: W }}
     >
-      <div
+      <Link
+        to="/dashboard"
         className={cn(
-          "h-16 flex items-center border-b border-border",
+          "h-16 flex items-center border-b border-border transition-colors hover:bg-muted/50",
           collapsed ? "justify-center px-0" : "px-5 gap-3",
         )}
       >
@@ -107,7 +108,7 @@ export default function Sidebar({ onItemClick }: { onItemClick?: () => void } = 
             EduNexis
           </span>
         )}
-      </div>
+      </Link>
 
       <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 space-y-5">
         <div className="space-y-1">

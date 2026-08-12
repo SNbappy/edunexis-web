@@ -47,14 +47,12 @@ export default function App() {
   return (
     <Suspense fallback={<BrandLoader variant="page" />}>
       <Routes>
-        {/* Public routes — visible to logged-out users; redirect to dashboard if logged in */}
-        <Route element={<RedirectIfAuthed />}>
-          <Route element={<PublicLayout />}>
-            <Route index element={<HomePage />} />
-            <Route path="/faculty" element={<FacultyDirectoryPage />} />
-            <Route path="/faculty/:slug" element={<FacultyDetailPage />} />
-            <Route path="/about" element={<AboutPage />} />
-          </Route>
+        {/* Public routes - accessible to everyone, logged in or not */}
+        <Route element={<PublicLayout />}>
+          <Route index element={<HomePage />} />
+          <Route path="/faculty" element={<FacultyDirectoryPage />} />
+          <Route path="/faculty/:slug" element={<FacultyDetailPage />} />
+          <Route path="/about" element={<AboutPage />} />
         </Route>
 
         <Route element={<GuestGuard />}>
