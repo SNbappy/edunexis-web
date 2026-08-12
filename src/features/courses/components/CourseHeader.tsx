@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import { createPortal } from "react-dom"
 import { Link } from "react-router-dom"
 import { motion, useScroll, useTransform } from "framer-motion"
 import {
@@ -37,6 +38,8 @@ export default function CourseHeader({
   course, isOwner, memberCount, onArchive, onUnarchive, onDelete,
 }: CourseHeaderProps) {
   const accent = pickAccent(course.id)
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null)
   const isLab = course.courseType === "Lab"
   const TypeIcon = isLab ? FlaskConical : BookOpen
 
@@ -237,8 +240,15 @@ export default function CourseHeader({
 
                 <div className="relative">
                   <button
+                    ref={menuButtonRef}
                     type="button"
-                    onClick={() => setMenuOpen(v => !v)}
+                    onClick={() => {
+                      if (!menuOpen && menuButtonRef.current) {
+                        const rect = menuButtonRef.current.getBoundingClientRect()
+                        setMenuPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right })
+                      }
+                      setMenuOpen(v => !v)
+                    }}
                     className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/30 bg-white/10 text-white backdrop-blur-sm transition-colors hover:bg-white/20"
                     aria-label="More actions"
                     aria-expanded={menuOpen}
@@ -246,17 +256,18 @@ export default function CourseHeader({
                     <MoreHorizontal className="h-4 w-4" />
                   </button>
 
-                  {menuOpen && (
+                  {menuOpen && menuPos && typeof document !== "undefined" && createPortal(
                     <>
                       <button
                         aria-hidden
-                        className="fixed inset-0 z-30 cursor-default"
+                        className="fixed inset-0 z-[9998] cursor-default"
                         onClick={() => setMenuOpen(false)}
                       />
                       <motion.div
                         initial={{ opacity: 0, y: -4 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="absolute right-0 top-11 z-40 w-52 overflow-hidden rounded-xl border border-border bg-card shadow-lg"
+                        style={{ position: "fixed", top: menuPos.top, right: menuPos.right }}
+                        className="z-[9999] w-52 overflow-hidden rounded-xl border border-border bg-card shadow-lg"
                       >
                         {course.isArchived ? (
                           <button
@@ -291,7 +302,8 @@ export default function CourseHeader({
                           </>
                         )}
                       </motion.div>
-                    </>
+                    </>,
+                    document.body
                   )}
                 </div>
               </div>
