@@ -35,45 +35,57 @@ export default function DeleteCourseModal({
   return (
     <Modal isOpen={isOpen} onClose={handleClose} size="md" title="" hideHeader>
       <div className="px-1 py-1">
-        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-red-200 bg-red-50 text-red-600 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
+        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 text-amber-600 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300">
           <AlertTriangle className="h-7 w-7" strokeWidth={2} />
         </div>
 
         <h3 className="text-center text-lg font-bold text-foreground">
-          Permanently delete this course?
+          Delete this course?
         </h3>
 
         <p className="mt-2 text-center text-[13px] leading-relaxed text-muted-foreground">
-          This will permanently delete <span className="font-semibold text-foreground">{courseTitle}</span> and
-          all its attendance records, assignments, materials, and marks. This action cannot be undone.
+          <span className="font-semibold text-foreground">{courseTitle}</span> will move to
+          Recently Deleted. All attendance records, assignments, materials, and marks are kept
+          and you can restore the course within 30 days.
         </p>
 
-        <div className="mt-5 space-y-3">
+        <div className="mt-5 space-y-3" autoComplete="off">
           <div>
-            <label className="mb-1.5 block text-[12px] font-semibold text-foreground">
-              Type <span className="font-mono text-red-600 dark:text-red-400">{courseCode}</span> to confirm
+            <label htmlFor="delete-course-code-confirm" className="mb-1.5 block text-[12px] font-semibold text-foreground">
+              Type <span className="font-mono text-amber-600 dark:text-amber-400">{courseCode}</span> to confirm
             </label>
             <input
+              id="delete-course-code-confirm"
+              name="delete-course-code-confirm"
               type="text"
               value={codeInput}
               onChange={e => setCodeInput(e.target.value)}
               placeholder={courseCode}
               autoComplete="off"
-              className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13px] font-mono text-foreground placeholder:text-muted-foreground/50 transition-all focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              data-lpignore="true"
+              data-1p-ignore="true"
+              className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13px] font-mono text-foreground placeholder:text-muted-foreground/50 transition-all focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
             />
           </div>
 
           <div>
-            <label className="mb-1.5 block text-[12px] font-semibold text-foreground">
+            <label htmlFor="delete-course-password-confirm" className="mb-1.5 block text-[12px] font-semibold text-foreground">
               Enter your password to confirm
             </label>
             <input
+              id="delete-course-password-confirm"
+              name="delete-course-password-confirm"
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="Your account password"
-              autoComplete="current-password"
-              className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13px] text-foreground placeholder:text-muted-foreground transition-all focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+              autoComplete="new-password"
+              data-lpignore="true"
+              data-1p-ignore="true"
+              className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13px] text-foreground placeholder:text-muted-foreground transition-all focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
             />
           </div>
         </div>
@@ -96,7 +108,7 @@ export default function DeleteCourseModal({
             disabled={!canSubmit}
             onClick={handleConfirm}
           >
-            Delete permanently
+            Delete course
           </Button>
         </div>
       </div>
