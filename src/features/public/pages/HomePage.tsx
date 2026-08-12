@@ -131,7 +131,7 @@ function HeroIllustration() {
           <span className="font-display text-[12.5px] font-bold text-stone-900">Attendance</span>
         </div>
         <div className="mt-4 space-y-2">
-          {["Aisha Khan", "Rahim Ali", "Priya Das"].map((n, i) => (
+          {["Mostafa Kamal", "Md. Sabbir Hossain Bappy", "Nasif Shahrier Nafi"].map((n, i) => (
             <div key={n} className="flex items-center justify-between">
               <span className="text-[11.5px] text-stone-700">{n}</span>
               <span className={
