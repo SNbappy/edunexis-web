@@ -90,10 +90,10 @@ export default function Sidebar({ onItemClick }: { onItemClick?: () => void } = 
         to="/dashboard"
         className={cn(
           "h-16 flex items-center border-b border-border transition-colors hover:bg-muted/50",
-          collapsed ? "justify-center px-0" : "px-5 gap-3",
+          collapsed ? "justify-center px-0" : "px-5 gap-1.5",
         )}
       >
-        <BrandMark className="h-8 w-8 text-primary shrink-0" />
+        <BrandMark className="h-6 w-6 text-primary shrink-0" />
         {!collapsed && (
           <span className="font-display font-bold text-[17px] tracking-tight text-foreground">
             EduNexis

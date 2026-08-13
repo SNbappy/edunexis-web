@@ -1,5 +1,6 @@
 interface BrandMarkProps {
   className?: string
+  style?: React.CSSProperties
 }
 
 /**
@@ -8,12 +9,13 @@ interface BrandMarkProps {
  * diagonal composition (arrow + star) that would get clipped by a
  * circular crop, so square is the correct container shape here.
  */
-export default function BrandMark({ className = "h-8 w-8" }: BrandMarkProps) {
+export default function BrandMark({ className = "h-8 w-8", style }: BrandMarkProps) {
   return (
     <img
       src="/logo/edunexis-logo-transparent.png"
       alt="EduNexis"
       className={className + " rounded-xl object-contain"}
+      style={style}
     />
   )
 }

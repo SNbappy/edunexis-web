@@ -1,5 +1,6 @@
 import { motion } from "framer-motion"
 import { cn } from "@/utils/cn"
+import BrandMark from "@/components/ui/BrandMark"
 
 type Variant = "screen" | "page" | "inline"
 
@@ -10,14 +11,7 @@ interface BrandLoaderProps {
 }
 
 function Mark({ size }: { size: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden>
-      <rect width="32" height="32" rx="8" fill="currentColor" />
-      <path d="M8 12L16 8L24 12L16 16L8 12Z" stroke="white" strokeWidth="1.8" strokeLinejoin="round" fill="none" />
-      <path d="M11 14V18C11 19.5 13.2 21 16 21C18.8 21 21 19.5 21 18V14" stroke="white" strokeWidth="1.8" strokeLinecap="round" fill="none" />
-      <circle cx="24" cy="12" r="1.2" fill="white" />
-    </svg>
-  )
+  return <BrandMark className="text-primary" style={{ width: size, height: size }} />
 }
 
 function OrbitRing({ size }: { size: number }) {
