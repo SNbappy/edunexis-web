@@ -1,4 +1,4 @@
-﻿import { useState } from "react"
+import { useState } from "react"
 import { Link } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -10,6 +10,7 @@ import { ROUTES } from "@/config/constants"
 import Input from "@/components/ui/Input"
 import Button from "@/components/ui/Button"
 import BrandLoader from "@/components/ui/BrandLoader"
+import BrandMark from "@/components/ui/BrandMark"
 
 const schema = z.object({
   email:    z.string().trim().email("Enter a valid email address"),
@@ -17,16 +18,6 @@ const schema = z.object({
 })
 type FormData = z.infer<typeof schema>
 
-function BrandMark({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 32 32" fill="none" className={className} aria-hidden>
-      <rect width="32" height="32" rx="8" fill="currentColor" />
-      <path d="M8 12L16 8L24 12L16 16L8 12Z" stroke="white" strokeWidth="1.8" strokeLinejoin="round" fill="none" />
-      <path d="M11 14V18C11 19.5 13.2 21 16 21C18.8 21 21 19.5 21 18V14" stroke="white" strokeWidth="1.8" strokeLinecap="round" fill="none" />
-      <circle cx="24" cy="12" r="1.2" fill="white" />
-    </svg>
-  )
-}
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -51,10 +42,10 @@ export default function LoginPage() {
           />
         </div>
 
-        <div className="relative flex items-center gap-3">
-          <BrandMark className="h-9 w-9 text-teal-500" />
+        <Link to="/" className="relative flex items-center gap-1.5">
+          <BrandMark className="h-7 w-7 text-teal-500" />
           <span className="font-display font-bold text-xl tracking-tight">EduNexis</span>
-        </div>
+        </Link>
 
         <div className="relative space-y-10">
           <div className="space-y-5 max-w-md">
@@ -102,10 +93,10 @@ export default function LoginPage() {
       {/* RIGHT — Sign-in form */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-10 bg-muted">
         <div className="w-full max-w-[380px] space-y-7">
-          <div className="lg:hidden flex items-center gap-2.5">
-            <BrandMark className="h-9 w-9 text-teal-600" />
+          <Link to="/" className="lg:hidden flex items-center gap-1.5">
+            <BrandMark className="h-7 w-7 text-teal-600" />
             <span className="font-display font-bold text-lg tracking-tight text-stone-900">EduNexis</span>
-          </div>
+          </Link>
 
           <div className="space-y-1.5">
             <h2 className="font-display text-[28px] font-bold tracking-tight text-stone-900 leading-tight">

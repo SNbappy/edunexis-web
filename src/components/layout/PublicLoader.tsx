@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { GraduationCap } from "lucide-react"
+import BrandMark from "@/components/ui/BrandMark"
 
 /**
  * Brand intro loader for public-facing pages. Shows on every page refresh.
@@ -48,9 +48,9 @@ export default function PublicLoader() {
                 delay: 0.3,
                 ease: [0.16, 1, 0.3, 1],
               }}
-              className="flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-teal-500 to-emerald-500 text-white shadow-[0_20px_60px_-15px_rgba(13,148,136,0.5)]"
+              className="flex h-24 w-24 items-center justify-center"
             >
-              <GraduationCap className="h-12 w-12" strokeWidth={2.5} />
+              <BrandMark className="h-20 w-20" />
             </motion.div>
 
             <motion.div

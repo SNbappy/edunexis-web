@@ -1,15 +1,13 @@
 import { Link } from "react-router-dom"
-import { GraduationCap } from "lucide-react"
+import BrandMark from "@/components/ui/BrandMark"
 export default function PublicFooter() {
   return (
     <footer className="border-t border-white/10 bg-slate-950">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-14 lg:px-8">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
           <div className="col-span-2">
-            <Link to="/" className="group flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500 text-white shadow-md transition-transform group-hover:scale-105">
-                <GraduationCap className="h-5 w-5" strokeWidth={2.5} />
-              </div>
+            <Link to="/" className="group flex items-center gap-1.5">
+              <BrandMark className="h-8 w-8" />
               <span className="font-display text-[18px] font-extrabold tracking-tight text-white">
                 EduNexis
               </span>

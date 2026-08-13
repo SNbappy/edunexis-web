@@ -10,20 +10,11 @@ import BrandLoader from "@/components/ui/BrandLoader"
 import { authService } from "../services/authService"
 import { useAuthStore } from "@/store/authStore"
 import { ROUTES } from "@/config/constants"
+import BrandMark from "@/components/ui/BrandMark"
 
 const SLOW_THRESHOLD_MS = 400
 const RESEND_COOLDOWN = 60
 
-function BrandMark({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 32 32" fill="none" className={className} aria-hidden>
-      <rect width="32" height="32" rx="8" fill="currentColor" />
-      <path d="M8 12L16 8L24 12L16 16L8 12Z" stroke="white" strokeWidth="1.8" strokeLinejoin="round" fill="none" />
-      <path d="M11 14V18C11 19.5 13.2 21 16 21C18.8 21 21 19.5 21 18V14" stroke="white" strokeWidth="1.8" strokeLinecap="round" fill="none" />
-      <circle cx="24" cy="12" r="1.2" fill="white" />
-    </svg>
-  )
-}
 
 export default function VerifyEmailPage() {
   const navigate = useNavigate()
@@ -203,10 +194,10 @@ export default function VerifyEmailPage() {
           />
         </div>
 
-        <div className="relative flex items-center gap-3">
-          <BrandMark className="h-9 w-9 text-teal-500" />
+        <Link to="/" className="relative flex items-center gap-1.5">
+          <BrandMark className="h-7 w-7 text-teal-500" />
           <span className="font-display font-bold text-xl tracking-tight">EduNexis</span>
-        </div>
+        </Link>
 
         <div className="relative space-y-8 max-w-md">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1">
@@ -242,10 +233,10 @@ export default function VerifyEmailPage() {
       {/* RIGHT — OTP form */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-10 bg-muted">
         <div className="w-full max-w-[400px] space-y-7">
-          <div className="lg:hidden flex items-center gap-2.5">
-            <BrandMark className="h-9 w-9 text-teal-600" />
+          <Link to="/" className="lg:hidden flex items-center gap-1.5">
+            <BrandMark className="h-7 w-7 text-teal-600" />
             <span className="font-display font-bold text-lg tracking-tight text-stone-900">EduNexis</span>
-          </div>
+          </Link>
 
           <div className="space-y-2">
             <Link

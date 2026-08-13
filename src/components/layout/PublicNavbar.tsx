@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link, NavLink, useLocation } from "react-router-dom"
-import { GraduationCap, ArrowRight, Menu, X, LayoutDashboard } from "lucide-react"
+import { ArrowRight, Menu, X, LayoutDashboard } from "lucide-react"
+import BrandMark from "@/components/ui/BrandMark"
 import { useAuthStore } from "@/store/authStore"
 import { cn } from "@/utils/cn"
 
@@ -49,18 +50,10 @@ export default function PublicNavbar() {
           )}
         >
           {/* Logo */}
-          <Link to="/" className="group flex items-center gap-2.5 sm:gap-3">
-            <div
-              className={cn(
-                "flex items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-emerald-600 text-white shadow-md transition-all duration-300 group-hover:scale-105",
-                scrolled ? "h-8 w-8" : "h-10 w-10 sm:h-11 sm:w-11"
-              )}
-            >
-              <GraduationCap
-                className={cn("transition-all duration-300", scrolled ? "h-4 w-4" : "h-5 w-5 sm:h-6 sm:w-6")}
-                strokeWidth={2.75}
-              />
-            </div>
+          <Link to="/" className="group flex items-center gap-1.5 sm:gap-2">
+          <BrandMark
+            className={cn("text-teal-600 dark:text-teal-500 transition-all duration-300", scrolled ? "h-7 w-7" : "h-8 w-8 sm:h-9 sm:w-9")}
+          />
             <span
               className={cn(
                 "font-display font-extrabold tracking-tight text-stone-900 transition-all duration-300",
