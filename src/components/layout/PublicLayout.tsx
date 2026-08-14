@@ -2,6 +2,7 @@ import { Suspense } from "react"
 import { Outlet } from "react-router-dom"
 import PublicNavbar from "./PublicNavbar"
 import PublicFooter from "./PublicFooter"
+import RouteProgress from "@/components/ui/RouteProgress"
 
 // Theme handling is centralized in ThemeProvider, which forces light on
 // public routes regardless of saved preference. No DOM mutation here.
@@ -22,7 +23,7 @@ export default function PublicLayout() {
           flash, then get shoved down when the page arrives. A full-viewport
           placeholder keeps the footer below the fold until content lands.
         */}
-        <Suspense fallback={<div aria-hidden className="min-h-screen" />}>
+        <Suspense fallback={<RouteProgress />}>
           <Outlet />
         </Suspense>
       </main>

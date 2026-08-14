@@ -6,6 +6,7 @@ import toast from "react-hot-toast"
 import axios from "axios"
 
 import Button from "@/components/ui/Button"
+import { CTA_PRIMARY } from "@/components/ui/ctaStyles"
 import BrandLoader from "@/components/ui/BrandLoader"
 import { authService } from "../services/authService"
 import { useAuthStore } from "@/store/authStore"
@@ -226,6 +227,7 @@ export default function VerifyEmailPage() {
               onClick={() => verify()}
               size="lg"
               fullWidth
+              className={CTA_PRIMARY}
               rightIcon={!verifying ? <ArrowRight className="h-4 w-4" /> : undefined}
             >
               Verify and continue

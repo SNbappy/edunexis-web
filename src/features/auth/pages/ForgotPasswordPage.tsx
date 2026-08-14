@@ -10,6 +10,7 @@ import { motion } from "framer-motion"
 
 import Input from "@/components/ui/Input"
 import Button from "@/components/ui/Button"
+import { CTA_PRIMARY } from "@/components/ui/ctaStyles"
 import { authService } from "../services/authService"
 import { ROUTES } from "@/config/constants"
 import AuthShell from "@/components/layout/AuthShell"
@@ -131,7 +132,7 @@ export default function ForgotPasswordPage() {
                   loading={submitting}
                   size="lg"
                   fullWidth
-                  className="bg-teal-900 hover:bg-teal-800"
+                  className={CTA_PRIMARY}
                   rightIcon={!submitting ? <ArrowRight className="h-4 w-4" /> : undefined}
                 >
                   Send reset link

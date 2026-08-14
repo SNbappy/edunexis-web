@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { Link, NavLink, useLocation } from "react-router-dom"
 import { ArrowRight, Menu, X, LayoutDashboard } from "lucide-react"
 import BrandMark from "@/components/ui/BrandMark"
+import { CTA_PRIMARY } from "@/components/ui/ctaStyles"
 import { useAuthStore } from "@/store/authStore"
 import { cn } from "@/utils/cn"
 
@@ -91,7 +92,7 @@ export default function PublicNavbar() {
               <Link
                 to="/dashboard"
                 className={cn(
-                  "group inline-flex items-center gap-1.5 rounded-xl bg-teal-900 font-display font-bold text-white transition-all hover:bg-teal-800 hover:shadow-[0_8px_20px_-6px_rgba(19,78,74,0.5)]",
+                  "group inline-flex items-center gap-1.5 rounded-xl font-display font-bold text-white " + CTA_PRIMARY,
                   scrolled ? "px-3.5 py-2 text-[13px]" : "px-5 py-3 text-[14.5px]"
                 )}
               >
@@ -113,7 +114,7 @@ export default function PublicNavbar() {
                 <Link
                   to="/register"
                   className={cn(
-                    "group inline-flex items-center gap-1.5 rounded-xl bg-teal-900 font-display font-bold text-white transition-all hover:bg-teal-800 hover:shadow-[0_8px_20px_-6px_rgba(19,78,74,0.5)]",
+                    "group inline-flex items-center gap-1.5 rounded-xl font-display font-bold text-white " + CTA_PRIMARY,
                     scrolled ? "px-3.5 py-2 text-[13px]" : "px-5 py-3 text-[14.5px]"
                   )}
                 >
@@ -160,7 +161,7 @@ export default function PublicNavbar() {
               {user ? (
                 <Link
                   to="/dashboard"
-                  className="group inline-flex items-center justify-center gap-2 rounded-xl bg-teal-900 px-5 py-3.5 font-display text-[15px] font-bold text-white transition-colors hover:bg-teal-800"
+                  className={"group inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 font-display text-[15px] font-bold text-white " + CTA_PRIMARY}
                 >
                   <LayoutDashboard className="h-4 w-4" />
                   Dashboard
@@ -175,7 +176,7 @@ export default function PublicNavbar() {
                   </Link>
                   <Link
                     to="/register"
-                    className="group inline-flex items-center justify-center gap-2 rounded-xl bg-teal-900 px-5 py-3.5 font-display text-[15px] font-bold text-white transition-colors hover:bg-teal-800"
+                    className={"group inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 font-display text-[15px] font-bold text-white " + CTA_PRIMARY}
                   >
                     Get started
                     <ArrowRight className="h-4 w-4" />

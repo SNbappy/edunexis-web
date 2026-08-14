@@ -9,6 +9,7 @@ import axios from "axios"
 import { AnimatePresence, motion } from "framer-motion"
 
 import Button from "@/components/ui/Button"
+import { CTA_PRIMARY } from "@/components/ui/ctaStyles"
 import { authService } from "../services/authService"
 import { ROUTES } from "@/config/constants"
 import AuthShell from "@/components/layout/AuthShell"
@@ -121,6 +122,7 @@ export default function ResetPasswordPage() {
                 onClick={() => navigate(ROUTES.LOGIN, { replace: true })}
                 size="lg"
                 fullWidth
+                className={CTA_PRIMARY}
               >
                 Continue to sign in
               </Button>
@@ -174,6 +176,7 @@ export default function ResetPasswordPage() {
                   disabled={!isValid}
                   size="lg"
                   fullWidth
+                  className={CTA_PRIMARY}
                 >
                   <ShieldCheck className="h-3.5 w-3.5" />
                   Reset password

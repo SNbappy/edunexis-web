@@ -13,6 +13,7 @@ import { useRegister } from "../hooks/useRegister"
 import { ROUTES, TEACHER_EMAIL_DOMAIN, STUDENT_EMAIL_DOMAIN } from "@/config/constants"
 import Input from "@/components/ui/Input"
 import Button from "@/components/ui/Button"
+import { CTA_PRIMARY } from "@/components/ui/ctaStyles"
 import BrandLoader from "@/components/ui/BrandLoader"
 import AuthShell from "@/components/layout/AuthShell"
 import { cn } from "@/utils/cn"
@@ -244,7 +245,7 @@ export default function RegisterPage() {
               loading={loading}
               size="lg"
               fullWidth
-              className="bg-teal-900 hover:bg-teal-800"
+              className={CTA_PRIMARY}
               rightIcon={!loading ? <ArrowRight className="h-4 w-4" /> : undefined}
             >
               Create account

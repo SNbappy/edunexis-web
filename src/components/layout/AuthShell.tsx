@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { Link } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
-import { ClipboardCheck, BarChart3, Bell, Check, ArrowLeft } from "lucide-react"
+import { ClipboardCheck, BarChart3, Bell, Check, ArrowLeft, Paperclip } from "lucide-react"
 import BrandMark from "@/components/ui/BrandMark"
 
 const EASE = [0.16, 1, 0.3, 1] as const
@@ -46,21 +46,34 @@ function usePrefersReducedMotion() {
 }
 
 /**
- * A small self-playing panel so the brand side isn't a static poster. Same
- * approach as the homepage films — scripted beats, transform/opacity only,
- * suspended off-screen, frozen on the first frame for reduced motion.
+ * Live activity stream for the brand panel.
+ *
+ * Deliberately not another tab-cycling card — the homepage already uses that
+ * device three times, so repeating it here made the auth screens feel like a
+ * fourth copy rather than their own moment. This reads as the product running:
+ * events arrive from below, push the stack up, and the oldest fades out at the
+ * top. Nothing switches; things happen.
+ *
+ * Also suits the narrower panel — a vertical stream fits a tall column far
+ * better than a wide screenshot did.
  */
-const BEATS = [
-  { label: "Attendance", Icon: ClipboardCheck },
-  { label: "Marks", Icon: BarChart3 },
-  { label: "Announcement", Icon: Bell },
+const ACTIVITY = [
+  { Icon: ClipboardCheck, tint: "bg-teal-500/15 text-teal-300", title: "Attendance saved", meta: "CSE327 · 43 of 47 present" },
+  { Icon: Paperclip, tint: "bg-blue-500/15 text-blue-300", title: "Nasif submitted Assignment 4", meta: "200147_erd.pdf · 2 days early" },
+  { Icon: BarChart3, tint: "bg-amber-500/15 text-amber-300", title: "Final marks published", meta: "47 students notified" },
+  { Icon: Bell, tint: "bg-violet-500/15 text-violet-300", title: "Lab 4 moved to Thursday", meta: "Announcement · seen by 41" },
+  { Icon: Check, tint: "bg-emerald-500/15 text-emerald-300", title: "Tasnim joined CSE327", meta: "Join request approved" },
 ]
+
+const VISIBLE = 3
+/** Card height (60px) + column gap (10px) — the distance the ticker travels. */
+const ROW_PITCH = 70
 
 function AuthFilm() {
   const ref = useRef<HTMLDivElement>(null)
   const reduced = usePrefersReducedMotion()
   const [onScreen, setOnScreen] = useState(false)
-  const [beat, setBeat] = useState(0)
+  const [head, setHead] = useState(0)
 
   useEffect(() => {
     const el = ref.current
@@ -72,116 +85,71 @@ function AuthFilm() {
 
   useEffect(() => {
     if (reduced || !onScreen) return
-    const id = window.setTimeout(() => setBeat(b => (b + 1) % BEATS.length), 2800)
+    const id = window.setTimeout(() => setHead(h => (h + 1) % ACTIVITY.length), 2400)
     return () => clearTimeout(id)
-  }, [beat, reduced, onScreen])
+  }, [head, reduced, onScreen])
 
-  const rows = [
-    { n: "Mostafa Kamal", i: "MK", tint: "from-teal-500 to-cyan-600" },
-    { n: "Md. Sabbir Hossain Bappy", i: "SH", tint: "from-blue-500 to-indigo-600" },
-    { n: "Nasif Shahrier Nafi", i: "NS", tint: "from-amber-500 to-orange-600" },
-  ]
+  /* Newest first; the list is a moving window over the loop. One extra row is
+     rendered below the fold so the column always has something to slide up
+     into. */
+  const shown = Array.from({ length: VISIBLE + 1 }, (_, i) => {
+    const idx = (head - i + ACTIVITY.length * 2) % ACTIVITY.length
+    return { ...ACTIVITY[idx], key: `${head}-${i}`, depth: i }
+  })
 
   return (
-    <div ref={ref} className="relative w-full max-w-sm">
-      <div aria-hidden className="absolute -inset-4 rounded-[28px] bg-teal-400/20 blur-3xl" />
+    <div ref={ref} className="w-full max-w-sm">
+      <div className="mb-3 flex items-center gap-2">
+        <span className="relative flex h-2 w-2">
+          {!reduced && (
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-70" />
+          )}
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-teal-400" />
+        </span>
+        <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-teal-300">
+          Happening now
+        </span>
+      </div>
 
-      <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-white shadow-[0_24px_60px_-18px_rgba(0,0,0,0.55)]">
-        <div className="flex items-center justify-between border-b border-stone-100 bg-stone-50 px-4 py-2.5">
-          <span className="font-display text-[12px] font-bold text-stone-900">CSE327 · Today</span>
-          <span className="rounded-full bg-teal-50 px-2 py-0.5 text-[9px] font-bold text-teal-700">Live</span>
-        </div>
+      {/*
+        A ticker, not an AnimatePresence stack. Both earlier attempts —
+        hand-computed offsets, then `mode="popLayout"` — left the exiting card
+        in the DOM at its old position while the rest shifted, so two cards
+        rendered on top of each other (measured: 60px of overlap).
 
-        {/* step rail */}
-        <div className="flex gap-1 px-4 pt-3">
-          {BEATS.map((b, i) => (
-            <div key={b.label} className="flex-1">
-              <div className="h-0.5 overflow-hidden rounded-full bg-stone-100">
-                <motion.div
-                  className="h-full rounded-full bg-teal-500"
-                  animate={{ scaleX: i <= beat ? 1 : 0 }}
-                  style={{ originX: 0 }}
-                  transition={{ duration: 0.45, ease: EASE }}
-                />
+        Here the whole column remounts each tick and slides up one row. Nothing
+        ever exits independently, so overlap is structurally impossible.
+      */}
+      <div className="relative h-[228px] overflow-hidden">
+        <motion.div
+          key={head}
+          initial={{ y: ROW_PITCH }}
+          animate={{ y: 0 }}
+          transition={{ duration: 0.55, ease: EASE }}
+          className="flex flex-col gap-2.5"
+        >
+          {shown.map(item => (
+            <div
+              key={item.key}
+              style={{ opacity: item.depth >= VISIBLE - 1 ? 0.45 : 1 }}
+              className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.06] p-3 backdrop-blur-sm"
+            >
+              <span className={"flex h-9 w-9 shrink-0 items-center justify-center rounded-lg " + item.tint}>
+                <item.Icon className="h-4 w-4" strokeWidth={2.25} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[12.5px] font-bold text-white">{item.title}</p>
+                <p className="truncate text-[11px] text-teal-100/55">{item.meta}</p>
               </div>
-              <p className={"mt-1.5 truncate text-[8.5px] font-semibold " + (i === beat ? "text-stone-800" : "text-stone-400")}>
-                {b.label}
-              </p>
             </div>
           ))}
-        </div>
+        </motion.div>
 
-        <div className="relative h-[164px] overflow-hidden">
-          <AnimatePresence initial={false}>
-            <motion.div
-              key={beat}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.32, ease: EASE }}
-              className="absolute inset-0 p-4"
-            >
-              {beat === 0 && (
-                <div className="space-y-1.5">
-                  {rows.map((r, i) => (
-                    <div key={r.n} className="flex items-center gap-2.5 border-b border-stone-50 py-1.5">
-                      <span className={"flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-[8.5px] font-bold text-white " + r.tint}>
-                        {r.i}
-                      </span>
-                      <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-stone-700">{r.n}</span>
-                      <motion.span
-                        initial={{ scale: 0.6, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: 0.2 + i * 0.22, duration: 0.3, ease: EASE }}
-                        className="rounded-full bg-teal-50 px-2 py-0.5 text-[9px] font-bold text-teal-700"
-                      >
-                        Present
-                      </motion.span>
-                    </div>
-                  ))}
-                  <p className="pt-1 text-[10px] font-semibold text-teal-700">43 of 47 present</p>
-                </div>
-              )}
-
-              {beat === 1 && (
-                <div className="space-y-1.5">
-                  {[
-                    { n: "Nasif Shahrier Nafi", m: "94.8" },
-                    { n: "Mostafa Kamal", m: "93.1" },
-                    { n: "Md. Sabbir Hossain Bappy", m: "78.0" },
-                  ].map((r, i) => (
-                    <motion.div
-                      key={r.n}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.16, duration: 0.35 }}
-                      className="flex items-center justify-between border-b border-stone-50 py-1.5"
-                    >
-                      <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-stone-700">{r.n}</span>
-                      <span className="font-display text-[12px] font-bold tabular-nums text-teal-700">{r.m}</span>
-                    </motion.div>
-                  ))}
-                  <p className="pt-1 text-[10px] font-semibold text-teal-700">Final marks published</p>
-                </div>
-              )}
-
-              {beat === 2 && (
-                <div className="flex h-full flex-col items-center justify-center text-center">
-                  <motion.span
-                    initial={{ scale: 0.6, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.4, ease: EASE }}
-                    className="flex h-11 w-11 items-center justify-center rounded-full bg-teal-600"
-                  >
-                    <Check className="h-5 w-5 text-white" strokeWidth={3} />
-                  </motion.span>
-                  <p className="mt-3 font-display text-[13px] font-bold text-stone-900">Lab 4 moved to Thursday</p>
-                  <p className="mt-0.5 text-[11px] text-stone-500">47 students notified instantly</p>
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
+        {/* the stack fades out as it leaves, rather than being hard-clipped */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-teal-950 to-transparent"
+        />
       </div>
     </div>
   )
@@ -216,7 +184,10 @@ export default function AuthShell({
   return (
     <div className="flex min-h-screen w-full bg-white text-stone-900">
       {/* LEFT — brand panel on the shared teal-ink surface */}
-      <aside className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-teal-950 p-12 text-white lg:flex xl:w-[54%] xl:p-16">
+      {/* Was 54% of the viewport while its widest content measured 448px —
+          31% of the panel was empty horizontal space. Sized to the content it
+          actually holds, which also gives the form column more room. */}
+      <aside className="relative hidden w-[46%] flex-col justify-between overflow-hidden bg-teal-950 p-10 text-white lg:flex xl:w-[44%] xl:p-14">
         <div
           aria-hidden
           className="absolute inset-0 opacity-[0.05]"

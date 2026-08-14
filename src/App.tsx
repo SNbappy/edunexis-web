@@ -10,6 +10,7 @@ import PublicLayout from "@/components/layout/PublicLayout"
 import RedirectIfAuthed from "@/components/guards/RedirectIfAuthed"
 import AuthLayout from "@/components/layout/AuthLayout"
 import BrandLoader from "@/components/ui/BrandLoader"
+import RouteProgress from "@/components/ui/RouteProgress"
 import { ROUTES } from "@/config/constants"
 
 const LoginPage = lazy(() => import("@/features/auth/pages/LoginPage"))
@@ -45,7 +46,7 @@ const UnauthorizedPage = lazy(() => import("@/pages/UnauthorizedPage"))
 
 export default function App() {
   return (
-    <Suspense fallback={<BrandLoader variant="page" />}>
+    <Suspense fallback={<RouteProgress />}>
       <Routes>
         {/* Public routes - accessible to everyone, logged in or not */}
         <Route element={<PublicLayout />}>

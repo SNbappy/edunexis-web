@@ -3,7 +3,7 @@ import { Outlet, useLocation } from "react-router-dom"
 import Sidebar from "./Sidebar"
 import Topbar from "./Topbar"
 import MobileSidebar from "./MobileSidebar"
-import BrandLoader from "@/components/ui/BrandLoader"
+import RouteProgress from "@/components/ui/RouteProgress"
 import Footer from "./Footer"
 
 export default function DashboardLayout() {
@@ -31,7 +31,7 @@ export default function DashboardLayout() {
         <main className="flex-1 overflow-y-auto">
           <div className="flex min-h-full flex-col">
             <div className="flex-1">
-              <Suspense fallback={<BrandLoader variant="page" />}>
+              <Suspense fallback={<RouteProgress spacer={false} />}>
                 <Outlet />
               </Suspense>
             </div>

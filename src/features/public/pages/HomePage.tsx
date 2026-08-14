@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion"
 import { useQuery } from "@tanstack/react-query"
 import { publicService } from "../services/publicService"
+import { CTA_PRIMARY, CTA_SECONDARY, CTA_ON_DARK } from "@/components/ui/ctaStyles"
 import {
   ArrowRight,
   ClipboardCheck,
@@ -273,14 +274,14 @@ function Hero() {
           <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <Link
               to="/register"
-              className="group inline-flex items-center gap-2 rounded-xl bg-teal-900 px-6 py-3.5 text-[14px] font-bold text-white shadow-[0_8px_24px_-8px_rgba(0,0,0,0.4)] transition-all hover:bg-teal-800 hover:shadow-[0_12px_32px_-8px_rgba(19,78,74,0.55)]"
+              className={"group inline-flex items-center gap-2 rounded-xl px-6 py-3.5 text-[14px] font-bold text-white " + CTA_PRIMARY}
             >
               Get started for free
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
             <Link
               to="/faculty"
-              className="inline-flex items-center gap-2 rounded-xl border border-stone-300 bg-white px-6 py-3.5 text-[14px] font-bold text-stone-900 transition-colors hover:bg-stone-50"
+              className={"inline-flex items-center gap-2 rounded-xl px-6 py-3.5 text-[14px] font-bold text-stone-900 " + CTA_SECONDARY}
             >
               Browse faculty
             </Link>
@@ -288,12 +289,19 @@ function Hero() {
 
           <div className="mt-10 flex items-center gap-3 text-[12.5px] text-stone-500">
             <div className="flex -space-x-2">
-              {["MK", "SB", "NN"].map(initials => (
+              {/* Same three students as the roster, and the same per-person
+                  tints they carry in every mockup — one flat colour made them
+                  read as a generic placeholder cluster. */}
+              {ROSTER.slice(0, 3).map((s, i) => (
                 <div
-                  key={initials}
-                  className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-teal-500 to-cyan-600 text-[9px] font-bold text-white"
+                  key={s.id}
+                  title={s.name}
+                  className={
+                    "flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br text-[9px] font-bold text-white " +
+                    AVATAR_TINTS[i]
+                  }
                 >
-                  {initials}
+                  {initials(s.name)}
                 </div>
               ))}
             </div>
@@ -995,7 +1003,7 @@ function AttendanceMockup() {
           </div>
           <button
             onClick={markAllPresent}
-            className="rounded-lg bg-teal-900 px-3 py-1.5 text-[11.5px] font-bold text-white transition-colors hover:bg-teal-700"
+            className={"rounded-lg px-3 py-1.5 text-[11.5px] font-bold text-white " + CTA_PRIMARY}
           >
             Mark all present
           </button>
@@ -1112,7 +1120,7 @@ function AttendanceMockup() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3, ease: EASE }}
-              className="inline-flex items-center gap-2 rounded-lg bg-teal-900 px-4 py-2 text-[12px] font-bold text-white shadow-[0_8px_20px_-8px_rgba(19,78,74,0.9)] transition-colors hover:bg-teal-800 disabled:opacity-70"
+              className={"inline-flex items-center gap-2 rounded-lg px-4 py-2 text-[12px] font-bold text-white disabled:opacity-70 " + CTA_PRIMARY}
             >
               {saveState === "saving" ? (
                 <>
@@ -2272,7 +2280,7 @@ function HowItStarts() {
           <div className="mt-12 flex flex-col items-center gap-3 text-center">
             <Link
               to="/register"
-              className="group inline-flex items-center gap-2 rounded-xl bg-teal-900 px-7 py-3.5 text-[14.5px] font-bold text-white shadow-[0_10px_28px_-10px_rgba(19,78,74,0.8)] transition-all hover:bg-teal-800"
+              className={"group inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-[14.5px] font-bold text-white " + CTA_PRIMARY}
             >
               Create your first course
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
