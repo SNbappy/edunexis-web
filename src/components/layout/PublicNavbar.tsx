@@ -50,9 +50,14 @@ export default function PublicNavbar() {
           )}
         >
           {/* Logo */}
-          <Link to="/" className="group flex items-center gap-1.5 sm:gap-2">
+          {/* Brand lockup. The mark's artwork fills its box horizontally with
+              ~10% vertical padding, so a 36px box rendered a ~32px mark against
+              a 16px cap height — a 2.0 ratio, which let the mark tower over the
+              wordmark. Sized down to sit near 1.6, with the gap opened to match
+              the mark's optical height. */}
+          <Link to="/" className="group flex items-center gap-2 sm:gap-2.5">
           <BrandMark
-            className={cn("text-teal-600 dark:text-teal-500 transition-all duration-300", scrolled ? "h-7 w-7" : "h-8 w-8 sm:h-9 sm:w-9")}
+            className={cn("text-teal-600 dark:text-teal-500 transition-all duration-300", scrolled ? "h-6 w-6" : "h-7 w-7 sm:h-8 sm:w-8")}
           />
             <span
               className={cn(
@@ -86,7 +91,7 @@ export default function PublicNavbar() {
               <Link
                 to="/dashboard"
                 className={cn(
-                  "group inline-flex items-center gap-1.5 rounded-xl bg-stone-900 font-display font-bold text-white transition-all hover:bg-stone-800 hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.4)]",
+                  "group inline-flex items-center gap-1.5 rounded-xl bg-teal-900 font-display font-bold text-white transition-all hover:bg-teal-800 hover:shadow-[0_8px_20px_-6px_rgba(19,78,74,0.5)]",
                   scrolled ? "px-3.5 py-2 text-[13px]" : "px-5 py-3 text-[14.5px]"
                 )}
               >
@@ -108,7 +113,7 @@ export default function PublicNavbar() {
                 <Link
                   to="/register"
                   className={cn(
-                    "group inline-flex items-center gap-1.5 rounded-xl bg-stone-900 font-display font-bold text-white transition-all hover:bg-stone-800 hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.4)]",
+                    "group inline-flex items-center gap-1.5 rounded-xl bg-teal-900 font-display font-bold text-white transition-all hover:bg-teal-800 hover:shadow-[0_8px_20px_-6px_rgba(19,78,74,0.5)]",
                     scrolled ? "px-3.5 py-2 text-[13px]" : "px-5 py-3 text-[14.5px]"
                   )}
                 >
@@ -155,7 +160,7 @@ export default function PublicNavbar() {
               {user ? (
                 <Link
                   to="/dashboard"
-                  className="group inline-flex items-center justify-center gap-2 rounded-xl bg-stone-900 px-5 py-3.5 font-display text-[15px] font-bold text-white transition-colors hover:bg-stone-800"
+                  className="group inline-flex items-center justify-center gap-2 rounded-xl bg-teal-900 px-5 py-3.5 font-display text-[15px] font-bold text-white transition-colors hover:bg-teal-800"
                 >
                   <LayoutDashboard className="h-4 w-4" />
                   Dashboard
@@ -170,7 +175,7 @@ export default function PublicNavbar() {
                   </Link>
                   <Link
                     to="/register"
-                    className="group inline-flex items-center justify-center gap-2 rounded-xl bg-stone-900 px-5 py-3.5 font-display text-[15px] font-bold text-white transition-colors hover:bg-stone-800"
+                    className="group inline-flex items-center justify-center gap-2 rounded-xl bg-teal-900 px-5 py-3.5 font-display text-[15px] font-bold text-white transition-colors hover:bg-teal-800"
                   >
                     Get started
                     <ArrowRight className="h-4 w-4" />

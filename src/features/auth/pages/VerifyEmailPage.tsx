@@ -10,7 +10,7 @@ import BrandLoader from "@/components/ui/BrandLoader"
 import { authService } from "../services/authService"
 import { useAuthStore } from "@/store/authStore"
 import { ROUTES } from "@/config/constants"
-import BrandMark from "@/components/ui/BrandMark"
+import AuthShell from "@/components/layout/AuthShell"
 
 const SLOW_THRESHOLD_MS = 400
 const RESEND_COOLDOWN = 60
@@ -180,89 +180,19 @@ export default function VerifyEmailPage() {
   }
 
   return (
-    <div className="min-h-screen w-full flex bg-white text-stone-900">
-      {/* LEFT — Brand panel */}
-      <aside className="hidden lg:flex relative flex-col justify-between w-1/2 xl:w-[55%] p-12 xl:p-16 overflow-hidden bg-teal-700 text-white">
-        <div className="absolute inset-0 pointer-events-none" aria-hidden>
-          <div
-            className="absolute -top-1/4 -left-1/4 h-[520px] w-[520px] rounded-full blur-3xl opacity-40"
-            style={{ background: "#2dd4bf" }}
-          />
-          <div
-            className="absolute -bottom-1/4 -right-1/4 h-[420px] w-[420px] rounded-full blur-3xl opacity-30"
-            style={{ background: "#f59e0b" }}
-          />
-        </div>
-
-        <Link to="/" className="relative flex items-center gap-1.5">
-          <BrandMark className="h-7 w-7 text-teal-500" />
-          <span className="font-display font-bold text-xl tracking-tight">EduNexis</span>
-        </Link>
-
-        <div className="relative space-y-8 max-w-md">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1">
-            <Mail className="h-3 w-3 text-amber-300" />
-            <span className="text-[11px] font-semibold text-white/90">One last step</span>
-          </div>
-          <h1 className="font-display text-4xl xl:text-5xl font-bold leading-[1.05] tracking-tight">
-            Check your email,<br />then you{"\u2019"}re in.
-          </h1>
-          <p className="text-[15px] leading-relaxed text-white/80">
-            We sent a 6-digit verification code to your university email. Enter it on the right to activate your account.
-          </p>
-
-          <ul className="space-y-3 pt-4 border-t border-white/15">
-            {[
-              "Codes expire in 10 minutes",
-              "Check your spam folder if you don't see it",
-              "You can request a new code if needed",
-            ].map(item => (
-              <li key={item} className="flex items-start gap-3 text-sm text-white/85">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" strokeWidth={2.25} />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="relative text-[11px] text-white/60">
-          Jashore University of Science and Technology
-        </div>
-      </aside>
-
-      {/* RIGHT — OTP form */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-10 bg-muted">
-        <div className="w-full max-w-[400px] space-y-7">
-          <Link to="/" className="lg:hidden flex items-center gap-1.5">
-            <BrandMark className="h-7 w-7 text-teal-600" />
-            <span className="font-display font-bold text-lg tracking-tight text-stone-900">EduNexis</span>
-          </Link>
-
-          <div className="space-y-2">
-            <Link
-              to={ROUTES.LOGIN}
-              className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-stone-500 transition-colors hover:text-teal-700"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Back to sign in
-            </Link>
-
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="space-y-1.5 pt-1"
-            >
-              <h2 className="font-display text-[28px] font-bold tracking-tight text-stone-900 leading-tight">
-                Verify your email
-              </h2>
-              <p className="text-sm text-stone-600">
-                We sent a 6-digit code to{" "}
-                <span className="font-semibold text-stone-900">{email}</span>
-              </p>
-            </motion.div>
-          </div>
-
+    <>
+      <AuthShell
+        title="Verify your email"
+        subtitle={
+          <>
+            We sent a 6-digit code to{" "}
+            <span className="font-semibold text-stone-900">{email}</span>
+          </>
+        }
+        back={{ to: ROUTES.LOGIN, label: "Back to sign in" }}
+        panelLines={["Check your email,", "then you’re in."]}
+        panelBody={"We sent a 6-digit verification code to your university email. Codes expire in 10 minutes — you can request a new one if it does not arrive."}
+      >
           {/* OTP inputs */}
           <div className="space-y-4">
             <div className="flex justify-between gap-2">
@@ -307,7 +237,7 @@ export default function VerifyEmailPage() {
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <p className="text-[12.5px] font-semibold text-stone-900">
-                  Didn{"\u2019"}t get the code?
+                  Didn{"’"}t get the code?
                 </p>
                 <p className="mt-0.5 text-[11px] text-stone-500">
                   Check your spam folder, or request a new code below.
@@ -336,10 +266,9 @@ export default function VerifyEmailPage() {
               Start over
             </Link>
           </p>
-        </div>
-      </div>
+      </AuthShell>
 
       {showOverlay && <BrandLoader variant="screen" label="Verifying your email…" />}
-    </div>
+    </>
   )
 }

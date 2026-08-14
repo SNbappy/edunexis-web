@@ -14,7 +14,7 @@ import { ROUTES, TEACHER_EMAIL_DOMAIN, STUDENT_EMAIL_DOMAIN } from "@/config/con
 import Input from "@/components/ui/Input"
 import Button from "@/components/ui/Button"
 import BrandLoader from "@/components/ui/BrandLoader"
-import BrandMark from "@/components/ui/BrandMark"
+import AuthShell from "@/components/layout/AuthShell"
 import { cn } from "@/utils/cn"
 
 const schema = z.object({
@@ -146,69 +146,21 @@ export default function RegisterPage() {
   const emailValue    = watch("email",    "")
 
   return (
-    <div className="min-h-screen w-full flex bg-white text-stone-900">
-      <aside className="hidden lg:flex relative flex-col justify-between w-1/2 xl:w-[55%] p-12 xl:p-16 overflow-hidden bg-teal-700 text-white">
-        <div className="absolute inset-0 pointer-events-none" aria-hidden>
-          <div className="absolute -top-1/4 -left-1/4 h-[520px] w-[520px] rounded-full blur-3xl opacity-40" style={{ background: "#2dd4bf" }} />
-          <div className="absolute -bottom-1/4 -right-1/4 h-[420px] w-[420px] rounded-full blur-3xl opacity-30" style={{ background: "#f59e0b" }} />
-        </div>
-
-        <Link to="/" className="relative flex items-center gap-1.5">
-          <BrandMark className="h-7 w-7 text-teal-500" />
-          <span className="font-display font-bold text-xl tracking-tight">EduNexis</span>
-        </Link>
-
-        <div className="relative space-y-10">
-          <div className="space-y-5 max-w-md">
-            <div className="inline-flex items-center gap-1.5 px-2.5 h-6 rounded-full bg-white/10 border border-white/15">
-              <Sparkles className="h-3 w-3 text-amber-300" />
-              <span className="text-[11px] font-semibold text-white/90">JUST Department of CSE</span>
-            </div>
-            <h1 className="font-display text-5xl xl:text-6xl font-bold leading-[1.02] tracking-tight">
-              Start your<br />semester right.
-            </h1>
-            <p className="text-[15px] leading-relaxed text-white/80 max-w-sm">
-              One account unlocks every course, assignment, attendance record, and grade — no more scattered tools or spreadsheets.
-            </p>
-          </div>
-
-          <ul className="space-y-3 max-w-sm">
-            {[
-              "Real-time attendance tracking",
-              "Dynamic grade computation with CT best-of-three",
-              "Assignment submission with plagiarism checks",
-            ].map(feat => (
-              <li key={feat} className="flex items-start gap-3 text-sm text-white/85">
-                <div className="h-5 w-5 rounded-md bg-white/15 inline-flex items-center justify-center shrink-0 mt-px">
-                  <CheckCircle2 className="h-3 w-3 text-amber-300" strokeWidth={2.5} />
-                </div>
-                <span>{feat}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="relative text-[11px] text-white/60">
-          Jashore University of Science and Technology
-        </div>
-      </aside>
-
-      <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-10 bg-muted overflow-y-auto">
-        <div className="w-full max-w-[400px] space-y-6 py-6">
-          <Link to="/" className="lg:hidden flex items-center gap-1.5">
-            <BrandMark className="h-7 w-7 text-teal-600" />
-            <span className="font-display font-bold text-lg tracking-tight text-stone-900">EduNexis</span>
-          </Link>
-
-          <div className="space-y-1.5">
-            <h2 className="font-display text-[28px] font-bold tracking-tight text-stone-900 leading-tight">
-              Create your account
-            </h2>
-            <p className="text-sm text-stone-600">
-              Use your university email to get started.
-            </p>
-          </div>
-
+    <>
+      <AuthShell
+        title="Create your account"
+        subtitle="Use your university email to get started."
+        panelLines={["Start your", "semester right."]}
+        panelBody="One account unlocks every course, assignment, attendance record and grade — no more scattered tools or spreadsheets."
+        footer={
+          <p className="text-center text-[14px] text-stone-600">
+            Already have an account?{" "}
+            <Link to={ROUTES.LOGIN} className="font-bold text-teal-700 transition-colors hover:text-teal-800">
+              Sign in
+            </Link>
+          </p>
+        }
+      >
           <form
             onSubmit={handleSubmit(({ fullName, email, password }) =>
               registerUser({ fullName, email, password }),
@@ -292,23 +244,16 @@ export default function RegisterPage() {
               loading={loading}
               size="lg"
               fullWidth
+              className="bg-teal-900 hover:bg-teal-800"
               rightIcon={!loading ? <ArrowRight className="h-4 w-4" /> : undefined}
             >
               Create account
             </Button>
           </form>
-
-          <p className="text-center text-sm text-stone-600">
-            Already have an account?{" "}
-            <Link to={ROUTES.LOGIN} className="font-semibold text-teal-700 hover:text-teal-800 transition-colors">
-              Sign in
-            </Link>
-          </p>
-        </div>
-      </div>
+      </AuthShell>
 
       {/* Slow-auth brand overlay */}
       {showOverlay && <BrandLoader variant="screen" label="Creating your account…" />}
-    </div>
+    </>
   )
 }

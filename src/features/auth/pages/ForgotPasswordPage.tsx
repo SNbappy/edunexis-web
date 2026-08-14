@@ -12,7 +12,7 @@ import Input from "@/components/ui/Input"
 import Button from "@/components/ui/Button"
 import { authService } from "../services/authService"
 import { ROUTES } from "@/config/constants"
-import BrandMark from "@/components/ui/BrandMark"
+import AuthShell from "@/components/layout/AuthShell"
 
 
 const schema = z.object({
@@ -51,51 +51,33 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen w-full flex bg-white text-stone-900">
-      <aside className="hidden lg:flex relative flex-col justify-between w-1/2 xl:w-[55%] p-12 xl:p-16 overflow-hidden bg-teal-700 text-white">
-        <div className="absolute inset-0 pointer-events-none" aria-hidden>
-          <div className="absolute -top-1/4 -left-1/4 h-[520px] w-[520px] rounded-full blur-3xl opacity-40" style={{ background: "#2dd4bf" }} />
-          <div className="absolute -bottom-1/4 -right-1/4 h-[420px] w-[420px] rounded-full blur-3xl opacity-30" style={{ background: "#f59e0b" }} />
-        </div>
-
-        <Link to="/" className="relative flex items-center gap-1.5">
-          <BrandMark className="h-7 w-7 text-teal-500" />
-          <span className="font-display font-bold text-xl tracking-tight">EduNexis</span>
-        </Link>
-
-        <div className="relative space-y-8 max-w-md">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1">
-            <ShieldQuestion className="h-3 w-3 text-amber-300" />
-            <span className="text-[11px] font-semibold text-white/90">Forgot your password?</span>
-          </div>
-          <h1 className="font-display text-4xl xl:text-5xl font-bold leading-[1.05] tracking-tight">
-            We{"\u2019"}ll get you<br />back in.
-          </h1>
-          <p className="text-[15px] leading-relaxed text-white/80">
-            Enter your university email and we{"\u2019"}ll send a secure link to reset your password.
+    <AuthShell
+      title={sent ? "Check your email" : "Reset your password"}
+      subtitle={
+        sent ? (
+          <>
+            If an account exists for{" "}
+            <span className="font-semibold text-stone-900">{sentEmail}</span>, we{"’"}ve
+            sent a password reset link.
+          </>
+        ) : (
+          <>Enter your email below. We{"’"}ll send you a link to set a new password.</>
+        )
+      }
+      back={{ to: ROUTES.LOGIN, label: "Back to sign in" }}
+      panelLines={["We’ll get you", "back in."]}
+      panelBody="Enter your university email and we’ll send a secure link to reset your password. The link expires in an hour."
+      footer={
+        sent ? undefined : (
+          <p className="text-center text-[14px] text-stone-600">
+            Remember your password?{" "}
+            <Link to={ROUTES.LOGIN} className="font-bold text-teal-700 transition-colors hover:text-teal-800">
+              Sign in
+            </Link>
           </p>
-        </div>
-
-        <div className="relative text-[11px] text-white/60">
-          Jashore University of Science and Technology
-        </div>
-      </aside>
-
-      <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-10 bg-muted">
-        <div className="w-full max-w-[400px] space-y-6">
-          <Link to="/" className="lg:hidden flex items-center gap-1.5">
-            <BrandMark className="h-7 w-7 text-teal-600" />
-            <span className="font-display font-bold text-lg tracking-tight text-stone-900">EduNexis</span>
-          </Link>
-
-          <Link
-            to={ROUTES.LOGIN}
-            className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-stone-500 transition-colors hover:text-teal-700"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Back to sign in
-          </Link>
-
+        )
+      }
+    >
           {sent ? (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
@@ -105,18 +87,8 @@ export default function ForgotPasswordPage() {
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-teal-50 text-teal-600 dark:bg-teal-950/30 dark:text-teal-300">
                 <CheckCircle2 className="h-6 w-6" strokeWidth={2.25} />
               </div>
-              <div className="space-y-1.5">
-                <h2 className="font-display text-[26px] font-bold tracking-tight text-stone-900 leading-tight">
-                  Check your email
-                </h2>
-                <p className="text-sm text-stone-600">
-                  If an account exists for{" "}
-                  <span className="font-semibold text-stone-900">{sentEmail}</span>, we{"\u2019"}ve sent a password reset link.
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-stone-200 bg-white p-4 dark:border-stone-800 dark:bg-card space-y-2 dark:border-stone-800 dark:bg-card">
-                <p className="text-[12.5px] font-semibold text-stone-900">What{"\u2019"}s next?</p>
+              <div className="space-y-2 rounded-xl border border-stone-200 bg-stone-50/70 p-4">
+                <p className="text-[12.5px] font-semibold text-stone-900">What{"’"}s next?</p>
                 <ul className="space-y-1.5 text-[12px] text-stone-600">
                   <li className="flex items-start gap-2">
                     <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-stone-400" />
@@ -128,7 +100,7 @@ export default function ForgotPasswordPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-stone-400" />
-                    <span>Check spam if you don{"\u2019"}t see it within a minute</span>
+                    <span>Check spam if you don{"’"}t see it within a minute</span>
                   </li>
                 </ul>
               </div>
@@ -142,17 +114,7 @@ export default function ForgotPasswordPage() {
               </button>
             </motion.div>
           ) : (
-            <>
-              <div className="space-y-1.5">
-                <h2 className="font-display text-[28px] font-bold tracking-tight text-stone-900 leading-tight">
-                  Reset your password
-                </h2>
-                <p className="text-sm text-stone-600">
-                  Enter your email below. We{"\u2019"}ll send you a link to set a new password.
-                </p>
-              </div>
-
-              <form onSubmit={handleSubmit(submit)} className="space-y-4" noValidate>
+            <form onSubmit={handleSubmit(submit)} className="space-y-4" noValidate>
                 <Input
                   {...register("email")}
                   type="email"
@@ -169,22 +131,13 @@ export default function ForgotPasswordPage() {
                   loading={submitting}
                   size="lg"
                   fullWidth
+                  className="bg-teal-900 hover:bg-teal-800"
                   rightIcon={!submitting ? <ArrowRight className="h-4 w-4" /> : undefined}
                 >
                   Send reset link
                 </Button>
-              </form>
-
-              <p className="text-center text-sm text-stone-600 pt-2">
-                Remember your password?{" "}
-                <Link to={ROUTES.LOGIN} className="font-semibold text-teal-700 hover:text-teal-800 transition-colors">
-                  Sign in
-                </Link>
-              </p>
-            </>
+            </form>
           )}
-        </div>
-      </div>
-    </div>
+    </AuthShell>
   )
 }

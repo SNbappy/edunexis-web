@@ -7,13 +7,27 @@ import { Toaster } from "react-hot-toast"
 import App from "./App"
 import { queryClient } from "./lib/queryClient"
 import ThemeProvider from "./components/ThemeProvider"
+import ScrollToTop from "./components/ScrollToTop"
 import "./index.css"
+
+/**
+ * Turn off the browser's own scroll restoration.
+ *
+ * With it on, reloading part-way down a long page makes Chrome jump straight
+ * to the old offset on first paint — so you see the footer for a frame before
+ * the app finishes laying out and snaps back to the top. That flash is what
+ * this prevents. ScrollToTop below then owns scroll position explicitly.
+ */
+if (typeof history !== "undefined" && "scrollRestoration" in history) {
+  history.scrollRestoration = "manual"
+}
 
 function Root() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
         <ThemeProvider>
+          <ScrollToTop />
           <App />
           <Toaster
             position="top-right"
