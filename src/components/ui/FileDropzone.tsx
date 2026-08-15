@@ -93,7 +93,7 @@ export default function FileDropzone({
                         {dragOver ? 'Drop files here!' : 'Drag & drop files or click to browse'}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                        PDF, DOC, PPT, images, videos, archives Â· Max {maxSizeMB}MB each
+                        PDF, DOC, PPT, images, videos, archives · Max {maxSizeMB}MB each
                     </p>
                 </div>
             </div>

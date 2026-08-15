@@ -3,7 +3,12 @@ import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import { Plus, LogIn, Search, BookOpen, Archive as ArchiveIcon, Inbox, Trash2 } from "lucide-react"
 import Button from "@/components/ui/Button"
+import Input from "@/components/ui/Input"
 import Skeleton from "@/components/ui/Skeleton"
+import EmptyState from "@/components/ui/EmptyState"
+import { Page, PageHeader } from "@/components/ui/Page"
+import { ICON_STROKE, FOCUS, TEXT } from "@/components/ui/appTokens"
+import { cn } from "@/utils/cn"
 import {
   ActiveCourseCard, PendingCourseCard, RejectedCourseCard,
 } from "../components/CourseCard"
@@ -68,59 +73,51 @@ export default function CoursesListPage() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-7xl px-6 py-8">
-        <Skeleton className="mb-6 h-10 w-64" />
-        <Skeleton className="mb-8 h-12 w-full max-w-md" />
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+      <Page>
+        <Skeleton className="mb-3 h-8 w-56" />
+        <Skeleton className="mb-6 h-9 w-full max-w-sm" />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-48 rounded-2xl" />
+            <Skeleton key={i} className="h-44" rounded="2xl" />
           ))}
         </div>
-      </div>
+      </Page>
     )
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-8">
-      {/* Header */}
-      <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
-            {teacher ? "Your courses" : "My courses"}
-          </h1>
-          <p className="mt-1 text-[14px] text-muted-foreground">
-            {teacher
-              ? "Courses you're teaching this semester."
-              : "Classes you're enrolled in."}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {teacher ? (
-            <Button onClick={() => navigate("/courses/create")}>
-              <Plus className="h-4 w-4" />
+    <Page>
+      <PageHeader
+        title={teacher ? "Your courses" : "My courses"}
+        description={
+          teacher
+            ? "Courses you're teaching this semester."
+            : "Classes you're enrolled in."
+        }
+        actions={
+          teacher ? (
+            <Button onClick={() => navigate("/courses/create")} leftIcon={<Plus strokeWidth={ICON_STROKE} />}>
               New course
             </Button>
           ) : (
-            <Button onClick={() => navigate("/courses/join")}>
-              <LogIn className="h-4 w-4" />
+            <Button onClick={() => navigate("/courses/join")} leftIcon={<LogIn strokeWidth={ICON_STROKE} />}>
               Join course
             </Button>
-          )}
-        </div>
-      </header>
+          )
+        }
+      />
 
       {/* Search + filter chips */}
-      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative max-w-md flex-1">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative max-w-sm flex-1">
+          <Input
             ref={searchRef}
             type="text"
-            placeholder="Search by title, code, or teacher..."
+            placeholder="Search by title, code, or teacher…"
             value={q}
             onChange={e => setQ(e.target.value)}
-            className="h-11 w-full rounded-xl border border-border bg-card pl-11 pr-16 text-sm text-foreground placeholder:text-muted-foreground transition-all focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/30"
+            leftIcon={<Search strokeWidth={ICON_STROKE} />}
+            className="pr-10"
           />
           {!q && (
             <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground">
@@ -159,7 +156,7 @@ export default function CoursesListPage() {
 
       {/* Grid */}
       {showingEnrolled && filteredEnrolled.length === 0 && (
-        <EmptyState
+        <CoursesEmpty
           filter={filter}
           teacher={teacher}
           hasSearch={!!q}
@@ -183,7 +180,7 @@ export default function CoursesListPage() {
         <div className="space-y-6">
           {pending.length > 0 && (
             <section>
-              <h2 className="mb-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+              <h2 className={cn(TEXT.eyebrow, "mb-3")}>
                 Pending ({pending.length})
               </h2>
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
@@ -196,7 +193,7 @@ export default function CoursesListPage() {
 
           {rejected.length > 0 && (
             <section>
-              <h2 className="mb-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+              <h2 className={cn(TEXT.eyebrow, "mb-3")}>
                 Declined ({rejected.length})
               </h2>
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
@@ -214,13 +211,12 @@ export default function CoursesListPage() {
         </div>
       )}
       {showingDeleted && !isDeletedLoading && deletedCourses.length === 0 && (
-        <div className="rounded-2xl border border-dashed border-border bg-muted/30 py-16 text-center">
-          <Trash2 className="mx-auto h-10 w-10 text-muted-foreground" />
-          <p className="mt-4 font-semibold text-foreground">Nothing in Recently Deleted</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Courses you delete stay here for 30 days before permanent removal.
-          </p>
-        </div>
+        <EmptyState
+          variant="panel"
+          icon={<Trash2 strokeWidth={ICON_STROKE} />}
+          title="Nothing in Recently Deleted"
+          description="Courses you delete stay here for 30 days before they are removed permanently."
+        />
       )}
       {showingDeleted && deletedCourses.length > 0 && (
         <motion.div
@@ -239,12 +235,16 @@ export default function CoursesListPage() {
           ))}
         </motion.div>
       )}
-    </div>
+    </Page>
   )
 }
 
 /* ─── Sub-components ─────────────────────────────────────────────── */
 
+/**
+ * Filter chip. A segmented set rather than loose pills: the active chip is the
+ * only filled one, and the group shares a track so it reads as "pick one".
+ */
 function FilterChip({
   active, onClick, children, badge,
 }: {
@@ -256,18 +256,22 @@ function FilterChip({
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-all ${
+      aria-pressed={active}
+      className={cn(
+        "inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-[12.5px] font-semibold transition-colors duration-120",
+        FOCUS,
         active
-          ? "bg-teal-600 text-white"
-          : "bg-stone-100 text-stone-700 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
-      }`}
+          ? "border-primary/25 bg-primary/10 text-primary"
+          : "border-border bg-card text-muted-foreground hover:border-border-strong hover:text-foreground",
+      )}
     >
       {children}
       {badge !== undefined && badge > 0 && (
         <span
-          className={`inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums ${
-            active ? "bg-white/20 text-white" : "bg-white text-teal-700"
-          }`}
+          className={cn(
+            "inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums",
+            active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
+          )}
         >
           {badge}
         </span>
@@ -276,7 +280,9 @@ function FilterChip({
   )
 }
 
-function EmptyState({
+/** Picks the right copy for why the grid is empty, then defers to the shared
+ *  EmptyState primitive — this page previously hand-rolled three of them. */
+function CoursesEmpty({
   filter, teacher, hasSearch, onCreate, onJoin,
 }: {
   filter:    FilterKey
@@ -287,54 +293,49 @@ function EmptyState({
 }) {
   if (hasSearch) {
     return (
-      <div className="rounded-2xl border border-dashed border-border bg-muted/30 py-16 text-center">
-        <Search className="mx-auto h-10 w-10 text-muted-foreground" />
-        <p className="mt-4 font-semibold text-foreground">No courses match your search</p>
-        <p className="mt-1 text-sm text-muted-foreground">Try different keywords.</p>
-      </div>
+      <EmptyState
+        variant="panel"
+        icon={<Search strokeWidth={ICON_STROKE} />}
+        title="No courses match your search"
+        description="Try a different title, course code or teacher name."
+      />
     )
   }
 
   if (filter === "archived") {
     return (
-      <div className="rounded-2xl border border-dashed border-border bg-muted/30 py-16 text-center">
-        <ArchiveIcon className="mx-auto h-10 w-10 text-muted-foreground" />
-        <p className="mt-4 font-semibold text-foreground">No archived courses</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Archived courses appear here when you retire them.
-        </p>
-      </div>
+      <EmptyState
+        variant="panel"
+        icon={<ArchiveIcon strokeWidth={ICON_STROKE} />}
+        title="No archived courses"
+        description="Courses you retire at the end of a semester appear here, with all their records intact."
+      />
     )
   }
 
-  // filter === "active", no courses
-  return (
-    <div className="rounded-2xl border border-dashed border-border bg-muted/30 py-16 text-center">
-      {teacher ? (
-        <>
-          <BookOpen className="mx-auto h-10 w-10 text-muted-foreground" />
-          <p className="mt-4 font-semibold text-foreground">No courses yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Create your first course to get started.
-          </p>
-          <Button className="mt-5" onClick={onCreate}>
-            <Plus className="h-4 w-4" />
-            New course
-          </Button>
-        </>
-      ) : (
-        <>
-          <Inbox className="mx-auto h-10 w-10 text-muted-foreground" />
-          <p className="mt-4 font-semibold text-foreground">Not enrolled in any courses</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Ask your teacher for a joining code.
-          </p>
-          <Button className="mt-5" onClick={onJoin}>
-            <LogIn className="h-4 w-4" />
-            Join course
-          </Button>
-        </>
-      )}
-    </div>
+  return teacher ? (
+    <EmptyState
+      variant="panel"
+      icon={<BookOpen strokeWidth={ICON_STROKE} />}
+      title="No courses yet"
+      description="Create your first course to start taking attendance, posting materials and grading."
+      action={
+        <Button onClick={onCreate} leftIcon={<Plus strokeWidth={ICON_STROKE} />}>
+          New course
+        </Button>
+      }
+    />
+  ) : (
+    <EmptyState
+      variant="panel"
+      icon={<Inbox strokeWidth={ICON_STROKE} />}
+      title="Not enrolled in any courses"
+      description="Ask your teacher for a joining code, then enrol to see everything here."
+      action={
+        <Button onClick={onJoin} leftIcon={<LogIn strokeWidth={ICON_STROKE} />}>
+          Join course
+        </Button>
+      }
+    />
   )
 }

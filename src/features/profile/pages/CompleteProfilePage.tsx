@@ -259,8 +259,8 @@ export default function CompleteProfilePage() {
       title={greeting}
       subtitle={
         teacher
-          ? "Let's set up your teacher profile. Takes about a minute Ã¢â‚¬â€ students will use this to find and trust your courses."
-          : "Let's set up your student profile. Takes about a minute Ã¢â‚¬â€ you'll need this to join courses, track attendance, and submit assignments."
+          ? "Let's set up your teacher profile. Takes about a minute — students will use this to find and trust your courses."
+          : "Let's set up your student profile. Takes about a minute — you'll need this to join courses, track attendance, and submit assignments."
       }
       topSlot={
         <FormStepper
@@ -342,7 +342,7 @@ export default function CompleteProfilePage() {
                       label="Designation *"
                       placeholder="e.g. Assistant Professor"
                       error={errors.designation?.message}
-                      hint="Your academic role Ã¢â‚¬â€ students will see this."
+                      hint="Your academic role — students will see this."
                     />
                   ) : (
                     <FormField
@@ -350,7 +350,7 @@ export default function CompleteProfilePage() {
                       label="Student ID *"
                       placeholder="e.g. 200109"
                       error={errors.studentId?.message}
-                      hint="Required Ã¢â‚¬â€ used for attendance and marks."
+                      hint="Required — used for attendance and marks."
                     />
                   )}
                 </div>
@@ -421,7 +421,7 @@ export default function CompleteProfilePage() {
               <FormSection
                 icon={Link2}
                 title="Connect"
-                subtitle="Where people can find you online. All optional Ã¢â‚¬â€ add what makes sense."
+                subtitle="Where people can find you online. All optional — add what makes sense."
                 tone="stone"
               >
                 <div className="space-y-2.5">

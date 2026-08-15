@@ -1,6 +1,8 @@
 import { useState } from "react"
-import { motion } from "framer-motion"
-import { Plus, GraduationCap, LayoutList, Calendar as CalendarIcon } from "lucide-react"
+import { Plus, LayoutList, Calendar as CalendarIcon } from "lucide-react"
+import Button from "@/components/ui/Button"
+import Skeleton from "@/components/ui/Skeleton"
+import { ICON, ICON_STROKE, FOCUS } from "@/components/ui/appTokens"
 import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
 import AttendanceRecordsList from "@/features/attendance/components/AttendanceRecordsList"
@@ -36,63 +38,41 @@ export default function AttendanceTab({ courseId, courseName, courseCode, semest
   if (!teacher) return <StudentAttendanceView courseId={courseId} />
 
   return (
-    <div className="space-y-5">
-      {/* Toolbar */}
-      <motion.div
-        initial={{ opacity: 0, y: -4 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between flex-wrap gap-3 p-4 rounded-2xl border border-border bg-card"
-      >
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl inline-flex items-center justify-center bg-success-soft text-success">
-            <GraduationCap className="h-5 w-5" strokeWidth={2} />
-          </div>
-          <div>
-            <h2 className="font-display text-[15px] font-bold text-foreground leading-tight">
-              Attendance
-            </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {sessions.length === 0
-                ? "No sessions yet"
-                : `${sessions.length} session${sessions.length === 1 ? "" : "s"} recorded`}
-            </p>
-          </div>
+    <div className="space-y-4">
+      {/* Toolbar.
+          No "Attendance" heading here — the course tab bar directly above
+          already says which section you are in, and repeating it cost a full
+          card of vertical space before any data. */}
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="mr-auto inline-flex items-center gap-0.5 rounded-xl border border-border bg-muted p-0.5">
+          {([
+            { id: "list",     label: "List",     icon: LayoutList   },
+            { id: "calendar", label: "Calendar", icon: CalendarIcon },
+          ] as const).map(opt => (
+            <button
+              key={opt.id}
+              onClick={() => setView(opt.id)}
+              aria-pressed={view === opt.id}
+              className={cn(
+                "inline-flex h-8 items-center gap-1.5 rounded-[9px] px-2.5 text-[12.5px] font-semibold transition-colors duration-120",
+                FOCUS,
+                view === opt.id
+                  ? "bg-card text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <opt.icon className={ICON.sm} strokeWidth={ICON_STROKE} />
+              {opt.label}
+            </button>
+          ))}
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* View toggle */}
-          <div className="inline-flex items-center p-1 rounded-lg bg-muted border border-border">
-            {([
-              { id: "list",     label: "List",     icon: LayoutList    },
-              { id: "calendar", label: "Calendar", icon: CalendarIcon  },
-            ] as const).map(opt => (
-              <button
-                key={opt.id}
-                onClick={() => setView(opt.id)}
-                className={cn(
-                  "inline-flex items-center gap-1.5 h-7 px-2.5 rounded text-[11px] font-semibold transition-colors",
-                  view === opt.id
-                    ? "bg-card text-foreground shadow-xs"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <opt.icon className="h-3 w-3" />
-                {opt.label}
-              </button>
-            ))}
-          </div>
+        <AttendanceExportButton courseId={courseId} courseName={courseName ?? "Course"} courseCode={courseCode} semester={semester} department={department} members={members} />
 
-          <AttendanceExportButton courseId={courseId} courseName={courseName ?? "Course"} courseCode={courseCode} semester={semester} department={department} members={members} />
-
-          <button
-            onClick={() => setTakeOpen(true)}
-            className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:brightness-105 transition-all focus-ring"
-          >
-            <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
-            Take attendance
-          </button>
-        </div>
-      </motion.div>
+        <Button size="md" onClick={() => setTakeOpen(true)} leftIcon={<Plus strokeWidth={ICON_STROKE} />}>
+          Take attendance
+        </Button>
+      </div>
 
       {/* Stats */}
       {stats && (
@@ -106,9 +86,9 @@ export default function AttendanceTab({ courseId, courseName, courseCode, semest
 
       {/* Content */}
       {isSessionsLoading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-16 rounded-xl skeleton" />
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-16" rounded="xl" />
           ))}
         </div>
       ) : view === "list" ? (

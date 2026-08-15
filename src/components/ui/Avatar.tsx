@@ -15,9 +15,16 @@ const sizes = {
     xl: 'w-20 h-20 text-2xl',
 }
 
+/** Honorifics that are not part of a name. "Dr. Taslima Rahman" is TR, not DT. */
+const TITLES = /^(dr|prof|mr|mrs|ms|md|engr)\.?$/i
+
 function getInitials(name?: string | null): string {
     if (!name) return '?'
-    return name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
+    const parts = name.trim().split(/\s+/).filter(Boolean)
+    // Keep the title only if it is the whole string, so we never return '?'
+    // for someone recorded as just "Dr".
+    while (parts.length > 1 && TITLES.test(parts[0])) parts.shift()
+    return parts.map((n) => n[0]).slice(0, 2).join('').toUpperCase()
 }
 
 function getColor(name?: string | null): string {

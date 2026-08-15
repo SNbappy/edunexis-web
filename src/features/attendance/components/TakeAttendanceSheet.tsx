@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo } from "react"
-import { motion } from "framer-motion"
-import {
-  CheckCircle2, XCircle, HelpCircle, Calendar,
-  BookOpen, Search, Users,
-} from "lucide-react"
+import { Check, X, Search, Users } from "lucide-react"
 import Avatar from "@/components/ui/Avatar"
 import Modal from "@/components/ui/Modal"
 import Button from "@/components/ui/Button"
+import Input from "@/components/ui/Input"
+import EmptyState from "@/components/ui/EmptyState"
+import { Field, FIELD_BASE, FIELD_HEIGHT, fieldState } from "@/components/ui/field"
+import { ICON_STROKE, FOCUS } from "@/components/ui/appTokens"
 import { todayISO } from "@/utils/dateUtils"
+import { cn } from "@/utils/cn"
 import type { AttendanceStatus } from "@/types/attendance.types"
 
 interface Member {
@@ -36,37 +37,23 @@ interface TakeAttendanceSheetProps {
 
 type StatusMap = Record<string, AttendanceStatus>
 
-interface StatusOption {
-  value: AttendanceStatus
-  label: string
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
-  text: string
-  bg: string
-  border: string
-  activeBg: string
-}
-
-const STATUS_OPTIONS: StatusOption[] = [
-  {
-    value: "Present",
-    label: "Present",
-    icon: CheckCircle2,
-    text: "text-emerald-700 dark:text-emerald-300",
-    bg: "bg-emerald-50 dark:bg-emerald-950/40",
-    border: "border-emerald-200 dark:border-emerald-800",
-    activeBg: "bg-emerald-600 text-white border-emerald-600",
-  },
-  {
-    value: "Absent",
-    label: "Absent",
-    icon: XCircle,
-    text: "text-red-700 dark:text-red-300",
-    bg: "bg-red-50 dark:bg-red-950/40",
-    border: "border-red-200 dark:border-red-800",
-    activeBg: "bg-red-600 text-white border-red-600",
-  },
-]
-
+/**
+ * Take-attendance sheet.
+ *
+ * Built for one job: getting through a roster fast, standing up, in front of a
+ * class. Three changes carry most of that:
+ *
+ *  · Rows are a divided list, not 18 stacked bordered cards. Card-per-row put
+ *    two borders and 16px of gutter between every student and cut how many fit
+ *    on screen roughly in half.
+ *  · Present/Absent is one segmented control per row rather than two loose
+ *    buttons, so the pair reads as a single either/or and the hit targets touch.
+ *  · Unmarked students are tinted and counted. The old sheet let you save a
+ *    half-finished register with nothing drawing your eye to the gaps.
+ *
+ * The per-row entrance stagger is gone: it delayed the last student by 300ms
+ * and re-ran on every search keystroke.
+ */
 export default function TakeAttendanceSheet({
   isOpen, onClose, members, courseId, onSubmit, isLoading,
   initialDate, initialTopic, initialStatuses,
@@ -131,207 +118,200 @@ export default function TakeAttendanceSheet({
       isOpen={isOpen}
       onClose={onClose}
       title={initialStatuses ? "Edit attendance" : "Take attendance"}
-      description={initialStatuses
-        ? "Update student attendance for this session."
-        : "Mark each student present, absent, or unmarked."}
+      description={
+        initialStatuses
+          ? "Update attendance for this session."
+          : "Mark each student present or absent."
+      }
       size="xl"
       scrollable
-    >
-      <div className="space-y-4">
-        {/* Date + topic */}
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-[13px] font-semibold text-foreground">
-              <Calendar className="mr-1 inline h-3.5 w-3.5" />
-              Session date
-            </label>
-            <input
-              type="date"
-              value={date}
-              onChange={e => setDate(e.target.value)}
-              className="h-10 w-full rounded-xl border border-border bg-muted/40 px-3 text-[13px] text-foreground outline-none focus:border-teal-500 focus:bg-card focus:ring-2 focus:ring-teal-500/20"
-            />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-[13px] font-semibold text-foreground">
-              <BookOpen className="mr-1 inline h-3.5 w-3.5" />
-              Topic <span className="font-normal text-muted-foreground">(optional)</span>
-            </label>
-            <input
-              type="text"
-              value={topic}
-              onChange={e => setTopic(e.target.value)}
-              placeholder={"e.g. Linked lists \u2014 chapter 3"}
-              className="h-10 w-full rounded-xl border border-border bg-muted/40 px-3 text-[13px] text-foreground outline-none placeholder:text-muted-foreground focus:border-teal-500 focus:bg-card focus:ring-2 focus:ring-teal-500/20"
-            />
-          </div>
-        </div>
-
-        {/* Stats + bulk actions */}
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-muted/30 p-3">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Stat label="Present" value={counts.present} tone="emerald" icon={CheckCircle2} />
-            <Stat label="Absent" value={counts.absent} tone="red" icon={XCircle} />
-            <Stat label="Unmarked" value={counts.unmarked} tone="amber" icon={HelpCircle} />
-          </div>
-          <div className="ml-auto flex flex-wrap items-center gap-2">
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setAll("Present")}
-              className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[11.5px] font-bold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-950/60"
-            >
-              All present
-            </motion.button>
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setAll("Absent")}
-              className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-[11.5px] font-bold text-red-700 transition-colors hover:bg-red-100 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-950/60"
-            >
-              All absent
-            </motion.button>
-          </div>
-        </div>
-
-        {/* Search */}
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder={"Search students by name or ID\u2026"}
-            className="h-10 w-full rounded-xl border border-border bg-muted/40 pl-10 pr-3 text-[13px] text-foreground outline-none placeholder:text-muted-foreground focus:border-teal-500 focus:bg-card focus:ring-2 focus:ring-teal-500/20"
-          />
-        </div>
-
-        {/* Student rows */}
-        {members.length === 0 ? (
-          <div className="rounded-xl border-2 border-dashed border-border bg-muted/30 py-10 text-center">
-            <Users className="mx-auto h-8 w-8 text-muted-foreground" strokeWidth={1.5} />
-            <p className="mt-2 text-[13px] font-bold text-foreground">No students enrolled</p>
-            <p className="mt-1 text-[12px] text-muted-foreground">
-              Approve join requests in the Members tab first.
+      footer={
+        <>
+          {counts.unmarked > 0 && (
+            <p className="mr-auto text-[12px] font-medium text-warning">
+              {counts.unmarked} still unmarked
             </p>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="rounded-xl border-2 border-dashed border-border bg-muted/30 py-8 text-center">
-            <p className="text-[13px] text-muted-foreground">
-              No students match "{search}"
-            </p>
-          </div>
-        ) : (
-          <div className="no-scrollbar max-h-96 space-y-2 overflow-y-auto pr-1">
-            {filtered.map((member, i) => {
-              const current = statuses[member.userId] ?? "Unmarked"
-              return (
-                <motion.div
-                  key={member.userId}
-                  initial={{ opacity: 0, x: -6 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: Math.min(i * 0.02, 0.3) }}
-                  className="flex items-center gap-3 rounded-xl border border-border bg-card p-3"
-                >
-                  <Avatar
-                    src={member.profilePhotoUrl}
-                    name={member.fullName}
-                    size="sm"
-                  />
-                  <div className="min-w-0 flex-1">
-                    {member.studentId ? (
-                      <>
-                        <p className="font-mono text-[13px] font-bold text-foreground leading-tight">
-                          {member.studentId}
-                        </p>
-                        <p className="truncate text-[11.5px] text-muted-foreground">
-                          {member.fullName}
-                        </p>
-                      </>
-                    ) : (
-                      <p className="truncate text-[13px] font-semibold text-foreground">
-                        {member.fullName}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    {STATUS_OPTIONS.map(opt => {
-                      const active = current === opt.value
-                      const Icon = opt.icon
-                      return (
-                        <motion.button
-                          key={opt.value}
-                          type="button"
-                          whileTap={{ scale: 0.92 }}
-                          onClick={() => setStatus(member.userId, opt.value)}
-                          aria-label={opt.label}
-                          aria-pressed={active}
-                          className={
-                            "inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-bold transition-colors " +
-                            (active
-                              ? opt.activeBg
-                              : opt.bg + " " + opt.border + " " + opt.text + " hover:opacity-90")
-                          }
-                        >
-                          <Icon className="h-3 w-3" strokeWidth={2.5} />
-                          <span className="hidden sm:inline">{opt.label}</span>
-                        </motion.button>
-                      )
-                    })}
-                  </div>
-                </motion.div>
-              )
-            })}
-          </div>
-        )}
-
-        {/* Footer */}
-        <div className="flex gap-3 border-t border-border pt-3">
-          <Button
-            type="button"
-            variant="secondary"
-            className="flex-1"
-            onClick={onClose}
-          >
+          )}
+          <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
           <Button
             type="button"
-            className="flex-1"
             onClick={handleSubmit}
             disabled={members.length === 0 || isLoading}
             loading={isLoading}
           >
             {initialStatuses ? "Update attendance" : "Save attendance"}
           </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        {/* Session details */}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Session date" htmlFor="attendance-date">
+            <input
+              id="attendance-date"
+              type="date"
+              value={date}
+              onChange={e => setDate(e.target.value)}
+              className={cn(FIELD_BASE, fieldState(false), FIELD_HEIGHT, "px-3")}
+            />
+          </Field>
+          <Input
+            label="Topic"
+            hint="Optional — shows on the session list"
+            value={topic}
+            onChange={e => setTopic(e.target.value)}
+            placeholder="e.g. Normalization — BCNF"
+          />
         </div>
+
+        {/* Tally + bulk actions. The tally is live, so you can see the register
+            fill up without counting rows yourself. */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-border bg-muted/40 px-3 py-2.5">
+          <div className="flex items-center gap-3">
+            <Tally value={counts.present}  label="present"  className="text-success" />
+            <Tally value={counts.absent}   label="absent"   className="text-destructive" />
+            <Tally value={counts.unmarked} label="unmarked" className={counts.unmarked ? "text-warning" : "text-muted-foreground"} />
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <Button type="button" size="sm" variant="secondary" onClick={() => setAll("Present")}>
+              All present
+            </Button>
+            <Button type="button" size="sm" variant="secondary" onClick={() => setAll("Absent")}>
+              All absent
+            </Button>
+          </div>
+        </div>
+
+        {/* Search */}
+        <Input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search by name or student ID…"
+          leftIcon={<Search strokeWidth={ICON_STROKE} />}
+        />
+
+        {/* Roster */}
+        {members.length === 0 ? (
+          <EmptyState
+            variant="panel"
+            icon={<Users strokeWidth={ICON_STROKE} />}
+            title="No students enrolled"
+            description="Approve join requests in the Members tab first."
+          />
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            variant="panel"
+            icon={<Search strokeWidth={ICON_STROKE} />}
+            title="No matches"
+            description={`No student matches “${search}”.`}
+          />
+        ) : (
+          <div className="max-h-[46vh] overflow-y-auto rounded-xl border border-border">
+            <ul className="divide-y divide-border">
+              {filtered.map(member => {
+                const current = statuses[member.userId] ?? "Unmarked"
+                const unmarked = current === "Unmarked"
+                return (
+                  <li
+                    key={member.userId}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 transition-colors duration-120",
+                      unmarked ? "bg-warning-soft/40" : "bg-card",
+                    )}
+                  >
+                    <Avatar src={member.profilePhotoUrl} name={member.fullName} size="sm" className="h-8 w-8" />
+
+                    <div className="min-w-0 flex-1">
+                      {member.studentId ? (
+                        <>
+                          <p className="font-mono text-[12.5px] font-bold leading-tight text-foreground">
+                            {member.studentId}
+                          </p>
+                          <p className="truncate text-[11.5px] text-muted-foreground">
+                            {member.fullName}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="truncate text-[13px] font-semibold text-foreground">
+                          {member.fullName}
+                        </p>
+                      )}
+                    </div>
+
+                    <StatusToggle
+                      value={current}
+                      onChange={s => setStatus(member.userId, s)}
+                      name={member.fullName}
+                    />
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )}
       </div>
     </Modal>
   )
 }
 
-interface StatProps {
-  label: string
-  value: number
-  tone: "emerald" | "red" | "amber"
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
-}
-
-function Stat({ label, value, tone, icon: Icon }: StatProps) {
-  const colorClass =
-    tone === "emerald" ? "text-emerald-700 dark:text-emerald-300"
-      : tone === "red" ? "text-red-700 dark:text-red-300"
-        : "text-amber-700 dark:text-amber-300"
-
+function Tally({ value, label, className }: { value: number; label: string; className?: string }) {
   return (
-    <div className="inline-flex items-center gap-1 sm:gap-1.5">
-      <Icon className={"h-3.5 w-3.5 " + colorClass} strokeWidth={2} />
-      <span className={"font-display text-[13px] font-extrabold tabular-nums " + colorClass}>
+    <span className="inline-flex items-baseline gap-1.5">
+      <span className={cn("font-display text-[15px] font-extrabold tabular-nums", className)}>
         {value}
       </span>
-      <span className="text-[10.5px] font-bold uppercase tracking-normal text-muted-foreground sm:tracking-wider">
-        {label}
-      </span>
+      <span className="text-[11.5px] text-muted-foreground">{label}</span>
+    </span>
+  )
+}
+
+/**
+ * Segmented present/absent control. One track, two halves — a tap on the active
+ * half is a no-op rather than a toggle-off, because "unmark this student" is
+ * never what you mean once you have marked them.
+ */
+function StatusToggle({
+  value, onChange, name,
+}: {
+  value: AttendanceStatus
+  onChange: (s: AttendanceStatus) => void
+  name: string
+}) {
+  const OPTIONS = [
+    { v: "Present" as const, icon: Check, label: "Present", on: "bg-success text-white" },
+    { v: "Absent"  as const, icon: X,     label: "Absent",  on: "bg-destructive text-white" },
+  ]
+
+  return (
+    <div
+      role="group"
+      aria-label={`Attendance for ${name}`}
+      className="flex shrink-0 items-center gap-0.5 rounded-lg border border-border bg-muted p-0.5"
+    >
+      {OPTIONS.map(opt => {
+        const active = value === opt.v
+        const Icon = opt.icon
+        return (
+          <button
+            key={opt.v}
+            type="button"
+            onClick={() => onChange(opt.v)}
+            aria-pressed={active}
+            aria-label={opt.label}
+            className={cn(
+              "inline-flex h-7 items-center gap-1 rounded-[7px] px-2 text-[11.5px] font-bold transition-colors duration-120",
+              FOCUS,
+              active ? opt.on : "text-muted-foreground hover:bg-card hover:text-foreground",
+            )}
+          >
+            <Icon className="h-3.5 w-3.5" strokeWidth={2.5} />
+            <span className="hidden sm:inline">{opt.label}</span>
+          </button>
+        )
+      })}
     </div>
   )
 }

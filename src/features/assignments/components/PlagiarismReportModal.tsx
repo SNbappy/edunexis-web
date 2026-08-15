@@ -302,9 +302,9 @@ export default function PlagiarismReportModal({ isOpen, onClose, report, isCheck
                                         <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Similarity thresholds</p>
                                         <div className="space-y-1">
                                             {[
-                                                { label: '0â€“29%', desc: 'Low â€” likely original', color: 'bg-emerald-500' },
-                                                { label: '30â€“59%', desc: 'Medium â€” review recommended', color: 'bg-amber-400' },
-                                                { label: '60â€“100%', desc: 'High â€” likely plagiarized', color: 'bg-red-500' },
+                                                { label: '0–29%', desc: 'Low — likely original', color: 'bg-emerald-500' },
+                                                { label: '30–59%', desc: 'Medium — review recommended', color: 'bg-amber-400' },
+                                                { label: '60–100%', desc: 'High — likely plagiarized', color: 'bg-red-500' },
                                             ].map((t) => (
                                                 <div key={t.label} className="flex items-center gap-2">
                                                     <div className={`w-2 h-2 rounded-full ${t.color}`} />

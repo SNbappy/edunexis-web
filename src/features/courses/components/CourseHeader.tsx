@@ -1,29 +1,18 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useRef } from "react"
 import { createPortal } from "react-dom"
 import { Link } from "react-router-dom"
-import { motion, useScroll, useTransform } from "framer-motion"
+import { motion } from "framer-motion"
 import {
-  ChevronLeft, Settings, MoreHorizontal,
+  ArrowLeft, Settings, MoreHorizontal,
   Archive, ArchiveRestore, Users, Copy, Check,
   FlaskConical, BookOpen, Trash2,
 } from "lucide-react"
 import Avatar from "@/components/ui/Avatar"
+import Badge from "@/components/ui/Badge"
+import { ICON, ICON_STROKE, FOCUS, MOTION, SURFACE } from "@/components/ui/appTokens"
+import { cn } from "@/utils/cn"
 import toast from "react-hot-toast"
 import type { CourseDto } from "@/types/course.types"
-
-/* Same rotation CourseCard uses — keep the palette in sync. */
-const ACCENTS = [
-  { name: "teal", bg: "from-teal-500 to-teal-700" },
-  { name: "amber", bg: "from-amber-500 to-amber-700" },
-  { name: "blue", bg: "from-blue-500 to-blue-700" },
-  { name: "violet", bg: "from-violet-500 to-violet-700" },
-] as const
-
-function pickAccent(id: string) {
-  let hash = 0
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0
-  return ACCENTS[Math.abs(hash) % ACCENTS.length]
-}
 
 interface CourseHeaderProps {
   course: CourseDto
@@ -34,33 +23,28 @@ interface CourseHeaderProps {
   onDelete?: () => void
 }
 
+/**
+ * Course header.
+ *
+ * This was a full-bleed gradient hero, ~250px tall, whose colour was chosen by
+ * hashing the course id — so a course was teal or violet for no reason a user
+ * could ever learn, and a quarter of every course screen was spent on it. It is
+ * now a normal page header on the app surface: the course code and title do the
+ * identifying, and the space goes to the attendance sheet or the gradebook.
+ *
+ * The scroll-linked collapse went with it. It ran a Framer transform on every
+ * scroll frame to save ~120px on a header that is now only 96px to begin with.
+ */
 export default function CourseHeader({
   course, isOwner, memberCount, onArchive, onUnarchive, onDelete,
 }: CourseHeaderProps) {
-  const accent = pickAccent(course.id)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
   const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null)
-  const isLab = course.courseType === "Lab"
-  const TypeIcon = isLab ? FlaskConical : BookOpen
-
   const [menuOpen, setMenuOpen] = useState(false)
   const [copied, setCopied] = useState(false)
 
-  /* Scroll-driven collapse: track window scroll; above 80px = full hero,
-     past 120px = compact strip. Framer interpolates smoothly. */
-  const { scrollY } = useScroll()
-  const [collapsed, setCollapsed] = useState(false)
-  useEffect(() => {
-    const unsub = scrollY.on("change", (v) => {
-      setCollapsed(v > 80)
-    })
-    return () => unsub()
-  }, [scrollY])
-
-  /* Animated dimensions — used for smooth padding/opacity transitions. */
-  const paddingBottom = useTransform(scrollY, [0, 120], [32, 12])
-  const paddingTop = useTransform(scrollY, [0, 120], [20, 10])
-  const detailsOpacity = useTransform(scrollY, [40, 100], [1, 0])
+  const isLab = course.courseType === "Lab"
+  const TypeIcon = isLab ? FlaskConical : BookOpen
 
   const handleCopyCode = async () => {
     if (!course.joiningCode) return
@@ -75,241 +59,173 @@ export default function CourseHeader({
   }
 
   return (
-    <header className="relative overflow-hidden">
-      <div className={"relative bg-gradient-to-br " + accent.bg}>
-        {/* Subtle dot texture */}
-        <div
-          className="absolute inset-0 opacity-[0.08]"
-          style={{
-            backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)",
-            backgroundSize: "24px 24px",
-          }}
-          aria-hidden
-        />
-        {/* Bottom contrast gradient */}
-        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/25 to-transparent" aria-hidden />
-
-        <motion.div
-          style={{ paddingTop, paddingBottom }}
-          className="relative mx-auto max-w-7xl px-5 lg:px-8"
+    <header className="border-b border-border bg-card">
+      <div className="mx-auto max-w-[1400px] px-4 pb-4 pt-5 sm:px-6">
+        <Link
+          to="/courses"
+          className={cn(
+            "-ml-1 mb-2.5 inline-flex items-center gap-1.5 rounded-lg px-1 py-0.5 text-[12.5px] font-medium text-muted-foreground transition-colors duration-120 hover:text-foreground",
+            FOCUS,
+          )}
         >
-          {/* Breadcrumb — hides when collapsed */}
-          <motion.div
-            style={{ opacity: detailsOpacity }}
-            animate={{ height: collapsed ? 0 : "auto" }}
-            transition={{ duration: 0.18 }}
-            className="overflow-hidden"
-          >
-            <Link
-              to="/courses"
-              className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-white/85 transition-colors hover:text-white"
-            >
-              <ChevronLeft className="h-3.5 w-3.5" />
-              Back to courses
-            </Link>
-          </motion.div>
+          <ArrowLeft className={ICON.xs} strokeWidth={ICON_STROKE} />
+          All courses
+        </Link>
 
-          {/* Main row */}
-          <div className={(collapsed ? "" : "mt-4 ") + "flex flex-wrap items-center gap-4"}>
-            <div className="min-w-0 flex-1">
-              {/* Metadata chips — hide most when collapsed */}
-              <div className="mb-2 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center rounded-md bg-white/15 px-2 py-0.5 font-mono text-[11px] font-bold uppercase tracking-wider text-white backdrop-blur-sm">
-                  {course.courseCode}
+        <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-lg border border-primary/20 bg-primary/10 px-2 py-1 font-mono text-[11.5px] font-bold tracking-wide text-primary">
+                {course.courseCode}
+              </span>
+              <Badge variant="neutral" size="sm" icon={<TypeIcon strokeWidth={ICON_STROKE} />}>
+                {course.courseType}
+              </Badge>
+              {course.isArchived && (
+                <Badge variant="warning" size="sm" icon={<Archive strokeWidth={ICON_STROKE} />}>
+                  Archived
+                </Badge>
+              )}
+            </div>
+
+            <h1 className="mt-2 font-display text-[22px] font-extrabold leading-tight tracking-tight text-foreground sm:text-[26px]">
+              {course.title}
+            </h1>
+
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <span className="inline-flex items-center gap-2">
+                <Avatar
+                  src={course.teacherProfilePhotoUrl}
+                  name={course.teacherName}
+                  size="xs"
+                  className="h-5 w-5"
+                />
+                <span className="text-[12.5px] font-semibold text-foreground">
+                  {course.teacherName}
                 </span>
+              </span>
 
-                {!collapsed && (
-                  <>
-                    <motion.span
-                      style={{ opacity: detailsOpacity }}
-                      className="inline-flex items-center gap-1 rounded-md bg-white/15 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white backdrop-blur-sm"
-                    >
-                      <TypeIcon className="h-3 w-3" />
-                      {course.courseType}
-                    </motion.span>
-                    {course.semester && (
-                      <motion.span
-                        style={{ opacity: detailsOpacity }}
-                        className="text-[12px] font-medium text-white/85"
-                      >
-                        {course.semester}
-                      </motion.span>
-                    )}
-                  </>
-                )}
+              <span className="inline-flex items-center gap-1.5 text-[12.5px] text-muted-foreground">
+                <Users className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
+                <span className="font-semibold tabular-nums text-foreground">{memberCount}</span>
+                {memberCount === 1 ? "member" : "members"}
+              </span>
 
-                {course.isArchived && (
-                  <span className="inline-flex items-center gap-1 rounded-md bg-stone-900/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
-                    <Archive className="h-3 w-3" />
-                    Archived
-                  </span>
-                )}
-              </div>
+              {course.semester && (
+                <span className="text-[12.5px] text-muted-foreground">{course.semester}</span>
+              )}
 
-              {/* Title — shrinks when collapsed */}
-              <motion.h1
-                animate={{
-                  fontSize: collapsed ? "20px" : "32px",
-                }}
-                transition={{ duration: 0.2 }}
-                className="font-display font-bold leading-tight tracking-tight text-white"
-              >
-                {course.title}
-              </motion.h1>
-
-              {/* Meta row — fades out when collapsed */}
-              <motion.div
-                style={{ opacity: detailsOpacity }}
-                animate={{ height: collapsed ? 0 : "auto", marginTop: collapsed ? 0 : 16 }}
-                transition={{ duration: 0.2 }}
-                className="flex flex-wrap items-center gap-x-5 gap-y-2 overflow-hidden"
-              >
-                <div className="inline-flex items-center gap-2">
-                  <Avatar
-                    src={course.teacherProfilePhotoUrl}
-                    name={course.teacherName}
-                    size="xs"
-                    className="h-6 w-6 ring-2 ring-white/40"
-                  />
-                  <span className="text-[13px] font-semibold text-white">
-                    {course.teacherName}
-                  </span>
-                </div>
-
-                <span className="inline-flex items-center gap-1.5 text-[13px] text-white/85">
-                  <Users className="h-3.5 w-3.5" />
-                  <span className="font-semibold tabular-nums">{memberCount}</span>
-                  {memberCount === 1 ? "member" : "members"}
-                </span>
-
-                {isOwner && course.joiningCode && (
-                  <button
-                    type="button"
-                    onClick={handleCopyCode}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-white/30 bg-white/10 px-2.5 py-1 text-[12px] font-bold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
-                    aria-label="Copy joining code"
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="h-3 w-3" />
-                        Copied
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="h-3 w-3" />
-                        <span className="font-mono tracking-wider">{course.joiningCode}</span>
-                      </>
-                    )}
-                  </button>
-                )}
-              </motion.div>
-
-              {/* Compact join-code pill when collapsed (owner only) */}
-              {collapsed && isOwner && course.joiningCode && (
+              {isOwner && course.joiningCode && (
                 <button
                   type="button"
                   onClick={handleCopyCode}
-                  className="ml-3 inline-flex items-center gap-1.5 rounded-md border border-white/30 bg-white/10 px-2 py-0.5 align-middle text-[11px] font-bold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted/60 px-2 py-1 text-[11.5px] font-semibold text-muted-foreground transition-colors duration-120 hover:border-border-strong hover:text-foreground",
+                    FOCUS,
+                  )}
                   aria-label="Copy joining code"
+                  title="Copy joining code"
                 >
                   {copied ? (
                     <>
-                      <Check className="h-3 w-3" />
+                      <Check className="h-3 w-3 text-success" strokeWidth={ICON_STROKE} />
                       Copied
                     </>
                   ) : (
                     <>
-                      <Copy className="h-3 w-3" />
-                      <span className="font-mono tracking-wider">{course.joiningCode}</span>
+                      <Copy className="h-3 w-3" strokeWidth={ICON_STROKE} />
+                      <span className="font-mono tracking-wider text-foreground">{course.joiningCode}</span>
                     </>
                   )}
                 </button>
               )}
             </div>
-
-            {/* Owner actions — always visible */}
-            {isOwner && (
-              <div className="flex items-center gap-2">
-                <Link
-                  to={"/courses/" + course.id + "/edit"}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/30 bg-white/10 px-3 text-[12px] font-bold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
-                >
-                  <Settings className="h-3.5 w-3.5" />
-                  {!collapsed && <span>Edit</span>}
-                </Link>
-
-                <div className="relative">
-                  <button
-                    ref={menuButtonRef}
-                    type="button"
-                    onClick={() => {
-                      if (!menuOpen && menuButtonRef.current) {
-                        const rect = menuButtonRef.current.getBoundingClientRect()
-                        setMenuPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right })
-                      }
-                      setMenuOpen(v => !v)
-                    }}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/30 bg-white/10 text-white backdrop-blur-sm transition-colors hover:bg-white/20"
-                    aria-label="More actions"
-                    aria-expanded={menuOpen}
-                  >
-                    <MoreHorizontal className="h-4 w-4" />
-                  </button>
-
-                  {menuOpen && menuPos && typeof document !== "undefined" && createPortal(
-                    <>
-                      <button
-                        aria-hidden
-                        className="fixed inset-0 z-[9998] cursor-default"
-                        onClick={() => setMenuOpen(false)}
-                      />
-                      <motion.div
-                        initial={{ opacity: 0, y: -4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        style={{ position: "fixed", top: menuPos.top, right: menuPos.right }}
-                        className="z-[9999] w-52 overflow-hidden rounded-xl border border-border bg-card shadow-lg"
-                      >
-                        {course.isArchived ? (
-                          <button
-                            type="button"
-                            onClick={() => { setMenuOpen(false); onUnarchive?.() }}
-                            className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium text-foreground transition-colors hover:bg-muted"
-                          >
-                            <ArchiveRestore className="h-4 w-4 text-teal-600" />
-                            Restore course
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => { setMenuOpen(false); onArchive?.() }}
-                            className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium text-foreground transition-colors hover:bg-muted"
-                          >
-                            <Archive className="h-4 w-4 text-stone-600" />
-                            Archive course
-                          </button>
-                        )}
-                        {isOwner && (
-                          <>
-                            <div className="my-1 border-t border-border" />
-                            <button
-                              type="button"
-                              onClick={() => { setMenuOpen(false); onDelete?.() }}
-                              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              Delete course
-                            </button>
-                          </>
-                        )}
-                      </motion.div>
-                    </>,
-                    document.body
-                  )}
-                </div>
-              </div>
-            )}
           </div>
-        </motion.div>
+
+          {isOwner && (
+            <div className="flex shrink-0 items-center gap-2">
+              <Link
+                to={"/courses/" + course.id + "/edit"}
+                className={cn(
+                  "inline-flex h-9 items-center gap-1.5 rounded-xl border border-border bg-card px-3 text-[13px] font-semibold text-foreground shadow-xs transition-colors duration-120 hover:bg-muted hover:border-border-strong",
+                  FOCUS,
+                )}
+              >
+                <Settings className={ICON.sm} strokeWidth={ICON_STROKE} />
+                Edit
+              </Link>
+
+              <button
+                ref={menuButtonRef}
+                type="button"
+                onClick={() => {
+                  if (!menuOpen && menuButtonRef.current) {
+                    const rect = menuButtonRef.current.getBoundingClientRect()
+                    setMenuPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right })
+                  }
+                  setMenuOpen(v => !v)
+                }}
+                className={cn(
+                  "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground shadow-xs transition-colors duration-120 hover:bg-muted hover:text-foreground",
+                  FOCUS,
+                )}
+                aria-label="More actions"
+                aria-expanded={menuOpen}
+              >
+                <MoreHorizontal className={ICON.sm} strokeWidth={ICON_STROKE} />
+              </button>
+
+              {menuOpen && menuPos && typeof document !== "undefined" && createPortal(
+                <>
+                  <button
+                    aria-hidden
+                    tabIndex={-1}
+                    className="fixed inset-0 z-[9998] cursor-default"
+                    onClick={() => setMenuOpen(false)}
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: MOTION.base, ease: MOTION.ease }}
+                    style={{ position: "fixed", top: menuPos.top, right: menuPos.right }}
+                    className={cn(SURFACE.raised, "z-[9999] w-52 overflow-hidden p-1.5")}
+                  >
+                    {course.isArchived ? (
+                      <button
+                        type="button"
+                        onClick={() => { setMenuOpen(false); onUnarchive?.() }}
+                        className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-foreground transition-colors duration-120 hover:bg-muted"
+                      >
+                        <ArchiveRestore className={cn(ICON.sm, "text-primary")} strokeWidth={ICON_STROKE} />
+                        Restore course
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => { setMenuOpen(false); onArchive?.() }}
+                        className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-foreground transition-colors duration-120 hover:bg-muted"
+                      >
+                        <Archive className={cn(ICON.sm, "text-muted-foreground")} strokeWidth={ICON_STROKE} />
+                        Archive course
+                      </button>
+                    )}
+
+                    <div className="my-1 border-t border-border" />
+                    <button
+                      type="button"
+                      onClick={() => { setMenuOpen(false); onDelete?.() }}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-destructive transition-colors duration-120 hover:bg-destructive-soft"
+                    >
+                      <Trash2 className={ICON.sm} strokeWidth={ICON_STROKE} />
+                      Delete course
+                    </button>
+                  </motion.div>
+                </>,
+                document.body
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </header>
   )

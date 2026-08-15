@@ -147,7 +147,17 @@ export const DEPARTMENT_GROUPS = [
 
 export const DEPARTMENTS = DEPARTMENT_GROUPS.flatMap(g => g.options.map(o => o.value))
 
-export const YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year"]
+// 5th year included: some departments (e.g. Pharmacy) run a five-year programme.
+export const YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year"]
+
+/**
+ * Course codes here are a department prefix plus four digits, where the first
+ * digit is the year and the second is the semester — CSE-3201 is a 3rd-year,
+ * 2nd-semester course. The dash is optional on input and added on save.
+ */
+export const COURSE_CODE_PATTERN = /^[A-Za-z]{2,6}\s?-?\s?\d{4}$/
+export const COURSE_CODE_MESSAGE =
+  "Use your department code and 4 digits, e.g. CSE-3201"
 
 export const SEMESTERS = ["1st Semester", "2nd Semester"]
 

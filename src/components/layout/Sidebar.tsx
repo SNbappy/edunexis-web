@@ -1,9 +1,10 @@
 import { useState } from "react"
 import { NavLink, Link, useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
+import type { LucideIcon } from "lucide-react"
 import {
   LayoutDashboard, BookOpen, Bell, User, LogOut, Settings,
-  ChevronLeft, ChevronRight, Shield,
+  PanelLeftClose, PanelLeft, Shield,
 } from "lucide-react"
 import { useAuthStore } from "@/store/authStore"
 import { ROUTES } from "@/config/constants"
@@ -11,6 +12,7 @@ import Avatar from "@/components/ui/Avatar"
 import BrandMark from "@/components/ui/BrandMark"
 import { isTeacher, isAdmin } from "@/utils/roleGuard"
 import { useNotifications } from "@/features/notifications/hooks/useNotifications"
+import { ICON, ICON_STROKE, FOCUS, MOTION, TEXT } from "@/components/ui/appTokens"
 import { cn } from "@/utils/cn"
 
 const NAV_PRIMARY = [
@@ -18,50 +20,72 @@ const NAV_PRIMARY = [
   { label: "Courses",   icon: BookOpen,        to: ROUTES.COURSES,   exact: false },
 ]
 const NAV_PERSONAL = [
-  { label: "Notifications", icon: Bell, to: "/notifications", exact: false, badge: true },
-  { label: "Profile",       icon: User,     to: ROUTES.PROFILE,  exact: false },
-  { label: "Settings",      icon: Settings, to: ROUTES.SETTINGS, exact: false },
+  { label: "Notifications", icon: Bell,     to: "/notifications", exact: false, badge: true },
+  { label: "Profile",       icon: User,     to: ROUTES.PROFILE,   exact: false },
+  { label: "Settings",      icon: Settings, to: ROUTES.SETTINGS,  exact: false },
 ]
 
-
+/**
+ * Sidebar.
+ *
+ * Rebuilt on the shared app tokens. Previously it mixed several icon sizes and
+ * stroke weights and leaned on a tinted "pill" for the active row; now every
+ * icon is one size at one weight, and the active state is carried by a single
+ * rail plus a weight change — quieter, and it reads instantly.
+ */
 function NavItem({
-  label, icon: Icon, to, exact, collapsed, badge, onItemClick,
+  label, icon: Icon, to, exact, collapsed, badge, onItemClick, railId,
 }: {
-  label: string; icon: any; to: string; exact?: boolean; collapsed: boolean; badge?: number;
+  label: string
+  icon: LucideIcon
+  to: string
+  exact?: boolean
+  collapsed: boolean
+  badge?: number
   onItemClick?: () => void
+  /** Scopes the sliding active rail to one sidebar instance — the desktop rail
+   *  and the mobile drawer are both mounted, and a shared layoutId would make
+   *  Framer animate the indicator between the two. */
+  railId: string
 }) {
   return (
-    <NavLink to={to} end={exact} onClick={onItemClick} className="block">
+    <NavLink to={to} end={exact} onClick={onItemClick} className={cn("block rounded-lg", FOCUS)}>
       {({ isActive }) => (
         <div
           className={cn(
-            "group relative flex items-center gap-3 h-10 rounded-xl transition-colors",
-            collapsed ? "justify-center px-0" : "px-3",
+            "group relative flex h-9 items-center gap-2.5 rounded-xl transition-colors duration-120",
+            collapsed ? "justify-center px-0" : "pl-3 pr-2.5",
             isActive
-              ? "bg-primary/10 text-primary"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted",
+              ? "bg-primary/10 text-foreground"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground",
           )}
           title={collapsed ? label : undefined}
         >
-          {isActive && !collapsed && (
+          {isActive && (
             <motion.span
-              layoutId="sidebar-active-indicator"
-              className="absolute left-0 inset-y-2 w-[3px] rounded-r-full bg-primary"
+              layoutId={railId}
+              className="absolute inset-y-1.5 left-0 w-[3px] rounded-r-full bg-primary"
+              transition={{ type: "spring", stiffness: 380, damping: 32 }}
               aria-hidden
             />
           )}
 
-          <div className="relative shrink-0 flex items-center justify-center">
-            <Icon className="h-[18px] w-[18px]" strokeWidth={isActive ? 2.25 : 1.9} />
+          <span className="relative flex shrink-0 items-center justify-center">
+            <Icon
+              className={cn(ICON.sm, isActive && "text-primary")}
+              strokeWidth={ICON_STROKE}
+            />
             {badge !== undefined && badge > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] px-1 rounded-full bg-destructive text-white text-[9px] font-bold leading-none inline-flex items-center justify-center ring-2 ring-background">
+              <span className="absolute -right-1.5 -top-1.5 inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold leading-none text-white ring-2 ring-card">
                 {badge > 9 ? "9+" : badge}
               </span>
             )}
-          </div>
+          </span>
 
           {!collapsed && (
-            <span className="text-sm font-medium truncate">{label}</span>
+            <span className={cn("truncate text-[13.5px]", isActive ? "font-semibold" : "font-medium")}>
+              {label}
+            </span>
           )}
         </div>
       )}
@@ -69,7 +93,17 @@ function NavItem({
   )
 }
 
+function GroupLabel({ children, collapsed }: { children: React.ReactNode; collapsed: boolean }) {
+  if (collapsed) return <div aria-hidden className="mx-auto my-2 h-px w-6 bg-border" />
+  return <p className={cn(TEXT.eyebrow, "px-3 pb-1.5")}>{children}</p>
+}
+
 export default function Sidebar({ onItemClick }: { onItemClick?: () => void } = {}) {
+  // `onItemClick` is only passed by MobileSidebar, so it doubles as "am I the
+  // drawer?" — the drawer is never collapsible and needs its own rail id.
+  const drawer = Boolean(onItemClick)
+  const railId = drawer ? "sidebar-rail-drawer" : "sidebar-rail"
+
   const [collapsed, setCollapsed] = useState(false)
   const { user, clearAuth } = useAuthStore()
   const { badgeCount } = useNotifications()
@@ -77,48 +111,42 @@ export default function Sidebar({ onItemClick }: { onItemClick?: () => void } = 
   const teacher = isTeacher(user?.role ?? "Student")
   const admin = isAdmin(user?.role ?? "Student")
 
-  const W = collapsed ? 68 : 260
+  const W = collapsed ? 64 : 244
 
   return (
     <motion.aside
       animate={{ width: W }}
-      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-      className="relative flex flex-col h-full shrink-0 bg-card border-r border-border"
+      transition={{ duration: MOTION.base, ease: MOTION.ease }}
+      className="relative flex h-full shrink-0 flex-col border-r border-border bg-card"
       style={{ minWidth: W, maxWidth: W }}
     >
+      {/* brand — same lockup proportions as the public navbar */}
       <Link
         to="/dashboard"
         className={cn(
-          "h-16 flex items-center border-b border-border transition-colors hover:bg-muted/50",
-          collapsed ? "justify-center px-0" : "px-5 gap-1.5",
+          "flex h-14 shrink-0 items-center border-b border-border transition-colors hover:bg-muted/60",
+          collapsed ? "justify-center px-0" : "gap-2.5 px-4",
+          FOCUS,
         )}
       >
-        <BrandMark className="h-6 w-6 text-primary shrink-0" />
+        <BrandMark className="h-6 w-6 shrink-0 text-primary" />
         {!collapsed && (
-          <span className="font-display font-bold text-[17px] tracking-tight text-foreground">
+          <span className="font-display text-[16px] font-extrabold tracking-tight text-foreground">
             EduNexis
           </span>
         )}
       </Link>
 
-      <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 space-y-5">
-        <div className="space-y-1">
-          {!collapsed && (
-            <p className="px-3 pb-1.5 text-[10px] font-semibold tracking-wider uppercase text-muted-foreground/70">
-              Learn
-            </p>
-          )}
+      <nav className="flex-1 space-y-5 overflow-y-auto overflow-x-hidden px-2.5 py-4">
+        <div className="space-y-0.5">
+          <GroupLabel collapsed={collapsed}>Learn</GroupLabel>
           {NAV_PRIMARY.map(item => (
-            <NavItem key={item.label} {...item} collapsed={collapsed} onItemClick={onItemClick} />
+            <NavItem key={item.label} {...item} collapsed={collapsed} onItemClick={onItemClick} railId={railId} />
           ))}
         </div>
 
-        <div className="space-y-1">
-          {!collapsed && (
-            <p className="px-3 pb-1.5 text-[10px] font-semibold tracking-wider uppercase text-muted-foreground/70">
-              You
-            </p>
-          )}
+        <div className="space-y-0.5">
+          <GroupLabel collapsed={collapsed}>You</GroupLabel>
           {NAV_PERSONAL.map(item => (
             <NavItem
               key={item.label}
@@ -126,17 +154,14 @@ export default function Sidebar({ onItemClick }: { onItemClick?: () => void } = 
               collapsed={collapsed}
               badge={item.badge ? badgeCount : undefined}
               onItemClick={onItemClick}
+              railId={railId}
             />
           ))}
         </div>
 
         {admin && (
-          <div className="space-y-1">
-            {!collapsed && (
-              <p className="px-3 pb-1.5 text-[10px] font-semibold tracking-wider uppercase text-muted-foreground/70">
-                Admin
-              </p>
-            )}
+          <div className="space-y-0.5">
+            <GroupLabel collapsed={collapsed}>Admin</GroupLabel>
             <NavItem
               label="Admin"
               icon={Shield}
@@ -144,17 +169,18 @@ export default function Sidebar({ onItemClick }: { onItemClick?: () => void } = 
               exact={false}
               collapsed={collapsed}
               onItemClick={onItemClick}
+              railId={railId}
             />
           </div>
         )}
       </nav>
 
-      <div className="shrink-0 p-3 border-t border-border space-y-1">
+      <div className="shrink-0 border-t border-border p-2.5">
         <div
           onClick={() => navigate(ROUTES.PROFILE)}
           className={cn(
-            "flex items-center gap-3 rounded-xl cursor-pointer transition-colors hover:bg-muted",
-            collapsed ? "justify-center p-2" : "p-2",
+            "flex cursor-pointer items-center gap-2.5 rounded-xl p-1.5 transition-colors duration-120 hover:bg-muted",
+            collapsed && "justify-center",
           )}
           title={collapsed ? user?.profile?.fullName ?? user?.email : undefined}
         >
@@ -166,36 +192,47 @@ export default function Sidebar({ onItemClick }: { onItemClick?: () => void } = 
           />
           {!collapsed && (
             <>
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-semibold text-foreground truncate leading-tight">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[12.5px] font-semibold leading-tight text-foreground">
                   {user?.profile?.fullName ?? "User"}
                 </p>
-                <p className="text-[11px] text-muted-foreground truncate">
+                <p className="truncate text-[11px] text-muted-foreground">
                   {teacher ? "Teacher" : "Student"}
                 </p>
               </div>
               <button
                 onClick={e => { e.stopPropagation(); window.location.replace("/"); clearAuth() }}
-                className="h-7 w-7 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive-soft transition-colors shrink-0"
+                className={cn(
+                  "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors duration-120 hover:bg-destructive-soft hover:text-destructive",
+                  FOCUS,
+                )}
                 title="Sign out"
                 aria-label="Sign out"
               >
-                <LogOut className="h-3.5 w-3.5" />
+                <LogOut className={ICON.xs} strokeWidth={ICON_STROKE} />
               </button>
             </>
           )}
         </div>
 
+        {!drawer && (
         <button
           onClick={() => setCollapsed(p => !p)}
-          className="w-full h-8 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className={cn(
+            "mt-1 inline-flex h-8 w-full items-center justify-center gap-2 rounded-lg text-muted-foreground transition-colors duration-120 hover:bg-muted hover:text-foreground",
+            FOCUS,
+          )}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed
-            ? <ChevronRight className="h-3.5 w-3.5" />
-            : <ChevronLeft  className="h-3.5 w-3.5" />
+            ? <PanelLeft className={ICON.sm} strokeWidth={ICON_STROKE} />
+            : <>
+                <PanelLeftClose className={ICON.sm} strokeWidth={ICON_STROKE} />
+                <span className="text-[12px] font-medium">Collapse</span>
+              </>
           }
         </button>
+        )}
       </div>
     </motion.aside>
   )

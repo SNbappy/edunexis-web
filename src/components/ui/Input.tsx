@@ -1,5 +1,5 @@
-﻿import { AlertCircle } from "lucide-react"
 import { forwardRef } from "react"
+import { Field, FIELD_BASE, fieldState } from "@/components/ui/field"
 import { cn } from "@/utils/cn"
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -12,9 +12,9 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 const SIZE = {
-  sm: "h-9  text-xs",
-  md: "h-10 text-sm",
-  lg: "h-11 text-[15px]",
+  sm: "h-8  text-[12.5px]",
+  md: "h-9  text-[13.5px]",
+  lg: "h-10 text-[14px]",
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -22,16 +22,10 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const inputId = id ?? label?.toLowerCase().replace(/\s+/g, "-")
 
     return (
-      <div className="space-y-1.5">
-        {label && (
-          <label htmlFor={inputId} className="block text-xs font-semibold text-foreground/90">
-            {label}
-          </label>
-        )}
-
+      <Field label={label} htmlFor={inputId} error={error} hint={hint}>
         <div className="relative">
           {leftIcon && (
-            <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground [&_svg]:w-4 [&_svg]:h-4">
+            <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground [&_svg]:h-4 [&_svg]:w-4">
               {leftIcon}
             </div>
           )}
@@ -41,48 +35,23 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             aria-invalid={!!error}
             className={cn(
-              // Base
-              "w-full rounded-xl font-medium placeholder:text-muted-foreground/70",
-              "bg-input text-foreground",
-              "border transition-[border-color,box-shadow,background-color] duration-150 ease-out",
-              "outline-none",
-              // Normal / error border
-              error
-                ? "border-destructive/60"
-                : "border-border hover:border-border-strong",
-              // Focus — via :focus, not inline style
-              error
-                ? "focus:border-destructive focus:shadow-[0_0_0_3px_rgb(var(--destructive)/0.15)]"
-                : "focus:border-primary focus:shadow-[0_0_0_3px_rgb(var(--ring)/0.18)]",
-              // Disabled
-              "disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-muted",
-              // Size
+              FIELD_BASE,
+              fieldState(!!error),
               SIZE[sizeVariant],
-              // Padding adjusts for icons
-              leftIcon  ? "pl-10" : "pl-3.5",
-              rightIcon ? "pr-10" : "pr-3.5",
+              leftIcon  ? "pl-9" : "pl-3",
+              rightIcon ? "pr-9" : "pr-3",
               className,
             )}
             {...props}
           />
 
           {rightIcon && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground [&_svg]:w-4 [&_svg]:h-4">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground [&_svg]:h-4 [&_svg]:w-4">
               {rightIcon}
             </div>
           )}
         </div>
-
-        {error && (
-          <p className="text-xs font-medium text-destructive flex items-center gap-1">
-            <AlertCircle className="h-3.5 w-3.5" aria-hidden />
-            {error}
-          </p>
-        )}
-        {!error && hint && (
-          <p className="text-xs text-muted-foreground">{hint}</p>
-        )}
-      </div>
+      </Field>
     )
   },
 )

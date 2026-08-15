@@ -55,41 +55,83 @@
     --destructive-soft:  254 226 226;
     --info:               59 130 246;
     --info-soft:         219 234 254;
+
+    /* Elevation. Defined here rather than in the Tailwind config so dark mode
+       can restate them — a 4%-black shadow is literally invisible on dark ink,
+       which is why unthemed dark UIs go flat. */
+    --shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+    --shadow-sm: 0 1px 3px 0 rgb(15 23 42 / 0.06), 0 1px 2px -1px rgb(15 23 42 / 0.04);
+    --shadow-md: 0 4px 8px -2px rgb(15 23 42 / 0.07), 0 2px 4px -2px rgb(15 23 42 / 0.04);
+    --shadow-lg: 0 12px 24px -6px rgb(15 23 42 / 0.10), 0 4px 8px -4px rgb(15 23 42 / 0.05);
+    --shadow-xl: 0 24px 48px -12px rgb(15 23 42 / 0.16), 0 8px 16px -8px rgb(15 23 42 / 0.06);
   }
 
-  /* ───── Dark mode ───── */
+  /* ───── Dark mode ─────
+     Not the light theme inverted. The surfaces carry a faint teal-ink cast
+     rather than being neutral black, which is what stops a dark UI reading as
+     "lights off" and makes it read as a material.
+
+     Two rules hold the depth together:
+       · background is DARKER than card. Panels catch light, the page behind
+         them recedes — the same direction as the light theme, so shadows and
+         elevation keep meaning something.
+       · the soft semantic fills are deep, desaturated tints, not the light
+         theme's pastels dimmed. A pastel at 8% on black turns to mud. */
   .dark {
-    --background:         12  10   9;  /* stone-950, warm black */
-    --foreground:        250 250 249;
-    --card:               28  25  23;  /* stone-900 */
-    --card-foreground:   250 250 249;
-    --popover:            28  25  23;
+    --background:          9  13  15;  /* teal-tinted ink, near-black */
+    --foreground:        236 241 242;
+    --card:               17  23  26;  /* lifted one step off the page */
+    --card-foreground:   236 241 242;
+    --popover:            22  29  33;  /* floats one step above cards */
 
-    --muted:              41  37  36;  /* stone-800 */
-    --muted-foreground: 168 162 158;   /* stone-400 */
-    --subtle:             41  37  36;
-    --subtle-foreground: 214 211 209;
+    --muted:              28  36  40;
+    --muted-foreground:  147 162 168;  /* passes AA on --card */
+    --subtle:             37  47  52;
+    --subtle-foreground: 212 222 225;
 
-    --border:             41  37  36;  /* stone-800 */
-    --border-strong:      68  64  60;  /* stone-700 */
-    --input:              28  25  23;
-    --ring:               20 184 166;  /* teal-500 — brighter in dark */
+    --border:             33  43  47;
+    --border-strong:      55  69  75;
+    --input:              14  20  23;  /* recessed — inputs read as wells */
+    --ring:               45 212 191;  /* teal-400 */
 
-    --primary:            20 184 166;  /* teal-500 */
-    --primary-foreground:  12  10   9;
+    /* The brand ramp is inverted for dark: `primary-50` still means "the
+       faintest brand surface", so a tint used as a background stays a
+       background instead of turning into a near-white slab. */
+    --primary-50:   11  38  38;
+    --primary-100:  14  52  50;
+    --primary-200:  17  74  70;
+    --primary-300:  20  99  93;
+    --primary-400:  23 132 123;
+    --primary-500:  20 184 166;
+    --primary-600:  45 212 191;
+    --primary-700:  94 234 212;
+    --primary-800: 153 246 228;
+    --primary-900: 204 251 241;
+
+    --primary:            45 212 191;  /* teal-400 — carries on dark ink */
+    --primary-foreground:  6  17  18;
 
     --accent:            251 191  36;  /* amber-400 */
-    --accent-foreground:  41  37  36;
-    --accent-soft:        69  26    3;
+    --accent-foreground:  28  20   3;
+    --accent-soft:        58  40   8;
 
     --success:            52 211 153;
-    --success-soft:       6  78   59;
+    --success-soft:       10  55  44;
     --warning:           251 191  36;
-    --warning-soft:      69  26    3;
+    --warning-soft:       58  40   8;
     --destructive:       248 113 113;
-    --destructive-soft: 127  29  29;
-    --info:              96 165 250;
-    --info-soft:         30  58 138;
+    --destructive-soft:   68  24  27;
+    --info:               96 165 250;
+    --info-soft:          23  42  76;
+
+    /* Deeper and wider than the light ramp. Depth on dark comes from the
+       shadow spreading further, not from it getting darker — there is not
+       much room left below near-black. */
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.40);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.50), 0 1px 2px -1px rgb(0 0 0 / 0.40);
+    --shadow-md: 0 6px 14px -4px rgb(0 0 0 / 0.55), 0 2px 6px -2px rgb(0 0 0 / 0.40);
+    --shadow-lg: 0 16px 32px -8px rgb(0 0 0 / 0.62), 0 6px 12px -6px rgb(0 0 0 / 0.45);
+    --shadow-xl: 0 32px 64px -16px rgb(0 0 0 / 0.72), 0 12px 24px -12px rgb(0 0 0 / 0.50);
   }
 
   * { box-sizing: border-box; }

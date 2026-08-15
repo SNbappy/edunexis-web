@@ -1,23 +1,13 @@
 ﻿import { Link } from "react-router-dom"
 import { motion } from "framer-motion"
-import { Archive, Users, GraduationCap, X, Clock, XCircle } from "lucide-react"
+import { Archive, Users, X, Clock, XCircle } from "lucide-react"
+import Avatar from "@/components/ui/Avatar"
+import Badge from "@/components/ui/Badge"
+import { ICON_STROKE, FOCUS, SURFACE } from "@/components/ui/appTokens"
+import { cn } from "@/utils/cn"
 import type {
   CourseSummaryDto, PendingCourseDto, RejectedCourseDto,
 } from "@/types/course.types"
-
-/** Teal / amber / blue / violet rotation driven by course.id hash. */
-const ACCENTS = [
-  "bg-teal-500",
-  "bg-amber-500",
-  "bg-blue-500",
-  "bg-violet-500",
-] as const
-
-function pickAccent(id: string): string {
-  let hash = 0
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0
-  return ACCENTS[Math.abs(hash) % ACCENTS.length]
-}
 
 function formatRelative(iso: string): string {
   const d   = new Date(iso)
@@ -41,72 +31,58 @@ interface ActiveCardProps {
   viewMode?: "grid" | "list"   // back-compat, unused
 }
 
+/**
+ * Active course card — the canonical one, used by both the courses grid and the
+ * dashboard so the two can't drift apart again.
+ *
+ * The course *code* leads. Previously every card opened with a coloured strip
+ * whose hue came from hashing the course id: four courses got four different
+ * colours that encoded nothing, and a teacher could never learn what teal meant
+ * because it meant nothing. CSE-327 is the thing people actually scan for.
+ */
 export function ActiveCourseCard({ course }: ActiveCardProps) {
-  const accent = pickAccent(course.id)
-
   return (
-    <motion.div
-      whileHover={{ y: -2 }}
-      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-      className={`group relative overflow-hidden rounded-2xl border border-border bg-card shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)] transition-all hover:shadow-[0_12px_32px_-8px_rgba(20,184,166,0.18)] hover:-translate-y-0.5 hover:border-teal-200 ${course.isArchived ? "opacity-70 hover:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)] hover:translate-y-0" : ""}`}
+    <Link
+      to={`/courses/${course.id}/stream`}
+      className={cn("group block rounded-2xl", FOCUS, course.isArchived && "opacity-70")}
     >
-      {/* Top accent strip */}
-      <div className={`h-1.5 w-full ${accent}`} />
-
-      <Link to={`/courses/${course.id}/stream`} className="block p-5">
-        {/* Header row */}
+      <div className={cn(SURFACE.cardInteractive, "flex h-full flex-col p-4")}>
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="mb-1 font-mono text-[11px] font-semibold uppercase tracking-wider text-teal-700">
-              {course.courseCode}
-            </p>
-            <h3 className="truncate font-display text-[17px] font-bold text-foreground group-hover:text-teal-700">
-              {course.title}
-            </h3>
-          </div>
-
+          <span className="rounded-lg border border-primary/20 bg-primary/10 px-2 py-1 font-mono text-[11px] font-bold tracking-wide text-primary">
+            {course.courseCode}
+          </span>
           {course.isArchived && (
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-stone-600 dark:bg-stone-800 dark:text-stone-300">
-              <Archive className="h-3 w-3" />
+            <Badge variant="neutral" size="sm" icon={<Archive strokeWidth={ICON_STROKE} />}>
               Archived
-            </span>
+            </Badge>
           )}
         </div>
 
-        {/* Teacher */}
-        <div className="mt-3 flex items-center gap-2">
-          {course.teacherProfilePhotoUrl ? (
-            <img
-              src={course.teacherProfilePhotoUrl}
-              alt=""
-              className="h-6 w-6 shrink-0 rounded-full object-cover"
-            />
-          ) : (
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-stone-100 text-[11px] font-bold text-stone-600 dark:bg-stone-800 dark:text-stone-300">
-              {course.teacherName.charAt(0).toUpperCase()}
-            </div>
-          )}
-          <span className="truncate text-[13px] text-muted-foreground">
+        <h3 className="mt-2.5 line-clamp-2 font-display text-[15px] font-bold leading-snug text-foreground transition-colors duration-120 group-hover:text-primary">
+          {course.title}
+        </h3>
+
+        <div className="mt-2 flex items-center gap-2">
+          <Avatar
+            src={course.teacherProfilePhotoUrl}
+            name={course.teacherName}
+            size="xs"
+            className="h-5 w-5 shrink-0"
+          />
+          <span className="truncate text-[12.5px] text-muted-foreground">
             {course.teacherName}
           </span>
         </div>
 
-        {/* Divider */}
-        <div className="my-4 h-px bg-border" />
-
-        {/* Meta row */}
-        <div className="flex items-center justify-between text-[12px] text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            <GraduationCap className="h-3.5 w-3.5" />
-            <span className="truncate">{course.semester}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Users className="h-3.5 w-3.5" />
-            <span className="font-semibold tabular-nums">{course.memberCount}</span>
-          </div>
+        <div className="mt-4 flex items-center justify-between gap-3 border-t border-border pt-3 text-[12px] text-muted-foreground">
+          <span className="truncate">{course.semester}</span>
+          <span className="inline-flex shrink-0 items-center gap-1.5">
+            <Users className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
+            <span className="font-semibold tabular-nums text-foreground">{course.memberCount}</span>
+          </span>
         </div>
-      </Link>
-    </motion.div>
+      </div>
+    </Link>
   )
 }
 
@@ -119,19 +95,19 @@ interface PendingCardProps {
 }
 
 export function PendingCourseCard({ course }: PendingCardProps) {
-  const accent = pickAccent(course.id)
-
   return (
     <div
       aria-disabled="true"
-      className="group relative overflow-hidden rounded-2xl border border-border bg-card opacity-80 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.04)] transition-all hover:opacity-95 hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.08)]"
+      className={cn(SURFACE.card, "group relative overflow-hidden")}
     >
-      <div className={`h-1.5 w-full ${accent}`} />
+      {/* Stripe means "awaiting review" here, rather than being a colour drawn
+          from the course id — status is the only thing worth colouring. */}
+      <div className="h-1 w-full bg-warning" />
 
-      <div className="p-5">
+      <div className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <p className="mb-1 font-mono text-[11px] font-semibold uppercase tracking-wider text-teal-700">
+            <p className="mb-1 font-mono text-[11px] font-bold tracking-wide text-primary">
               {course.courseCode}
             </p>
             <h3 className="truncate font-display text-[17px] font-bold text-foreground">
@@ -186,14 +162,12 @@ interface RejectedCardProps {
 export function RejectedCourseCard({
   course, onDismiss, isDismissing,
 }: RejectedCardProps) {
-  const accent = pickAccent(course.id)
-
   return (
     <div
       aria-disabled="true"
-      className="group relative overflow-hidden rounded-2xl border border-border bg-card opacity-80 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.04)] transition-all hover:opacity-95 hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.08)]"
+      className={cn(SURFACE.card, "group relative overflow-hidden")}
     >
-      <div className={`h-1.5 w-full ${accent}`} />
+      <div className="h-1 w-full bg-destructive" />
 
       {/* Dismiss button (top right absolute) */}
       <button

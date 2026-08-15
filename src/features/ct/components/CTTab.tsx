@@ -89,7 +89,7 @@ export default function CTTab({ courseId, members = [] }: Props) {
               {ctEvents.length === 0
                 ? "Nothing posted yet"
                 : publishedCount > 0
-                  ? publishedCount + " published Â· " + ctEvents.length + " total"
+                  ? publishedCount + " published · " + ctEvents.length + " total"
                   : ctEvents.length + " total"
               }
             </p>

@@ -63,11 +63,13 @@ const config = {
         "3xl": "16px",
       },
       boxShadow: {
-        xs:   "0 1px 2px 0 rgb(0 0 0 / 0.04)",
-        sm:   "0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04)",
-        md:   "0 4px 8px -2px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04)",
-        lg:   "0 10px 20px -4px rgb(0 0 0 / 0.08), 0 4px 8px -4px rgb(0 0 0 / 0.04)",
-        xl:   "0 20px 32px -8px rgb(0 0 0 / 0.10), 0 8px 16px -8px rgb(0 0 0 / 0.04)",
+        // Defined in index.css so the dark theme can restate them; see the
+        // --shadow-* block there.
+        xs:   "var(--shadow-xs)",
+        sm:   "var(--shadow-sm)",
+        md:   "var(--shadow-md)",
+        lg:   "var(--shadow-lg)",
+        xl:   "var(--shadow-xl)",
         ring:      "0 0 0 4px rgb(var(--ring) / 0.18)",
         "ring-sm": "0 0 0 3px rgb(var(--ring) / 0.15)",
       },

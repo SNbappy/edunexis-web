@@ -21,6 +21,7 @@ import { ActiveCourseCard } from "../components/CourseCard"
 
 import {
   DEPARTMENT_GROUPS, YEARS, SEMESTERS, ACADEMIC_SESSIONS,
+  COURSE_CODE_PATTERN, COURSE_CODE_MESSAGE,
 } from "@/config/constants"
 import { useAuthStore } from "@/store/authStore"
 import { useCourses } from "../hooks/useCourses"
@@ -31,7 +32,9 @@ import type { CourseSummaryDto } from "@/types/course.types"
 
 const schema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
-  courseCode: z.string().min(2, "Course code is required"),
+  courseCode: z.string()
+    .min(2, "Course code is required")
+    .regex(COURSE_CODE_PATTERN, COURSE_CODE_MESSAGE),
   courseType: z.enum(["Theory", "Lab"]),
   creditHours: z.coerce.number().min(0.5).max(6),
   department: z.string().min(1, "Department is required"),
@@ -152,7 +155,7 @@ export default function CreateCoursePage() {
   const previewCourse: CourseSummaryDto = {
     id: PREVIEW_COURSE_ID,
     title: values.title?.trim() || "Your course title",
-    courseCode: values.courseCode?.trim().toUpperCase() || "COURSE-000",
+    courseCode: values.courseCode?.trim().toUpperCase() || "COURSE-0000",
     department: values.department || "Department",
     academicSession: values.academicSession || "",
     semester: values.year && values.semesterInYear
@@ -270,7 +273,7 @@ export default function CreateCoursePage() {
                   <FormField
                     {...register("courseCode")}
                     label="Course code"
-                    placeholder="e.g. CSE-301"
+                    placeholder="e.g. CSE-3201"
                     hint="Short code like CSE-301 or MATH-101."
                     error={errors.courseCode?.message}
                   />

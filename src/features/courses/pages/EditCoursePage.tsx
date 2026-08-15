@@ -19,6 +19,7 @@ import { ActiveCourseCard } from "../components/CourseCard"
 
 import {
   DEPARTMENT_GROUPS, YEARS, SEMESTERS, ACADEMIC_SESSIONS,
+  COURSE_CODE_PATTERN, COURSE_CODE_MESSAGE,
 } from "@/config/constants"
 import { useAuthStore } from "@/store/authStore"
 import { courseService } from "../services/courseService"
@@ -26,7 +27,9 @@ import type { CourseSummaryDto } from "@/types/course.types"
 
 const schema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
-  courseCode: z.string().min(2, "Course code is required"),
+  courseCode: z.string()
+    .min(2, "Course code is required")
+    .regex(COURSE_CODE_PATTERN, COURSE_CODE_MESSAGE),
   creditHours: z.coerce.number().min(0.5).max(6),
   department: z.string().min(1, "Department is required"),
   academicSession: z.string().min(1, "Academic session is required"),

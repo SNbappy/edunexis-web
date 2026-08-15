@@ -8,6 +8,7 @@ import NotificationsPanel from "@/features/notifications/components/Notification
 import Avatar from "@/components/ui/Avatar"
 import ThemeToggle from "@/components/ui/ThemeToggle"
 import { ROUTES } from "@/config/constants"
+import { ICON, ICON_STROKE, FOCUS, MOTION, SURFACE, TEXT } from "@/components/ui/appTokens"
 import { cn } from "@/utils/cn"
 
 const SEARCH_LINKS = [
@@ -16,6 +17,10 @@ const SEARCH_LINKS = [
   { label: "Notifications", to: "/notifications", icon: Bell            },
   { label: "Profile",       to: ROUTES.PROFILE,   icon: User            },
 ]
+
+/** Icon buttons in the bar: one size, one shape, one hover. */
+const BAR_BUTTON =
+  "relative inline-flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-colors duration-120 hover:bg-muted hover:text-foreground"
 
 interface Props { onMenuClick: () => void }
 
@@ -80,41 +85,42 @@ export default function Topbar({ onMenuClick }: Props) {
     <>
       <header
         className={cn(
-          "sticky top-0 z-30 flex items-center h-16 px-4 lg:px-6 gap-3",
-          "bg-background/80 backdrop-blur-md",
-          "border-b transition-all duration-180",
-          scrolled ? "border-border shadow-sm" : "border-transparent",
+          "sticky top-0 z-30 flex h-14 items-center gap-2 px-3 lg:px-5",
+          "bg-background/85 backdrop-blur-md",
+          "border-b transition-colors duration-180",
+          scrolled ? "border-border" : "border-transparent",
         )}
       >
         <button
           onClick={onMenuClick}
           aria-label="Open menu"
-          className="lg:hidden h-10 w-10 inline-flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted focus-ring transition-colors"
+          className={cn(BAR_BUTTON, FOCUS, "lg:hidden")}
         >
-          <Menu className="h-[18px] w-[18px]" />
+          <Menu className={ICON.md} strokeWidth={ICON_STROKE} />
         </button>
 
+        {/* Search reads as a field, not a button — but it is one, because the
+            real search lives in the ⌘K palette below. */}
         <button
           type="button"
           onClick={() => setSearchOpen(true)}
           className={cn(
-            "group hidden sm:flex items-center gap-3 h-10 px-4 rounded-xl flex-1 max-w-md",
-            "bg-muted/70 hover:bg-muted border border-border hover:border-border-strong",
-            "text-muted-foreground hover:text-foreground",
-            "transition-colors focus-ring text-left",
+            "hidden h-9 max-w-sm flex-1 items-center gap-2.5 rounded-xl px-3 sm:flex",
+            "border border-border bg-muted/60 text-muted-foreground",
+            "text-left transition-colors duration-120 hover:border-border-strong hover:bg-muted",
+            FOCUS,
           )}
         >
-          <Search className="h-4 w-4 shrink-0" />
-          <span className="text-sm flex-1 truncate">Search pages, courses, people…</span>
-          <kbd className="hidden md:inline-flex items-center gap-1 h-6 px-1.5 rounded-md border border-border bg-background font-mono text-[10px] font-semibold text-muted-foreground">
-            <span>Ctrl</span>
-            <span>K</span>
+          <Search className={cn(ICON.sm, "shrink-0")} strokeWidth={ICON_STROKE} />
+          <span className="flex-1 truncate text-[13px]">Search…</span>
+          <kbd className="hidden items-center gap-0.5 rounded-md border border-border bg-card px-1.5 py-0.5 font-mono text-[10px] font-semibold md:inline-flex">
+            Ctrl K
           </kbd>
         </button>
 
         <div className="flex-1" />
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-0.5">
           <ThemeToggle />
 
           <motion.button
@@ -122,16 +128,11 @@ export default function Topbar({ onMenuClick }: Props) {
             aria-label={`Notifications${badgeCount > 0 ? ` (${badgeCount} new)` : ""}`}
             animate={bellShake ? { rotate: [0, -10, 10, -6, 6, 0] } : {}}
             transition={{ duration: 0.5 }}
-            className={cn(
-              "relative h-10 w-10 inline-flex items-center justify-center rounded-xl",
-              "text-muted-foreground hover:text-foreground hover:bg-muted",
-              "focus-ring transition-colors",
-              notifOpen && "bg-muted text-foreground",
-            )}
+            className={cn(BAR_BUTTON, FOCUS, notifOpen && "bg-muted text-foreground")}
           >
-            <Bell className="h-[18px] w-[18px]" strokeWidth={2} />
+            <Bell className={ICON.md} strokeWidth={ICON_STROKE} />
             {badgeCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-white text-[10px] font-bold leading-none inline-flex items-center justify-center ring-2 ring-background">
+              <span className="absolute right-1.5 top-1.5 inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold leading-none text-white ring-2 ring-background">
                 {badgeCount > 9 ? "9+" : badgeCount}
               </span>
             )}
@@ -144,8 +145,8 @@ export default function Topbar({ onMenuClick }: Props) {
               aria-label="Account menu"
               aria-expanded={profileMenuOpen}
               className={cn(
-                "flex items-center gap-1.5 h-10 pl-1.5 pr-2 rounded-xl transition-colors focus-ring",
-                "hover:bg-muted",
+                "ml-1 flex h-9 w-9 items-center justify-center rounded-xl transition-colors duration-120 hover:bg-muted",
+                FOCUS,
                 profileMenuOpen && "bg-muted",
               )}
             >
@@ -167,52 +168,41 @@ export default function Topbar({ onMenuClick }: Props) {
                     initial={{ opacity: 0, y: -6, scale: 0.98 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -6, scale: 0.98 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute right-0 top-12 z-50 w-56 rounded-xl border border-border bg-card shadow-lg overflow-hidden"
+                    transition={{ duration: MOTION.base, ease: MOTION.ease }}
+                    className={cn(SURFACE.raised, "absolute right-0 top-11 z-50 w-60 overflow-hidden")}
                   >
-                    <div className="px-4 py-3 border-b border-border">
-                      <p className="text-[13px] font-semibold text-foreground truncate">
+                    <div className="border-b border-border px-3.5 py-3">
+                      <p className="truncate text-[13px] font-semibold text-foreground">
                         {user?.profile?.fullName ?? "User"}
                       </p>
-                      <p className="text-[12px] text-muted-foreground truncate">
-                        {user?.email}
-                      </p>
+                      <p className={cn(TEXT.muted, "truncate")}>{user?.email}</p>
                     </div>
 
                     <div className="p-1.5">
-                      <Link
-                        to={ROUTES.PROFILE}
-                        onClick={() => setProfileMenuOpen(false)}
-                        className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium text-foreground hover:bg-muted transition-colors"
-                      >
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        View profile
-                      </Link>
-                      <Link
-                        to="/"
-                        onClick={() => setProfileMenuOpen(false)}
-                        className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium text-foreground hover:bg-muted transition-colors"
-                      >
-                        <Globe className="h-4 w-4 text-muted-foreground" />
-                        Public homepage
-                      </Link>
-                      <Link
-                        to={ROUTES.SETTINGS}
-                        onClick={() => setProfileMenuOpen(false)}
-                        className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium text-foreground hover:bg-muted transition-colors"
-                      >
-                        <Settings className="h-4 w-4 text-muted-foreground" />
-                        Settings
-                      </Link>
+                      {[
+                        { to: ROUTES.PROFILE,  icon: User,     label: "View profile"   },
+                        { to: "/",             icon: Globe,    label: "Public homepage" },
+                        { to: ROUTES.SETTINGS, icon: Settings, label: "Settings"        },
+                      ].map(item => (
+                        <Link
+                          key={item.label}
+                          to={item.to}
+                          onClick={() => setProfileMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-foreground transition-colors duration-120 hover:bg-muted"
+                        >
+                          <item.icon className={cn(ICON.sm, "text-muted-foreground")} strokeWidth={ICON_STROKE} />
+                          {item.label}
+                        </Link>
+                      ))}
                     </div>
 
-                    <div className="p-1.5 border-t border-border">
+                    <div className="border-t border-border p-1.5">
                       <button
                         type="button"
                         onClick={() => { setProfileMenuOpen(false); window.location.replace("/"); clearAuth() }}
-                        className="flex w-full items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30 transition-colors"
+                        className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-destructive transition-colors duration-120 hover:bg-destructive-soft"
                       >
-                        <LogOut className="h-4 w-4" />
+                        <LogOut className={ICON.sm} strokeWidth={ICON_STROKE} />
                         Sign out
                       </button>
                     </div>
@@ -232,60 +222,58 @@ export default function Topbar({ onMenuClick }: Props) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-50 flex items-start justify-center pt-[14vh] px-4 bg-foreground/30 backdrop-blur-sm"
+            transition={{ duration: MOTION.fast }}
+            className="fixed inset-0 z-50 flex items-start justify-center bg-foreground/25 px-4 pt-[14vh] backdrop-blur-sm"
             onClick={() => setSearchOpen(false)}
           >
             <motion.div
               initial={{ opacity: 0, y: -12, scale: 0.98 }}
               animate={{ opacity: 1, y: 0,   scale: 1    }}
               exit={{    opacity: 0, y: -12, scale: 0.98 }}
-              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: MOTION.overlay, ease: MOTION.ease }}
               onClick={e => e.stopPropagation()}
-              className="w-full max-w-xl rounded-2xl overflow-hidden bg-card border border-border shadow-xl"
+              className={cn(SURFACE.overlay, "w-full max-w-xl overflow-hidden")}
             >
-              <div className="flex items-center gap-3 px-4 h-14 border-b border-border">
-                <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+              <div className="flex items-center gap-2.5 border-b border-border px-4 py-3.5">
+                <Search className={cn(ICON.sm, "shrink-0 text-muted-foreground")} strokeWidth={ICON_STROKE} />
                 <input
                   ref={searchRef}
                   value={searchVal}
                   onChange={e => setSearchVal(e.target.value)}
                   placeholder="Search pages, courses, notifications…"
-                  className="flex-1 bg-transparent outline-none text-sm font-medium text-foreground placeholder:text-muted-foreground"
+                  className="flex-1 bg-transparent text-[13.5px] font-medium text-foreground outline-none placeholder:text-muted-foreground"
                 />
                 <button
                   onClick={() => setSearchOpen(false)}
-                  className="h-6 w-6 rounded-md inline-flex items-center justify-center bg-muted hover:bg-subtle text-muted-foreground transition-colors"
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted text-muted-foreground transition-colors duration-120 hover:bg-subtle hover:text-foreground"
                   aria-label="Close"
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-3 w-3" strokeWidth={ICON_STROKE} />
                 </button>
               </div>
 
-              <div className="p-2 max-h-80 overflow-y-auto">
+              <div className="max-h-80 overflow-y-auto p-1.5">
                 {filtered.length === 0 ? (
-                  <p className="text-center py-10 text-sm text-muted-foreground">No results for "{searchVal}"</p>
+                  <p className={cn(TEXT.muted, "py-10 text-center")}>No results for “{searchVal}”</p>
                 ) : (
                   filtered.map(item => (
                     <button
                       key={item.to}
                       onClick={() => { navigate(item.to); setSearchOpen(false); setSearchVal("") }}
-                      className="w-full flex items-center gap-3 px-3 h-11 rounded-xl text-left text-foreground hover:bg-muted transition-colors"
+                      className="flex h-10 w-full items-center gap-3 rounded-xl px-2.5 text-left text-foreground transition-colors duration-120 hover:bg-muted"
                     >
-                      <div className="h-8 w-8 rounded-lg inline-flex items-center justify-center bg-primary/10 text-primary">
-                        <item.icon className="h-4 w-4" />
-                      </div>
-                      <span className="text-sm font-medium">{item.label}</span>
+                      <item.icon className={cn(ICON.sm, "text-muted-foreground")} strokeWidth={ICON_STROKE} />
+                      <span className="text-[13.5px] font-medium">{item.label}</span>
                     </button>
                   ))
                 )}
               </div>
 
-              <div className="px-4 h-10 flex items-center gap-2 border-t border-border text-[11px] text-muted-foreground">
-                <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted font-mono text-[10px] font-semibold">ESC</kbd>
+              <div className={cn(TEXT.muted, "flex h-10 items-center gap-2 border-t border-border px-4 text-[11px]")}>
+                <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold">ESC</kbd>
                 <span>to close</span>
                 <span className="mx-1 text-border">•</span>
-                <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted font-mono text-[10px] font-semibold">Enter</kbd>
+                <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold">Enter</kbd>
                 <span>to select</span>
               </div>
             </motion.div>

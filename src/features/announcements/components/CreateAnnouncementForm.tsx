@@ -1,11 +1,13 @@
-import InlineSpinner from "@/components/ui/InlineSpinner"
 import { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import {
-  Send, Paperclip, X, Loader2, Megaphone,
-} from "lucide-react"
+import { Send, Paperclip, X, Megaphone } from "lucide-react"
 import Avatar from "@/components/ui/Avatar"
+import Button from "@/components/ui/Button"
+import InlineSpinner from "@/components/ui/InlineSpinner"
+import { Textarea } from "@/components/ui/field"
+import { ICON_STROKE, FOCUS, MOTION, SURFACE } from "@/components/ui/appTokens"
 import { useAuthStore } from "@/store/authStore"
+import { cn } from "@/utils/cn"
 import type { CreateAnnouncementRequest } from "@/types/announcement.types"
 
 interface CreateAnnouncementFormProps {
@@ -17,6 +19,14 @@ interface CreateAnnouncementFormProps {
 const CHAR_LIMIT = 2000
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024 // 10 MB, matches Cloudinary raw-upload cap
 
+/**
+ * Announcement composer.
+ *
+ * Collapsed it is a single row that looks like the thing it becomes; expanding
+ * grows the same card rather than opening a modal, so the feed you are posting
+ * to stays on screen. The character counter only appears near the limit —
+ * a permanent "2,000 characters left" is noise on a two-line post.
+ */
 export default function CreateAnnouncementForm({
   courseId, onSubmit, isLoading,
 }: CreateAnnouncementFormProps) {
@@ -38,6 +48,7 @@ export default function CreateAnnouncementForm({
   const handleCancel = () => {
     setContent("")
     setAttachment(null)
+    setAttachError(null)
     setExpanded(false)
   }
 
@@ -49,18 +60,16 @@ export default function CreateAnnouncementForm({
     if (e.key === "Escape") handleCancel()
   }
 
-  const charCount = content.length
-  const charsLeft = CHAR_LIMIT - charCount
-  const overWarning = charCount > CHAR_LIMIT * 0.9
+  const charsLeft = CHAR_LIMIT - content.length
+  const nearLimit = content.length > CHAR_LIMIT * 0.9
 
   return (
     <div
-      className={
-        "relative overflow-hidden rounded-2xl border bg-card shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-colors " +
-        (expanded
-          ? "border-teal-300 dark:border-teal-700"
-          : "border-border hover:border-teal-200 dark:hover:border-teal-800")
-      }
+      className={cn(
+        SURFACE.card,
+        "relative overflow-hidden transition-colors duration-120",
+        expanded ? "border-primary/40" : "hover:border-border-strong",
+      )}
     >
       <AnimatePresence>
         {isLoading && (
@@ -70,7 +79,7 @@ export default function CreateAnnouncementForm({
             exit={{ opacity: 0 }}
             className="absolute inset-0 z-10 flex items-center justify-center gap-2.5 bg-card/90 backdrop-blur-sm"
           >
-            <InlineSpinner size={16} className="text-teal-600" />
+            <InlineSpinner size={16} className="text-primary" />
             <span className="text-[13px] font-semibold text-foreground">Posting…</span>
           </motion.div>
         )}
@@ -80,19 +89,22 @@ export default function CreateAnnouncementForm({
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-muted/50"
+          className={cn(
+            "flex w-full items-center gap-3 p-3.5 text-left transition-colors duration-120 hover:bg-muted/50",
+            FOCUS,
+          )}
         >
           <Avatar
             src={user?.profile?.profilePhotoUrl}
             name={user?.profile?.fullName}
             size="sm"
-            className="h-10 w-10 shrink-0"
+            className="h-9 w-9 shrink-0"
           />
-          <span className="flex-1 truncate text-[14px] text-muted-foreground">
+          <span className="flex-1 truncate text-[13.5px] text-muted-foreground">
             Share something with your class…
           </span>
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-teal-700 dark:border-teal-800 dark:bg-teal-950/50 dark:text-teal-300">
-            <Megaphone className="h-3 w-3" />
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-primary/20 bg-primary/10 px-2.5 py-1.5 text-[12px] font-semibold text-primary">
+            <Megaphone className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
             Announce
           </span>
         </button>
@@ -104,48 +116,40 @@ export default function CreateAnnouncementForm({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
+            transition={{ duration: MOTION.overlay, ease: MOTION.ease }}
             className="overflow-hidden"
           >
-            <div className="space-y-3 p-4">
-              <div className="flex items-start gap-3">
+            <div className="space-y-3 p-3.5">
+              <div className="flex items-center gap-3">
                 <Avatar
                   src={user?.profile?.profilePhotoUrl}
                   name={user?.profile?.fullName}
                   size="sm"
-                  className="h-10 w-10 shrink-0"
+                  className="h-9 w-9 shrink-0"
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-bold text-foreground">
+                  <p className="truncate text-[13px] font-semibold text-foreground">
                     {user?.profile?.fullName ?? "You"}
                   </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Posting to this course
-                  </p>
+                  <p className="text-[11.5px] text-muted-foreground">Posting to this course</p>
                 </div>
               </div>
 
-              <textarea
+              <Textarea
                 autoFocus
                 value={content}
                 onChange={e => setContent(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="What's on your mind? Use Ctrl+Enter to post."
+                placeholder="What's on your mind? Ctrl+Enter to post."
                 rows={5}
                 maxLength={CHAR_LIMIT}
-                className="w-full resize-none rounded-xl border border-border bg-muted/50 px-4 py-3 text-[14px] text-foreground placeholder:text-muted-foreground transition-all focus:border-teal-600 focus:bg-card focus:outline-none focus:ring-2 focus:ring-teal-600/30"
               />
 
-              <div className="flex items-center justify-end">
-                <span
-                  className={
-                    "text-[11px] font-medium " +
-                    (overWarning ? "text-amber-600" : "text-muted-foreground")
-                  }
-                >
+              {nearLimit && (
+                <p className="text-right text-[11.5px] font-medium text-warning">
                   {charsLeft.toLocaleString()} characters left
-                </span>
-              </div>
+                </p>
+              )}
 
               <AnimatePresence>
                 {attachment && (
@@ -153,47 +157,48 @@ export default function CreateAnnouncementForm({
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="flex items-center gap-2.5 rounded-xl border border-teal-200 bg-teal-50/60 px-3 py-2.5 dark:border-teal-800 dark:bg-teal-950/30"
+                    className="flex items-center gap-2.5 rounded-xl border border-border bg-muted/60 px-3 py-2.5"
                   >
-                    <Paperclip className="h-3.5 w-3.5 shrink-0 text-teal-700 dark:text-teal-300" />
-                    <span className="flex-1 truncate text-[12px] text-foreground">
+                    <Paperclip className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={ICON_STROKE} />
+                    <span className="flex-1 truncate text-[12.5px] text-foreground">
                       {attachment.name}
                     </span>
                     <button
                       type="button"
                       onClick={() => setAttachment(null)}
                       aria-label="Remove attachment"
-                      className="text-muted-foreground transition-colors hover:text-red-600"
+                      className={cn("rounded p-0.5 text-muted-foreground transition-colors duration-120 hover:text-destructive", FOCUS)}
                     >
-                      <X className="h-3.5 w-3.5" />
+                      <X className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
                     </button>
                   </motion.div>
                 )}
               </AnimatePresence>
 
               {attachError && (
-                <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[12px] font-semibold text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+                <div className="flex items-start gap-2 rounded-xl border border-destructive/25 bg-destructive-soft px-3 py-2.5 text-[12.5px] font-medium text-destructive">
                   <span className="flex-1">{attachError}</span>
                   <button
                     type="button"
                     onClick={() => setAttachError(null)}
                     aria-label="Dismiss"
-                    className="shrink-0 rounded-full p-0.5 text-red-600 transition-colors hover:bg-red-200 dark:text-red-300 dark:hover:bg-red-900/60"
+                    className="shrink-0 rounded-full p-0.5 transition-opacity duration-120 hover:opacity-70"
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
                   </button>
                 </div>
               )}
 
               <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="sm"
                   onClick={() => fileRef.current?.click()}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted px-3 py-2 text-[12px] font-semibold text-foreground transition-colors hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700 dark:hover:border-teal-700 dark:hover:bg-teal-950/30 dark:hover:text-teal-300"
+                  leftIcon={<Paperclip strokeWidth={ICON_STROKE} />}
                 >
-                  <Paperclip className="h-3.5 w-3.5" />
                   Attach file
-                </button>
+                </Button>
                 <input
                   ref={fileRef}
                   type="file"
@@ -212,24 +217,18 @@ export default function CreateAnnouncementForm({
                 />
 
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleCancel}
-                    className="rounded-lg px-3 py-2 text-[12px] font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  >
+                  <Button type="button" variant="ghost" size="sm" onClick={handleCancel}>
                     Cancel
-                  </button>
-                  <motion.button
+                  </Button>
+                  <Button
                     type="button"
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
+                    size="sm"
                     onClick={handleSubmit}
                     disabled={!content.trim() || isLoading}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-2 text-[12px] font-bold text-white sm:px-4 sm:text-[12.5px] shadow-sm transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    leftIcon={<Send strokeWidth={ICON_STROKE} />}
                   >
-                    <Send className="h-3.5 w-3.5" />
                     Post announcement
-                  </motion.button>
+                  </Button>
                 </div>
               </div>
             </div>

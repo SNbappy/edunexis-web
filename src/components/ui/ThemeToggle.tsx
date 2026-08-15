@@ -1,6 +1,8 @@
 ﻿import { AnimatePresence, motion } from "framer-motion"
 import { Sun, Moon } from "lucide-react"
 import { useThemeStore } from "@/store/themeStore"
+import { ICON, ICON_STROKE, FOCUS } from "@/components/ui/appTokens"
+import { cn } from "@/utils/cn"
 
 export default function ThemeToggle() {
   const { dark, toggle } = useThemeStore()
@@ -10,7 +12,10 @@ export default function ThemeToggle() {
       onClick={toggle}
       title={dark ? "Switch to light mode" : "Switch to dark mode"}
       aria-label="Toggle theme"
-      className="h-10 w-10 inline-flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted focus-ring transition-colors"
+      className={cn(
+        "inline-flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-colors duration-120 hover:bg-muted hover:text-foreground",
+        FOCUS,
+      )}
     >
       <AnimatePresence mode="wait" initial={false}>
         {dark ? (
@@ -22,7 +27,7 @@ export default function ThemeToggle() {
             transition={{ duration: 0.15 }}
             className="inline-flex"
           >
-            <Sun className="h-[18px] w-[18px]" strokeWidth={2} />
+            <Sun className={ICON.md} strokeWidth={ICON_STROKE} />
           </motion.span>
         ) : (
           <motion.span
@@ -33,7 +38,7 @@ export default function ThemeToggle() {
             transition={{ duration: 0.15 }}
             className="inline-flex"
           >
-            <Moon className="h-[18px] w-[18px]" strokeWidth={2} />
+            <Moon className={ICON.md} strokeWidth={ICON_STROKE} />
           </motion.span>
         )}
       </AnimatePresence>
