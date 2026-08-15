@@ -46,7 +46,7 @@ export default function PresentationsTab({ courseId }: Props) {
   )
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
+    <div className="space-y-4">
       <motion.div
         initial={{ opacity: 0, y: -6 }}
         animate={{ opacity: 1, y: 0 }}

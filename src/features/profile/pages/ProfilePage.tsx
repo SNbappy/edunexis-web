@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom"
 import { Pencil } from "lucide-react"
 import Button from "@/components/ui/Button"
 import Skeleton from "@/components/ui/Skeleton"
+import { Page } from "@/components/ui/Page"
+import { ICON_STROKE } from "@/components/ui/appTokens"
 import { useAuthStore } from "@/store/authStore"
 import { useProfile } from "../hooks/useProfile"
 import { usePublicProfile } from "../hooks/usePublicProfile"
@@ -45,7 +47,10 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
 
   if (isLoading) return <ProfilePageSkeleton />
 
-  if (isFetched && !p) {
+  /* `!p`, not `isFetched && !p` — the loading branch has already returned, so
+     this both covers the real not-found case and narrows `p` for the render
+     below, which was otherwise dereferencing a possibly-null profile. */
+  if (!p) {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center px-6 text-center">
         <h2 className="font-display text-lg font-semibold text-foreground">Profile not found</h2>
@@ -124,11 +129,12 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-5 lg:px-6">
+    <Page>
       {/* Two-column body — identity card persists across all tabs */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[300px_1fr]">
-        {/* Identity card (sticky on desktop) */}
-        <div className="lg:sticky lg:top-5 lg:self-start">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[292px_1fr]">
+        {/* Identity card. Sticks below the 56px topbar rather than at the very
+            top, where it would slide under the bar on scroll. */}
+        <div className="lg:sticky lg:top-20 lg:self-start">
           <ProfileIdentityCard
             profile={p}
             isSelf={isSelf}
@@ -146,8 +152,11 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
             {isSelf ? (
-              <Button variant="secondary" onClick={() => navigate("/profile/edit")}>
-                <Pencil className="h-3.5 w-3.5" />
+              <Button
+                variant="secondary"
+                onClick={() => navigate("/profile/edit")}
+                leftIcon={<Pencil strokeWidth={ICON_STROKE} />}
+              >
                 Edit profile
               </Button>
             ) : null}
@@ -209,14 +218,14 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
           />
         </>
       ) : null}
-    </div>
+    </Page>
   )
 }
 
 function ProfilePageSkeleton() {
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-5 lg:px-6">
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[300px_1fr]">
+    <Page>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[292px_1fr]">
         <Skeleton className="aspect-[3/4] w-full rounded-2xl" />
         <div className="space-y-5">
           <Skeleton className="h-12 w-72 rounded-xl" />
@@ -224,6 +233,6 @@ function ProfilePageSkeleton() {
           <Skeleton className="h-32 rounded-2xl" />
         </div>
       </div>
-    </div>
+    </Page>
   )
 }

@@ -63,7 +63,16 @@ export interface SubmitAssignmentRequest {
 }
 
 export interface GradeSubmissionRequest {
-    obtainedMarks: number
+    /**
+     * Must be `marks` — the API binds this body onto GradeSubmissionCommand,
+     * whose field is `Marks`. It was sent as `obtainedMarks`, which matched
+     * nothing, so the decimal defaulted to 0 and passed the `>= 0` validator:
+     * every graded assignment was silently stored as zero while the feedback
+     * (whose name did match) saved fine, so the grade looked like it worked.
+     *
+     * Note this differs from the *response* DTOs, which do use `obtainedMarks`.
+     */
+    marks: number
     feedback?: string
 }
 
@@ -77,6 +86,22 @@ export interface PlagiarismPair {
     similarity: number
     level: 'low' | 'medium' | 'high'
     commonPhrases: string[]
+    /**
+     * The three measures behind `similarity`. The checker has always computed
+     * these but the type never declared them, so they were dropped on the
+     * floor. They are worth keeping, because they say *how* two submissions
+     * match — a high LCS means long verbatim runs, whereas a high Jaccard with
+     * low LCS is the same vocabulary reordered. That distinction matters before
+     * putting an accusation to a student.
+     */
+    breakdown?: {
+        /** Cosine similarity over term-frequency vectors. */
+        cosine: number
+        /** Jaccard overlap of the two word sets. */
+        jaccard: number
+        /** Longest-common-subsequence ratio — catches verbatim copying. */
+        lcs: number
+    }
 }
 
 export interface PlagiarismReport {

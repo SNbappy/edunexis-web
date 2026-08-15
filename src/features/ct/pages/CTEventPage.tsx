@@ -11,6 +11,7 @@ import BrandLoader from '@/components/ui/BrandLoader'
 import { formatDate } from '@/utils/dateUtils'
 import { useAuthStore } from '@/store/authStore'
 import { isTeacher } from '@/utils/roleGuard'
+import type { UserRole } from '@/types/auth.types'
 import { useCTEvents, useCTMarks } from '../hooks/useCTEvents'
 import { useAttendance } from '@/features/attendance/hooks/useAttendance'
 
@@ -39,7 +40,9 @@ export default function CTEventPage() {
     const { members } = useAttendance(courseId!)
 
     const ct       = ctEvents.find(e => e.id === ctId)
-    const students = members.filter(m => !isTeacher(m.role ?? ''))
+    /* `role` on a course member is a plain string from the API, so it is
+       defaulted to a real role rather than "" — isTeacher takes a UserRole. */
+    const students = members.filter(m => !isTeacher((m.role as UserRole) ?? 'Student'))
 
     const [files, setFiles]           = useState<{ best?: File; worst?: File; avg?: File }>({})
     const [markInputs, setMarkInputs] = useState<Record<string, MarkInput>>({})
@@ -94,7 +97,11 @@ export default function CTEventPage() {
 
     )
 
-    if (!eventsLoading && !ct) return (
+    /* `!ct` alone, not `!eventsLoading && !ct`. The loading branch above has
+       already returned, so the extra clause was redundant at runtime — but it
+       stopped TypeScript narrowing `ct`, which is why every access below was
+       reported as possibly-undefined. */
+    if (!ct) return (
         <div className="p-6 text-center text-muted-foreground">CT event not found.</div>
     )
 

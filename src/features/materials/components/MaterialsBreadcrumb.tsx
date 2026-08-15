@@ -27,8 +27,8 @@ export default function MaterialsBreadcrumb({ items, onNavigate }: MaterialsBrea
               className={
                 "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[13px] font-semibold transition-colors " +
                 (isLast
-                  ? "cursor-default border border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-800 dark:bg-teal-950/50 dark:text-teal-300"
-                  : "border border-transparent text-muted-foreground hover:text-teal-700 dark:hover:text-teal-300")
+                  ? "cursor-default border border-primary/20 bg-primary/10 text-primary"
+                  : "border border-transparent text-muted-foreground hover:text-primary")
               }
             >
               {isHome ? (

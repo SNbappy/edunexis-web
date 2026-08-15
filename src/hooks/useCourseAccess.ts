@@ -31,9 +31,15 @@ export function useCourseAccess(courseId: string) {
   })
 
   const course = courseQuery.data
+  /* "Admin" is not a role this app has — the admin roles are DepartmentAdmin
+     and SuperAdmin. The comparison could never be true, so department admins
+     were dropped into the student membership check below and shown
+     "not enrolled" on courses they are entitled to administer. */
   const isTeacherOrAdmin =
     !!user && !!course &&
-    (course.teacherId === user.id || user.role === "Admin" || user.role === "SuperAdmin")
+    (course.teacherId === user.id ||
+      user.role === "DepartmentAdmin" ||
+      user.role === "SuperAdmin")
 
   const membersQuery = useQuery({
     queryKey: ["course-members", courseId],
@@ -71,7 +77,9 @@ export function useCourseAccess(courseId: string) {
     if (courseQuery.isFetching) {
       return { status: "loading" as AccessStatus, course: null }
     }
-    if (courseQuery.isSuccess && courseQuery.data === null) {
+    // `course` is already known falsy in this branch, so a settled successful
+    // query here means the API genuinely returned nothing.
+    if (courseQuery.isSuccess) {
       return { status: "not-found" as AccessStatus, course: null }
     }
     return { status: "loading" as AccessStatus, course: null }

@@ -20,8 +20,8 @@ interface ChipListProps {
 }
 
 const VARIANT_STYLES = {
-    teal: "border-teal-200 bg-teal-50 text-teal-800 dark:border-teal-800/50 dark:bg-teal-950/40 dark:text-teal-300",
-    violet: "border-violet-200 bg-violet-50 text-violet-800 dark:border-violet-800/50 dark:bg-violet-950/40 dark:text-violet-300",
+    teal: "border-primary/20 bg-primary/10 text-teal-800 border-primary/20/50 bg-primary/10 text-primary",
+    violet: "border-border bg-muted text-violet-800 dark:border-violet-800/50 bg-muted text-foreground",
     amber: "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/40 dark:text-amber-300",
 }
 

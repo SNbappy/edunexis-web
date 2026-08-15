@@ -1,10 +1,18 @@
 import { useState } from 'react'
-import { Shield, Users, ToggleLeft, ToggleRight, Award } from 'lucide-react'
+import { Users, Award, Ban, Clock } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
+import Badge from '@/components/ui/Badge'
+import Input from '@/components/ui/Input'
 import Skeleton from '@/components/ui/Skeleton'
-import { useAdmin } from '../hooks/useAdmin'
-import type { TeacherAdminDto } from '../services/adminService'
+import EmptyState from '@/components/ui/EmptyState'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
+import { Page, PageHero, PageSection } from '@/components/ui/Page'
+import { Switch } from '@/components/ui/field'
+import { ICON_STROKE, SURFACE, TEXT } from '@/components/ui/appTokens'
+import { cn } from '@/utils/cn'
+import { useAdmin, useTeacherGrants } from '../hooks/useAdmin'
+import type { TeacherAdminDto, GrantDto, GrantStatus } from '../services/adminService'
 
 export default function AdminSettingsPage() {
   const {
@@ -12,113 +20,130 @@ export default function AdminSettingsPage() {
     teachers, isTeachersLoading,
     updateSettings, isUpdatingSettings,
     grantQuota, isGrantingQuota,
+    revokeGrant, isRevokingGrant,
   } = useAdmin()
 
-  const [quotaModalTeacher, setQuotaModalTeacher] = useState<TeacherAdminDto | null>(null)
+  const [grantFor, setGrantFor] = useState<TeacherAdminDto | null>(null)
+  const [historyFor, setHistoryFor] = useState<TeacherAdminDto | null>(null)
+
+  const enforced = !!settings?.courseQuotaEnforced
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-8">
-      <header className="mb-8">
-        <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
-          Admin
-        </h1>
-        <p className="mt-1 text-[14px] text-muted-foreground">
-          Platform-wide settings and teacher management.
-        </p>
-      </header>
+    <Page>
+      <PageHero
+        eyebrow="Platform"
+        title="Admin"
+        description="Course-creation limits and the allowances you grant to teachers."
+        figures={[
+          { value: teachers.length, label: teachers.length === 1 ? "teacher" : "teachers" },
+          { value: enforced ? "On" : "Off", label: "quota enforcement" },
+        ]}
+      />
 
-      {/* Platform settings card */}
-      <section className="mb-8 rounded-2xl border border-border bg-card p-6">
-        <div className="flex items-center gap-2.5 mb-4">
-          <Shield className="h-4 w-4 text-teal-600" />
-          <h2 className="text-[15px] font-bold text-foreground">Course creation quota</h2>
-        </div>
+      <div className="h-6" />
 
+      {/* ── Enforcement switch ─────────────────────────────────────
+          The single lever that turns the whole quota system on. While it is
+          off nothing below has any effect on teachers. */}
+      <PageSection title="Course creation quota">
         {isSettingsLoading ? (
-          <Skeleton className="h-16 w-full rounded-xl" />
+          <Skeleton className="m-4 h-14" rounded="xl" />
         ) : (
-          <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-muted/30 p-4">
+          <div className="flex items-center justify-between gap-4 p-4">
             <div className="min-w-0">
-              <p className="text-[13px] font-semibold text-foreground">
-                {settings?.courseQuotaEnforced
-                  ? "Enforced - teachers limited to 1 free course"
-                  : "Disabled - teachers can create unlimited courses"}
+              <p className="flex items-center gap-2 text-[13.5px] font-semibold text-foreground">
+                {enforced ? 'Enforced' : 'Disabled'}
+                <Badge variant={enforced ? 'warning' : 'success'} size="sm">
+                  {enforced ? 'Limits apply' : 'Unlimited'}
+                </Badge>
               </p>
-              <p className="mt-0.5 text-[12px] text-muted-foreground">
-                {settings?.courseQuotaEnforced
-                  ? "Teachers past their limit must request more from you."
-                  : "Turn this on when premium launches to start limiting free accounts."}
+              <p className={cn(TEXT.muted, 'mt-1 max-w-prose leading-relaxed')}>
+                {enforced
+                  ? 'Teachers get one free course, then need a grant from you. Courses they already created are never affected.'
+                  : 'Every teacher can create unlimited courses. Turn this on when premium launches — existing courses stay, limits apply only to new ones.'}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => updateSettings(!settings?.courseQuotaEnforced)}
+            <Switch
+              checked={enforced}
+              onChange={next => updateSettings(next)}
               disabled={isUpdatingSettings}
-              className="shrink-0 disabled:opacity-50"
-              aria-label="Toggle course quota enforcement"
-            >
-              {settings?.courseQuotaEnforced ? (
-                <ToggleRight className="h-9 w-9 text-teal-600" />
-              ) : (
-                <ToggleLeft className="h-9 w-9 text-muted-foreground" />
-              )}
-            </button>
+              label="Enforce course creation quota"
+            />
           </div>
         )}
-      </section>
+      </PageSection>
 
-      {/* Teachers table */}
-      <section className="rounded-2xl border border-border bg-card p-6">
-        <div className="flex items-center gap-2.5 mb-4">
-          <Users className="h-4 w-4 text-teal-600" />
-          <h2 className="text-[15px] font-bold text-foreground">
-            Teachers {teachers.length > 0 && "(" + teachers.length + ")"}
-          </h2>
-        </div>
-
+      {/* ── Teachers ───────────────────────────────────────────── */}
+      <PageSection
+        title={`Teachers${teachers.length > 0 ? ` (${teachers.length})` : ''}`}
+        description={enforced ? undefined : 'Allowances are inactive while the quota switch is off.'}
+      >
         {isTeachersLoading ? (
-          <div className="space-y-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-14 w-full rounded-xl" />
-            ))}
+          <div className="space-y-2 p-4">
+            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12" rounded="lg" />)}
           </div>
         ) : teachers.length === 0 ? (
-          <p className="py-8 text-center text-[13px] text-muted-foreground">No teachers yet.</p>
+          <EmptyState
+            icon={<Users strokeWidth={ICON_STROKE} />}
+            title="No teachers yet"
+            description="Teacher accounts appear here once they register."
+            className="py-12"
+          />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full min-w-[720px] text-left">
               <thead>
-                <tr className="border-b border-border text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                  <th className="pb-2 pr-4">Teacher</th>
-                  <th className="pb-2 pr-4">Active courses</th>
-                  <th className="pb-2 pr-4">Quota</th>
-                  <th className="pb-2"></th>
+                <tr className="border-b border-border bg-muted/40">
+                  <th className={cn(TEXT.eyebrow, 'px-4 py-2.5')}>Teacher</th>
+                  <th className={cn(TEXT.eyebrow, 'px-3 py-2.5 text-right')}>Courses</th>
+                  <th className={cn(TEXT.eyebrow, 'px-3 py-2.5 text-right')}>Allowance</th>
+                  <th className={cn(TEXT.eyebrow, 'px-3 py-2.5')}>Expires</th>
+                  <th className="px-4 py-2.5" />
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-border">
                 {teachers.map(t => (
-                  <tr key={t.id} className="border-b border-border/50 text-[13px]">
-                    <td className="py-3 pr-4">
-                      <p className="font-semibold text-foreground">{t.fullName ?? t.email}</p>
+                  <tr key={t.id} className="transition-colors duration-120 hover:bg-muted/40">
+                    <td className="px-4 py-2.5">
+                      <p className="text-[13px] font-semibold text-foreground">
+                        {t.fullName ?? t.email}
+                      </p>
                       <p className="text-[11.5px] text-muted-foreground">{t.email}</p>
                     </td>
-                    <td className="py-3 pr-4 text-foreground">{t.activeCourseCount}</td>
-                    <td className="py-3 pr-4">
+                    <td className="px-3 py-2.5 text-right tabular-nums text-foreground">
+                      {t.activeCourseCount}
+                    </td>
+                    <td className="px-3 py-2.5 text-right">
                       {t.hasActiveQuota ? (
-                        <span className="text-foreground">{t.usedQuota} / {t.totalQuota}</span>
+                        <span className="tabular-nums text-foreground">
+                          <span className="font-semibold">{t.remainingQuota}</span>
+                          <span className="text-muted-foreground"> left of {t.totalQuota}</span>
+                        </span>
                       ) : (
-                        <span className="text-muted-foreground">No quota</span>
+                        <span className="text-[12.5px] text-muted-foreground">No allowance</span>
                       )}
                     </td>
-                    <td className="py-3 text-right">
-                      <Button
-                        variant="secondary"
-                        className="text-[12px] py-1.5 px-3"
-                        onClick={() => setQuotaModalTeacher(t)}
-                      >
-                        <Award className="h-3.5 w-3.5" />
-                        Grant quota
-                      </Button>
+                    <td className="px-3 py-2.5">
+                      {t.expiresInDays === null ? (
+                        <span className="text-[12.5px] text-muted-foreground">—</span>
+                      ) : (
+                        <ExpiryLabel days={t.expiresInDays} grants={t.activeGrantCount} />
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => setHistoryFor(t)}>
+                          History
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => setGrantFor(t)}
+                          leftIcon={<Award strokeWidth={ICON_STROKE} />}
+                        >
+                          Grant
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -126,19 +151,141 @@ export default function AdminSettingsPage() {
             </table>
           </div>
         )}
-      </section>
+      </PageSection>
 
       <GrantQuotaModal
-        teacher={quotaModalTeacher}
-        onClose={() => setQuotaModalTeacher(null)}
-        onGrant={(totalQuota, accessDurationDays) => {
-          if (!quotaModalTeacher) return
-          grantQuota({ teacherId: quotaModalTeacher.id, totalQuota, accessDurationDays })
-          setQuotaModalTeacher(null)
+        teacher={grantFor}
+        onClose={() => setGrantFor(null)}
+        onGrant={(courses, accessDurationDays, note) => {
+          if (!grantFor) return
+          grantQuota({ teacherId: grantFor.id, courses, accessDurationDays, note })
+          setGrantFor(null)
         }}
         isLoading={isGrantingQuota}
       />
-    </div>
+
+      <GrantHistoryModal
+        teacher={historyFor}
+        onClose={() => setHistoryFor(null)}
+        onRevoke={(grantId) => {
+          if (!historyFor) return
+          revokeGrant({ grantId, teacherId: historyFor.id })
+        }}
+        isRevoking={isRevokingGrant}
+      />
+    </Page>
+  )
+}
+
+/** Colours only when the deadline is close enough to act on. */
+function ExpiryLabel({ days, grants }: { days: number; grants: number }) {
+  const tone = days <= 7 ? 'text-destructive' : days <= 30 ? 'text-warning' : 'text-muted-foreground'
+  return (
+    <span className={cn('inline-flex items-center gap-1.5 text-[12.5px]', tone)}>
+      <Clock className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
+      <span className="tabular-nums">{days === 0 ? 'today' : `${days} days`}</span>
+      {grants > 1 && (
+        <span className="text-muted-foreground">· {grants} grants</span>
+      )}
+    </span>
+  )
+}
+
+const STATUS_VARIANT: Record<GrantStatus, 'success' | 'neutral' | 'warning' | 'danger'> = {
+  active: 'success',
+  'used-up': 'neutral',
+  expired: 'warning',
+  revoked: 'danger',
+}
+
+function GrantHistoryModal({
+  teacher, onClose, onRevoke, isRevoking,
+}: {
+  teacher: TeacherAdminDto | null
+  onClose: () => void
+  onRevoke: (grantId: string) => void
+  isRevoking?: boolean
+}) {
+  const { data: grants = [], isLoading } = useTeacherGrants(teacher?.id ?? null)
+  const [confirmRevoke, setConfirmRevoke] = useState<GrantDto | null>(null)
+
+  return (
+    <>
+      <Modal
+        isOpen={!!teacher}
+        onClose={onClose}
+        size="xl"
+        scrollable
+        title={`Course allowance — ${teacher?.fullName ?? teacher?.email ?? ''}`}
+        description="Every grant ever issued. Revoking withdraws unused slots only; courses already created are never removed."
+      >
+        {isLoading ? (
+          <div className="space-y-2">
+            {[1, 2, 3].map(i => <Skeleton key={i} className="h-16" rounded="xl" />)}
+          </div>
+        ) : grants.length === 0 ? (
+          <EmptyState
+            icon={<Award strokeWidth={ICON_STROKE} />}
+            title="No grants yet"
+            description="This teacher has never been given a course allowance."
+            className="py-10"
+          />
+        ) : (
+          <ul className={cn(SURFACE.card, 'divide-y divide-border overflow-hidden')}>
+            {grants.map(g => (
+              <li key={g.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-3.5 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-2 text-[13px] font-semibold text-foreground">
+                    <span className="tabular-nums">
+                      {g.used} of {g.courses} used
+                    </span>
+                    <Badge variant={STATUS_VARIANT[g.status]} size="sm">{g.status}</Badge>
+                    {g.isStarterGrant && <Badge variant="neutral" size="sm">free tier</Badge>}
+                  </p>
+                  <p className="mt-0.5 text-[11.5px] text-muted-foreground">
+                    {g.isRevoked
+                      ? 'Revoked'
+                      : g.status === 'expired'
+                        ? `Expired ${new Date(g.expiresAt).toLocaleDateString()}`
+                        : `Expires ${new Date(g.expiresAt).toLocaleDateString()} · ${g.expiresInDays} days`}
+                    {g.grantedByEmail && ` · by ${g.grantedByEmail}`}
+                    {g.note && ` · ${g.note}`}
+                  </p>
+                </div>
+
+                {g.status === 'active' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setConfirmRevoke(g)}
+                    leftIcon={<Ban strokeWidth={ICON_STROKE} />}
+                  >
+                    Revoke
+                  </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Modal>
+
+      <ConfirmDialog
+        isOpen={!!confirmRevoke}
+        onClose={() => setConfirmRevoke(null)}
+        onConfirm={() => {
+          if (confirmRevoke) onRevoke(confirmRevoke.id)
+          setConfirmRevoke(null)
+        }}
+        title="Revoke this grant?"
+        description={
+          confirmRevoke
+            ? `${confirmRevoke.remaining} unused course slot(s) will be withdrawn. Courses already created with this grant are not affected.`
+            : ''
+        }
+        confirmLabel="Revoke grant"
+        isLoading={isRevoking}
+      />
+    </>
   )
 }
 
@@ -147,60 +294,72 @@ function GrantQuotaModal({
 }: {
   teacher: TeacherAdminDto | null
   onClose: () => void
-  onGrant: (totalQuota: number, accessDurationDays: number) => void
+  onGrant: (courses: number, accessDurationDays: number, note?: string) => void
   isLoading?: boolean
 }) {
-  const [totalQuota, setTotalQuota] = useState("5")
-  const [accessDays, setAccessDays] = useState("365")
+  const [courses, setCourses] = useState('5')
+  const [days, setDays] = useState('365')
+  const [note, setNote] = useState('')
 
   const handleClose = () => {
-    setTotalQuota("5")
-    setAccessDays("365")
+    setCourses('5'); setDays('365'); setNote('')
     onClose()
   }
 
-  const handleSubmit = () => {
-    const q = parseInt(totalQuota, 10)
-    const d = parseInt(accessDays, 10)
-    if (!q || q <= 0 || !d || d <= 0) return
-    onGrant(q, d)
-  }
+  const c = parseInt(courses, 10)
+  const d = parseInt(days, 10)
+  const valid = c > 0 && d > 0
+
+  const expiresOn = valid
+    ? new Date(Date.now() + d * 86_400_000).toLocaleDateString(undefined, {
+        day: 'numeric', month: 'short', year: 'numeric',
+      })
+    : null
 
   return (
-    <Modal isOpen={!!teacher} onClose={handleClose} size="sm" title={"Grant quota to " + (teacher?.fullName ?? teacher?.email ?? "")}>
-      <div className="space-y-3">
-        <div>
-          <label className="mb-1.5 block text-[12px] font-semibold text-foreground">
-            Total courses allowed
-          </label>
-          <input
-            type="number"
-            min={1}
-            value={totalQuota}
-            onChange={e => setTotalQuota(e.target.value)}
-            className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13px] text-foreground transition-all focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
-          />
-        </div>
-        <div>
-          <label className="mb-1.5 block text-[12px] font-semibold text-foreground">
-            Access duration (days)
-          </label>
-          <input
-            type="number"
-            min={1}
-            value={accessDays}
-            onChange={e => setAccessDays(e.target.value)}
-            className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13px] text-foreground transition-all focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
-          />
-        </div>
-        <div className="flex gap-3 pt-2">
-          <Button variant="secondary" className="flex-1" onClick={handleClose} disabled={isLoading}>
-            Cancel
+    <Modal
+      isOpen={!!teacher}
+      onClose={handleClose}
+      size="sm"
+      title={`Grant courses to ${teacher?.fullName ?? teacher?.email ?? ''}`}
+      description="This is added on top of any allowance they already hold."
+      footer={
+        <>
+          <Button variant="secondary" onClick={handleClose} disabled={isLoading}>Cancel</Button>
+          <Button loading={isLoading} disabled={!valid} onClick={() => onGrant(c, d, note)}>
+            Grant {valid ? c : ''} {c === 1 ? 'course' : 'courses'}
           </Button>
-          <Button className="flex-1" loading={isLoading} onClick={handleSubmit}>
-            Grant quota
-          </Button>
-        </div>
+        </>
+      }
+    >
+      <div className="space-y-3.5">
+        <Input
+          label="Courses to add"
+          type="number"
+          min={1}
+          value={courses}
+          onChange={e => setCourses(e.target.value)}
+          hint={
+            teacher?.hasActiveQuota
+              ? `They currently have ${teacher.remainingQuota} left of ${teacher.totalQuota}.`
+              : 'They have no active allowance right now.'
+          }
+        />
+        <Input
+          label="Valid for (days)"
+          type="number"
+          min={1}
+          value={days}
+          onChange={e => setDays(e.target.value)}
+          hint={expiresOn ? `Expires ${expiresOn}. Unused slots lapse on that date.` : undefined}
+        />
+        <Input
+          label="Note"
+          value={note}
+          onChange={e => setNote(e.target.value)}
+          placeholder="e.g. Spring 2027 premium"
+          hint="Optional — shown in the grant history."
+        />
       </div>
     </Modal>
   )

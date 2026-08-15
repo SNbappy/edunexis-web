@@ -12,7 +12,7 @@ import Avatar from "@/components/ui/Avatar"
 import BrandMark from "@/components/ui/BrandMark"
 import { isTeacher, isAdmin } from "@/utils/roleGuard"
 import { useNotifications } from "@/features/notifications/hooks/useNotifications"
-import { ICON, ICON_STROKE, FOCUS, MOTION, TEXT } from "@/components/ui/appTokens"
+import { ICON, ICON_STROKE, FOCUS, MOTION, INK } from "@/components/ui/appTokens"
 import { cn } from "@/utils/cn"
 
 const NAV_PRIMARY = [
@@ -56,15 +56,18 @@ function NavItem({
             "group relative flex h-9 items-center gap-2.5 rounded-xl transition-colors duration-120",
             collapsed ? "justify-center px-0" : "pl-3 pr-2.5",
             isActive
-              ? "bg-primary/10 text-foreground"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              ? "text-white"
+              : "text-teal-100/60 hover:bg-white/[0.07] hover:text-white",
           )}
           title={collapsed ? label : undefined}
         >
+          {/* The active state is a filled pill that slides between items,
+              rather than a static tint plus a separate rail. One moving
+              object is easier to follow than two appearing ones. */}
           {isActive && (
             <motion.span
               layoutId={railId}
-              className="absolute inset-y-1.5 left-0 w-[3px] rounded-r-full bg-primary"
+              className="absolute inset-0 rounded-xl border border-white/10 bg-white/[0.13] shadow-[inset_0_1px_0_rgb(255_255_255/0.12)]"
               transition={{ type: "spring", stiffness: 380, damping: 32 }}
               aria-hidden
             />
@@ -72,18 +75,18 @@ function NavItem({
 
           <span className="relative flex shrink-0 items-center justify-center">
             <Icon
-              className={cn(ICON.sm, isActive && "text-primary")}
+              className={cn(ICON.sm, isActive && "text-teal-300")}
               strokeWidth={ICON_STROKE}
             />
             {badge !== undefined && badge > 0 && (
-              <span className="absolute -right-1.5 -top-1.5 inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold leading-none text-white ring-2 ring-card">
+              <span className="absolute -right-1.5 -top-1.5 inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold leading-none text-white ring-2 ring-teal-950">
                 {badge > 9 ? "9+" : badge}
               </span>
             )}
           </span>
 
           {!collapsed && (
-            <span className={cn("truncate text-[13.5px]", isActive ? "font-semibold" : "font-medium")}>
+            <span className={cn("relative truncate text-[13.5px]", isActive ? "font-semibold" : "font-medium")}>
               {label}
             </span>
           )}
@@ -94,8 +97,12 @@ function NavItem({
 }
 
 function GroupLabel({ children, collapsed }: { children: React.ReactNode; collapsed: boolean }) {
-  if (collapsed) return <div aria-hidden className="mx-auto my-2 h-px w-6 bg-border" />
-  return <p className={cn(TEXT.eyebrow, "px-3 pb-1.5")}>{children}</p>
+  if (collapsed) return <div aria-hidden className="mx-auto my-2 h-px w-6 bg-white/10" />
+  return (
+    <p className="px-3 pb-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-teal-300/50">
+      {children}
+    </p>
+  )
 }
 
 export default function Sidebar({ onItemClick }: { onItemClick?: () => void } = {}) {
@@ -111,33 +118,62 @@ export default function Sidebar({ onItemClick }: { onItemClick?: () => void } = 
   const teacher = isTeacher(user?.role ?? "Student")
   const admin = isAdmin(user?.role ?? "Student")
 
+  /* isTeacher() returns true for admins too (they inherit teaching rights), so
+     a plain teacher/student ternary labelled a SuperAdmin as "Teacher". Admin
+     is checked first because it is the more specific role. */
+  const roleLabel =
+    user?.role === "SuperAdmin" ? "Administrator"
+      : user?.role === "DepartmentAdmin" ? "Department admin"
+        : teacher ? "Teacher"
+          : "Student"
+
   const W = collapsed ? 64 : 244
 
   return (
+    /* Ink rail.
+       The sidebar was plain white with grey labels, which read as pale
+       next to the brand surfaces it sits beside and gave the app no
+       constant identity. Making it the same teal ink frames every screen
+       and lets the light content area read as the lit working surface. */
     <motion.aside
       animate={{ width: W }}
       transition={{ duration: MOTION.base, ease: MOTION.ease }}
-      className="relative flex h-full shrink-0 flex-col border-r border-border bg-card"
+      className={cn(
+        "relative flex h-full shrink-0 flex-col overflow-hidden",
+        INK.chrome,
+        INK.chromeEdge,
+      )}
       style={{ minWidth: W, maxWidth: W }}
     >
-      {/* brand — same lockup proportions as the public navbar */}
+      {/* Same 48px grid as the heroes, at half strength so it reads as
+          texture rather than pattern at this width. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.035]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
+          backgroundSize: "48px 48px",
+        }}
+      />
+
       <Link
         to="/dashboard"
         className={cn(
-          "flex h-14 shrink-0 items-center border-b border-border transition-colors hover:bg-muted/60",
+          "relative flex h-14 shrink-0 items-center border-b border-white/10 transition-colors duration-120 hover:bg-white/[0.06]",
           collapsed ? "justify-center px-0" : "gap-2.5 px-4",
           FOCUS,
         )}
       >
-        <BrandMark className="h-6 w-6 shrink-0 text-primary" />
+        <BrandMark className="h-6 w-6 shrink-0 text-teal-300" />
         {!collapsed && (
-          <span className="font-display text-[16px] font-extrabold tracking-tight text-foreground">
+          <span className="font-display text-[16px] font-extrabold tracking-tight text-white">
             EduNexis
           </span>
         )}
       </Link>
 
-      <nav className="flex-1 space-y-5 overflow-y-auto overflow-x-hidden px-2.5 py-4">
+      <nav className="relative flex-1 space-y-5 overflow-y-auto overflow-x-hidden px-2.5 py-4">
         <div className="space-y-0.5">
           <GroupLabel collapsed={collapsed}>Learn</GroupLabel>
           {NAV_PRIMARY.map(item => (
@@ -175,11 +211,11 @@ export default function Sidebar({ onItemClick }: { onItemClick?: () => void } = 
         )}
       </nav>
 
-      <div className="shrink-0 border-t border-border p-2.5">
+      <div className="relative shrink-0 border-t border-white/10 p-2.5">
         <div
           onClick={() => navigate(ROUTES.PROFILE)}
           className={cn(
-            "flex cursor-pointer items-center gap-2.5 rounded-xl p-1.5 transition-colors duration-120 hover:bg-muted",
+            "flex cursor-pointer items-center gap-2.5 rounded-xl p-1.5 transition-colors duration-120 hover:bg-white/[0.07]",
             collapsed && "justify-center",
           )}
           title={collapsed ? user?.profile?.fullName ?? user?.email : undefined}
@@ -188,22 +224,22 @@ export default function Sidebar({ onItemClick }: { onItemClick?: () => void } = 
             src={user?.profile?.profilePhotoUrl ?? undefined}
             name={user?.profile?.fullName ?? user?.email ?? "U"}
             size="sm"
-            className="shrink-0"
+            className="shrink-0 ring-1 ring-white/20"
           />
           {!collapsed && (
             <>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[12.5px] font-semibold leading-tight text-foreground">
+                <p className="truncate text-[12.5px] font-semibold leading-tight text-white">
                   {user?.profile?.fullName ?? "User"}
                 </p>
-                <p className="truncate text-[11px] text-muted-foreground">
-                  {teacher ? "Teacher" : "Student"}
+                <p className="truncate text-[11px] text-teal-100/60">
+                  {roleLabel}
                 </p>
               </div>
               <button
                 onClick={e => { e.stopPropagation(); window.location.replace("/"); clearAuth() }}
                 className={cn(
-                  "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors duration-120 hover:bg-destructive-soft hover:text-destructive",
+                  "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-teal-100/60 transition-colors duration-120 hover:bg-rose-500/20 hover:text-rose-300",
                   FOCUS,
                 )}
                 title="Sign out"
@@ -219,7 +255,7 @@ export default function Sidebar({ onItemClick }: { onItemClick?: () => void } = 
         <button
           onClick={() => setCollapsed(p => !p)}
           className={cn(
-            "mt-1 inline-flex h-8 w-full items-center justify-center gap-2 rounded-lg text-muted-foreground transition-colors duration-120 hover:bg-muted hover:text-foreground",
+            "mt-1 inline-flex h-8 w-full items-center justify-center gap-2 rounded-lg text-teal-100/60 transition-colors duration-120 hover:bg-white/[0.07] hover:text-white",
             FOCUS,
           )}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}

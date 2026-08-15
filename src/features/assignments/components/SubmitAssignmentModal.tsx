@@ -1,4 +1,4 @@
-﻿import { useState } from "react"
+import { useState } from "react"
 import { motion } from "framer-motion"
 import { Send, FileText, Paperclip, Clock, Award } from "lucide-react"
 import Modal from "@/components/ui/Modal"
@@ -39,12 +39,12 @@ export default function SubmitAssignmentModal({
     <Modal isOpen={isOpen} onClose={handleClose} title="Submit assignment" size="lg">
       <div className="space-y-4">
         {/* Assignment info card */}
-        <div className="space-y-2 rounded-2xl border border-teal-200 bg-teal-50 dark:border-teal-900/50 dark:bg-teal-950/30 p-4 dark:border-teal-800 dark:bg-teal-950/40">
+        <div className="space-y-2 rounded-2xl border border-primary/25 bg-primary-soft p-4">
           <p className="font-display text-[13.5px] font-bold text-foreground">
             {assignment.title}
           </p>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-            <span className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-teal-700 dark:text-teal-300">
+            <span className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-primary">
               <Clock className="h-3 w-3" />
               Due: {formatDateTime(assignment.deadline)}
             </span>
@@ -54,7 +54,7 @@ export default function SubmitAssignmentModal({
             </span>
           </div>
           {assignment.instructions && (
-            <p className="border-t border-teal-200 pt-2 text-[11.5px] leading-relaxed text-muted-foreground dark:border-teal-800">
+            <p className="border-t border-primary/25 pt-2 text-[11.5px] leading-relaxed text-muted-foreground">
               {assignment.instructions}
             </p>
           )}
@@ -74,7 +74,7 @@ export default function SubmitAssignmentModal({
                 className={
                   "flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-[12.5px] font-bold transition-colors " +
                   (active
-                    ? "bg-card text-teal-700 shadow-sm dark:text-teal-300"
+                    ? "bg-card text-primary shadow-sm"
                     : "text-muted-foreground hover:text-foreground")
                 }
               >
@@ -99,7 +99,7 @@ export default function SubmitAssignmentModal({
               onChange={e => setTextContent(e.target.value)}
               rows={8}
               placeholder="Write your answer here…"
-              className="w-full resize-none rounded-xl border border-border bg-muted/40 px-4 py-3 text-[13px] text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-teal-500 focus:bg-card focus:ring-2 focus:ring-teal-500/20"
+              className="w-full resize-none rounded-xl border border-border bg-muted/40 px-4 py-3 text-[13px] text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:bg-card focus:ring-2 focus:ring-teal-500/20"
             />
             <p className="mt-1 text-right text-[11px] text-muted-foreground">
               {textContent.length} characters

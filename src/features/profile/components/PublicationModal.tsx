@@ -94,11 +94,11 @@ export default function PublicationModal({
                 {/* Type */}
                 <div>
                     <label className="mb-1.5 block text-[13px] font-semibold text-foreground">
-                        Type <span className="text-red-500">*</span>
+                        Type <span className="text-destructive">*</span>
                     </label>
                     <select
                         {...register("type")}
-                        className="h-10 w-full rounded-xl border border-border bg-card px-3 text-[13px] text-foreground outline-none transition-colors focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+                        className="h-10 w-full rounded-xl border border-border bg-card px-3 text-[13px] text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-teal-500/20"
                     >
                         {TYPES.map(t => (
                             <option key={t} value={t}>{TYPE_LABEL[t]}</option>

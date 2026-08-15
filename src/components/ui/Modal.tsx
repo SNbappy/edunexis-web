@@ -63,7 +63,7 @@ function ModalContent({
             exit={{ opacity: 0 }}
             transition={{ duration: MOTION.overlay }}
             onClick={onClose}
-            className="fixed inset-0 bg-foreground/45 backdrop-blur-sm"
+            className={cn("fixed inset-0", SURFACE.scrim)}
           />
 
           {/* Rises a little rather than scaling up from small: at dialog size a

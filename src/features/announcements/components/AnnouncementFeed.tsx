@@ -1,8 +1,10 @@
 ﻿import { Pin, Megaphone } from "lucide-react"
 import EmptyState from "@/components/ui/EmptyState"
 import { SkeletonCard } from "@/components/ui/Skeleton"
+import { TabSplit } from "@/components/ui/Page"
 import { ICON_STROKE, TEXT } from "@/components/ui/appTokens"
 import { cn } from "@/utils/cn"
+import StreamRail from "./StreamRail"
 import AnnouncementCard from "./AnnouncementCard"
 import CreateAnnouncementForm from "./CreateAnnouncementForm"
 import { useAnnouncements } from "../hooks/useAnnouncements"
@@ -32,16 +34,19 @@ export default function AnnouncementFeed({ courseId }: AnnouncementFeedProps) {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-3xl space-y-3">
-        {[1, 2, 3].map(i => (
-          <SkeletonCard key={i} />
-        ))}
-      </div>
+      <TabSplit>
+        <div className="space-y-3">
+          {[1, 2, 3].map(i => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      </TabSplit>
     )
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
+    <TabSplit aside={<StreamRail courseId={courseId} />}>
+      <div className="space-y-5">
       {/* Composer — teachers only */}
       {teacher && (
         <CreateAnnouncementForm
@@ -114,7 +119,8 @@ export default function AnnouncementFeed({ courseId }: AnnouncementFeedProps) {
           </div>
         </section>
       )}
-    </div>
+      </div>
+    </TabSplit>
   )
 }
 

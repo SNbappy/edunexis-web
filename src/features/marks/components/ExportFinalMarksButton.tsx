@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Download, FileText, FileImage, Printer } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Button from '@/components/ui/Button'
-import type { FinalMarkDto, FormulaDto } from '@/types/marks.types'
+import type { FinalMarkDto, GradingFormulaDto } from '@/types/marks.types'
 import {
     getCsvLetterheadRows,
     getHtmlLetterhead,
@@ -11,12 +11,12 @@ import {
 
 interface Props {
     marks: FinalMarkDto[]
-    formula: FormulaDto
+    formula: GradingFormulaDto
     courseTitle?: string
     courseCode?: string | null
     semester?: string | null
     department?: string | null
-    members?: Array<{ userId: string; studentId?: string; fullName: string }>
+    members?: Array<{ userId: string; studentId?: string | null; fullName: string }>
 }
 
 export default function ExportFinalMarksButton({

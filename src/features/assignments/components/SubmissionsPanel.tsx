@@ -1,6 +1,7 @@
-import { useState } from "react"
+﻿import { useState } from "react"
 import { motion } from "framer-motion"
 import { CheckCircle2, AlertCircle, Star, ShieldAlert, Clock } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import Avatar from "@/components/ui/Avatar"
 import Button from "@/components/ui/Button"
 import GradeSubmissionModal from "./GradeSubmissionModal"
@@ -26,7 +27,7 @@ function getStatus(s: SubmissionDto): SubStatus {
 
 interface StatusConfig {
   classes: string
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
+  icon: LucideIcon
 }
 
 function getStatusConfig(status: SubStatus): StatusConfig {

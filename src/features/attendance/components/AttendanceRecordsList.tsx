@@ -11,6 +11,8 @@ interface AttendanceRecordsListProps {
   onDelete?: (id: string) => void
   onEdit?: (id: string) => void
   onView?: (id: string) => void
+  /** Shown in the empty state so a teacher knows the roll is ready. */
+  totalStudents?: number
 }
 
 function getStats(s: AttendanceSessionDto) {
@@ -36,7 +38,7 @@ function getStats(s: AttendanceSessionDto) {
  * out and a 74% looked much like an 89%.
  */
 export default function AttendanceRecordsList({
-  sessions, onDelete, onEdit,
+  sessions, onDelete, onEdit, totalStudents,
 }: AttendanceRecordsListProps) {
   if (sessions.length === 0) {
     return (
@@ -44,7 +46,11 @@ export default function AttendanceRecordsList({
         variant="panel"
         icon={<ClipboardCheck strokeWidth={ICON_STROKE} />}
         title="No attendance records yet"
-        description="Take attendance for today's class to get started."
+        description={
+          totalStudents && totalStudents > 0
+            ? `Take attendance for today's class to get started. ${totalStudents} student${totalStudents === 1 ? "" : "s"} enrolled.`
+            : "Take attendance for today's class to get started."
+        }
       />
     )
   }

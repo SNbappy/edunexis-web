@@ -1,6 +1,10 @@
 import { useState } from "react"
 import { Building2, Shield, Mail, Phone, MapPin, Clock, BookOpen, FileText } from "lucide-react"
-import Avatar from "@/components/ui/Avatar"
+import Badge from "@/components/ui/Badge"
+import { SURFACE } from "@/components/ui/appTokens"
+import { cn } from "@/utils/cn"
+import { getInitials } from "@/utils/names"
+
 import InlineSpinner from "@/components/ui/InlineSpinner"
 import { isTeacher } from "@/utils/roleGuard"
 import type { PublicProfileDto } from "@/types/auth.types"
@@ -42,32 +46,64 @@ export default function ProfileIdentityCard(props: ProfileIdentityCardProps) {
 
   return (
     <>
-      <aside className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm ring-1 ring-stone-200/50 dark:ring-white/5">
-        {/* Photo - square, fills card width */}
-        <div className="relative aspect-square w-full overflow-hidden bg-muted">
+      <aside className={cn(SURFACE.card, "overflow-hidden")}>
+        {/* Portrait.
+            Profile is a destination page like Dashboard or Courses, but it
+            already has this card doing the work a hero would, so stacking an
+            ink banner above it would just say the same thing twice. Instead
+            the card carries the brand itself: with no photo this is the ink
+            surface with the person's initials, rather than the grey slab it
+            used to be — the largest, dullest block on the page. */}
+        <div className="relative aspect-square w-full overflow-hidden bg-teal-950">
+          {!p.profilePhotoUrl && (
+            <>
+              <div
+                aria-hidden
+                className="absolute inset-0 opacity-[0.06]"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
+                  backgroundSize: "32px 32px",
+                }}
+              />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full opacity-40 blur-3xl"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(45,212,191,0.6) 0%, rgba(45,212,191,0.12) 50%, transparent 70%)",
+                }}
+              />
+            </>
+          )}
+
           {(isUploadingPhoto || isRemovingPhoto) ? (
             <div className="flex h-full w-full items-center justify-center">
-              <InlineSpinner size={32} className="text-teal-600" />
+              <InlineSpinner size={32} className="text-teal-300" />
             </div>
           ) : (
             <button
               type="button"
               onClick={() => setAvatarOpen(true)}
-              className="group block h-full w-full"
+              className="group relative block h-full w-full"
               aria-label="View profile picture"
             >
-              <Avatar
-                src={p.profilePhotoUrl}
-                name={p.fullName}
-                size="xl"
-                className="h-full w-full rounded-none text-5xl transition-transform group-hover:scale-[1.02]"
-              />
               {p.profilePhotoUrl ? (
-                <div className="pointer-events-none absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/15" />
-              ) : null}
+                <>
+                  <img
+                    src={p.profilePhotoUrl}
+                    alt={p.fullName}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                  />
+                  <div className="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-200 group-hover:bg-black/15" />
+                </>
+              ) : (
+                <span className="flex h-full w-full items-center justify-center font-display text-6xl font-extrabold tracking-tight text-white/90">
+                  {getInitials(p.fullName)}
+                </span>
+              )}
             </button>
           )}
-
         </div>
 
         {/* Identity body */}
@@ -77,7 +113,7 @@ export default function ProfileIdentityCard(props: ProfileIdentityCardProps) {
           </h2>
 
           {p.designation ? (
-            <p className="mt-1 text-[13.5px] font-semibold italic text-teal-700 dark:text-teal-400">
+            <p className="mt-1 text-[13.5px] font-semibold text-primary">
               {p.designation}
             </p>
           ) : null}
@@ -88,21 +124,20 @@ export default function ProfileIdentityCard(props: ProfileIdentityCardProps) {
             </p>
           ) : null}
 
-          {/* Teal accent divider */}
-          <div className="my-4 h-[2px] w-12 rounded-full bg-teal-600 dark:bg-teal-500" />
+          <div className="my-4 border-t border-border" />
 
           {/* Department + ID */}
           <div className="space-y-2.5 text-[13px]">
             {p.department ? (
               <div className="flex items-start gap-2.5">
-                <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+                <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.75} />
                 <span className="font-semibold text-foreground">{p.department}</span>
               </div>
             ) : null}
 
             {showStudentId ? (
               <div className="flex items-start gap-2.5">
-                <Shield className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+                <Shield className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.75} />
                 <span className="font-mono text-foreground">{p.studentId}</span>
               </div>
             ) : null}
@@ -111,17 +146,18 @@ export default function ProfileIdentityCard(props: ProfileIdentityCardProps) {
           {/* Stats - inline badges */}
           {(totalCourses > 0 || p.publications.length > 0) ? (
             <div className="mt-3 flex flex-wrap items-center gap-2">
+              {/* Two counts, one treatment. The second was violet purely to
+                  differ from the first, which made "publications" look like a
+                  different kind of thing than "courses". */}
               {totalCourses > 0 ? (
-                <span className="inline-flex items-center gap-1.5 rounded-lg bg-teal-50 px-2.5 py-1 text-[11.5px] font-bold text-teal-700 dark:bg-teal-950/40 dark:text-teal-300">
-                  <BookOpen className="h-3 w-3" />
+                <Badge variant="neutral" size="md" icon={<BookOpen strokeWidth={1.75} />}>
                   {totalCourses} {totalCourses === 1 ? "course" : "courses"}
-                </span>
+                </Badge>
               ) : null}
               {teacher && p.publications.length > 0 ? (
-                <span className="inline-flex items-center gap-1.5 rounded-lg bg-violet-50 px-2.5 py-1 text-[11.5px] font-bold text-violet-700 dark:bg-violet-950/40 dark:text-violet-300">
-                  <FileText className="h-3 w-3" />
+                <Badge variant="neutral" size="md" icon={<FileText strokeWidth={1.75} />}>
                   {p.publications.length} {p.publications.length === 1 ? "publication" : "publications"}
-                </span>
+                </Badge>
               ) : null}
             </div>
           ) : null}
@@ -133,11 +169,11 @@ export default function ProfileIdentityCard(props: ProfileIdentityCardProps) {
               <div className="space-y-2.5 text-[13px]">
                 {showEmail ? (
                   <div className="flex items-start gap-2.5">
-                    <Mail className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+                    <Mail className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.75} />
                     <button
                       type="button"
                       onClick={openEmail}
-                      className="break-all text-left text-foreground transition-colors hover:text-teal-700 dark:hover:text-teal-400"
+                      className="break-all text-left text-foreground transition-colors duration-120 hover:text-primary"
                     >
                       {p.email}
                     </button>
@@ -145,7 +181,7 @@ export default function ProfileIdentityCard(props: ProfileIdentityCardProps) {
                 ) : null}
                 {showPhone ? (
                   <div className="flex items-start gap-2.5">
-                    <Phone className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+                    <Phone className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.75} />
                     <span className="text-foreground">{p.phoneNumber}</span>
                   </div>
                 ) : null}
@@ -160,13 +196,13 @@ export default function ProfileIdentityCard(props: ProfileIdentityCardProps) {
               <div className="space-y-2.5 text-[13px]">
                 {showOffice ? (
                   <div className="flex items-start gap-2.5">
-                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.75} />
                     <span className="text-foreground">{p.officeLocation}</span>
                   </div>
                 ) : null}
                 {showHours ? (
                   <div className="flex items-start gap-2.5">
-                    <Clock className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+                    <Clock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.75} />
                     <span className="text-foreground">{p.officeHours}</span>
                   </div>
                 ) : null}

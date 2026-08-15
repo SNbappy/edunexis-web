@@ -1,5 +1,6 @@
 import { useEffect } from "react"
 import Sidebar from "./Sidebar"
+import { SURFACE } from "@/components/ui/appTokens"
 import { cn } from "@/utils/cn"
 
 interface MobileSidebarProps { isOpen: boolean; onClose: () => void }
@@ -22,7 +23,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
         onClick={onClose}
         aria-hidden
         className={cn(
-          "fixed inset-0 z-40 lg:hidden bg-foreground/40 backdrop-blur-sm transition-opacity duration-200",
+          "fixed inset-0 z-40 lg:hidden transition-opacity duration-200", SURFACE.scrim,
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
       />

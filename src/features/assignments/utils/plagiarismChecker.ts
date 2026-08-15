@@ -146,7 +146,7 @@ export async function checkPlagiarismAsync(submissions: CheckInput[]): Promise<P
                 if (extracted.trim().length > 30)
                     resolved.push({ id: sub.id, studentName: sub.studentName, text: extracted, source: 'pdf' })
                 else
-                    cannotCheck.push(sub.studentName + ' (scanned/image PDF ? not readable)')
+                    cannotCheck.push(sub.studentName + ' (scanned/image PDF, not readable)')
             } else {
                 cannotCheck.push(sub.studentName + ' (non-PDF file)')
             }

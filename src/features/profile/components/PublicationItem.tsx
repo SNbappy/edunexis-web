@@ -44,7 +44,7 @@ export default function PublicationItem({
         <div className="min-w-0 flex-1">
           {/* Type chip + year */}
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="rounded-md bg-teal-50 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wider text-teal-700 dark:bg-teal-950/40 dark:text-teal-300">
+            <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wider text-primary bg-primary/10 text-primary">
               {typeLabel}
             </span>
             <span className="font-mono text-[11px] text-muted-foreground">{p.year}</span>
@@ -82,7 +82,7 @@ export default function PublicationItem({
                   target="_blank"
                   rel="noopener noreferrer"
                   reloadDocument
-                  className="inline-flex items-center gap-1 text-[11.5px] font-bold text-teal-700 transition-colors hover:underline dark:text-teal-300"
+                  className="inline-flex items-center gap-1 text-[11.5px] font-bold text-primary transition-colors hover:underline text-primary"
                 >
                   <ExternalLink className="h-3 w-3" />
                   External link

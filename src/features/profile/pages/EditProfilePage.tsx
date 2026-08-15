@@ -349,7 +349,7 @@ export default function EditProfilePage() {
                   <div className="relative h-20 w-20 shrink-0">
                     {(own.isUploading || own.isRemovingPhoto) ? (
                       <div className="flex h-full w-full items-center justify-center rounded-full bg-muted">
-                        <InlineSpinner size={24} className="text-teal-600" />
+                        <InlineSpinner size={24} className="text-primary" />
                       </div>
                     ) : (
                       <Avatar
@@ -364,7 +364,7 @@ export default function EditProfilePage() {
                   <div className="flex flex-1 flex-wrap items-center gap-2">
                     <label
                       htmlFor="edit-profile-photo-input"
-                      className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-[13px] font-bold text-white transition-colors hover:bg-teal-700"
+                      className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-primary px-4 py-2 text-[13px] font-bold text-white transition-colors hover:bg-primary"
                     >
                       <Upload className="h-4 w-4" />
                       {own.profile.profilePhotoUrl ? "Change photo" : "Upload photo"}
@@ -386,7 +386,7 @@ export default function EditProfilePage() {
                         type="button"
                         onClick={() => own.removePhoto()}
                         disabled={own.isRemovingPhoto}
-                        className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-[13px] font-bold text-red-600 transition-colors hover:border-red-300 hover:bg-red-50 disabled:opacity-50 dark:hover:border-red-800/60 dark:hover:bg-red-950/30 dark:text-red-400"
+                        className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-[13px] font-bold text-destructive transition-colors hover:border-destructive/25 hover:bg-destructive-soft disabled:opacity-50/60"
                       >
                         <Trash2 className="h-4 w-4" />
                         Remove
@@ -427,7 +427,7 @@ export default function EditProfilePage() {
                       optionGroups={DEPARTMENT_GROUPS}
                     />
                     {errors.department?.message ? (
-                      <p className="mt-1.5 text-[11.5px] font-semibold text-red-600">
+                      <p className="mt-1.5 text-[11.5px] font-semibold text-destructive">
                         {errors.department.message}
                       </p>
                     ) : null}
@@ -489,7 +489,7 @@ export default function EditProfilePage() {
                     {...register("bio")}
                     rows={12}
                     placeholder={"Hello! I'm... I work on... My research focuses on... Outside of work I enjoy..."}
-                    className="w-full resize-y rounded-xl border border-border bg-card px-4 py-3 text-[14px] leading-7 text-foreground placeholder:text-muted-foreground transition-all focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/30"
+                    className="w-full resize-y rounded-xl border border-border bg-card px-4 py-3 text-[14px] leading-7 text-foreground placeholder:text-muted-foreground transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-teal-600/30"
                   />
                   <div className="mt-1.5 flex items-center justify-between">
                     <p className="text-[11.5px] text-muted-foreground">
@@ -500,7 +500,7 @@ export default function EditProfilePage() {
                     </p>
                   </div>
                   {errors.bio?.message ? (
-                    <p className="mt-1.5 text-[11.5px] font-semibold text-red-600">
+                    <p className="mt-1.5 text-[11.5px] font-semibold text-destructive">
                       {errors.bio.message}
                     </p>
                   ) : null}
@@ -623,11 +623,11 @@ export default function EditProfilePage() {
                 />
               </FormSection>
 
-              <div className="mt-6 rounded-2xl border border-teal-200 bg-teal-50 dark:border-teal-900/50 dark:bg-teal-950/30/60 p-5 dark:border-teal-900/50 dark:bg-teal-950/20 dark:border-teal-800/50 dark:bg-teal-950/30">
-                <p className="text-[12px] font-bold uppercase tracking-widest text-teal-700 dark:text-teal-400">
+              <div className="mt-6 rounded-2xl border border-primary/25 bg-primary-soft/60 p-5">
+                <p className="text-[12px] font-bold uppercase tracking-widest text-primary">
                   Ready to save
                 </p>
-                <p className="mt-1.5 text-[13px] text-teal-900/80 dark:text-teal-200/80">
+                <p className="mt-1.5 text-[13px] text-primary/80/80">
                   Take one last look at the live preview on the right. Changes save immediately to your public profile.
                 </p>
               </div>

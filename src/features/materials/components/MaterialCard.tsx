@@ -9,6 +9,9 @@ import FileIcon from "./FileIcon"
 import { formatRelative } from "@/utils/dateUtils"
 import { formatFileSize } from "@/utils/fileUtils"
 import { isPreviewable } from "@/utils/filePreview"
+import { isYouTubeUrl } from "@/utils/videoEmbed"
+import { FOCUS } from "@/components/ui/appTokens"
+import { cn } from "@/utils/cn"
 import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
 import type { MaterialDto } from "@/types/material.types"
@@ -35,8 +38,8 @@ const ACCENTS: Record<string, AccentSpec> = {
 }
 
 const DEFAULT_ACCENT: AccentSpec = {
-  stripe: "bg-teal-500",
-  iconHover: "hover:bg-teal-50 hover:text-teal-700 dark:hover:bg-teal-950/40 dark:hover:text-teal-300",
+  stripe: "bg-primary",
+  iconHover: "hover:bg-primary/10 hover:text-primary",
 }
 
 export default function MaterialCard({
@@ -90,7 +93,13 @@ export default function MaterialCard({
     if (isFolder) {
       onOpenFolder?.(material.id, material.title)
     } else if (isLink) {
-      if (material.embedUrl) window.open(material.embedUrl, "_blank")
+      // A YouTube link opens the in-app player; anything else is a site we
+      // do not control, so it gets a new tab rather than an iframe.
+      if (material.embedUrl && isYouTubeUrl(material.embedUrl)) {
+        onPreview?.(material)
+      } else if (material.embedUrl) {
+        window.open(material.embedUrl, "_blank", "noopener,noreferrer")
+      }
     } else if (canPreview) {
       onPreview?.(material)
     } else {
@@ -121,15 +130,27 @@ export default function MaterialCard({
 
         <div className="min-w-0 flex-1">
           <div className="mb-0.5 flex flex-wrap items-center gap-2">
-            <span
-              className={
-                "max-w-sm truncate text-[13.5px] font-bold text-foreground transition-colors " +
-                (!isFolder ? "cursor-pointer hover:text-teal-700 dark:hover:text-teal-300" : "")
-              }
-              onClick={!isFolder ? (e) => { e.stopPropagation(); handlePrimaryAction() } : undefined}
-            >
-              {material.title}
-            </span>
+            {/* A real <button> when it does something. As a <span> with onClick
+                the title was unreachable by keyboard and surfaced to assistive
+                tech as plain text, so the main way of opening a material was
+                mouse-only. The folder case has no handler here — the whole row
+                is clickable — so it stays inert text. */}
+            {isFolder ? (
+              <span className="max-w-sm truncate text-[13.5px] font-bold text-foreground">
+                {material.title}
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={e => { e.stopPropagation(); handlePrimaryAction() }}
+                className={cn(
+                  "max-w-sm truncate rounded text-left text-[13.5px] font-bold text-foreground transition-colors hover:text-primary",
+                  FOCUS,
+                )}
+              >
+                {material.title}
+              </button>
+            )}
             {isFolder && (material.childCount ?? 0) > 0 && (
               <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
                 {material.childCount} {material.childCount === 1 ? "item" : "items"}
@@ -225,9 +246,9 @@ export default function MaterialCard({
                       <button
                         type="button"
                         onClick={() => { setMenuOpen(false); handleDownload() }}
-                        className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium text-foreground transition-colors hover:bg-teal-50 dark:hover:bg-teal-950/30"
+                        className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium text-foreground transition-colors hover:bg-primary/10"
                       >
-                        <Download className="h-3.5 w-3.5 text-teal-700 dark:text-teal-300" />
+                        <Download className="h-3.5 w-3.5 text-primary" />
                         Download
                       </button>
                     )}

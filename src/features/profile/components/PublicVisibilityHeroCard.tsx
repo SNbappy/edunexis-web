@@ -13,7 +13,7 @@ interface Props {
 export default function PublicVisibilityHeroCard({ isPublic, slug }: Props) {
   if (isPublic && slug) {
     return (
-      <div className="rounded-2xl border border-teal-200 bg-gradient-to-r from-teal-50 to-emerald-50 p-4 dark:border-teal-800 dark:from-teal-950/40 dark:to-emerald-950/30">
+      <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-teal-50 to-emerald-50 p-4 border-primary/20 dark:from-teal-950/40 dark:to-emerald-950/30">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-600 text-white">
@@ -33,7 +33,7 @@ export default function PublicVisibilityHeroCard({ isPublic, slug }: Props) {
               to={`/faculty/${slug}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-teal-300 bg-white px-3 py-1.5 text-[12px] font-bold text-teal-700 transition-colors hover:bg-teal-50 dark:border-teal-700 dark:bg-stone-900 dark:text-teal-300 dark:hover:bg-stone-800"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-primary/20 bg-white px-3 py-1.5 text-[12px] font-bold text-primary transition-colors hover:bg-primary/10 border-primary/20 dark:bg-stone-900 text-primary dark:hover:bg-stone-800"
             >
               <ExternalLink className="h-3 w-3" />
               Preview

@@ -4,12 +4,13 @@ import {
   FileText, X, Upload, CheckCircle2,
   Trophy, TrendingDown, BarChart3,
 } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import Modal from "@/components/ui/Modal"
 import Button from "@/components/ui/Button"
 import { useCTMarks } from "../hooks/useCTEvents"
 import type { CTEventDto } from "@/types/ct.types"
 
-interface Member { userId: string; fullName: string; studentId?: string }
+interface Member { userId: string; fullName: string; studentId?: string | null }
 
 const MAX_SIZE_BYTES = 10 * 1024 * 1024 // 10 MB, matches Cloudinary raw-upload cap
 
@@ -24,7 +25,7 @@ interface KhataSlot {
   key: "best" | "worst" | "avg"
   label: string
   description: string
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
+  icon: LucideIcon
   fileKey: "bestCopy" | "worstCopy" | "avgCopy"
   studentKey: "bestStudentId" | "worstStudentId" | "avgStudentId"
   tone: "emerald" | "red" | "violet"
@@ -50,34 +51,34 @@ interface ToneClasses {
 function getToneClasses(tone: KhataSlot["tone"]): ToneClasses {
   switch (tone) {
     case "emerald": return {
-      border: "border-emerald-200 dark:border-emerald-800",
-      bg: "bg-emerald-50/60 dark:bg-emerald-950/30",
-      iconBg: "bg-emerald-100 dark:bg-emerald-900/60",
-      iconText: "text-emerald-700 dark:text-emerald-300",
-      textBold: "text-emerald-700 dark:text-emerald-300",
-      buttonBg: "bg-emerald-50 dark:bg-emerald-950/40",
-      buttonBorder: "border-emerald-300 dark:border-emerald-700",
-      buttonText: "text-emerald-700 dark:text-emerald-300",
+      border: "border-success/25",
+      bg: "bg-success-soft/60",
+      iconBg: "bg-success-soft",
+      iconText: "text-success",
+      textBold: "text-success",
+      buttonBg: "bg-success-soft",
+      buttonBorder: "border-success/25",
+      buttonText: "text-success",
     }
     case "red": return {
-      border: "border-red-200 dark:border-red-800",
-      bg: "bg-red-50/60 dark:bg-red-950/30",
-      iconBg: "bg-red-100 dark:bg-red-900/60",
-      iconText: "text-red-700 dark:text-red-300",
-      textBold: "text-red-700 dark:text-red-300",
-      buttonBg: "bg-red-50 dark:bg-red-950/40",
-      buttonBorder: "border-red-300 dark:border-red-700",
-      buttonText: "text-red-700 dark:text-red-300",
+      border: "border-destructive/25",
+      bg: "bg-destructive-soft/60",
+      iconBg: "bg-destructive-soft",
+      iconText: "text-destructive",
+      textBold: "text-destructive",
+      buttonBg: "bg-destructive-soft",
+      buttonBorder: "border-destructive/25",
+      buttonText: "text-destructive",
     }
     case "violet": return {
-      border: "border-violet-200 dark:border-violet-800",
-      bg: "bg-violet-50/60 dark:bg-violet-950/30",
-      iconBg: "bg-violet-100 dark:bg-violet-900/60",
-      iconText: "text-violet-700 dark:text-violet-300",
-      textBold: "text-violet-700 dark:text-violet-300",
-      buttonBg: "bg-violet-50 dark:bg-violet-950/40",
-      buttonBorder: "border-violet-300 dark:border-violet-700",
-      buttonText: "text-violet-700 dark:text-violet-300",
+      border: "border-info/25",
+      bg: "bg-info-soft/60",
+      iconBg: "bg-info-soft",
+      iconText: "text-info",
+      textBold: "text-info",
+      buttonBg: "bg-info-soft",
+      buttonBorder: "border-info/25",
+      buttonText: "text-info",
     }
   }
 }
@@ -141,20 +142,20 @@ export default function UploadKhataModal({ isOpen, onClose, ct, members = [] }: 
     >
       <div className="space-y-3">
         {sizeError && (
-          <div className="sticky top-0 z-10 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[11.5px] font-semibold text-red-700 shadow-md transition-opacity duration-300 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+          <div className="sticky top-0 z-10 flex items-start gap-2 rounded-xl border border-destructive/25 bg-destructive-soft px-3 py-2.5 text-[11.5px] font-semibold text-destructive shadow-md transition-opacity duration-300">
             <span className="flex-1">{sizeError}</span>
             <button
               type="button"
               onClick={() => setSizeError(null)}
               aria-label="Dismiss"
-              className="shrink-0 rounded-full p-0.5 text-red-600 transition-colors hover:bg-red-200 dark:text-red-300 dark:hover:bg-red-900/60"
+              className="shrink-0 rounded-full p-0.5 text-destructive transition-colors hover:bg-red-200"
             >
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
         )}
         {/* Progress indicator */}
-        <div className="flex items-center justify-between gap-1 rounded-xl border border-teal-200 bg-teal-50 p-3 dark:border-teal-800 dark:bg-teal-950/40">
+        <div className="flex items-center justify-between gap-1 rounded-xl border border-primary/25 bg-primary-soft p-3">
           {SLOTS.map((slot, i) => {
             const done = !!files[slot.fileKey]
             return (
@@ -163,15 +164,15 @@ export default function UploadKhataModal({ isOpen, onClose, ct, members = [] }: 
                   <div className={
                     "h-[2px] flex-1 rounded-full transition-colors " +
                     (done || files[SLOTS[i - 1].fileKey]
-                      ? "bg-teal-500"
-                      : "bg-teal-200 dark:bg-teal-800")
+                      ? "bg-primary-soft0"
+                      : "bg-teal-200")
                   } />
                 )}
                 <div className={
                   "inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[10.5px] font-bold transition-colors " +
                   (done
-                    ? "bg-teal-600 text-white"
-                    : "border border-teal-300 bg-card text-teal-700 dark:border-teal-700 dark:text-teal-300")
+                    ? "bg-primary text-white"
+                    : "border border-primary/25 bg-card text-primary")
                 }>
                   {done ? <CheckCircle2 className="h-3 w-3" /> : <span>{i + 1}</span>}
                   {slot.label}
@@ -228,7 +229,7 @@ export default function UploadKhataModal({ isOpen, onClose, ct, members = [] }: 
                         if (r.current) r.current.value = ""
                       }}
                       aria-label={"Remove " + slot.label}
-                      className="flex h-6 w-6 items-center justify-center rounded-full bg-red-100 text-red-600 transition-colors hover:bg-red-200 dark:bg-red-950/50 dark:hover:bg-red-950/80"
+                      className="flex h-6 w-6 items-center justify-center rounded-full bg-destructive-soft text-destructive transition-colors hover:bg-red-200/80"
                     >
                       <X className="h-3 w-3" />
                     </motion.button>
@@ -268,7 +269,7 @@ export default function UploadKhataModal({ isOpen, onClose, ct, members = [] }: 
                       ...prev,
                       [slot.studentKey]: e.target.value || undefined,
                     }))}
-                    className="h-8 flex-1 rounded-lg border border-border bg-card px-2 text-[12px] text-foreground outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+                    className="h-8 flex-1 rounded-lg border border-border bg-card px-2 text-[12px] text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-teal-500/20"
                   >
                     <option value="">Select student...</option>
                     {members.map(m => (

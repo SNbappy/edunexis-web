@@ -12,8 +12,8 @@ import type { PresentationDto, PresentationMarkEntry } from '@/types/presentatio
 interface Member {
     userId: string
     fullName: string
-    studentId?: string
-    profilePhotoUrl?: string
+    studentId?: string | null
+    profilePhotoUrl?: string | null
 }
 
 interface Props {
@@ -91,7 +91,7 @@ export default function PresentationMarkEntryModal({ isOpen, onClose, presentati
         >
             <div className="space-y-5">
                 <div className="flex items-center gap-4 flex-wrap text-sm">
-                    <span className="flex items-center gap-1.5 text-emerald-500 font-medium">
+                    <span className="flex items-center gap-1.5 text-success font-medium">
                         <CheckCircle2 className="w-4 h-4" /> {gradedCount} graded
                     </span>
                     <span className="flex items-center gap-1.5 text-destructive font-medium">
@@ -101,18 +101,12 @@ export default function PresentationMarkEntryModal({ isOpen, onClose, presentati
                         {members.length - gradedCount - absentCount} pending
                     </span>
                     <div className="ml-auto flex gap-2">
-                        <button
-                            onClick={() => setAllAbsent(false)}
-                            className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:bg-muted transition-all"
-                        >
+                        <Button type="button" size="sm" variant="secondary" onClick={() => setAllAbsent(false)}>
                             Clear absent
-                        </button>
-                        <button
-                            onClick={() => setAllAbsent(true)}
-                            className="text-xs px-3 py-1.5 rounded-lg border border-destructive/30 text-destructive hover:bg-destructive/10 transition-all"
-                        >
+                        </Button>
+                        <Button type="button" size="sm" variant="secondary" onClick={() => setAllAbsent(true)}>
                             Mark all absent
-                        </button>
+                        </Button>
                     </div>
                 </div>
 

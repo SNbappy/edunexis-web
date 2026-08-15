@@ -3,6 +3,7 @@ import {
   Calendar, Award, Upload, CheckCircle2, ClipboardList, Send,
   Star, XCircle, FileText, EyeOff, ExternalLink,
 } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import Modal from "@/components/ui/Modal"
 import Button from "@/components/ui/Button"
 import { formatDate } from "@/utils/dateUtils"
@@ -33,8 +34,8 @@ function StudentMarkSection({
 
   const isAbsent = myMark.isAbsent
   const containerClass = isAbsent
-    ? "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/40"
-    : "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/40"
+    ? "border-destructive/25 bg-destructive-soft"
+    : "border-success/25 bg-success-soft"
 
   return (
     <motion.div
@@ -43,12 +44,12 @@ function StudentMarkSection({
       className={"space-y-2 rounded-xl border p-4 " + containerClass}
     >
       {isAbsent ? (
-        <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
+        <div className="flex items-center gap-2 text-destructive">
           <XCircle className="h-5 w-5" />
           <span className="font-display text-[15px] font-bold">Absent</span>
         </div>
       ) : (
-        <div className="flex items-baseline gap-2 text-emerald-700 dark:text-emerald-300">
+        <div className="flex items-baseline gap-2 text-success">
           <Star className="h-5 w-5 self-center" />
           <span className="font-display text-2xl font-extrabold tabular-nums">
             {myMark.obtainedMarks}
@@ -107,22 +108,22 @@ export default function CTEventDetailModal({
           <span className={
             "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wider " +
             (isPublished
-              ? "border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
-              : "border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300")
+              ? "border border-success/25 bg-success-soft text-success"
+              : "border border-warning/25 bg-warning-soft text-warning")
           }>
             <CheckCircle2 className="h-2.5 w-2.5" strokeWidth={2.5} />
             {ct.status}
           </span>
 
           {isDraft && !ct.khataUploaded && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wider text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-warning/25 bg-warning-soft px-2.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wider text-warning">
               <Upload className="h-2.5 w-2.5" strokeWidth={2.5} />
               Scripts pending
             </span>
           )}
 
           {isDraft && ct.khataUploaded && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wider text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-success/25 bg-success-soft px-2.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wider text-success">
               <CheckCircle2 className="h-2.5 w-2.5" strokeWidth={2.5} />
               Scripts uploaded
             </span>
@@ -156,7 +157,7 @@ export default function CTEventDetailModal({
                   className={
                     "space-y-1.5 rounded-xl border p-3 text-center transition-all " +
                     (slot.url
-                      ? "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/40"
+                      ? "border-success/25 bg-success-soft"
                       : "border-border bg-muted/30")
                   }
                 >
@@ -167,9 +168,9 @@ export default function CTEventDetailModal({
                   rel="noopener noreferrer"
                   className="group flex flex-col items-center gap-1"
                     >
-                  <CheckCircle2 className="mx-auto h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  <CheckCircle2 className="mx-auto h-4 w-4 text-success" />
                   <p className="text-[10.5px] text-muted-foreground">{slot.label}</p>
-                  <p className="inline-flex items-center gap-1 text-[11px] font-bold text-teal-700 group-hover:underline dark:text-teal-300">
+                  <p className="inline-flex items-center gap-1 text-[11px] font-bold text-primary group-hover:underline">
                     View file
                     <ExternalLink className="h-2.5 w-2.5" />
                   </p>
@@ -239,7 +240,7 @@ export default function CTEventDetailModal({
             />
           )}
           {isPublished && !onUnpublish && (
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-center text-[12px] font-semibold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+            <div className="rounded-xl border border-success/25 bg-success-soft p-3 text-center text-[12px] font-semibold text-success">
               <CheckCircle2 className="mr-1 inline h-3 w-3" />
               Published — students can view their marks
             </div>
@@ -264,7 +265,7 @@ export default function CTEventDetailModal({
 }
 
 interface InfoTileProps {
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
+  icon: LucideIcon
   label: string
   value: string
 }
@@ -286,7 +287,7 @@ function InfoTile({ icon: Icon, label, value }: InfoTileProps) {
 type ActionVariant = "primary" | "secondary" | "amber" | "success"
 
 interface ActionButtonProps {
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
+  icon: LucideIcon
   label: string
   onClick: () => void
   variant: ActionVariant
@@ -294,10 +295,10 @@ interface ActionButtonProps {
 
 function ActionButton({ icon: Icon, label, onClick, variant }: ActionButtonProps) {
   const classMap: Record<ActionVariant, string> = {
-    primary: "bg-teal-600 text-white hover:bg-teal-700 shadow-[0_4px_14px_-4px_rgba(20,184,166,0.6)]",
-    secondary: "border border-border bg-muted text-foreground hover:bg-stone-100 dark:hover:bg-stone-900",
-    amber: "border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-950/60",
-    success: "bg-emerald-600 text-white hover:bg-emerald-700 shadow-[0_4px_14px_-4px_rgba(16,185,129,0.6)]",
+    primary: "bg-primary text-white hover:bg-primary shadow-[0_4px_14px_-4px_rgba(20,184,166,0.6)]",
+    secondary: "border border-border bg-muted text-foreground hover:bg-muted dark:hover:bg-stone-900",
+    amber: "border border-warning/25 bg-warning-soft text-warning hover:bg-warning-soft",
+    success: "bg-success text-white hover:bg-success shadow-[0_4px_14px_-4px_rgba(16,185,129,0.6)]",
   }
 
   return (

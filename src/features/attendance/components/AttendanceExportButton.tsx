@@ -19,7 +19,7 @@ interface Props {
   courseCode?: string | null
   semester?: string | null
   department?: string | null
-  members?: Array<{ userId: string; studentId?: string; fullName: string }>
+  members?: Array<{ userId: string; studentId?: string | null; fullName: string }>
 }
 
 function getStudentStatus(s: AttendanceSessionDto, studentId: string) {

@@ -52,13 +52,21 @@ export const materialService = {
             .then((r) => r.data)
     },
 
-    addLink: (data: CreateMaterialRequest) =>
+    /**
+     * Adds a link material. `type` distinguishes a YouTube video from any
+     * other URL, because only YouTube is ever embedded — everything else
+     * opens in a new tab. Both are stored in the same `embedUrl` field.
+     */
+    addLink: (data: CreateMaterialRequest & { type?: 'Link' | 'YouTube' }) =>
         api
             .post<ApiResponse<MaterialDto>>(base(data.courseId), toForm({
                 title: data.title,
                 description: data.description,
-                type: 'Link',
-                embedUrl: data.linkUrl,
+                type: data.type ?? 'Link',
+                // `embedUrl`, not `linkUrl` — the request type has never had a
+                // `linkUrl` field, so this read undefined and posted a Link
+                // material with no URL attached.
+                embedUrl: data.embedUrl,
                 parentFolderId: data.parentFolderId,
             }), { headers: { 'Content-Type': 'multipart/form-data' } })
             .then((r) => r.data),

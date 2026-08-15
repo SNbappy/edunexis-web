@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import Modal from "@/components/ui/Modal"
 import Button from "@/components/ui/Button"
 import Input from "@/components/ui/Input"
@@ -110,7 +110,7 @@ export default function EducationModal({
             value={form.description ?? ""}
             onChange={e => set("description", e.target.value)}
             placeholder="Activities, achievements, research focus..."
-            className="w-full resize-none rounded-xl border border-border bg-card px-4 py-2.5 text-sm text-foreground transition-all focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/40"
+            className="w-full resize-none rounded-xl border border-border bg-card px-4 py-2.5 text-sm text-foreground transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-teal-600/40"
           />
         </div>
       </div>

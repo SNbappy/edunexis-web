@@ -33,7 +33,10 @@ export default function EnrollmentGuard({ children }: { children: React.ReactNod
           Couldn't load course
         </h2>
         <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">
-          The connection hiccuped. Your session is fine \u2014 this usually resolves in a few seconds.
+          {/* A literal em dash, not a "\u2014" escape: JSX *text* does not process
+              backslash escapes, so the escape sequence rendered verbatim to
+              the user. Only string literals inside braces get unescaped. */}
+          The connection hiccuped. Your session is fine — this usually resolves in a few seconds.
         </p>
         <Button
           variant="secondary"

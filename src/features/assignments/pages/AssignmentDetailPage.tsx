@@ -74,12 +74,20 @@ export default function AssignmentDetailPage() {
         )
     }
 
-    if (isFetched && !assignment) {
+    /* Guarded on `!assignment`, not `isFetched && !assignment`: the loading
+       branch above has already returned, so anything still null here really is
+       missing, and this narrows the type for the whole render below. The old
+       condition let a deleted or forbidden assignment crash the page on the
+       very next line. */
+    if (!assignment) {
         return (
             <div className="max-w-5xl mx-auto px-4 py-16 flex flex-col items-center gap-4 text-center">
                 <AlertCircle className="w-12 h-12 text-destructive" />
                 <p className="text-lg font-semibold text-foreground">Assignment not found</p>
-                <Button variant="outline" onClick={() => navigate(-1)}>Go Back</Button>
+                <p className="text-sm text-muted-foreground">
+                    It may have been deleted, or you may not have access to it.
+                </p>
+                <Button variant="outline" onClick={() => navigate(-1)}>Go back</Button>
             </div>
         )
     }
@@ -308,7 +316,12 @@ export default function AssignmentDetailPage() {
                                                 )}
                                             </div>
                                         ) : (
-                                            <p className="text-xs text-center text-muted-foreground py-1">? Awaiting grade from teacher</p>
+                                            /* Leading "?" removed — a character an ANSI save had
+                                               flattened, which students saw literally as
+                                               "? Awaiting grade from teacher". */
+                                            <p className="py-1 text-center text-xs text-muted-foreground">
+                                                Awaiting grade from teacher
+                                            </p>
                                         )}
 
                                         {/* Resubmit if still open */}

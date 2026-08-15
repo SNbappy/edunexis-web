@@ -1,6 +1,7 @@
 ﻿import { motion } from "framer-motion"
 import { Users, GraduationCap, BookOpen, Check, ArrowLeft } from "lucide-react"
 import Button from "@/components/ui/Button"
+import { getInitials } from "@/utils/names"
 import type { CourseByCodeDto } from "@/types/course.types"
 
 interface JoinCoursePreviewProps {
@@ -49,8 +50,11 @@ export default function JoinCoursePreview({
                 className="h-7 w-7 shrink-0 rounded-full object-cover"
               />
             ) : (
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-stone-200 text-[12px] font-bold text-stone-700 dark:bg-stone-800 dark:text-stone-300">
-                {course.teacherName.charAt(0).toUpperCase()}
+              /* Shared helper, not charAt(0): "Dr. Rezaul Karim" starts with the
+                 honorific, so the first letter gave a "D" avatar here while
+                 every other surface in the app showed "RK". */
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-[12px] font-bold text-muted-foreground">
+                {getInitials(course.teacherName)}
               </div>
             )}
             <span className="truncate text-[13px] font-medium text-foreground">

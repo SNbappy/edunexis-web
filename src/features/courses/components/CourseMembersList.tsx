@@ -1,10 +1,15 @@
-﻿import { useState } from "react"
+import { useState, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Users, UserCheck, UserX, Clock, UserMinus, AlertTriangle } from "lucide-react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import Avatar from "@/components/ui/Avatar"
+import Badge from "@/components/ui/Badge"
 import Button from "@/components/ui/Button"
 import Modal from "@/components/ui/Modal"
+import Skeleton from "@/components/ui/Skeleton"
+import EmptyState from "@/components/ui/EmptyState"
+import { ICON_STROKE, FOCUS, SURFACE, TEXT } from "@/components/ui/appTokens"
+import { cn } from "@/utils/cn"
 import { useCourseMembers } from "../hooks/useCourseMembers"
 import { usePublicProfile } from "@/features/profile/hooks/usePublicProfile"
 import { useAuthStore } from "@/store/authStore"
@@ -40,6 +45,28 @@ export default function CourseMembersList({ courseId, course }: CourseMembersLis
   const pendingRequests = joinRequests.filter((r: any) => r.status === "Pending")
   const pendingCount = pendingRequests.length
 
+  /**
+   * Roster order.
+   *
+   * The API returns members in insertion order, which is effectively random to
+   * a reader — the same class looked shuffled every time you opened it.
+   *
+   * Role does the grouping (the instructor sits in their own block above), and
+   * within the student body everyone sorts by student ID. Class reps are not
+   * floated to the top: they are ordinary students on a roll sheet, and pinning
+   * them would break the roll order that attendance and marks depend on. The
+   * CR badge still marks them in place. `numeric: true` keeps 200109 before
+   * 200115 rather than sorting them as text.
+   */
+  const sortedMembers = useMemo(
+    () =>
+      [...members].sort((a: any, b: any) =>
+        (a.studentId ?? "").localeCompare(b.studentId ?? "", undefined, { numeric: true }) ||
+        (a.fullName ?? "").localeCompare(b.fullName ?? ""),
+      ),
+    [members],
+  )
+
   const FILTERS: { key: FilterTab; label: string; count?: number }[] = [
     { key: "all", label: "All", count: members.length || undefined },
     { key: "students", label: "Students", count: members.length || undefined },
@@ -50,167 +77,134 @@ export default function CourseMembersList({ courseId, course }: CourseMembersLis
 
   if (isMembersLoading) {
     return (
-      <div className="mx-auto max-w-3xl space-y-3">
-        <div className="h-16 animate-pulse rounded-2xl border border-border bg-muted/40" />
-        {[1, 2, 3].map(i => (
-          <div key={i} className="h-16 animate-pulse rounded-2xl border border-border bg-muted/40" />
-        ))}
+      <div className="space-y-2">
+        {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-16" rounded="2xl" />)}
       </div>
     )
   }
 
   return (
     <>
-      <div className="mx-auto max-w-3xl space-y-4">
-        {/* Toolbar */}
-        <motion.div
-          initial={{ opacity: 0, y: -6 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-100 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300">
-              <Users className="h-4 w-4" strokeWidth={2} />
-            </div>
-            <div>
-              <h2 className="font-display text-[15px] font-bold text-foreground">
-                Members
-              </h2>
-              <p className="text-[11.5px] text-muted-foreground">
-                {members.length > 0 ? (
-                  <span className="text-emerald-700 dark:text-emerald-300">
-                    {members.length} student{members.length !== 1 ? "s" : ""} enrolled
-                  </span>
-                ) : (
-                  <span>No students yet</span>
-                )}
-                {teacher && pendingCount > 0 && (
-                  <span className="text-amber-700 dark:text-amber-300">
-                    {" · " + pendingCount + " pending"}
-                  </span>
-                )}
-              </p>
-            </div>
-          </div>
+      {/* Left-aligned, not centred: the course header above spans the full
+          width, and a centred column made the left edge jump between them. */}
+      <div className="space-y-4">
+        {/* Toolbar — count and filters, no repeated "Members" heading. */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[13px] text-muted-foreground">
+            {members.length > 0
+              ? `${members.length} student${members.length !== 1 ? "s" : ""} enrolled`
+              : "No students yet"}
+            {teacher && pendingCount > 0 && (
+              <span className="font-semibold text-warning"> · {pendingCount} pending</span>
+            )}
+          </p>
 
-          {/* Filter chips */}
-          <div className="flex items-center gap-1 rounded-xl border border-border bg-muted p-1">
+          <div className="flex items-center gap-0.5 rounded-xl border border-border bg-muted p-0.5">
             {FILTERS.map(tab => {
               const active = filter === tab.key
               return (
-                <motion.button
+                <button
                   key={tab.key}
                   type="button"
-                  whileTap={{ scale: 0.95 }}
                   onClick={() => setFilter(tab.key)}
-                  className={
-                    "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-colors " +
-                    (active
-                      ? "bg-card text-teal-700 shadow-sm dark:text-teal-300"
-                      : "text-muted-foreground hover:text-foreground")
-                  }
+                  aria-pressed={active}
+                  className={cn(
+                    "inline-flex h-8 items-center gap-1.5 rounded-[9px] px-3 text-[12.5px] font-semibold transition-colors duration-120",
+                    FOCUS,
+                    active
+                      ? "bg-card text-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
                 >
                   {tab.label}
                   {tab.count !== undefined && (
-                    <span className={
-                      "rounded-full px-1.5 py-0.5 text-[10px] font-bold " +
-                      (active
-                        ? "bg-teal-100 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300"
-                        : tab.key === "requests"
-                          ? "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
-                          : "bg-card text-muted-foreground")
-                    }>
+                    <span className={cn(
+                      "rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums",
+                      // Pending requests are the one count worth flagging —
+                      // they are work waiting on the teacher.
+                      tab.key === "requests" && tab.count > 0
+                        ? "bg-warning-soft text-warning"
+                        : "bg-muted text-muted-foreground",
+                    )}>
                       {tab.count}
                     </span>
                   )}
-                </motion.button>
+                </button>
               )
             })}
           </div>
-        </motion.div>
+        </div>
 
         {/* Join Requests */}
         {teacher && (filter === "all" || filter === "requests") && (
           <AnimatePresence>
             {isRequestsLoading ? (
-              <div className="h-16 animate-pulse rounded-2xl border border-border bg-muted/40" />
+              <Skeleton className="h-16" rounded="2xl" />
             ) : pendingCount > 0 ? (
+              /* Requests keep a warning tint — unlike the decorative colour
+                 elsewhere, this one means "these are waiting on you". */
               <motion.div
                 key="requests"
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="overflow-hidden rounded-2xl border border-amber-200 bg-card shadow-sm dark:border-amber-800"
+                className="overflow-hidden rounded-2xl border border-warning/30 bg-card"
               >
-                <div className="flex items-center gap-2 border-b border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-950/40">
-                  <Clock className="h-3.5 w-3.5 text-amber-700 dark:text-amber-300" />
-                  <span className="text-[11px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300">
-                    Join requests
-                  </span>
-                  <span className="ml-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-900/60 dark:text-amber-300">
+                <div className="flex items-center gap-2 border-b border-warning/30 bg-warning-soft px-4 py-2.5">
+                  <Clock className="h-3.5 w-3.5 text-warning" strokeWidth={ICON_STROKE} />
+                  <span className={cn(TEXT.eyebrow, "text-warning")}>Join requests</span>
+                  <span className="rounded-full bg-warning/20 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-warning">
                     {pendingCount}
                   </span>
                 </div>
-                <div className="space-y-2 p-3">
-                  {pendingRequests.map((req: any, i: number) => (
-                    <motion.div
-                      key={req.id}
-                      initial={{ opacity: 0, x: -6 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.04 }}
-                      className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50/60 p-3 dark:border-amber-800 dark:bg-amber-950/20"
-                    >
-                      <div className="h-9 w-9 shrink-0 overflow-hidden rounded-xl border-2 border-amber-300 dark:border-amber-700">
-                        <Avatar src={req.profilePhotoUrl} name={req.studentName} size="sm" className="h-full w-full rounded-none" />
-                      </div>
+                <ul className="divide-y divide-border">
+                  {pendingRequests.map((req: any) => (
+                    <li key={req.id} className="flex items-center gap-3 px-3 py-2.5">
+                      <Avatar src={req.profilePhotoUrl} name={req.studentName} size="sm" className="h-9 w-9 shrink-0" />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[13px] font-semibold text-foreground">
                           {req.studentName}
                         </p>
-                        <p className="truncate text-[11px] text-muted-foreground">
+                        <p className="truncate text-[11.5px] text-muted-foreground">
                           {req.studentEmail}
                         </p>
                       </div>
                       {req.studentIdNumber && (
-                        <span className="hidden shrink-0 font-mono text-[11px] text-muted-foreground sm:block">
+                        <span className="hidden shrink-0 font-mono text-[12px] font-bold text-muted-foreground sm:block">
                           {req.studentIdNumber}
                         </span>
                       )}
                       <div className="flex shrink-0 items-center gap-1.5">
-                        <motion.button
-                          type="button"
-                          whileTap={{ scale: 0.95 }}
+                        <Button
+                          size="sm"
+                          variant="success"
                           onClick={() => reviewRequest({ requestId: req.id, status: "Approved" })}
                           disabled={isReviewing}
-                          className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] font-bold text-emerald-700 transition-colors hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-950/60"
+                          leftIcon={<UserCheck strokeWidth={ICON_STROKE} />}
                         >
-                          <UserCheck className="h-3 w-3" />
                           Approve
-                        </motion.button>
-                        <motion.button
-                          type="button"
-                          whileTap={{ scale: 0.95 }}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
                           onClick={() => reviewRequest({ requestId: req.id, status: "Rejected" })}
                           disabled={isReviewing}
-                          className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-[11px] font-bold text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-950/60"
+                          leftIcon={<UserX strokeWidth={ICON_STROKE} />}
                         >
-                          <UserX className="h-3 w-3" />
                           Reject
-                        </motion.button>
+                        </Button>
                       </div>
-                    </motion.div>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </motion.div>
             ) : filter === "requests" ? (
-              <motion.div
-                key="no-requests"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-muted/30 py-10 text-center"
-              >
-                <Clock className="mb-2 h-7 w-7 text-muted-foreground" strokeWidth={1.5} />
-                <p className="text-[13px] font-bold text-foreground">No pending requests</p>
-              </motion.div>
+              <EmptyState
+                variant="panel"
+                icon={<Clock strokeWidth={ICON_STROKE} />}
+                title="No pending requests"
+                description="Students who ask to join this course will appear here for approval."
+                className="py-10"
+              />
             ) : null}
           </AnimatePresence>
         )}
@@ -218,106 +212,111 @@ export default function CourseMembersList({ courseId, course }: CourseMembersLis
         {/* Instructor */}
         {course && (filter === "all" || filter === "students") && (
           <div>
-            <p className="mb-2 px-1 font-display text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              Instructor
-            </p>
-            <motion.div
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
+            <p className={cn(TEXT.eyebrow, "mb-2 px-1")}>Instructor</p>
+            <div
+              role="button"
+              tabIndex={0}
               onClick={() => handleVisitProfile(course.teacherId, {
                 userId: course.teacherId,
                 fullName: course.teacherName,
                 role: "Teacher",
               })}
-              whileHover={{ y: -1 }}
-              className="flex cursor-pointer items-center gap-3 rounded-2xl border border-teal-200 bg-teal-50 dark:border-teal-900/50 dark:bg-teal-950/30 p-4 transition-shadow hover:shadow-md dark:border-teal-800 dark:bg-teal-950/40"
+              onKeyDown={e => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault()
+                  handleVisitProfile(course.teacherId, {
+                    userId: course.teacherId,
+                    fullName: course.teacherName,
+                    role: "Teacher",
+                  })
+                }
+              }}
+              className={cn(SURFACE.cardInteractive, FOCUS, "flex cursor-pointer items-center gap-3 p-3.5")}
             >
-              <div className="relative shrink-0">
-                <div className="h-10 w-10 overflow-hidden rounded-xl border-2 border-teal-300 dark:border-teal-700">
-                  <Avatar
-                    src={teacherProfile?.profilePhotoUrl ?? course.teacherProfilePhotoUrl}
-                    name={teacherProfile?.fullName ?? course.teacherName ?? "Instructor"}
-                    size="md"
-                    className="h-full w-full rounded-none"
-                  />
-                </div>
-                <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card bg-teal-600" />
-              </div>
+              <Avatar
+                src={teacherProfile?.profilePhotoUrl ?? course.teacherProfilePhotoUrl}
+                name={teacherProfile?.fullName ?? course.teacherName ?? "Instructor"}
+                size="md"
+                className="h-10 w-10 shrink-0"
+              />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-bold text-foreground">
+                <p className="truncate text-[13.5px] font-semibold text-foreground">
                   {teacherProfile?.fullName ?? course.teacherName ?? "Course Instructor"}
                 </p>
-                <p className="text-[11px] text-muted-foreground">
-                  Course teacher
-                </p>
+                <p className="text-[11.5px] text-muted-foreground">Course teacher</p>
               </div>
-              <span className="rounded-full border border-teal-200 bg-teal-100 px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wider text-teal-700 dark:border-teal-700 dark:bg-teal-900/60 dark:text-teal-300">
-                Teacher
-              </span>
-            </motion.div>
+              <Badge variant="primary" size="sm">Teacher</Badge>
+            </div>
           </div>
         )}
 
         {/* Students */}
         {(filter === "all" || filter === "students") && (
           members.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-muted/30 py-14 text-center">
-              <Users className="mb-3 h-9 w-9 text-muted-foreground" strokeWidth={1.5} />
-              <p className="font-display text-[15px] font-bold text-foreground">
-                No students yet
-              </p>
-              <p className="mt-1 text-[12.5px] text-muted-foreground">
-                Approve join requests to add students.
-              </p>
-            </div>
+            <EmptyState
+              variant="panel"
+              icon={<Users strokeWidth={ICON_STROKE} />}
+              title="No students yet"
+              description="Approve join requests to add students to this course."
+            />
           ) : (
             <div>
-              <p className="mb-2 px-1 font-display text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              <p className={cn(TEXT.eyebrow, "mb-2 px-1")}>
                 Students ({members.length})
               </p>
-              <div className="space-y-2">
-                <AnimatePresence>
-                  {members.map((m: any, i: number) => (
-                    <motion.div
+              {/* A divided list rather than a stack of cards: a roster is read
+                  as a column of names, and 18 separately-shadowed cards make
+                  that column harder to scan, not easier. */}
+              <div className={cn(SURFACE.card, "overflow-hidden")}>
+                <ul className="divide-y divide-border">
+                  {sortedMembers.map((m: any) => (
+                    <li
                       key={m.userId}
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ delay: Math.min(i * 0.03, 0.3) }}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => handleVisitProfile(m.userId, m)}
-                      whileHover={{ y: -1 }}
-                      className="group flex cursor-pointer items-center gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-sm transition-colors hover:border-teal-200 dark:hover:border-teal-800"
+                      onKeyDown={e => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault()
+                          handleVisitProfile(m.userId, m)
+                        }
+                      }}
+                      className={cn(
+                        "group flex cursor-pointer items-center gap-3 px-3 py-2.5 transition-colors duration-120 hover:bg-muted/50",
+                        FOCUS,
+                      )}
                     >
-                      <div className="h-9 w-9 shrink-0 overflow-hidden rounded-xl border-2 border-teal-200 dark:border-teal-800">
-                        <Avatar src={m.profilePhotoUrl} name={m.fullName} size="sm" className="h-full w-full rounded-none" />
-                      </div>
+                      <Avatar src={m.profilePhotoUrl} name={m.fullName} size="sm" className="h-9 w-9 shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] font-semibold text-foreground">
+                        <p className="flex items-center gap-2 truncate text-[13px] font-semibold text-foreground">
                           {m.fullName}
+                          {m.isCR && <Badge variant="primary" size="xs">CR</Badge>}
                         </p>
-                        <p className="truncate text-[11px] text-muted-foreground">
+                        <p className="truncate text-[11.5px] text-muted-foreground">
                           {m.email}
                         </p>
                       </div>
                       {m.studentId && (
-                        <span className="hidden shrink-0 font-mono text-[11px] text-muted-foreground sm:block">
+                        <span className="hidden shrink-0 font-mono text-[12px] font-bold text-muted-foreground sm:block">
                           {m.studentId}
                         </span>
                       )}
                       {teacher && (
-                        <motion.button
+                        <button
                           type="button"
-                          whileTap={{ scale: 0.9 }}
                           onClick={e => { e.stopPropagation(); setConfirmTarget(m) }}
                           aria-label={"Remove " + m.fullName}
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-red-600 opacity-0 transition-all hover:bg-red-50 group-hover:opacity-100 dark:hover:bg-red-950/40"
+                          className={cn(
+                            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground opacity-0 transition-all duration-120 hover:bg-destructive-soft hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100",
+                            FOCUS,
+                          )}
                         >
-                          <UserMinus className="h-3.5 w-3.5" />
-                        </motion.button>
+                          <UserMinus className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
+                        </button>
                       )}
-                    </motion.div>
+                    </li>
                   ))}
-                </AnimatePresence>
+                </ul>
               </div>
             </div>
           )

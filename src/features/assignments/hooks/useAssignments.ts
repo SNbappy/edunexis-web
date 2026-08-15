@@ -145,6 +145,11 @@ export function useAssignment(courseId: string, assignmentId: string) {
         assignment: query.data ?? null,
         isLoading: query.isLoading,
         isError: query.isError,
+        /* Callers guard "not found" with this. It was never returned, so
+           `isFetched && !assignment` read as `undefined && …` — always false —
+           which made every not-found branch dead code and let the pages walk
+           straight into dereferencing a null assignment. */
+        isFetched: query.isFetched,
         mySubmission: mySubQuery.data ?? null,
         submitAssignment: submitMutation.mutate,
         isSubmitting: submitMutation.isPending,

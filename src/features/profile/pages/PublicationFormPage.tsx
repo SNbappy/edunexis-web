@@ -10,6 +10,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import Button from "@/components/ui/Button"
 import { useProfile } from "../hooks/useProfile"
+import { usePublicProfile } from "../hooks/usePublicProfile"
+import { useAuthStore } from "@/store/authStore"
 import type { UserPublicationDto, PublicationType } from "@/types/auth.types"
 
 const PUBLICATION_TYPES: { value: PublicationType; label: string }[] = [
@@ -56,8 +58,9 @@ export default function PublicationFormPage() {
   const navigate = useNavigate()
   const isEdit = !!id
 
+  const { user } = useAuthStore()
+
   const {
-    profile,
     addPublication, isAddingPublication,
     updatePublication, isUpdatingPublication,
     deletePublication, isDeletingPublication,
@@ -66,9 +69,22 @@ export default function PublicationFormPage() {
     updatePublicationPdfVisibility, isUpdatingPublicationPdfVisibility,
   } = useProfile()
 
-  const existing: UserPublicationDto | null = isEdit && profile?.publications
-    ? profile.publications.find(p => p.id === id) ?? null
-    : null
+  /**
+   * The publication being edited comes from the *public* profile.
+   *
+   * This previously read `profile.publications` off `useProfile()`, but that
+   * hook calls GET /profile, which returns UserProfileDto — a DTO that has
+   * never carried publications. So `existing` was always null: opening
+   * "Edit publication" showed an empty form, and saving it created a second
+   * copy instead of updating the original. PublicProfileDto is the shape that
+   * actually includes them, and it is what ProfilePage's research tab renders.
+   */
+  const { data: publicProfile } = usePublicProfile(user?.id)
+
+  const existing: UserPublicationDto | null =
+    isEdit && publicProfile?.publications
+      ? publicProfile.publications.find(p => p.id === id) ?? null
+      : null
 
   const isSaving = isAddingPublication || isUpdatingPublication
 
@@ -101,11 +117,16 @@ export default function PublicationFormPage() {
     }
   }, [existing, reset])
 
+  /* Only bail out once the profile carrying the publications has actually
+     loaded. Gated on `profile` before, which loads independently and never
+     contained publications — so `existing` was always null and this fired on
+     every edit, bouncing the user back to /profile instead of opening the
+     form. */
   useEffect(() => {
-    if (isEdit && profile && !existing) {
+    if (isEdit && publicProfile && !existing) {
       navigate("/profile", { replace: true })
     }
-  }, [isEdit, profile, existing, navigate])
+  }, [isEdit, publicProfile, existing, navigate])
 
   const onSubmit = (values: FormValues) => {
     const data = {

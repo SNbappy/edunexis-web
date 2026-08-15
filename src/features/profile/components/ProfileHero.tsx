@@ -1,4 +1,4 @@
-﻿import { useMemo, useRef, useState, useEffect } from "react"
+import { useMemo, useRef, useState, useEffect } from "react"
 import { ImagePlus, Trash2, MoreHorizontal, Pencil } from "lucide-react"
 import Button from "@/components/ui/Button"
 import InlineSpinner from "@/components/ui/InlineSpinner"
@@ -108,7 +108,7 @@ export default function ProfileHero(props: ProfileHeroProps) {
                 onClick={() => { setCoverMenuOpen(false); coverInputRef.current?.click() }}
                 className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium text-foreground transition-colors hover:bg-muted"
               >
-                <ImagePlus className="h-4 w-4 text-teal-600" />
+                <ImagePlus className="h-4 w-4 text-primary" />
                 {p.coverPhotoUrl ? "Change cover" : "Upload cover"}
               </button>
               {p.coverPhotoUrl ? (

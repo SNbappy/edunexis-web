@@ -5,6 +5,7 @@ import Avatar from "@/components/ui/Avatar"
 import Badge from "@/components/ui/Badge"
 import { ICON_STROKE, FOCUS, SURFACE } from "@/components/ui/appTokens"
 import { cn } from "@/utils/cn"
+import { getInitials } from "@/utils/names"
 import type {
   CourseSummaryDto, PendingCourseDto, RejectedCourseDto,
 } from "@/types/course.types"
@@ -46,42 +47,81 @@ export function ActiveCourseCard({ course }: ActiveCardProps) {
       to={`/courses/${course.id}/stream`}
       className={cn("group block rounded-2xl", FOCUS, course.isArchived && "opacity-70")}
     >
-      <div className={cn(SURFACE.cardInteractive, "flex h-full flex-col p-4")}>
-        <div className="flex items-start justify-between gap-3">
-          <span className="rounded-lg border border-primary/20 bg-primary/10 px-2 py-1 font-mono text-[11px] font-bold tracking-wide text-primary">
-            {course.courseCode}
-          </span>
-          {course.isArchived && (
-            <Badge variant="neutral" size="sm" icon={<Archive strokeWidth={ICON_STROKE} />}>
-              Archived
-            </Badge>
-          )}
-        </div>
-
-        <h3 className="mt-2.5 line-clamp-2 font-display text-[15px] font-bold leading-snug text-foreground transition-colors duration-120 group-hover:text-primary">
-          {course.title}
-        </h3>
-
-        <div className="mt-2 flex items-center gap-2">
-          <Avatar
-            src={course.teacherProfilePhotoUrl}
-            name={course.teacherName}
-            size="xs"
-            className="h-5 w-5 shrink-0"
+      <article
+        className={cn(
+          "flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card",
+          "shadow-[inset_0_1px_0_rgb(255_255_255/0.55),0_1px_2px_rgb(15_23_42/0.05),0_4px_12px_-6px_rgb(15_23_42/0.10)]",
+          "transition-all duration-200 hover:-translate-y-1 hover:border-border-strong",
+          "hover:shadow-[0_2px_4px_rgb(15_23_42/0.06),0_18px_36px_-16px_rgb(var(--primary)/0.45)]",
+          "dark:shadow-[inset_0_1px_0_rgb(255_255_255/0.045),0_1px_2px_rgb(0_0_0/0.45),0_4px_12px_-6px_rgb(0_0_0/0.6)]",
+        )}
+      >
+        {/* Ink plate.
+            The card was a white rectangle with stacked text rows — correct,
+            but it could have been a card for anything. This is the brand
+            material at card scale: the course code set large in mono, the
+            way a course is actually referred to out loud, on the same teal
+            ink as the page heroes. It gives the card a subject. */}
+        <div className="relative overflow-hidden bg-teal-950 px-4 py-3">
+          <div
+            aria-hidden
+            className="absolute inset-0 opacity-[0.06]"
+            style={{
+              backgroundImage:
+                "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
+              backgroundSize: "24px 24px",
+            }}
           />
-          <span className="truncate text-[12.5px] text-muted-foreground">
-            {course.teacherName}
-          </span>
+          {/* Glow brightens on hover, so the whole plate responds rather than
+              just the border. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full opacity-30 blur-2xl transition-opacity duration-300 group-hover:opacity-60"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(45,212,191,0.7) 0%, rgba(45,212,191,0.15) 50%, transparent 70%)",
+            }}
+          />
+
+          <div className="relative flex items-center justify-between gap-3">
+            <span className="font-mono text-[17px] font-bold tracking-tight text-white">
+              {course.courseCode}
+            </span>
+            <span className="shrink-0 rounded-md border border-white/15 bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-teal-100/80">
+              {course.isArchived ? "Archived" : course.courseType}
+            </span>
+          </div>
         </div>
 
-        <div className="mt-4 flex items-center justify-between gap-3 border-t border-border pt-3 text-[12px] text-muted-foreground">
-          <span className="truncate">{course.semester}</span>
-          <span className="inline-flex shrink-0 items-center gap-1.5">
-            <Users className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
-            <span className="font-semibold tabular-nums text-foreground">{course.memberCount}</span>
-          </span>
+        {/* Body */}
+        <div className="flex flex-1 flex-col p-4">
+          <h3 className="line-clamp-2 font-display text-[15.5px] font-bold leading-snug text-foreground transition-colors duration-120 group-hover:text-primary">
+            {course.title}
+          </h3>
+
+          <div className="mt-2.5 flex items-center gap-2">
+            <Avatar
+              src={course.teacherProfilePhotoUrl}
+              name={course.teacherName}
+              size="xs"
+              className="h-5 w-5 shrink-0"
+            />
+            <span className="truncate text-[12.5px] text-muted-foreground">
+              {course.teacherName}
+            </span>
+          </div>
+
+          <div className="mt-auto flex items-center justify-between gap-3 pt-4 text-[12px] text-muted-foreground">
+            <span className="truncate">{course.semester}</span>
+            <span className="inline-flex shrink-0 items-center gap-1.5">
+              <Users className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
+              <span className="font-semibold tabular-nums text-foreground">
+                {course.memberCount}
+              </span>
+            </span>
+          </div>
         </div>
-      </div>
+      </article>
     </Link>
   )
 }
@@ -129,8 +169,8 @@ export function PendingCourseCard({ course }: PendingCardProps) {
               className="h-6 w-6 shrink-0 rounded-full object-cover"
             />
           ) : (
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-stone-100 text-[11px] font-bold text-stone-600 dark:bg-stone-800 dark:text-stone-300">
-              {course.teacherName.charAt(0).toUpperCase()}
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-muted-foreground">
+              {getInitials(course.teacherName)}
             </div>
           )}
           <span className="truncate text-[13px] text-muted-foreground">
@@ -205,8 +245,8 @@ export function RejectedCourseCard({
               className="h-6 w-6 shrink-0 rounded-full object-cover"
             />
           ) : (
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-stone-100 text-[11px] font-bold text-stone-600 dark:bg-stone-800 dark:text-stone-300">
-              {course.teacherName.charAt(0).toUpperCase()}
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-muted-foreground">
+              {getInitials(course.teacherName)}
             </div>
           )}
           <span className="truncate text-[13px] text-muted-foreground">

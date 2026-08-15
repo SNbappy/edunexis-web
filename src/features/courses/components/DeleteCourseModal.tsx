@@ -35,7 +35,7 @@ export default function DeleteCourseModal({
   return (
     <Modal isOpen={isOpen} onClose={handleClose} size="md" title="" hideHeader>
       <div className="px-1 py-1">
-        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 text-amber-600 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300">
+        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-warning/25 bg-warning-soft text-warning">
           <AlertTriangle className="h-7 w-7" strokeWidth={2} />
         </div>
 
@@ -49,10 +49,11 @@ export default function DeleteCourseModal({
           and you can restore the course within 30 days.
         </p>
 
-        <div className="mt-5 space-y-3" autoComplete="off">
+        {/* `autoComplete` is a form/input attribute; on a div it did nothing. */}
+        <div className="mt-5 space-y-3">
           <div>
             <label htmlFor="delete-course-code-confirm" className="mb-1.5 block text-[12px] font-semibold text-foreground">
-              Type <span className="font-mono text-amber-600 dark:text-amber-400">{courseCode}</span> to confirm
+              Type <span className="font-mono text-warning">{courseCode}</span> to confirm
             </label>
             <input
               id="delete-course-code-confirm"
@@ -67,7 +68,7 @@ export default function DeleteCourseModal({
               spellCheck={false}
               data-lpignore="true"
               data-1p-ignore="true"
-              className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13px] font-mono text-foreground placeholder:text-muted-foreground/50 transition-all focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+              className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13px] font-mono text-foreground placeholder:text-muted-foreground/50 transition-all focus:border-warning focus:outline-none focus:ring-2 focus:ring-amber-500/20"
             />
           </div>
 
@@ -85,7 +86,7 @@ export default function DeleteCourseModal({
               autoComplete="new-password"
               data-lpignore="true"
               data-1p-ignore="true"
-              className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13px] text-foreground placeholder:text-muted-foreground transition-all focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+              className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13px] text-foreground placeholder:text-muted-foreground transition-all focus:border-warning focus:outline-none focus:ring-2 focus:ring-amber-500/20"
             />
           </div>
         </div>

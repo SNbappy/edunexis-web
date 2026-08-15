@@ -21,7 +21,7 @@ export default function OfficeInfoCard({
             <dl className="space-y-2.5">
                 {hasLocation && (
                     <div className="flex items-start gap-2.5">
-                        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" strokeWidth={2} />
+                        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2} />
                         <div>
                             <dt className="sr-only">Location</dt>
                             <dd className="text-[13px] font-medium text-foreground">{location}</dd>
@@ -30,7 +30,7 @@ export default function OfficeInfoCard({
                 )}
                 {hasHours && (
                     <div className="flex items-start gap-2.5">
-                        <Clock className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" strokeWidth={2} />
+                        <Clock className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2} />
                         <div>
                             <dt className="sr-only">Hours</dt>
                             <dd className="text-[13px] font-medium text-foreground">{hours}</dd>

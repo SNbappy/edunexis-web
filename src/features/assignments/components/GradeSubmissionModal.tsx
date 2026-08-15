@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { FileText, Star, ExternalLink } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
@@ -37,7 +37,7 @@ export default function GradeSubmissionModal({ isOpen, onClose, submission, maxM
     const handleSubmit = () => {
         const n = parseFloat(marks)
         if (isNaN(n) || n < 0 || n > maxMarks) return
-        onGrade({ obtainedMarks: n, feedback: feedback || undefined })
+        onGrade({ marks: n, feedback: feedback || undefined })
     }
 
     return (
@@ -53,7 +53,7 @@ export default function GradeSubmissionModal({ isOpen, onClose, submission, maxM
                         </p>
                     </div>
                     {submission.isLate && (
-                        <span className="ml-auto text-[10.5px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-800 px-2 py-0.5 rounded-full">
+                        <span className="ml-auto text-[10.5px] font-bold uppercase tracking-wider text-warning bg-warning-soft border border-warning/25 px-2 py-0.5 rounded-full">
                             Late
                         </span>
                     )}

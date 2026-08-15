@@ -1,9 +1,13 @@
 import { cn } from '@/utils/cn'
+import { getInitials } from '@/utils/names'
 
 interface AvatarProps {
     src?: string | null
     name?: string | null
     size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+    /** `muted` drops the hashed colour — for large surfaces where a saturated
+     *  fill would dominate the page. */
+    tone?: 'color' | 'muted'
     className?: string
 }
 
@@ -15,17 +19,8 @@ const sizes = {
     xl: 'w-20 h-20 text-2xl',
 }
 
-/** Honorifics that are not part of a name. "Dr. Taslima Rahman" is TR, not DT. */
-const TITLES = /^(dr|prof|mr|mrs|ms|md|engr)\.?$/i
-
-function getInitials(name?: string | null): string {
-    if (!name) return '?'
-    const parts = name.trim().split(/\s+/).filter(Boolean)
-    // Keep the title only if it is the whole string, so we never return '?'
-    // for someone recorded as just "Dr".
-    while (parts.length > 1 && TITLES.test(parts[0])) parts.shift()
-    return parts.map((n) => n[0]).slice(0, 2).join('').toUpperCase()
-}
+// Initials come from the shared name helper — see utils/names.ts for why
+// honorifics have to be stripped ("Dr. Taslima Rahman" is TR, not DT).
 
 function getColor(name?: string | null): string {
     const colors = [
@@ -41,7 +36,7 @@ function getColor(name?: string | null): string {
     return colors[idx]
 }
 
-export function Avatar({ src, name, size = 'md', className }: AvatarProps) {
+export function Avatar({ src, name, size = 'md', tone = 'color', className }: AvatarProps) {
     if (src) {
         return (
             <img
@@ -51,11 +46,17 @@ export function Avatar({ src, name, size = 'md', className }: AvatarProps) {
             />
         )
     }
+    /* The hashed gradient earns its place at list sizes — it is what lets you
+       pick one person out of eighteen at a glance. Blown up to a 360px block on
+       a profile card it stops being a cue and becomes the loudest thing on the
+       page, so large surfaces pass tone="muted". */
     return (
         <div
             className={cn(
-                'rounded-full flex items-center justify-center font-semibold text-white shrink-0',
-                `bg-gradient-to-br ${getColor(name)}`,
+                'rounded-full flex items-center justify-center font-semibold shrink-0',
+                tone === 'muted'
+                    ? 'bg-muted text-muted-foreground'
+                    : `bg-gradient-to-br text-white ${getColor(name)}`,
                 sizes[size],
                 className
             )}

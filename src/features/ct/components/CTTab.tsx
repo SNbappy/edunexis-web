@@ -1,6 +1,9 @@
-﻿import { useState } from "react"
-import { motion } from "framer-motion"
-import { Plus, BookMarked } from "lucide-react"
+import { useState } from "react"
+import { Plus } from "lucide-react"
+import Button from "@/components/ui/Button"
+import Skeleton from "@/components/ui/Skeleton"
+import { ICON_STROKE, FOCUS } from "@/components/ui/appTokens"
+import { cn } from "@/utils/cn"
 import CTEventsList from "./CTEventsList"
 import CTEventDetailModal from "./CTEventDetailModal"
 import CreateCTEventModal from "./CreateCTEventModal"
@@ -13,7 +16,9 @@ import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
 import type { CTEventDto, CreateCTEventRequest } from "@/types/ct.types"
 
-interface Member { userId: string; fullName: string; studentId?: string; profilePhotoUrl?: string }
+/** `string | null` matches CourseMemberDto — the API sends null, not undefined,
+ *  and the narrower type made every hook that returns members unassignable. */
+interface Member { userId: string; fullName: string; studentId?: string | null; profilePhotoUrl?: string | null }
 interface Props { courseId: string; members?: Member[] }
 type FilterTab = "all" | "draft" | "published"
 
@@ -57,92 +62,60 @@ export default function CTTab({ courseId, members = [] }: Props) {
   ]
 
   const createButton = (
-    <motion.button
-      type="button"
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.97 }}
-      onClick={() => setCreateOpen(true)}
-      className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-[13px] font-bold text-white shadow-[0_4px_14px_-4px_rgba(20,184,166,0.6)] transition-colors hover:bg-teal-700"
-    >
-      <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+    <Button onClick={() => setCreateOpen(true)} leftIcon={<Plus strokeWidth={ICON_STROKE} />}>
       New CT
-    </motion.button>
+    </Button>
   )
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
-      {/* Toolbar */}
-      <motion.div
-        initial={{ opacity: 0, y: -6 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm"
-      >
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-100 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300">
-            <BookMarked className="h-4 w-4" strokeWidth={2} />
-          </div>
-          <div>
-            <h2 className="font-display text-[15px] font-bold text-foreground">
-              Class tests
-            </h2>
-            <p className="text-[11.5px] text-muted-foreground">
-              {ctEvents.length === 0
-                ? "Nothing posted yet"
-                : publishedCount > 0
-                  ? publishedCount + " published · " + ctEvents.length + " total"
-                  : ctEvents.length + " total"
-              }
-            </p>
-          </div>
-        </div>
+    <div className="space-y-4">
+      {/* Status + filters + action. The tab bar already says "CT". */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-[13px] text-muted-foreground">
+          {ctEvents.length === 0
+            ? "Nothing posted yet"
+            : publishedCount > 0
+              ? `${publishedCount} published · ${ctEvents.length} total`
+              : `${ctEvents.length} total · none published`}
+        </p>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* Filter chips */}
-          <div className="flex items-center gap-1 rounded-xl border border-border bg-muted p-1">
+          <div className="flex items-center gap-0.5 rounded-xl border border-border bg-muted p-0.5">
             {FILTERS.map(tab => {
               const active = filter === tab.key
               return (
-                <motion.button
+                <button
                   key={tab.key}
                   type="button"
-                  whileTap={{ scale: 0.95 }}
                   onClick={() => setFilter(tab.key)}
-                  className={
-                    "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-colors " +
-                    (active
-                      ? "bg-card text-teal-700 shadow-sm dark:text-teal-300"
-                      : "text-muted-foreground hover:text-foreground")
-                  }
+                  aria-pressed={active}
+                  className={cn(
+                    "inline-flex h-8 items-center gap-1.5 rounded-[9px] px-2.5 text-[12.5px] font-semibold transition-colors duration-120",
+                    FOCUS,
+                    active
+                      ? "bg-card text-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
                 >
                   {tab.label}
                   {tab.count > 0 && (
-                    <span className={
-                      "rounded-full px-1.5 py-0.5 text-[10px] font-bold " +
-                      (active
-                        ? "bg-teal-100 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300"
-                        : "bg-card text-muted-foreground")
-                    }>
+                    <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-muted-foreground">
                       {tab.count}
                     </span>
                   )}
-                </motion.button>
+                </button>
               )
             })}
           </div>
 
           {teacher && createButton}
         </div>
-      </motion.div>
+      </div>
 
       {/* List */}
       {isLoading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map(i => (
-            <div
-              key={i}
-              className="h-24 animate-pulse rounded-2xl border border-border bg-muted/40"
-            />
-          ))}
+        <div className="space-y-2">
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-24" rounded="2xl" />)}
         </div>
       ) : (
         <CTEventsList
@@ -184,7 +157,6 @@ export default function CTTab({ courseId, members = [] }: Props) {
           isOpen={!!marksTarget}
           onClose={() => setMarksTarget(null)}
           ct={marksTarget}
-          courseId={courseId}
           members={memberList}
         />
       )}

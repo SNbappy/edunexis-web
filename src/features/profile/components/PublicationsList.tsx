@@ -25,7 +25,7 @@ export default function PublicationsList({
                     <button
                         type="button"
                         onClick={onAdd}
-                        className="mt-2 text-[12px] font-bold text-teal-700 hover:underline dark:text-teal-400"
+                        className="mt-2 text-[12px] font-bold text-primary hover:underline text-primary"
                     >
                         Add your first publication
                     </button>
@@ -56,7 +56,7 @@ export default function PublicationsList({
                 <button
                     type="button"
                     onClick={onAdd}
-                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-3 py-1.5 text-[12px] font-bold text-teal-700 transition-colors hover:bg-teal-100 dark:border-teal-800/50 dark:bg-teal-950/40 dark:text-teal-300 dark:hover:bg-teal-950/60"
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-primary/20 bg-primary/10 px-3 py-1.5 text-[12px] font-bold text-primary transition-colors hover:bg-primary/10 border-primary/20/50 bg-primary/10 text-primary dark:hover:bg-teal-950/60"
                 >
                     <Plus className="h-3.5 w-3.5" />
                     Add publication

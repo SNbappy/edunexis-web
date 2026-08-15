@@ -64,6 +64,28 @@ export function useMaterials(courseId: string) {
         onError: () => toast.error('Upload failed.'),
     })
 
+    const addLinkMutation = useMutation({
+        mutationFn: (payload: {
+            title: string; url: string; description?: string; isYouTube: boolean
+        }) =>
+            materialService.addLink({
+                courseId,
+                parentFolderId: currentFolderId,
+                title: payload.title,
+                description: payload.description,
+                embedUrl: payload.url,
+                // Stored as its own type so the UI knows what it may embed.
+                type: payload.isYouTube ? 'YouTube' : 'Link',
+            }),
+        onSuccess: (res, vars) => {
+            if (res.success) {
+                invalidate()
+                toast.success(vars.isYouTube ? 'Video added!' : 'Link added!')
+            } else toast.error(res.message)
+        },
+        onError: () => toast.error('Failed to add link.'),
+    })
+
     const deleteMutation = useMutation({
         mutationFn: (id: string) => materialService.deleteMaterial(courseId, id),
         onSuccess: (res) => { if (res.success) { invalidate(); toast.success('Deleted.') } else toast.error(res.message) },
@@ -108,6 +130,8 @@ export function useMaterials(courseId: string) {
         isCreatingFolder: createFolderMutation.isPending,
         uploadFile: uploadMutation.mutate,
         isUploading: uploadMutation.isPending,
+        addLink: addLinkMutation.mutate,
+        isAddingLink: addLinkMutation.isPending,
         deleteMaterial: deleteMutation.mutate,
         isDeleting: deleteMutation.isPending,
     }

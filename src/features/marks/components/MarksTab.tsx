@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { CheckCircle2, RefreshCw, Send, BarChart3 } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
+import { RefreshCw, Send, Check } from "lucide-react"
 import toast from "react-hot-toast"
 import { useMarks } from "../hooks/useMarks"
 import { useAttendance } from "@/features/attendance/hooks/useAttendance"
@@ -8,6 +7,14 @@ import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
 import MyGradesView from "./MyGradesView"
 import ExportFinalMarksButton from "./ExportFinalMarksButton"
+import Button from "@/components/ui/Button"
+import Badge from "@/components/ui/Badge"
+import Skeleton from "@/components/ui/Skeleton"
+import EmptyState from "@/components/ui/EmptyState"
+import { Switch, FIELD_BASE, fieldState } from "@/components/ui/field"
+import { DistributionBar } from "@/components/ui/charts"
+import { ICON_STROKE, SURFACE, TEXT } from "@/components/ui/appTokens"
+import { cn } from "@/utils/cn"
 import type { FormulaComponentType, SelectionRule } from "@/types/marks.types"
 
 interface MarksTabProps { courseId: string; courseTitle?: string; courseCode?: string; semester?: string; department?: string }
@@ -30,71 +37,30 @@ interface ComponentMeta {
   abbr: string
   type: FormulaComponentType
   showRule: boolean
-  /** Each component gets a tonal class set, picked to look distinct but unified */
-  tone: "teal" | "violet" | "amber" | "emerald"
 }
 
+/**
+ * The four components no longer carry a colour each.
+ *
+ * They previously got teal / violet / amber / emerald, with a tinted row, a
+ * tinted badge and a matching toggle — four hues that encode nothing beyond
+ * "this is the second row". The abbreviation already identifies the component,
+ * and removing the tints frees colour to mean one thing on this screen: a
+ * failing total.
+ */
 const COMPONENTS: ComponentMeta[] = [
-  { key: "ct", label: "Class tests", abbr: "CT", type: "CT", showRule: true, tone: "teal" },
-  { key: "assignment", label: "Assignments", abbr: "ASN", type: "Assignment", showRule: true, tone: "violet" },
-  { key: "presentation", label: "Other tests", abbr: "OT", type: "Presentation", showRule: true, tone: "amber" },
-  { key: "attendance", label: "Attendance", abbr: "ATT", type: "Attendance", showRule: false, tone: "emerald" },
+  { key: "ct",           label: "Class tests",  abbr: "CT",  type: "CT",           showRule: true  },
+  { key: "assignment",   label: "Assignments",  abbr: "ASN", type: "Assignment",   showRule: true  },
+  { key: "presentation", label: "Other tests",  abbr: "OT",  type: "Presentation", showRule: true  },
+  { key: "attendance",   label: "Attendance",   abbr: "ATT", type: "Attendance",   showRule: false },
 ]
 
 const RULES: { value: SelectionRule; label: string }[] = [
   { value: "Best1", label: "Best 1" },
   { value: "Best2", label: "Best 2" },
   { value: "Best3", label: "Best 3" },
-  { value: "All", label: "Average of all" },
+  { value: "All",   label: "Average of all" },
 ]
-
-interface ToneClasses {
-  badgeBg: string
-  badgeText: string
-  toggleOn: string
-  rowBg: string
-  rowBorder: string
-}
-
-function getToneClasses(tone: ComponentMeta["tone"]): ToneClasses {
-  switch (tone) {
-    case "teal": return {
-      badgeBg: "bg-teal-100 dark:bg-teal-950/50",
-      badgeText: "text-teal-700 dark:text-teal-300",
-      toggleOn: "bg-teal-600",
-      rowBg: "bg-teal-50/60 dark:bg-teal-950/20",
-      rowBorder: "border-teal-200 dark:border-teal-800",
-    }
-    case "violet": return {
-      badgeBg: "bg-violet-100 dark:bg-violet-950/50",
-      badgeText: "text-violet-700 dark:text-violet-300",
-      toggleOn: "bg-violet-600",
-      rowBg: "bg-violet-50/60 dark:bg-violet-950/20",
-      rowBorder: "border-violet-200 dark:border-violet-800",
-    }
-    case "amber": return {
-      badgeBg: "bg-amber-100 dark:bg-amber-950/50",
-      badgeText: "text-amber-700 dark:text-amber-300",
-      toggleOn: "bg-amber-600",
-      rowBg: "bg-amber-50/60 dark:bg-amber-950/20",
-      rowBorder: "border-amber-200 dark:border-amber-800",
-    }
-    case "emerald": return {
-      badgeBg: "bg-emerald-100 dark:bg-emerald-950/50",
-      badgeText: "text-emerald-700 dark:text-emerald-300",
-      toggleOn: "bg-emerald-600",
-      rowBg: "bg-emerald-50/60 dark:bg-emerald-950/20",
-      rowBorder: "border-emerald-200 dark:border-emerald-800",
-    }
-  }
-}
-
-function getScoreClass(percent: number): string {
-  if (percent >= 80) return "text-emerald-600 dark:text-emerald-400"
-  if (percent >= 70) return "text-teal-600 dark:text-teal-400"
-  if (percent >= 60) return "text-amber-600 dark:text-amber-400"
-  return "text-red-600 dark:text-red-400"
-}
 
 export default function MarksTab({ courseId, courseTitle, courseCode, semester, department }: MarksTabProps) {
   const { user } = useAuthStore()
@@ -126,6 +92,52 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
     setLoaded(true)
   }, [formula, loaded])
 
+  /** Student IDs by user id, so the results table can key on the roll number. */
+  const studentIdOf = useMemo(() => {
+    const map: Record<string, string> = {}
+    ;(members ?? []).forEach((m: any) => {
+      if (m.studentId) map[m.userId] = m.studentId
+    })
+    return map
+  }, [members])
+
+  /**
+   * Gradebook order.
+   *
+   * By student ID, matching the roster and the attendance sheet. The API
+   * returns calculation order, so the same class appeared in a different order
+   * on every screen — and a mark sheet that does not run in roll order is
+   * almost unusable for transcribing to the university's own forms.
+   */
+  /**
+   * Grade bands for the distribution bar. Thresholds follow GRADE_SCALE's
+   * shape rather than even quarters, so the bands mean something to a
+   * teacher: a fail, a pass, a good result, a top result.
+   */
+  const distribution = useMemo(() => {
+    const total = formula?.totalMarks ?? 0
+    const pct = (m: any) => (total > 0 ? (m.finalMark / total) * 100 : 0)
+    const band = (lo: number, hi: number) =>
+      marks.filter((m: any) => pct(m) >= lo && pct(m) < hi).length
+
+    return [
+      { label: "Below 40", count: band(0, 40),   className: "bg-destructive" },
+      { label: "40–59",    count: band(40, 60),  className: "bg-warning" },
+      { label: "60–79",    count: band(60, 80),  className: "bg-primary/60" },
+      { label: "80+",      count: band(80, 1e9), className: "bg-success" },
+    ]
+  }, [marks, formula])
+
+  const sortedMarks = useMemo(
+    () =>
+      [...marks].sort((a: any, b: any) =>
+        (studentIdOf[a.studentId] ?? "").localeCompare(
+          studentIdOf[b.studentId] ?? "", undefined, { numeric: true },
+        ) || (a.studentName ?? "").localeCompare(b.studentName ?? ""),
+      ),
+    [marks, studentIdOf],
+  )
+
   if (!teacher) return <MyGradesView courseId={courseId} />
 
   const enabled = COMPONENTS.filter(c => config[c.key].enabled)
@@ -153,300 +165,249 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
     setConfig(prev => ({ ...prev, [key]: { ...prev[key], ...patch } }))
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
-      {/* Toolbar */}
-      <motion.div
-        initial={{ opacity: 0, y: -6 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm"
-      >
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-100 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300">
-            <BarChart3 className="h-4 w-4" strokeWidth={2} />
-          </div>
-          <div>
-            <h2 className="font-display text-[15px] font-bold text-foreground">
-              Marks &amp; grading
-            </h2>
-            <p className="text-[11.5px] text-muted-foreground">
-              {isPublished
-                ? <span className="text-emerald-600 dark:text-emerald-400">Results published · {marks.length} students</span>
-                : formula
-                  ? <span>Formula saved · {hasMarks ? marks.length + " calculated" : "not calculated yet"}</span>
-                  : <span>No formula set</span>
-              }
-            </p>
-          </div>
-        </div>
+    <div className="space-y-4">
+      {/* Toolbar. No "Marks & grading" heading — the tab bar above already
+          names the section; this row carries state and actions only. */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-[13px] text-muted-foreground">
+          {isPublished
+            ? <>Results published to <span className="font-semibold text-foreground">{marks.length}</span> students</>
+            : formula
+              ? <>Formula saved · {hasMarks ? `${marks.length} calculated, not yet published` : "not calculated yet"}</>
+              : <>No grading formula set yet</>}
+        </p>
 
         <div className="flex flex-wrap items-center gap-2">
           {formula && (
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.96 }}
+            <Button
+              variant="secondary"
               onClick={() => calculate()}
               disabled={isCalculating}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-muted px-3 py-2 text-[12px] font-semibold text-foreground transition-colors hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700 disabled:opacity-40 dark:hover:border-teal-700 dark:hover:bg-teal-950/30 dark:hover:text-teal-300"
+              leftIcon={<RefreshCw className={isCalculating ? "animate-spin" : ""} strokeWidth={ICON_STROKE} />}
             >
-              <RefreshCw className={"h-3 w-3 " + (isCalculating ? "animate-spin" : "")} />
               {hasMarks ? "Recalculate" : "Calculate"}
-            </motion.button>
+            </Button>
           )}
-
           {hasMarks && !isPublished && (
-            <motion.button
-              type="button"
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => publish()}
-              disabled={isPublishing}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 px-4 py-2 text-[12px] font-bold text-white shadow-[0_4px_14px_-4px_rgba(20,184,166,0.6)] transition-colors hover:bg-teal-700 disabled:opacity-40"
-            >
-              <Send className="h-3 w-3" />
+            <Button onClick={() => publish()} loading={isPublishing} leftIcon={<Send strokeWidth={ICON_STROKE} />}>
               Publish results
-            </motion.button>
+            </Button>
           )}
-
           {isPublished && formula && (
             <ExportFinalMarksButton marks={marks} formula={formula} courseTitle={courseTitle} courseCode={courseCode} semester={semester} department={department} members={members} />
           )}
         </div>
-      </motion.div>
+      </div>
 
-      {/* Formula Builder */}
-      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-        <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
+      {/* ── Grading formula ───────────────────────────────────────── */}
+      <section className={cn(SURFACE.card, "overflow-hidden")}>
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
           <div>
-            <h3 className="font-display text-[14px] font-bold text-foreground">
-              Grading formula
-            </h3>
-            <p className="mt-0.5 text-[11.5px] text-muted-foreground">
-              {formula ? "Saved — edit and re-save to update" : "Define how final marks are calculated"}
+            <h3 className={TEXT.section}>Grading formula</h3>
+            <p className={cn(TEXT.muted, "mt-0.5")}>
+              {formula ? "Edit and save again to update." : "Define how final marks are calculated."}
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {formula && !isFormulaLoading && (
-              <span className="rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10.5px] font-bold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
-                Saved
-              </span>
-            )}
-            {totalMarks > 0 && (
-              <span className="rounded-lg border border-teal-200 bg-teal-50 px-2 py-1 text-[10.5px] font-bold text-teal-700 dark:border-teal-800 dark:bg-teal-950/40 dark:text-teal-300">
-                {totalMarks} total marks
-              </span>
-            )}
+            {formula && !isFormulaLoading && <Badge variant="success" size="sm">Saved</Badge>}
+            <Badge variant={totalMarks > 0 ? "primary" : "neutral"} size="sm">
+              {totalMarks} total marks
+            </Badge>
           </div>
-        </div>
+        </header>
 
-        <div className="space-y-2 p-4">
-          {COMPONENTS.map((comp, i) => {
+        <ul className="divide-y divide-border">
+          {COMPONENTS.map(comp => {
             const cfg = config[comp.key]
-            const tone = getToneClasses(comp.tone)
+            /* Weight is what a formula is actually about, so it is shown
+               alongside the raw marks rather than left for the reader to work
+               out from four numbers and a total. */
+            const weight = totalMarks > 0 && cfg.enabled
+              ? Math.round(((parseFloat(cfg.maxMarks) || 0) / totalMarks) * 100)
+              : 0
 
             return (
-              <motion.div
-                key={comp.key}
-                initial={{ opacity: 0, x: -6 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.04 }}
-                className={
-                  "overflow-hidden rounded-xl border transition-all " +
-                  (cfg.enabled
-                    ? tone.rowBg + " " + tone.rowBorder
-                    : "border-border bg-muted/30")
-                }
-              >
-                <div className="flex items-center justify-between gap-3 px-4 py-3">
-                  <div className="flex items-center gap-2.5">
-                    <span className={
-                      "inline-flex items-center justify-center rounded-lg px-2 py-0.5 text-[10.5px] font-extrabold " +
-                      (cfg.enabled
-                        ? tone.badgeBg + " " + tone.badgeText
-                        : "bg-card text-muted-foreground")
-                    }>
-                      {comp.abbr}
-                    </span>
-                    <span className={
-                      "text-[13px] font-semibold " +
-                      (cfg.enabled ? "text-foreground" : "text-muted-foreground")
-                    }>
-                      {comp.label}
-                    </span>
-                    {cfg.enabled && (
-                      <span className={"rounded-md px-1.5 py-0.5 text-[10.5px] font-bold " + tone.badgeBg + " " + tone.badgeText}>
-                        {parseFloat(cfg.maxMarks) || 0} marks
-                      </span>
+              <li key={comp.key} className={cn("px-4 py-3", !cfg.enabled && "bg-muted/30")}>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <span
+                    className={cn(
+                      "inline-flex h-6 w-11 shrink-0 items-center justify-center rounded-md border font-mono text-[10.5px] font-bold",
+                      cfg.enabled
+                        ? "border-primary/20 bg-primary/10 text-primary"
+                        : "border-border bg-card text-muted-foreground",
                     )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setComp(comp.key, { enabled: !cfg.enabled })}
-                    aria-pressed={cfg.enabled}
-                    aria-label={(cfg.enabled ? "Disable " : "Enable ") + comp.label}
-                    className={
-                      "relative h-5 w-9 shrink-0 rounded-full transition-colors " +
-                      (cfg.enabled ? tone.toggleOn : "bg-stone-300 dark:bg-stone-700")
-                    }
                   >
-                    <span className={
-                      "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all " +
-                      (cfg.enabled ? "left-[18px]" : "left-0.5")
-                    } />
-                  </button>
-                </div>
+                    {comp.abbr}
+                  </span>
 
-                {cfg.enabled && (
-                  <div className={"flex flex-wrap items-center gap-x-4 gap-y-2 border-t px-4 pb-3 pt-2.5 " + tone.rowBorder}>
-                    {comp.showRule && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[11.5px] font-semibold text-muted-foreground">Count:</span>
-                        <select
-                          value={cfg.selectionRule}
-                          onChange={e => setComp(comp.key, { selectionRule: e.target.value as SelectionRule })}
-                          className="h-7 rounded-lg border border-border bg-card px-2 text-[12px] text-foreground outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
-                        >
-                          {RULES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-                        </select>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[11.5px] font-semibold text-muted-foreground">Worth:</span>
-                      <input
-                        type="number"
-                        min="1"
-                        value={cfg.maxMarks}
-                        onChange={e => setComp(comp.key, { maxMarks: e.target.value })}
-                        className="h-7 w-16 rounded-lg border border-border bg-card px-2 text-center text-[12px] text-foreground outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
-                      />
-                      <span className="text-[11.5px] font-semibold text-muted-foreground">marks</span>
+                  <span className={cn(
+                    "min-w-0 flex-1 text-[13.5px] font-semibold",
+                    cfg.enabled ? "text-foreground" : "text-muted-foreground",
+                  )}>
+                    {comp.label}
+                  </span>
+
+                  {cfg.enabled && (
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                      {comp.showRule && (
+                        <label className="flex items-center gap-1.5">
+                          <span className="text-[12px] text-muted-foreground">Count</span>
+                          <select
+                            value={cfg.selectionRule}
+                            onChange={e => setComp(comp.key, { selectionRule: e.target.value as SelectionRule })}
+                            aria-label={`How many ${comp.label.toLowerCase()} to count`}
+                            style={{ colorScheme: "light dark" }}
+                            className={cn(FIELD_BASE, fieldState(false), "h-8 cursor-pointer px-2 text-[12.5px]")}
+                          >
+                            {RULES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                          </select>
+                        </label>
+                      )}
+
+                      <label className="flex items-center gap-1.5">
+                        <span className="text-[12px] text-muted-foreground">Worth</span>
+                        <input
+                          type="number"
+                          min="1"
+                          value={cfg.maxMarks}
+                          onChange={e => setComp(comp.key, { maxMarks: e.target.value })}
+                          aria-label={`Marks for ${comp.label.toLowerCase()}`}
+                          className={cn(FIELD_BASE, fieldState(false), "h-8 w-16 px-2 text-center text-[12.5px]")}
+                        />
+                        <span className="w-16 text-[12px] tabular-nums text-muted-foreground">
+                          {weight > 0 ? `= ${weight}%` : "marks"}
+                        </span>
+                      </label>
                     </div>
-                  </div>
-                )}
-              </motion.div>
+                  )}
+
+                  <Switch
+                    checked={cfg.enabled}
+                    onChange={next => setComp(comp.key, { enabled: next })}
+                    label={`${cfg.enabled ? "Disable" : "Enable"} ${comp.label}`}
+                  />
+                </div>
+              </li>
             )
           })}
-        </div>
+        </ul>
 
-        <div className="flex items-center justify-end gap-3 border-t border-border px-5 py-3">
-          <motion.button
-            type="button"
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
+        <footer className="flex items-center justify-end border-t border-border bg-muted/40 px-4 py-3">
+          <Button
             onClick={handleSave}
-            disabled={enabled.length === 0 || isSaving}
-            className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-[13px] font-bold text-white shadow-[0_4px_14px_-4px_rgba(20,184,166,0.6)] transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-40"
+            disabled={enabled.length === 0}
+            loading={isSaving}
+            leftIcon={<Check strokeWidth={ICON_STROKE} />}
           >
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            {isSaving ? "Saving…" : "Save formula"}
-          </motion.button>
-        </div>
-      </div>
+            Save formula
+          </Button>
+        </footer>
+      </section>
 
-      {/* Results Table */}
+      {/* ── Results ───────────────────────────────────────────────── */}
       {formula && (
-        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-          <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
+        <section className={cn(SURFACE.card, "overflow-hidden")}>
+          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
             <div>
-              <h3 className="font-display text-[14px] font-bold text-foreground">
-                Calculated results
-              </h3>
-              <p className="mt-0.5 text-[11.5px] text-muted-foreground">
+              <h3 className={TEXT.section}>Calculated results</h3>
+              <p className={cn(TEXT.muted, "mt-0.5")}>
                 {hasMarks
-                  ? marks.length + " student" + (marks.length !== 1 ? "s" : "") + " · out of " + formula.totalMarks + " marks"
-                  : "No marks calculated yet — click Calculate above"
-                }
+                  ? `${marks.length} student${marks.length !== 1 ? "s" : ""} · out of ${formula.totalMarks} marks`
+                  : "Not calculated yet."}
               </p>
             </div>
-            {isPublished && (
-              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10.5px] font-bold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
-                Published
-              </span>
-            )}
-          </div>
+            {isPublished && <Badge variant="success" size="sm">Published</Badge>}
+          </header>
 
-          <div className="p-4">
-            {isMarksLoading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="h-12 animate-pulse rounded-xl border border-border bg-muted/40" />
-                ))}
-              </div>
-            ) : hasMarks ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-[13px]">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="py-2 pr-4 text-left text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
-                        Student
-                      </th>
-                      {formula.components.map((c: any) => (
-                        <th
-                          key={c.componentType}
-                          className="px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground"
-                        >
-                          {c.componentType}
-                          <span className="block text-[9.5px] font-normal normal-case text-muted-foreground/80">
-                            /{c.maxMarks}
-                          </span>
-                        </th>
-                      ))}
-                      <th className="px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300">
-                        Total
-                        <span className="block text-[9.5px] font-normal normal-case text-muted-foreground">
-                          /{formula.totalMarks}
+          {/* How the class actually landed. A column of numbers cannot show
+              whether the cohort is bunched at the top or spread thin, which
+              is the first thing worth knowing before publishing. */}
+          {hasMarks && (
+            <div className="border-b border-border bg-muted/30 px-4 py-3.5">
+              <p className={cn(TEXT.eyebrow, "mb-2.5")}>Spread of the class</p>
+              <DistributionBar buckets={distribution} />
+            </div>
+          )}
+
+          {isMarksLoading ? (
+            <div className="space-y-2 p-4">
+              {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-10" rounded="lg" />)}
+            </div>
+          ) : hasMarks ? (
+            /* The table scrolls inside its own container rather than widening
+               the page — a formula with four components plus a total is already
+               six columns before any student name. */
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px] text-[13px]">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40">
+                    <th className={cn(TEXT.eyebrow, "sticky left-0 z-10 bg-muted/40 px-4 py-2.5 text-left")}>
+                      Student
+                    </th>
+                    {formula.components.map((c: any) => (
+                      <th key={c.componentType} className={cn(TEXT.eyebrow, "px-3 py-2.5 text-right")}>
+                        {c.componentType}
+                        <span className="ml-1 font-normal normal-case tracking-normal opacity-70">
+                          /{c.maxMarks}
                         </span>
                       </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {marks.map((m: any, idx: number) => {
-                      let bd: Record<string, { earned: number }> = {}
-                      try { bd = JSON.parse(m.breakdownJson) } catch { /* ignore */ }
-                      const pct = formula.totalMarks > 0 ? (m.finalMark / formula.totalMarks) * 100 : 0
-                      const scoreClass = getScoreClass(pct)
-                      return (
-                        <motion.tr
-                          key={m.studentId}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: Math.min(idx * 0.02, 0.4) }}
-                          className={
-                            "border-b border-border transition-colors hover:bg-muted/40 " +
-                            (idx % 2 === 0 ? "bg-muted/20" : "bg-transparent")
-                          }
-                        >
-                          <td className="py-3 pr-4">
-                            <p className="text-[13px] font-semibold text-foreground">
-                              {m.studentName}
-                            </p>
-                          </td>
-                          {formula.components.map((c: any) => (
-                            <td
-                              key={c.componentType}
-                              className="px-3 py-3 text-center text-[13px] tabular-nums text-muted-foreground"
-                            >
-                              {bd[c.componentType] != null ? bd[c.componentType].earned.toFixed(1) : "—"}
-                            </td>
-                          ))}
-                          <td className="px-3 py-3 text-center">
-                            <span className={"text-[13px] font-bold tabular-nums " + scoreClass}>
-                              {m.finalMark.toFixed(1)}
+                    ))}
+                    <th className={cn(TEXT.eyebrow, "px-4 py-2.5 text-right text-primary")}>
+                      Total
+                      <span className="ml-1 font-normal normal-case tracking-normal opacity-70">
+                        /{formula.totalMarks}
+                      </span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {sortedMarks.map((m: any) => {
+                    let bd: Record<string, { earned: number }> = {}
+                    try { bd = JSON.parse(m.breakdownJson) } catch { /* ignore */ }
+                    const pct  = formula.totalMarks > 0 ? (m.finalMark / formula.totalMarks) * 100 : 0
+                    const fail = pct < 40
+                    const sid  = studentIdOf[m.studentId]
+
+                    return (
+                      <tr key={m.studentId} className="transition-colors duration-120 hover:bg-muted/40">
+                        <td className="sticky left-0 z-10 bg-card px-4 py-2.5">
+                          {sid && (
+                            <span className="mr-2 font-mono text-[12px] font-bold text-muted-foreground">
+                              {sid}
                             </span>
+                          )}
+                          <span className="text-[13px] font-medium text-foreground">{m.studentName}</span>
+                        </td>
+                        {formula.components.map((c: any) => (
+                          <td key={c.componentType} className="px-3 py-2.5 text-right tabular-nums text-muted-foreground">
+                            {bd[c.componentType] != null ? bd[c.componentType].earned.toFixed(1) : "—"}
                           </td>
-                        </motion.tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="py-10 text-center text-[13px] text-muted-foreground">
-                Click "Calculate" in the toolbar to generate results.
-              </div>
-            )}
-          </div>
-        </div>
+                        ))}
+                        <td className="px-4 py-2.5 text-right">
+                          {/* Only a fail is coloured. The old four-band scale
+                              tinted every total, so nothing stood out. */}
+                          <span className={cn(
+                            "font-display text-[13.5px] font-bold tabular-nums",
+                            fail ? "text-destructive" : "text-foreground",
+                          )}>
+                            {m.finalMark.toFixed(1)}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <EmptyState
+              icon={<RefreshCw strokeWidth={ICON_STROKE} />}
+              title="No marks calculated yet"
+              description="Save your formula, then hit Calculate to pull in class tests, assignments and attendance."
+              className="py-12"
+            />
+          )}
+        </section>
       )}
     </div>
   )

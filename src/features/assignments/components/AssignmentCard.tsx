@@ -2,8 +2,9 @@ import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   ClipboardList, MoreVertical, Pencil, Trash2,
-  Users, CalendarClock, Award,
+  CalendarClock, Award,
 } from "lucide-react"
+import { FOCUS } from "@/components/ui/appTokens"
 import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
 import {
@@ -46,14 +47,29 @@ export default function AssignmentCard({
   const showMenu = teacher && (onEdit || onDelete)
 
   return (
+    /* Keyboard-operable: opening an assignment was a bare onClick on a div, so
+       a student could tab to the teacher's actions menu inside the card but had
+       no way to open the assignment itself. Not a real <button> because the
+       card contains one (the menu), and nesting interactive elements is
+       invalid — hence role="button" plus explicit key handling. */
     <motion.div
+      role="button"
+      tabIndex={0}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.04, 0.2), duration: 0.25 }}
       onClick={() => onView(assignment)}
+      onKeyDown={e => {
+        if (e.target !== e.currentTarget) return
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          onView(assignment)
+        }
+      }}
       whileHover={{ y: -2 }}
       className={
         "group relative cursor-pointer rounded-2xl border bg-card shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-all hover:shadow-[0_12px_32px_-8px_rgba(20,184,166,0.18)] " +
+        FOCUS + " " +
         tone.border + " " +
         (menuOpen ? "z-30" : "z-0")
       }
@@ -159,12 +175,10 @@ export default function AssignmentCard({
               </span>
             )}
 
-            {teacher && typeof assignment.submissionCount === "number" && (
-              <span className="inline-flex items-center gap-1">
-                <Users className="h-3 w-3" />
-                {assignment.submissionCount} submitted
-              </span>
-            )}
+            {/* No separate "N submitted" chip: for a teacher, display.detail
+                above already carries the submission count in every branch
+                ("0 submitted · Due in 7d", "2 / 5 graded", "No submissions"),
+                so the chip repeated the same number in the same row. */}
 
             {assignment.allowLateSubmission && (
               <span className="inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">

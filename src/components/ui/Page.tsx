@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom"
 import { ChevronRight, ArrowLeft } from "lucide-react"
-import { ICON, ICON_STROKE, FOCUS, SURFACE } from "@/components/ui/appTokens"
+import InkPanel from "@/components/ui/InkPanel"
+import { ICON, ICON_STROKE, FOCUS, SURFACE, TEXT, INK } from "@/components/ui/appTokens"
 import { cn } from "@/utils/cn"
 
 /**
@@ -39,6 +40,127 @@ export function Page({
   )
 }
 
+/**
+ * Ink hero for a top-level page.
+ *
+ * The brand-surface counterpart to `PageHeader`. Use it where a page is a
+ * destination in its own right — Dashboard, Courses, Notifications — and
+ * keep the plain `PageHeader` for pages nested under one, so the dark
+ * band marks the top of a section rather than appearing on every screen
+ * and losing its meaning.
+ *
+ * Sits inside `Page`'s padding, so it is a rounded panel rather than a
+ * full-bleed band; the course header is full-bleed because it sits above
+ * the tab bar and the two read as one unit.
+ */
+export function PageHero({
+  title, description, actions, eyebrow, figures, className,
+}: {
+  title: React.ReactNode
+  description?: React.ReactNode
+  actions?: React.ReactNode
+  /** Small uppercase line above the title — a date, a section name. */
+  eyebrow?: React.ReactNode
+  /** Inline counts rendered as chips on the ink. */
+  figures?: { value: React.ReactNode; label: string; to?: string }[]
+  className?: string
+}) {
+  return (
+    <InkPanel className={cn("rounded-3xl", className)}>
+      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4 px-6 py-7 sm:px-8">
+        <div className="min-w-0 flex-1">
+          {eyebrow && (
+            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-teal-300/80">
+              {eyebrow}
+            </p>
+          )}
+          <h1 className={cn(TEXT.hero, "mt-2 text-white")}>{title}</h1>
+          {description && (
+            <p className={cn(INK.body, "mt-2 max-w-lg text-[14px] leading-relaxed")}>
+              {description}
+            </p>
+          )}
+
+          {figures && figures.length > 0 && (
+            <div className="mt-5 flex flex-wrap items-center gap-2.5">
+              {figures.map((f, i) => {
+                const body = (
+                  <span
+                    className={cn(
+                      INK.chip,
+                      "inline-flex items-baseline gap-2 px-3 py-2 transition-colors duration-120",
+                      f.to && "hover:bg-white/[0.16]",
+                    )}
+                  >
+                    <span className="font-display text-[17px] font-extrabold tabular-nums leading-none">
+                      {f.value}
+                    </span>
+                    <span className="text-[12.5px] text-teal-100/70">{f.label}</span>
+                  </span>
+                )
+                return f.to
+                  ? <Link key={i} to={f.to} className={cn("rounded-lg", FOCUS)}>{body}</Link>
+                  : <span key={i}>{body}</span>
+              })}
+            </div>
+          )}
+        </div>
+
+        {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+      </div>
+    </InkPanel>
+  )
+}
+
+/**
+ * Two-column layout for a content tab: a primary column and a context rail.
+ *
+ * Several course tabs were a narrow `max-w-3xl` column pinned to the left,
+ * which left roughly a third of a laptop screen empty and made the app
+ * look unfinished. Centring alone would not have fixed it — a 768px
+ * column floating in 1536px is still mostly gap. The rail earns the space
+ * by carrying things you would otherwise switch tabs to find.
+ *
+ * The rail drops below the main column under `lg`, so on a laptop it is a
+ * sidebar and on a tablet it is a footer — never a squeezed second column.
+ */
+export function TabSplit({
+  children, aside, className,
+}: {
+  children: React.ReactNode
+  aside?: React.ReactNode
+  className?: string
+}) {
+  if (!aside) return <div className={cn("w-full", className)}>{children}</div>
+
+  return (
+    <div className={cn("grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_300px]", className)}>
+      <div className="min-w-0">{children}</div>
+      <aside className="min-w-0 space-y-4">{aside}</aside>
+    </div>
+  )
+}
+
+/** A titled block for the context rail. */
+export function RailCard({
+  title, children, className,
+}: {
+  title?: React.ReactNode
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <div className={cn(SURFACE.card, "overflow-hidden", className)}>
+      {title && (
+        <div className="border-b border-border px-3.5 py-2.5">
+          <h3 className={TEXT.eyebrow}>{title}</h3>
+        </div>
+      )}
+      <div className="p-3.5">{children}</div>
+    </div>
+  )
+}
+
 export interface Crumb { label: string; to?: string }
 
 /**
@@ -62,7 +184,10 @@ export function PageHeader({
 }) {
   return (
     <header className={cn("mb-6", className)}>
-      {back && (
+      {/* `back.to` must be non-empty. Onboarding passes empty strings because it
+          has nowhere to go back to, which used to render a bare arrow linking to
+          the current page — a control that looks live and does nothing. */}
+      {back && back.to && (
         <Link
           to={back.to}
           className={cn(

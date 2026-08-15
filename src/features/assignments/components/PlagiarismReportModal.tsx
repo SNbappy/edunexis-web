@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ShieldAlert, ShieldCheck, AlertTriangle, ChevronDown, ChevronUp, FileX, Clock } from 'lucide-react'
 import { cn } from '@/utils/cn'
@@ -13,7 +13,7 @@ interface Props {
 }
 
 function SimilarityBar({ value, level }: { value: number; level: string }) {
-    const color = level === 'high' ? 'bg-red-500' : level === 'medium' ? 'bg-amber-400' : 'bg-emerald-500'
+    const color = level === 'high' ? 'bg-destructive-soft0' : level === 'medium' ? 'bg-warning' : 'bg-success-soft0'
     return (
         <div className="flex items-center gap-2">
             <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
@@ -25,7 +25,7 @@ function SimilarityBar({ value, level }: { value: number; level: string }) {
                 />
             </div>
             <span className={cn('text-xs font-bold w-9 text-right tabular-nums',
-                level === 'high' ? 'text-red-500' : level === 'medium' ? 'text-amber-500' : 'text-emerald-500'
+                level === 'high' ? 'text-destructive' : level === 'medium' ? 'text-warning' : 'text-success'
             )}>
                 {value}%
             </span>
@@ -36,9 +36,9 @@ function SimilarityBar({ value, level }: { value: number; level: string }) {
 function LevelBadge({ level }: { level: string }) {
     return (
         <span className={cn('px-2 py-0.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide',
-            level === 'high' ? 'bg-red-500/15 text-red-500' :
-            level === 'medium' ? 'bg-amber-400/15 text-amber-500' :
-            'bg-emerald-500/15 text-emerald-600'
+            level === 'high' ? 'bg-destructive-soft0/15 text-destructive' :
+            level === 'medium' ? 'bg-warning/15 text-warning' :
+            'bg-success-soft0/15 text-success'
         )}>
             {level === 'high' ? 'High' : level === 'medium' ? 'Medium' : 'Low'}
         </span>
@@ -95,8 +95,8 @@ function PairRow({ pair, index }: { pair: PlagiarismPair; index: number }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.04 }}
             className={cn('rounded-xl border transition-all',
-                pair.level === 'high' ? 'border-red-500/30 bg-red-500/5' :
-                pair.level === 'medium' ? 'border-amber-400/30 bg-amber-400/5' :
+                pair.level === 'high' ? 'border-destructive/30 bg-destructive-soft0/5' :
+                pair.level === 'medium' ? 'border-warning/30 bg-warning/5' :
                 'border-border bg-card'
             )}
         >
@@ -132,7 +132,7 @@ function PairRow({ pair, index }: { pair: PlagiarismPair; index: number }) {
                                     <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Common phrases detected</p>
                                     <div className="flex flex-wrap gap-1.5">
                                         {pair.commonPhrases.map((ph, i) => (
-                                            <span key={i} className="px-2 py-0.5 rounded-md bg-amber-400/20 text-amber-700 dark:text-amber-300 text-[11px] font-medium">
+                                            <span key={i} className="px-2 py-0.5 rounded-md bg-warning/20 text-warning text-[11px] font-medium">
                                                 {ph}
                                             </span>
                                         ))}
@@ -227,18 +227,18 @@ export default function PlagiarismReportModal({ isOpen, onClose, report, isCheck
                                         </div>
                                         <div className={cn('p-3 rounded-xl border text-center',
                                             report.flaggedPairs.filter(p => p.level === 'high').length > 0
-                                                ? 'bg-red-500/10 border-red-500/30' : 'bg-muted/50 border-border'
+                                                ? 'bg-destructive-soft0/10 border-destructive/30' : 'bg-muted/50 border-border'
                                         )}>
-                                            <p className="text-xl font-bold text-red-500">
+                                            <p className="text-xl font-bold text-destructive">
                                                 {report.flaggedPairs.filter((p) => p.level === 'high').length}
                                             </p>
                                             <p className="text-[11px] text-muted-foreground mt-0.5">High risk</p>
                                         </div>
                                         <div className={cn('p-3 rounded-xl border text-center',
                                             report.flaggedPairs.filter(p => p.level === 'medium').length > 0
-                                                ? 'bg-amber-400/10 border-amber-400/30' : 'bg-muted/50 border-border'
+                                                ? 'bg-warning/10 border-warning/30' : 'bg-muted/50 border-border'
                                         )}>
-                                            <p className="text-xl font-bold text-amber-500">
+                                            <p className="text-xl font-bold text-warning">
                                                 {report.flaggedPairs.filter((p) => p.level === 'medium').length}
                                             </p>
                                             <p className="text-[11px] text-muted-foreground mt-0.5">Suspicious</p>
@@ -262,8 +262,8 @@ export default function PlagiarismReportModal({ isOpen, onClose, report, isCheck
                                     {/* All clear */}
                                     {report.flaggedPairs.length === 0 && report.totalCompared > 0 && (
                                         <div className="flex flex-col items-center py-10 gap-3">
-                                            <div className="w-14 h-14 rounded-full bg-emerald-500/15 flex items-center justify-center">
-                                                <ShieldCheck className="w-7 h-7 text-emerald-500" />
+                                            <div className="w-14 h-14 rounded-full bg-success-soft0/15 flex items-center justify-center">
+                                                <ShieldCheck className="w-7 h-7 text-success" />
                                             </div>
                                             <div className="text-center">
                                                 <p className="text-sm font-semibold text-foreground">No plagiarism detected</p>
@@ -302,9 +302,9 @@ export default function PlagiarismReportModal({ isOpen, onClose, report, isCheck
                                         <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Similarity thresholds</p>
                                         <div className="space-y-1">
                                             {[
-                                                { label: '0–29%', desc: 'Low — likely original', color: 'bg-emerald-500' },
-                                                { label: '30–59%', desc: 'Medium — review recommended', color: 'bg-amber-400' },
-                                                { label: '60–100%', desc: 'High — likely plagiarized', color: 'bg-red-500' },
+                                                { label: '0–29%', desc: 'Low — likely original', color: 'bg-success-soft0' },
+                                                { label: '30–59%', desc: 'Medium — review recommended', color: 'bg-warning' },
+                                                { label: '60–100%', desc: 'High — likely plagiarized', color: 'bg-destructive-soft0' },
                                             ].map((t) => (
                                                 <div key={t.label} className="flex items-center gap-2">
                                                     <div className={`w-2 h-2 rounded-full ${t.color}`} />

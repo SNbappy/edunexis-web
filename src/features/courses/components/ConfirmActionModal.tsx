@@ -1,4 +1,4 @@
-﻿import { AlertTriangle } from "lucide-react"
+import { AlertTriangle } from "lucide-react"
 import Modal from "@/components/ui/Modal"
 import Button from "@/components/ui/Button"
 
@@ -25,22 +25,22 @@ const toneStyles: Record<ConfirmActionTone, {
   warning:  string
 }> = {
   primary: {
-    iconWrap: "bg-teal-50 border-teal-200 text-teal-600 dark:bg-teal-950/30 dark:border-teal-900/50 dark:text-teal-300",
-    icon:     "text-teal-600",
+    iconWrap: "bg-primary-soft border-primary/25 text-primary",
+    icon:     "text-primary",
     button:   "primary",
-    warning:  "text-stone-600",
+    warning:  "text-muted-foreground",
   },
   warning: {
-    iconWrap: "bg-amber-50 border-amber-200 text-amber-600 dark:bg-amber-950/30 dark:border-amber-900/50 dark:text-amber-300",
-    icon:     "text-amber-600",
+    iconWrap: "bg-warning-soft border-warning/25 text-warning",
+    icon:     "text-warning",
     button:   "primary",
-    warning:  "text-amber-700",
+    warning:  "text-warning",
   },
   danger: {
-    iconWrap: "bg-red-50 border-red-200 text-red-600 dark:bg-red-950/30 dark:border-red-900/50 dark:text-red-300",
-    icon:     "text-red-600",
+    iconWrap: "bg-destructive-soft border-destructive/25 text-destructive",
+    icon:     "text-destructive",
     button:   "danger",
-    warning:  "text-red-700",
+    warning:  "text-destructive",
   },
 }
 

@@ -1,4 +1,6 @@
-import { AlertCircle, Info, Sparkles } from "lucide-react"
+import { AlertCircle, Clock, Info } from "lucide-react"
+import { ICON_STROKE } from "@/components/ui/appTokens"
+import { cn } from "@/utils/cn"
 import type { TeacherQuotaDto } from "@/types/course.types"
 
 interface Props {
@@ -7,76 +9,72 @@ interface Props {
 }
 
 /**
- * Compact status card for a teacher's course-creation quota.
- * - Green/muted: healthy remaining
- * - Amber: on last slot
- * - Red: exhausted; hints at admin request flow
+ * A teacher's course-creation allowance.
+ *
+ * One row, one shape, four states — the previous version was four separate
+ * hand-built blocks with their own colours and paddings, and the "last slot"
+ * branch shipped a broken string that rendered as "Last course slot available
+ * ( /  used)" because the counts were never interpolated.
+ *
+ * The expiry is shown whenever it is near, since that is the part a teacher
+ * cannot infer: unused slots lapse on that date and need a fresh grant.
  */
 export default function QuotaBanner({ quota, loading }: Props) {
-  if (loading) {
-    return (
-      <div className="h-10 w-full max-w-xl animate-pulse rounded-lg bg-muted/40" />
-    )
-  }
+  if (loading) return <div className="h-12 w-full max-w-xl animate-pulse rounded-xl bg-muted/50" />
   if (!quota) return null
 
-  const { totalQuota, usedQuota, remainingQuota, isStarterQuota, isAccessActive } = quota
+  const {
+    totalQuota, usedQuota, remainingQuota,
+    isStarterQuota, isAccessActive, expiresInDays,
+  } = quota
 
-  if (!isAccessActive) {
-    return (
-      <div className="flex items-start gap-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 dark:border-rose-900/40 dark:bg-rose-950/20">
-        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" strokeWidth={2.25} />
-        <div className="min-w-0">
-          <p className="text-[12.5px] font-semibold text-rose-800 dark:text-rose-200">Access period expired</p>
-          <p className="mt-0.5 text-[11.5px] text-rose-700/80 dark:text-rose-300/70">
-            Contact your admin to renew your course-creation access.
-          </p>
-        </div>
-      </div>
-    )
-  }
+  const state =
+    !isAccessActive ? "expired"
+      : remainingQuota <= 0 ? "exhausted"
+        : remainingQuota === 1 ? "last"
+          : "ok"
 
-  if (remainingQuota <= 0) {
-    return (
-      <div className="flex items-start gap-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 dark:border-rose-900/40 dark:bg-rose-950/20">
-        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" strokeWidth={2.25} />
-        <div className="min-w-0">
-          <p className="text-[12.5px] font-semibold text-rose-800 dark:text-rose-200">
-            Course creation quota exhausted ({usedQuota} / {totalQuota})
-          </p>
-          <p className="mt-0.5 text-[11.5px] text-rose-700/80 dark:text-rose-300/70">
-            You've used every slot you were granted. Request more from your admin to create additional courses.
-          </p>
-        </div>
-      </div>
-    )
-  }
+  const TONE = {
+    expired:   "border-destructive/25 bg-destructive-soft text-destructive",
+    exhausted: "border-destructive/25 bg-destructive-soft text-destructive",
+    last:      "border-warning/25 bg-warning-soft text-warning",
+    ok:        "border-border bg-muted/40 text-muted-foreground",
+  }[state]
 
-  if (remainingQuota === 1) {
-    return (
-      <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-900/40 dark:bg-amber-950/20">
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" strokeWidth={2.25} />
-        <div className="min-w-0">
-          <p className="text-[12.5px] font-semibold text-amber-800 dark:text-amber-200">
-            {isStarterQuota
-              ? "You have your 1 free course slot available."
-              : "Last course slot available ( /  used)."}
-          </p>
-          <p className="mt-0.5 text-[11.5px] text-amber-700/80 dark:text-amber-300/70">
-            Need to create more later? Request additional slots from your admin.
-          </p>
-        </div>
-      </div>
-    )
-  }
+  const Icon = state === "ok" ? Info : AlertCircle
+
+  const title =
+    state === "expired"  ? "Course creation access has expired"
+      : state === "exhausted" ? `No course slots left — ${usedQuota} of ${totalQuota} used`
+        : state === "last"      ? (isStarterQuota
+            ? "You have 1 free course slot"
+            : `Last course slot — ${usedQuota} of ${totalQuota} used`)
+          : `${remainingQuota} course slots left — ${usedQuota} of ${totalQuota} used`
+
+  const detail =
+    state === "expired" || state === "exhausted"
+      ? "Ask your admin for more slots. Courses you have already created are unaffected."
+      : null
+
+  /* Only surface the countdown when it is close enough to matter — a date two
+     years out is noise, a week out is something to act on. */
+  const showExpiry =
+    isAccessActive && expiresInDays !== null && expiresInDays !== undefined && expiresInDays <= 60
 
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 px-4 py-3">
-      <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-teal-600 dark:text-teal-400" strokeWidth={2.25} />
-      <div className="min-w-0">
-        <p className="text-[12.5px] font-semibold text-foreground">
-          {remainingQuota} course slots remaining ({usedQuota} / {totalQuota} used)
-        </p>
+    <div className={cn("flex items-start gap-3 rounded-xl border px-4 py-3", TONE)}>
+      <Icon className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={ICON_STROKE} />
+      <div className="min-w-0 flex-1">
+        <p className="text-[12.5px] font-semibold">{title}</p>
+        {detail && <p className="mt-0.5 text-[11.5px] opacity-80">{detail}</p>}
+        {showExpiry && (
+          <p className="mt-1 inline-flex items-center gap-1.5 text-[11.5px] opacity-80">
+            <Clock className="h-3 w-3" strokeWidth={ICON_STROKE} />
+            {expiresInDays === 0
+              ? "Unused slots lapse today"
+              : `Unused slots lapse in ${expiresInDays} day${expiresInDays === 1 ? "" : "s"}`}
+          </p>
+        )}
       </div>
     </div>
   )

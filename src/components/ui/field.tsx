@@ -1,6 +1,6 @@
 import { forwardRef } from "react"
 import { AlertCircle } from "lucide-react"
-import { ICON_STROKE } from "@/components/ui/appTokens"
+import { ICON_STROKE, FOCUS } from "@/components/ui/appTokens"
 import { cn } from "@/utils/cn"
 
 /**
@@ -54,6 +54,49 @@ export const Textarea = forwardRef<
   />
 ))
 Textarea.displayName = "Textarea"
+
+/**
+ * Switch.
+ *
+ * For settings that apply immediately. The knob travels on a track that changes
+ * colour, so the state is legible from motion and colour both — a toggle that
+ * only changes colour is ambiguous to anyone who did not see it move.
+ */
+export function Switch({
+  checked, onChange, label, disabled, className,
+}: {
+  checked: boolean
+  onChange: (next: boolean) => void
+  /** Accessible name. Required — a bare toggle tells a screen reader nothing. */
+  label: string
+  disabled?: boolean
+  className?: string
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "relative h-5 w-9 shrink-0 rounded-full transition-colors duration-150",
+        FOCUS,
+        checked ? "bg-primary" : "bg-subtle",
+        disabled && "cursor-not-allowed opacity-50",
+        className,
+      )}
+    >
+      <span
+        className={cn(
+          "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-150 ease-out",
+          checked ? "translate-x-[18px]" : "translate-x-0.5",
+        )}
+      />
+    </button>
+  )
+}
 
 /** Label + control + one message slot. Error wins over hint; they never stack. */
 export function Field({

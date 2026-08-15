@@ -74,13 +74,17 @@ export default function AttendanceTab({ courseId, courseName, courseCode, semest
         </Button>
       </div>
 
-      {/* Stats */}
-      {stats && (
+      {/* Stats — only once there is something to summarise. With no sessions
+          the card rendered its own "No attendance taken yet" panel directly
+          above the list's "No attendance records yet" panel, so an empty tab
+          said the same thing twice in two different visual styles. */}
+      {stats && stats.totalSessions > 0 && (
         <AttendanceStatsCard
           totalSessions={stats.totalSessions}
           averageAttendance={stats.averageAttendance}
           totalStudents={stats.studentSummaries?.length}
           lastSessionDate={stats.lastSessionDate}
+          sessions={sessions}
         />
       )}
 
@@ -94,6 +98,7 @@ export default function AttendanceTab({ courseId, courseName, courseCode, semest
       ) : view === "list" ? (
         <AttendanceRecordsList
           sessions={sessions}
+          totalStudents={stats?.studentSummaries?.length}
           onEdit={(id) => setEditSession(sessions.find((s: any) => s.id === id) ?? null)}
           onDelete={deleteSession}
         />

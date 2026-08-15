@@ -24,7 +24,7 @@ export default function OverviewTab(props: OverviewTabProps) {
     <button
       type="button"
       onClick={onSeeAllCourses}
-      className="inline-flex items-center gap-1 text-[12px] font-bold text-teal-700 transition-colors hover:text-teal-800 dark:text-teal-400 dark:hover:text-teal-300"
+      className="inline-flex items-center gap-1 text-[12px] font-bold text-primary transition-colors hover:text-teal-800 text-primary dark:hover:text-teal-300"
     >
       View all ({totalCourses})
       <ArrowRight className="h-3 w-3" />
@@ -35,7 +35,7 @@ export default function OverviewTab(props: OverviewTabProps) {
     <button
       type="button"
       onClick={onSeeResearch}
-      className="inline-flex items-center gap-1 text-[12px] font-bold text-teal-700 transition-colors hover:text-teal-800 dark:text-teal-400 dark:hover:text-teal-300"
+      className="inline-flex items-center gap-1 text-[12px] font-bold text-primary transition-colors hover:text-teal-800 text-primary dark:hover:text-teal-300"
     >
       View all ({p.publications.length})
       <ArrowRight className="h-3 w-3" />
@@ -46,7 +46,7 @@ export default function OverviewTab(props: OverviewTabProps) {
     <button
       type="button"
       onClick={onSeeResearch}
-      className="inline-flex items-center gap-1 text-[12px] font-bold text-teal-700 transition-colors hover:text-teal-800 dark:text-teal-400 dark:hover:text-teal-300"
+      className="inline-flex items-center gap-1 text-[12px] font-bold text-primary transition-colors hover:text-teal-800 text-primary dark:hover:text-teal-300"
     >
       See more
       <ArrowRight className="h-3 w-3" />

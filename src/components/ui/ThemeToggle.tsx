@@ -12,8 +12,10 @@ export default function ThemeToggle() {
       onClick={toggle}
       title={dark ? "Switch to light mode" : "Switch to dark mode"}
       aria-label="Toggle theme"
+      /* Ink-styled: this only ever renders in the topbar, which is part of
+         the dark app chrome. */
       className={cn(
-        "inline-flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-colors duration-120 hover:bg-muted hover:text-foreground",
+        "inline-flex h-9 w-9 items-center justify-center rounded-xl text-teal-100/60 transition-colors duration-120 hover:bg-white/[0.08] hover:text-white",
         FOCUS,
       )}
     >

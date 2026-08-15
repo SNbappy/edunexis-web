@@ -202,7 +202,7 @@ export default function JoinCoursePage() {
                 </>
               ) : isComplete ? (
                 <>
-                  <Sparkles className="h-3 w-3 text-teal-600" />
+                  <Sparkles className="h-3 w-3 text-primary" />
                   Ready to look up
                 </>
               ) : (
@@ -217,7 +217,7 @@ export default function JoinCoursePage() {
 
           {/* Helper note */}
           <div className="flex items-start gap-2.5 rounded-xl border border-border bg-muted/40 p-3.5">
-            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-600" />
+            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
             <p className="text-[12px] leading-relaxed text-muted-foreground">
               We{"\u2019"}ll show you the course details before sending the request. Joining requires your teacher{"\u2019"}s approval.
             </p>
@@ -251,11 +251,17 @@ function CodeBox({
       whileFocus={{ scale: 1.05, y: -1 }}
       autoComplete="off"
       spellCheck={false}
+      /* Without this the eight boxes announce as eight identical unlabelled
+         fields, giving no clue which position you are on. */
+      aria-label={`Joining code character ${i + 1} of 8`}
       className={
         "h-[52px] w-8 sm:w-11 rounded-xl border-2 text-center font-display text-[16px] sm:text-[18px] font-bold outline-none transition-colors " +
         (value
-          ? "border-teal-600 bg-teal-50 text-teal-700 dark:bg-teal-600/15 dark:text-teal-300"
-          : "border-border bg-card text-foreground focus:border-teal-600")
+          // text-primary/15 here rendered the typed character at 15% opacity —
+          // roughly 1.1:1 against the field, so the code you had just entered
+          // was effectively invisible and impossible to proof-read.
+          ? "border-primary bg-primary-soft text-primary"
+          : "border-border bg-card text-foreground focus:border-primary")
       }
     />
   )

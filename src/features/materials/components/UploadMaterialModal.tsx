@@ -1,8 +1,9 @@
-import InlineSpinner from "@/components/ui/InlineSpinner"
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Upload, CheckCircle2 } from "lucide-react"
 import Modal from "@/components/ui/Modal"
+import Button from "@/components/ui/Button"
+import { ICON_STROKE } from "@/components/ui/appTokens"
 import FileDropzone from "@/components/ui/FileDropzone"
 
 interface UploadMaterialModalProps {
@@ -72,7 +73,7 @@ export default function UploadMaterialModal({
                     value={fileTitle}
                     onChange={e => setFileTitle(e.target.value)}
                     placeholder={"Default: " + singleFile.name}
-                    className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13px] text-foreground placeholder:text-muted-foreground transition-all focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/30"
+                    className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13px] text-foreground placeholder:text-muted-foreground transition-all focus:border-primary focus:outline-none focus:shadow-[0_0_0_3px_rgb(var(--ring)/0.18)]"
                   />
                 </div>
                 <div>
@@ -85,7 +86,7 @@ export default function UploadMaterialModal({
                     onChange={e => setFileDesc(e.target.value)}
                     placeholder="What is this file about?"
                     rows={2}
-                    className="w-full resize-none rounded-xl border border-border bg-card px-4 py-2.5 text-[13px] text-foreground placeholder:text-muted-foreground transition-all focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/30"
+                    className="w-full resize-none rounded-xl border border-border bg-card px-4 py-2.5 text-[13px] text-foreground placeholder:text-muted-foreground transition-all focus:border-primary focus:outline-none focus:shadow-[0_0_0_3px_rgb(var(--ring)/0.18)]"
                   />
                 </div>
               </div>
@@ -102,19 +103,19 @@ export default function UploadMaterialModal({
               exit={{ opacity: 0 }}
               className="space-y-2"
             >
-              <div className="flex items-center justify-between text-[12px] font-semibold text-teal-700 dark:text-teal-300">
+              <div className="flex items-center justify-between text-[12px] font-semibold text-primary">
                 <span>Uploading…</span>
                 <span>{progress}%</span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-muted">
                 <motion.div
-                  className="h-full rounded-full bg-teal-600"
+                  className="h-full rounded-full bg-primary"
                   animate={{ width: progress + "%" }}
                   transition={{ duration: 0.3 }}
                 />
               </div>
               {progress === 100 && (
-                <div className="flex items-center gap-2 text-[12px] font-semibold text-emerald-600 dark:text-emerald-400">
+                <div className="flex items-center gap-2 text-[12px] font-semibold text-success">
                   <CheckCircle2 className="h-3.5 w-3.5" />
                   Upload complete
                 </div>
@@ -124,34 +125,19 @@ export default function UploadMaterialModal({
         </AnimatePresence>
 
         {/* Actions */}
-        <div className="flex gap-3 border-t border-border pt-4">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="flex-1 rounded-xl border border-border bg-card px-4 py-2.5 text-[13px] font-semibold text-foreground transition-colors hover:bg-muted"
-          >
+        <div className="flex justify-end gap-2 border-t border-border pt-4">
+          <Button type="button" variant="secondary" onClick={handleClose} disabled={isUploading}>
             Cancel
-          </button>
-          <motion.button
+          </Button>
+          <Button
             type="button"
-            whileHover={files.length ? { scale: 1.02 } : {}}
-            whileTap={files.length ? { scale: 0.98 } : {}}
             onClick={handleUpload}
-            disabled={!files.length || !!isUploading}
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-[13px] font-bold text-white shadow-sm transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!files.length}
+            loading={isUploading}
+            leftIcon={<Upload strokeWidth={ICON_STROKE} />}
           >
-            {isUploading ? (
-              <>
-                <InlineSpinner className="text-white" />
-                Uploading…
-              </>
-            ) : (
-              <>
-                <Upload className="h-4 w-4" />
-                {files.length > 1 ? "Upload " + files.length + " files" : "Upload"}
-              </>
-            )}
-          </motion.button>
+            {files.length > 1 ? `Upload ${files.length} files` : "Upload"}
+          </Button>
         </div>
       </div>
     </Modal>

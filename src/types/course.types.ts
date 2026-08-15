@@ -160,14 +160,21 @@ export interface JoinRequest {
   requestedAt:      string
   status:           "Pending" | "Approved" | "Rejected"
 }
+/**
+ * A teacher's course-creation allowance, summed across every active grant.
+ * `accessEndDate` is the soonest expiry among them — the date unused slots
+ * start lapsing.
+ */
 export interface TeacherQuotaDto {
-  totalQuota:      number
-  usedQuota:       number
-  remainingQuota:  number
-  accessStartDate: string
-  accessEndDate:   string
-  isAccessActive:  boolean
-  isStarterQuota:  boolean
+  totalQuota:       number
+  usedQuota:        number
+  remainingQuota:   number
+  accessStartDate:  string
+  accessEndDate:    string
+  isAccessActive:   boolean
+  isStarterQuota:   boolean
+  expiresInDays:    number | null
+  activeGrantCount: number
 }
 export interface DeletedCourseDto {
   id:              string

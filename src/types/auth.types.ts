@@ -125,11 +125,22 @@ export interface UserDto {
   profile: UserProfileDto | null
 }
 
+/**
+ * Mirrors AuthResponseDto on the API.
+ *
+ * When `verificationRequired` is true the tokens are empty and `user` is null —
+ * the client should send the person to /verify-email with `pendingEmail`. Those
+ * last two fields were missing here, and `user` was typed non-nullable, so the
+ * OTP branch in useLogin/useRegister failed to compile even though the API had
+ * been sending the fields all along.
+ */
 export interface AuthResponseDto {
   accessToken: string
   refreshToken: string
   expiresIn: number
-  user: UserDto
+  user: UserDto | null
+  verificationRequired?: boolean
+  pendingEmail?: string | null
 }
 
 export interface RegisterRequest {

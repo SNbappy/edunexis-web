@@ -9,6 +9,11 @@ import {
 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { useNotifications } from "@/features/notifications/hooks/useNotifications"
+import { Page, PageHero, TabSplit, RailCard } from "@/components/ui/Page"
+import Button from "@/components/ui/Button"
+import Skeleton from "@/components/ui/Skeleton"
+import SharedEmptyState from "@/components/ui/EmptyState"
+import { ICON_STROKE, FOCUS } from "@/components/ui/appTokens"
 import { cn } from "@/utils/cn"
 
 type Tone = "primary" | "success" | "warning" | "danger" | "info" | "muted"
@@ -82,76 +87,74 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="p-6 lg:p-8 max-w-3xl mx-auto">
-      <motion.header
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.24 }}
-        className="flex items-start justify-between gap-4 mb-8 flex-wrap"
-      >
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl inline-flex items-center justify-center bg-primary/10 text-primary">
-              <Bell className="h-5 w-5" strokeWidth={2} />
-            </div>
-            <div>
-              <h1 className="font-display text-2xl font-bold tracking-tight text-foreground leading-none">
-                Notifications
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                {notifications.length} total
-                {unreadCount > 0 && <> · <span className="font-semibold text-primary">{unreadCount} unread</span></>}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {unreadCount > 0 && (
-          <button
-            onClick={() => markAllRead?.()}
-            className="inline-flex items-center gap-2 h-10 px-4 rounded-xl text-sm font-semibold bg-primary/10 text-primary hover:bg-primary/15 focus-ring transition-colors"
-          >
-            <CheckCheck className="h-4 w-4" />
-            Mark all read
-          </button>
-        )}
-      </motion.header>
-
-      <div className="flex flex-wrap items-center gap-1.5 mb-6">
-        {FILTERS.map(f => {
-          const active = activeFilter === f.id
-          const count  = countFor(f.id)
-          return (
-            <button
-              key={f.id}
-              onClick={() => setActiveFilter(f.id)}
-              className={cn(
-                "inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold transition-colors focus-ring",
-                active
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-subtle hover:text-foreground border border-border",
-              )}
+    <Page>
+      <PageHero
+        eyebrow="Activity"
+        title="Notifications"
+        description="Announcements, new assignments, join requests and published marks from every course."
+        figures={[
+          { value: notifications.length, label: "total" },
+          { value: unreadCount, label: "unread" },
+        ]}
+        actions={
+          unreadCount > 0 ? (
+            <Button
+              variant="secondary"
+              onClick={() => markAllRead?.()}
+              leftIcon={<CheckCheck strokeWidth={ICON_STROKE} />}
             >
-              {f.label}
-              {count > 0 && (
-                <span className={cn(
-                  "inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold",
-                  active
-                    ? "bg-primary-foreground/20 text-primary-foreground"
-                    : "bg-primary/10 text-primary",
-                )}>
-                  {count}
-                </span>
-              )}
-            </button>
-          )
-        })}
-      </div>
+              Mark all read
+            </Button>
+          ) : undefined
+        }
+      />
 
+      <div className="h-6" />
+
+      {/* Inbox layout: categories in a rail, the list in the main column.
+          These were chips stacked above a 672px column, which left most of
+          a laptop screen empty and buried the category counts. */}
+      <TabSplit
+        aside={
+          <RailCard title="Filter">
+            <ul className="space-y-0.5">
+              {FILTERS.map(f => {
+                const active = activeFilter === f.id
+                const count  = countFor(f.id)
+                return (
+                  <li key={f.id}>
+                    <button
+                      onClick={() => setActiveFilter(f.id)}
+                      aria-pressed={active}
+                      className={cn(
+                        "flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-[12.5px] font-semibold transition-colors duration-120",
+                        FOCUS,
+                        active
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      )}
+                    >
+                      {f.label}
+                      {count > 0 && (
+                        <span className={cn(
+                          "inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums",
+                          active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
+                        )}>
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </RailCard>
+        }
+      >
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-20 rounded-xl skeleton" />
+            <Skeleton key={i} className="h-20" rounded="xl" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -261,29 +264,23 @@ export default function NotificationsPage() {
           </AnimatePresence>
         </ul>
       )}
-    </div>
+      </TabSplit>
+    </Page>
   )
 }
 
 function EmptyState({ filter }: { filter: FilterId }) {
   const label = FILTERS.find(f => f.id === filter)?.label.toLowerCase() ?? "notifications"
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="flex flex-col items-center justify-center py-20 rounded-2xl border border-dashed border-border bg-card text-center px-6"
-    >
-      <div className="h-14 w-14 rounded-2xl inline-flex items-center justify-center bg-muted text-muted-foreground mb-4">
-        <BellOff className="h-6 w-6" strokeWidth={1.8} />
-      </div>
-      <p className="text-base font-semibold text-foreground">
-        {filter === "all" ? "You're all caught up" : `No ${label} notifications`}
-      </p>
-      <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-        {filter === "all"
+    <SharedEmptyState
+      variant="panel"
+      icon={<BellOff strokeWidth={ICON_STROKE} />}
+      title={filter === "all" ? "You're all caught up" : `No ${label} notifications`}
+      description={
+        filter === "all"
           ? "New updates about your courses and assignments will appear here."
-          : "Try a different filter to see more notifications."}
-      </p>
-    </motion.div>
+          : "Try a different filter to see more notifications."
+      }
+    />
   )
 }

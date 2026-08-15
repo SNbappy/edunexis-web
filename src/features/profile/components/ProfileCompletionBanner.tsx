@@ -32,7 +32,7 @@ export default function ProfileCompletionBanner({ percent }: Props) {
                     </div>
                 </div>
                 <Link
-                    to={ROUTES.EDIT_PROFILE}
+                    to={ROUTES.PROFILE_EDIT}
                     className="flex items-center gap-1 text-xs font-medium text-warning hover:underline shrink-0"
                 >
                     Edit <ArrowRight className="w-3 h-3" />

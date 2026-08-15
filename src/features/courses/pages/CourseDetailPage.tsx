@@ -48,7 +48,9 @@ export default function CourseDetailPage() {
 
   if (isLoading) return <BrandLoader variant="page" label="Loading course…" />
 
-  if (isFetched && !course) {
+  /* `!course` alone — the loading branch above has returned, so this narrows
+     `course` for the whole render instead of leaving it possibly-undefined. */
+  if (!course) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
         <h2 className="font-display text-lg font-semibold text-foreground">Course not found</h2>

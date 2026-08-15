@@ -21,6 +21,7 @@ import { useProfile } from "../hooks/useProfile"
 import { useAuthStore } from "@/store/authStore"
 import { DEPARTMENT_GROUPS, ROUTES } from "@/config/constants"
 import { isTeacher } from "@/utils/roleGuard"
+import { getFirstName } from "@/utils/names"
 
 function buildSchema(teacher: boolean) {
   return z.object({
@@ -96,7 +97,7 @@ const SOCIAL_FIELDS = [
     icon: FaGlobe,
     placeholder: "yourwebsite.com",
     label: "Website",
-    bgClass: "bg-teal-600 text-white",
+    bgClass: "bg-primary text-white",
   },
 ]
 
@@ -249,8 +250,11 @@ export default function CompleteProfilePage() {
     </>
   )
 
-  const firstName = user?.profile?.fullName?.split(" ")[0] ?? ""
-  const greeting = firstName ? "Welcome, " + firstName : "Welcome to EduNexis"
+  /* `getFirstName` strips the honorific. Splitting on the first space made
+     "Dr. Taslima Rahman" greet the user as "Welcome, Dr." on the very first
+     screen they see after registering. */
+  const firstName = getFirstName(user?.profile?.fullName, "")
+  const greeting = firstName ? `Welcome, ${firstName}` : "Welcome to EduNexis"
 
   return (
     <FormPageLayout
@@ -272,9 +276,9 @@ export default function CompleteProfilePage() {
       footer={footer}
     >
           {teacher ? (
-            <div className="mb-4 rounded-2xl border border-teal-200 bg-gradient-to-r from-teal-50 to-emerald-50 p-4 dark:border-teal-800 dark:from-teal-950/40 dark:to-emerald-950/30">
+            <div className="mb-4 rounded-2xl border border-primary/25 bg-gradient-to-r from-teal-50 to-emerald-50 p-4 dark:from-teal-950/40 dark:to-emerald-950/30">
               <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-600 text-white">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-white">
                   <Globe className="h-4 w-4" />
                 </div>
                 <div className="min-w-0">
@@ -330,7 +334,7 @@ export default function CompleteProfilePage() {
                       optionGroups={DEPARTMENT_GROUPS}
                     />
                     {errors.department?.message && (
-                      <p className="mt-1.5 text-[11.5px] font-semibold text-red-600">
+                      <p className="mt-1.5 text-[11.5px] font-semibold text-destructive">
                         {errors.department.message}
                       </p>
                     )}
@@ -395,10 +399,10 @@ export default function CompleteProfilePage() {
                       ? "e.g. I teach algorithms and work on distributed systems. Interested in graph theory and competitive programming."
                       : "e.g. CSE student interested in ML and backend engineering. Currently building a recipe app in my spare time."
                     }
-                    className="w-full resize-none rounded-xl border border-border bg-card px-4 py-3 text-[14px] text-foreground placeholder:text-muted-foreground transition-all focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/30"
+                    className="w-full resize-none rounded-xl border border-border bg-card px-4 py-3 text-[14px] text-foreground placeholder:text-muted-foreground transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-teal-600/30"
                   />
                   {errors.bio?.message && (
-                    <p className="mt-1.5 text-[11.5px] font-semibold text-red-600">
+                    <p className="mt-1.5 text-[11.5px] font-semibold text-destructive">
                       {errors.bio.message}
                     </p>
                   )}
@@ -437,22 +441,22 @@ export default function CompleteProfilePage() {
                         {...register(key)}
                         type="text"
                         placeholder={placeholder}
-                        className="h-11 flex-1 rounded-xl border border-border bg-card px-4 text-[14px] text-foreground placeholder:text-muted-foreground transition-all focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/30"
+                        className="h-11 flex-1 rounded-xl border border-border bg-card px-4 text-[14px] text-foreground placeholder:text-muted-foreground transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-teal-600/30"
                       />
                     </div>
                   ))}
                 </div>
               </FormSection>
 
-              <div className="mt-6 flex items-start gap-3 rounded-2xl border border-teal-200 bg-teal-50 dark:border-teal-900/50 dark:bg-teal-950/30/60 p-5 dark:border-teal-900/50 dark:bg-teal-950/20">
-                <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-600 text-white">
+              <div className="mt-6 flex items-start gap-3 rounded-2xl border border-primary/25 bg-primary-soft/60 p-5">
+                <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-white">
                   <Sparkles className="h-3.5 w-3.5" />
                 </div>
                 <div>
-                  <p className="text-[12px] font-bold uppercase tracking-widest text-teal-700">
+                  <p className="text-[12px] font-bold uppercase tracking-widest text-primary">
                     You're almost set
                   </p>
-                  <p className="mt-1 text-[13px] text-teal-900/80">
+                  <p className="mt-1 text-[13px] text-primary/80">
                     Click "Finish setup" to start using EduNexis. You can edit any of this later from your profile.
                   </p>
                 </div>

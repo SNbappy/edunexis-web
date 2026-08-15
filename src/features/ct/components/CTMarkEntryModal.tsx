@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Save, CheckCircle2, XCircle, AlertTriangle } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import Modal from "@/components/ui/Modal"
 import Button from "@/components/ui/Button"
 import Avatar from "@/components/ui/Avatar"
@@ -11,8 +12,8 @@ import type { CTEventDto, CTMarkEntry } from "@/types/ct.types"
 interface Member {
   userId: string
   fullName: string
-  studentId?: string
-  profilePhotoUrl?: string
+  studentId?: string | null
+  profilePhotoUrl?: string | null
 }
 
 interface CTMarkEntryModalProps {
@@ -32,13 +33,13 @@ interface StatProps {
   label: string
   value: number
   tone: "emerald" | "red" | "muted"
-  icon?: React.ComponentType<{ className?: string; strokeWidth?: number }>
+  icon?: LucideIcon
 }
 
 function Stat({ label, value, tone, icon: Icon }: StatProps) {
   const colorClass =
-    tone === "emerald" ? "text-emerald-700 dark:text-emerald-300"
-      : tone === "red" ? "text-red-700 dark:text-red-300"
+    tone === "emerald" ? "text-success"
+      : tone === "red" ? "text-destructive"
         : "text-muted-foreground"
 
   return (
@@ -129,9 +130,9 @@ export default function CTMarkEntryModal({
       <div className="space-y-5">
         {/* Khata warning */}
         {!ct.khataUploaded && (
-          <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/40">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" strokeWidth={2} />
-            <p className="text-[12px] leading-relaxed text-amber-900 dark:text-amber-200">
+          <div className="flex items-start gap-3 rounded-xl border border-warning/25 bg-warning-soft p-3">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" strokeWidth={2} />
+            <p className="text-[12px] leading-relaxed text-warning">
               All 3 answer scripts must be uploaded before saving marks.
             </p>
           </div>
@@ -157,7 +158,7 @@ export default function CTMarkEntryModal({
               type="button"
               whileTap={{ scale: 0.95 }}
               onClick={() => setAllAbsent(true)}
-              className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-[11.5px] font-bold text-red-700 transition-colors hover:bg-red-100 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-950/60"
+              className="rounded-lg border border-destructive/25 bg-destructive-soft px-3 py-1.5 text-[11.5px] font-bold text-destructive transition-colors hover:bg-destructive-soft"
             >
               Mark all absent
             </motion.button>
@@ -191,9 +192,9 @@ export default function CTMarkEntryModal({
                   className={
                     "flex items-center gap-3 rounded-xl border p-3 transition-colors " +
                     (e.absent
-                      ? "border-red-200 bg-red-50/60 dark:border-red-800 dark:bg-red-950/30"
+                      ? "border-destructive/25 bg-destructive-soft/60"
                       : hasMarks
-                        ? "border-emerald-200 bg-emerald-50/40 dark:border-emerald-800 dark:bg-emerald-950/20"
+                        ? "border-success/25 bg-success-soft/40"
                         : "border-border bg-card")
                   }
                 >
@@ -232,8 +233,8 @@ export default function CTMarkEntryModal({
                     className={
                       "inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11.5px] font-bold transition-colors " +
                       (e.absent
-                        ? "border-red-300 bg-red-100 text-red-700 dark:border-red-700 dark:bg-red-950/60 dark:text-red-300"
-                        : "border-border bg-card text-muted-foreground hover:border-red-200 hover:text-red-700 dark:hover:border-red-800")
+                        ? "border-destructive/25 bg-destructive-soft text-destructive"
+                        : "border-border bg-card text-muted-foreground hover:border-destructive/25 hover:text-destructive")
                     }
                   >
                     <XCircle className="h-3 w-3" />
@@ -251,10 +252,10 @@ export default function CTMarkEntryModal({
                       step={0.5}
                       placeholder="—"
                       aria-label={"Marks for " + member.fullName}
-                      className="h-9 w-16 rounded-xl border border-border bg-card text-center text-[13px] font-semibold tabular-nums text-foreground outline-none transition-all focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+                      className="h-9 w-16 rounded-xl border border-border bg-card text-center text-[13px] font-semibold tabular-nums text-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-teal-500/20"
                     />
                   ) : (
-                    <div className="flex h-9 w-16 items-center justify-center rounded-xl bg-red-100 text-[12px] font-extrabold text-red-700 dark:bg-red-950/50 dark:text-red-300">
+                    <div className="flex h-9 w-16 items-center justify-center rounded-xl bg-destructive-soft text-[12px] font-extrabold text-destructive">
                       ABS
                     </div>
                   )}

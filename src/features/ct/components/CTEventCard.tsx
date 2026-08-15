@@ -4,6 +4,10 @@ import {
   Calendar, Upload, CheckCircle2, MoreVertical,
   Eye, Edit2, Send, EyeOff, Trash2, ClipboardList,
 } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
+import Badge from "@/components/ui/Badge"
+import { ICON, ICON_STROKE, FOCUS, MOTION, SURFACE } from "@/components/ui/appTokens"
+import { cn } from "@/utils/cn"
 import { formatDate } from "@/utils/dateUtils"
 import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
@@ -21,28 +25,36 @@ interface CTEventCardProps {
 }
 
 interface MenuItemProps {
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
+  /* `LucideIcon`, not a hand-written ComponentType. The narrower signature
+     declared `strokeWidth: number`, but Lucide's own prop is `string | number`,
+     and TypeScript rejects every icon passed to it — six errors in this file
+     alone, and the same shape recurs across the CT and presentation
+     components. */
+  icon: LucideIcon
   label: string
   variant: "default" | "danger"
   onClick: () => void
 }
 
 function MenuItem({ icon: Icon, label, variant, onClick }: MenuItemProps) {
-  const colorClass = variant === "danger"
-    ? "text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
-    : "text-foreground hover:bg-teal-50 dark:hover:bg-teal-950/30"
-
-  const iconClass = variant === "danger"
-    ? "text-red-600"
-    : "text-teal-700 dark:text-teal-300"
+  const danger = variant === "danger"
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={"flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium transition-colors " + colorClass}
+      className={cn(
+        "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium transition-colors duration-120",
+        FOCUS,
+        danger
+          ? "text-destructive hover:bg-destructive-soft"
+          : "text-foreground hover:bg-muted",
+      )}
     >
-      <Icon className={"h-3.5 w-3.5 " + iconClass} strokeWidth={2} />
+      <Icon
+        className={cn(ICON.sm, danger ? "" : "text-muted-foreground")}
+        strokeWidth={ICON_STROKE}
+      />
       {label}
     </button>
   )
@@ -59,14 +71,6 @@ export default function CTEventCard({
   const isPublished = ct.status === "Published"
   const isDraft = ct.status === "Draft"
 
-  /* Status-driven palette */
-  const statusBadge = isPublished
-    ? "border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
-    : "border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
-
-  const stripeClass = isPublished
-    ? "bg-emerald-500"
-    : "bg-amber-500"
 
   const hasMenu = teacher && (onUploadKhata || onEnterMarks || onPublish || onUnpublish || onDelete)
 
@@ -82,27 +86,33 @@ export default function CTEventCard({
   }, [menuOpen])
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index * 0.04, 0.2), duration: 0.25 }}
+    /* role/tabIndex/onKeyDown rather than a bare onClick div: opening a CT was
+       mouse-only, so a keyboard user could reach the actions menu inside the
+       card but never the card itself. It cannot be a real <button> because it
+       contains one (the actions menu), and nesting interactive elements is
+       invalid — hence the explicit button role. */
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => onView(ct)}
-      whileHover={{ y: -2 }}
-      className={
-        "group relative cursor-pointer rounded-2xl border border-border bg-card shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-all hover:border-teal-200 hover:shadow-[0_12px_32px_-8px_rgba(20,184,166,0.18)] dark:hover:border-teal-800 " +
-        (menuOpen ? "z-30" : "z-0")
-      }
+      onKeyDown={e => {
+        if (e.target !== e.currentTarget) return
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          onView(ct)
+        }
+      }}
+      className={cn(
+        SURFACE.cardInteractive,
+        FOCUS,
+        "group relative cursor-pointer",
+        menuOpen ? "z-30" : "z-0",
+      )}
     >
-      {/* Status stripe */}
-      <div
-        className={"pointer-events-none absolute bottom-3 left-0 top-3 w-[3px] rounded-full " + stripeClass}
-        aria-hidden
-      />
-
-      <div className="flex items-start gap-3 px-5 py-4 pl-6">
-        {/* CT number badge */}
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-100 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300">
-          <span className="font-display text-[11px] font-extrabold">CT{ct.ctNumber}</span>
+      <div className="flex items-start gap-3 p-4">
+        {/* CT number — the label people use ("what did you get in CT2?"). */}
+        <div className="flex h-9 w-11 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+          <span className="font-mono text-[11.5px] font-bold">CT{ct.ctNumber}</span>
         </div>
 
         <div className="min-w-0 flex-1">
@@ -112,39 +122,44 @@ export default function CTEventCard({
             </h3>
 
             <div className="flex shrink-0 items-center gap-1.5" onClick={e => e.stopPropagation()}>
-              <span className={"inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wider " + statusBadge}>
-                {isPublished
-                  ? <><CheckCircle2 className="h-2.5 w-2.5" strokeWidth={2.5} /> Published</>
-                  : <><Edit2 className="h-2.5 w-2.5" strokeWidth={2.5} /> Draft</>
-                }
-              </span>
+              {/* Draft vs published is the one thing worth colouring: it decides
+                  whether students can see their marks. */}
+              <Badge
+                variant={isPublished ? "success" : "warning"}
+                size="sm"
+                icon={isPublished
+                  ? <CheckCircle2 strokeWidth={ICON_STROKE} />
+                  : <Edit2 strokeWidth={ICON_STROKE} />}
+              >
+                {isPublished ? "Published" : "Draft"}
+              </Badge>
 
               {hasMenu && (
                 <div className="relative" ref={menuRef}>
-                  <motion.button
+                  <button
                     type="button"
-                    whileTap={{ scale: 0.9 }}
                     onClick={e => { e.stopPropagation(); setMenuOpen(v => !v) }}
                     aria-label="CT actions"
                     aria-expanded={menuOpen}
-                    className={
-                      "flex h-7 w-7 items-center justify-center rounded-lg transition-colors " +
-                      (menuOpen
+                    className={cn(
+                      "flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-120",
+                      FOCUS,
+                      menuOpen
                         ? "bg-muted text-foreground"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground")
-                    }
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    )}
                   >
-                    <MoreVertical className="h-3.5 w-3.5" />
-                  </motion.button>
+                    <MoreVertical className={ICON.sm} strokeWidth={ICON_STROKE} />
+                  </button>
 
                   <AnimatePresence>
                     {menuOpen && (
                       <motion.div
-                        initial={{ opacity: 0, scale: 0.96, y: -4 }}
+                        initial={{ opacity: 0, scale: 0.98, y: -4 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.96, y: -4 }}
-                        transition={{ duration: 0.12 }}
-                        className="absolute right-0 top-9 z-50 w-52 overflow-hidden rounded-xl border border-border bg-card shadow-lg"
+                        exit={{ opacity: 0, scale: 0.98, y: -4 }}
+                        transition={{ duration: MOTION.base, ease: MOTION.ease }}
+                        className={cn(SURFACE.raised, "absolute right-0 top-9 z-50 w-52 overflow-hidden p-1.5")}
                         onClick={e => e.stopPropagation()}
                       >
                         <MenuItem
@@ -192,7 +207,7 @@ export default function CTEventCard({
 
                         {onDelete && (
                           <>
-                            <div className="my-1 h-px bg-border" />
+                            <div className="my-1 border-t border-border" />
                             <MenuItem
                               icon={Trash2}
                               label="Delete"
@@ -209,38 +224,32 @@ export default function CTEventCard({
             </div>
           </div>
 
-          {/* Meta row */}
-          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11.5px] text-muted-foreground">
-            {ct.heldOn ? (
-              <span className="inline-flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                {formatDate(ct.heldOn, "dd MMM yyyy")}
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-300">
-                <Calendar className="h-3 w-3" />
-                Date not set
-              </span>
-            )}
+          {/* Meta row. Only the two states that need the teacher to act —
+              a missing date and pending scripts — carry colour. */}
+          <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px] text-muted-foreground">
+            <span className={cn("inline-flex items-center gap-1.5", !ct.heldOn && "font-semibold text-warning")}>
+              <Calendar className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
+              {ct.heldOn ? formatDate(ct.heldOn, "dd MMM yyyy") : "Date not set"}
+            </span>
 
-            <span className="inline-flex items-center rounded-full border border-teal-200 bg-teal-50 px-1.5 py-0.5 text-[10px] font-bold text-teal-700 dark:border-teal-800 dark:bg-teal-950/40 dark:text-teal-300">
-              {ct.maxMarks} marks
+            <span className="tabular-nums">
+              <span className="font-semibold text-foreground">{ct.maxMarks}</span> marks
             </span>
 
             {teacher && (
               ct.khataUploaded
-                ? <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-300">
-                  <CheckCircle2 className="h-3 w-3" />
-                  Scripts uploaded
-                </span>
-                : <span className="inline-flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-300">
-                  <Upload className="h-3 w-3" />
-                  Scripts pending
-                </span>
+                ? <span className="inline-flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
+                    Scripts uploaded
+                  </span>
+                : <span className="inline-flex items-center gap-1.5 font-semibold text-warning">
+                    <Upload className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
+                    Scripts pending
+                  </span>
             )}
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }

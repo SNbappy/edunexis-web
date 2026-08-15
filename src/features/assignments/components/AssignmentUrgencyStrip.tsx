@@ -1,12 +1,13 @@
 import { useMemo } from "react"
-import { motion } from "framer-motion"
-import { ArrowRight, Flame } from "lucide-react"
+import { ArrowRight, Clock } from "lucide-react"
 import {
-  getStudentDisplay, getTeacherDisplay, getToneClasses,
-  type AssignmentDisplay, type Tone,
+  getStudentDisplay, getTeacherDisplay,
+  type AssignmentDisplay,
 } from "@/utils/assignmentStatus"
 import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
+import { ICON_STROKE, FOCUS, TEXT } from "@/components/ui/appTokens"
+import { cn } from "@/utils/cn"
 import type { AssignmentDto } from "@/types/assignment.types"
 
 interface AssignmentUrgencyStripProps {
@@ -17,6 +18,19 @@ interface AssignmentUrgencyStripProps {
 const URGENCY_THRESHOLD = 35
 const MAX_ITEMS = 3
 
+/**
+ * The few assignments that need action now.
+ *
+ * This used to be an amber-to-red gradient panel with its own badges and
+ * card style — the only screen in the app still speaking a different
+ * visual language, which made it look bolted on rather than designed in.
+ *
+ * The urgency now comes from position and one accent, not from wrapping
+ * everything in a warm gradient: the strip sits at the top of the tab,
+ * each item carries a left rail in its own tone, and the deadline is the
+ * only coloured text. Same information, and it stops competing with the
+ * course header directly above it.
+ */
 export default function AssignmentUrgencyStrip({
   assignments, onView,
 }: AssignmentUrgencyStripProps) {
@@ -36,28 +50,23 @@ export default function AssignmentUrgencyStrip({
 
   if (items.length === 0) return null
 
-  const heading = teacher ? "Needs your attention" : "Due soon"
+  /* A shortcut is only a shortcut if it saves scanning. When the strip would
+     list every assignment the tab already shows in full below it, the same
+     cards render twice on one screen and the "needs your attention" heading
+     stops meaning anything — it is just the list again with a louder title. */
+  if (items.length >= assignments.length) return null
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
-      className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 via-orange-50/40 to-red-50/30 p-4 dark:border-amber-900 dark:from-amber-950/40 dark:via-orange-950/20 dark:to-red-950/20"
-    >
-      <div className="mb-3 flex items-center gap-2">
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-200 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
-          <Flame className="h-3.5 w-3.5" strokeWidth={2.4} />
-        </div>
-        <h3 className="font-display text-[13px] font-bold text-amber-900 dark:text-amber-200">
-          {heading}
-        </h3>
-        <span className="rounded-md border border-amber-300 bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+    <section aria-label={teacher ? "Needs your attention" : "Due soon"}>
+      <div className="mb-2.5 flex items-center gap-2">
+        <Clock className="h-3.5 w-3.5 text-warning" strokeWidth={ICON_STROKE} />
+        <h3 className={TEXT.eyebrow}>{teacher ? "Needs your attention" : "Due soon"}</h3>
+        <span className="rounded-full bg-warning-soft px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-warning">
           {items.length}
         </span>
       </div>
 
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
         {items.map(({ assignment, display }) => (
           <UrgencyCard
             key={assignment.id}
@@ -67,7 +76,7 @@ export default function AssignmentUrgencyStrip({
           />
         ))}
       </div>
-    </motion.div>
+    </section>
   )
 }
 
@@ -77,49 +86,47 @@ interface UrgencyCardProps {
   onView: (a: AssignmentDto) => void
 }
 
+/**
+ * Tone is mapped onto the semantic tokens rather than raw palette classes,
+ * so these follow the theme and stay consistent with every other status
+ * colour in the app.
+ */
+const TONE: Record<string, { rail: string; text: string }> = {
+  red:     { rail: "bg-destructive", text: "text-destructive" },
+  amber:   { rail: "bg-warning",     text: "text-warning" },
+  emerald: { rail: "bg-success",     text: "text-success" },
+  teal:    { rail: "bg-primary",     text: "text-primary" },
+  violet:  { rail: "bg-info",        text: "text-info" },
+}
+
 function UrgencyCard({ assignment, display, onView }: UrgencyCardProps) {
-  const tone = getToneClasses(display.tone)
-  const dominantTextClass = dominantTextFor(display.tone)
+  const tone = TONE[display.tone] ?? { rail: "bg-border-strong", text: "text-muted-foreground" }
 
   return (
-    <motion.button
+    <button
       type="button"
-      whileHover={{ y: -1 }}
-      whileTap={{ scale: 0.99 }}
       onClick={() => onView(assignment)}
-      className={
-        "group flex w-full items-start gap-3 rounded-xl border bg-card p-3 text-left shadow-sm transition-all hover:shadow-md " +
-        tone.border
-      }
+      className={cn(
+        "group relative flex w-full items-start gap-3 overflow-hidden rounded-xl border border-border bg-card p-3 text-left shadow-xs",
+        "transition-all duration-180 hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md",
+        FOCUS,
+      )}
     >
-      <div className={"mt-0.5 h-full w-[3px] shrink-0 rounded-full " + tone.stripe} aria-hidden />
+      <span className={cn("absolute inset-y-0 left-0 w-[3px]", tone.rail)} aria-hidden />
 
-      <div className="min-w-0 flex-1">
-        <div className="mb-1 flex items-center gap-1.5">
-          <span className={"inline-flex items-center rounded-full px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider " + tone.badgeBg + " " + tone.badgeText}>
-            {display.label}
-          </span>
-        </div>
-        <p className="line-clamp-1 text-[13px] font-bold text-foreground">
+      <div className="min-w-0 flex-1 pl-1">
+        <p className="line-clamp-1 text-[13px] font-semibold text-foreground">
           {assignment.title}
         </p>
-        <p className={"mt-0.5 text-[11.5px] font-semibold " + dominantTextClass}>
+        <p className={cn("mt-1 text-[11.5px] font-semibold", tone.text)}>
           {display.detail}
         </p>
       </div>
 
-      <ArrowRight className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-foreground" />
-    </motion.button>
+      <ArrowRight
+        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-120 group-hover:translate-x-0.5 group-hover:text-foreground"
+        strokeWidth={ICON_STROKE}
+      />
+    </button>
   )
-}
-
-function dominantTextFor(tone: Tone): string {
-  switch (tone) {
-    case "red": return "text-red-700 dark:text-red-300"
-    case "amber": return "text-amber-700 dark:text-amber-300"
-    case "violet": return "text-violet-700 dark:text-violet-300"
-    case "emerald": return "text-emerald-700 dark:text-emerald-300"
-    case "teal": return "text-teal-700 dark:text-teal-300"
-    default: return "text-muted-foreground"
-  }
 }

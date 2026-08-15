@@ -44,11 +44,11 @@ export default function CoursesTab({ profile: p, isSelf }: CoursesTabProps) {
                 <section className="rounded-2xl border border-border bg-card shadow-sm ring-1 ring-stone-200/50 dark:ring-white/5 p-6">
                     <div className="mb-4 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <BookOpen className="h-4 w-4 text-teal-600" />
+                            <BookOpen className="h-4 w-4 text-primary" />
                             <h2 className="font-display text-[15px] font-bold text-foreground">
                                 Running
                             </h2>
-                            <span className="rounded-full bg-teal-50 px-2 py-0.5 text-[11px] font-bold text-teal-700 dark:bg-teal-950/40 dark:text-teal-300">
+                            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary bg-primary/10 text-primary">
                                 {p.runningCoursesCount}
                             </span>
                         </div>
@@ -86,7 +86,7 @@ export default function CoursesTab({ profile: p, isSelf }: CoursesTabProps) {
                 <div className="flex justify-center">
                     <Link
                         to={`/users/${p.userId}/courses`}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-[13px] font-bold text-foreground transition-colors hover:border-teal-300 hover:bg-teal-50 dark:hover:border-teal-700 dark:hover:bg-teal-950/30"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-[13px] font-bold text-foreground transition-colors hover:border-primary/20 hover:bg-primary/10 dark:hover:border-teal-700 dark:hover:bg-teal-950/30"
                     >
                         View all {total} courses
                         <ArrowRight className="h-3.5 w-3.5" />

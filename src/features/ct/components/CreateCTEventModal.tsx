@@ -44,8 +44,8 @@ export default function CreateCTEventModal({
     >
       <form onSubmit={handleSubmit(submit)} className="space-y-4">
         {/* Helper card — CT number is auto-assigned */}
-        <div className="flex items-center gap-3 rounded-xl border border-teal-200 bg-teal-50 p-3 dark:border-teal-800 dark:bg-teal-950/40">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-100 text-teal-700 dark:bg-teal-900/60 dark:text-teal-200">
+        <div className="flex items-center gap-3 rounded-xl border border-primary/25 bg-primary-soft p-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
             <ClipboardList className="h-4 w-4" strokeWidth={2} />
           </div>
           <div>
@@ -83,11 +83,11 @@ export default function CreateCTEventModal({
         </div>
 
         {/* Workflow tip — CRITICAL for the user mental model */}
-        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/40">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-200 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
+        <div className="flex items-start gap-3 rounded-xl border border-warning/25 bg-warning-soft p-3">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-200 text-warning">
             <Lightbulb className="h-3.5 w-3.5" strokeWidth={2.5} />
           </div>
-          <p className="text-[12px] leading-relaxed text-amber-900 dark:text-amber-200">
+          <p className="text-[12px] leading-relaxed text-warning">
             After creating, upload the{" "}
             <strong className="font-bold">best</strong>,{" "}
             <strong className="font-bold">worst</strong>, and{" "}

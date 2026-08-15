@@ -37,10 +37,17 @@ const SIZE: Record<Size, string> = {
 const FILL = "shadow-[inset_0_1px_0_rgb(255_255_255/0.18)] active:translate-y-px"
 
 const VARIANT: Record<Variant, string> = {
+  /**
+   * A vertical gradient, not a flat fill — matching the CTAs on the
+   * marketing and auth pages. A single flat colour is the difference
+   * between a button that looks printed on and one that looks like a
+   * physical control, and it was the most visible break between the
+   * signed-out and signed-in halves of the product.
+   */
   primary:
-    `bg-primary text-primary-foreground ${FILL} shadow-[inset_0_1px_0_rgb(255_255_255/0.18),0_1px_2px_rgb(var(--primary)/0.28),0_6px_16px_-8px_rgb(var(--primary)/0.55)] hover:bg-primary-700 dark:hover:bg-primary-400`,
+    `bg-gradient-to-b from-primary-600 to-primary-800 text-white ${FILL} shadow-[inset_0_1px_0_rgb(255_255_255/0.2),0_1px_2px_rgb(var(--primary)/0.3),0_8px_20px_-8px_rgb(var(--primary)/0.6)] hover:from-primary-500 hover:to-primary-700`,
   secondary:
-    "bg-card text-foreground border border-border shadow-xs hover:bg-muted hover:border-border-strong active:translate-y-px",
+    "bg-gradient-to-b from-card to-muted/60 text-foreground border border-border shadow-[inset_0_1px_0_rgb(255_255_255/0.6),0_1px_2px_rgb(15_23_42/0.05)] hover:border-border-strong hover:to-muted active:translate-y-px dark:shadow-[inset_0_1px_0_rgb(255_255_255/0.05),0_1px_2px_rgb(0_0_0/0.4)]",
   ghost:
     "bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground",
   outline:

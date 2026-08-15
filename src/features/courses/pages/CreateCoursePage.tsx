@@ -14,6 +14,9 @@ import Select from "@/components/ui/Select"
 import FormPageLayout from "@/components/forms/FormPageLayout"
 import FormSection from "@/components/forms/FormSection"
 import FormField from "@/components/forms/FormField"
+import { Field as FieldGroup, Textarea } from "@/components/ui/field"
+import { TEXT } from "@/components/ui/appTokens"
+import { cn } from "@/utils/cn"
 import FormStepper from "@/components/forms/FormStepper"
 import ShowAdvancedToggle from "@/components/forms/ShowAdvancedToggle"
 import LivePreviewPanel from "@/components/forms/LivePreviewPanel"
@@ -425,29 +428,26 @@ export default function CreateCoursePage() {
                 subtitle="What will students learn? A good description helps students decide to join."
                 tone="stone"
               >
-                <div>
-                  <label className="mb-1.5 block text-[13px] font-semibold text-foreground">
-                    Description
-                    <span className="ml-1 font-normal text-muted-foreground">(optional)</span>
-                  </label>
-                  <textarea
+                <FieldGroup
+                  label="Description"
+                  htmlFor="course-description"
+                  hint="You can edit this later from the course settings."
+                >
+                  <Textarea
+                    id="course-description"
                     {...register("description")}
                     rows={6}
                     placeholder="A short paragraph about what the course covers, the main topics, and what students should be able to do by the end."
-                    className="w-full resize-none rounded-xl border border-border bg-card px-4 py-3 text-[14px] text-foreground placeholder:text-muted-foreground transition-all focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/30"
                   />
-                  <p className="mt-1.5 text-[11.5px] text-muted-foreground">
-                    You can edit this later from the course settings.
-                  </p>
-                </div>
+                </FieldGroup>
               </FormSection>
 
-              <div className="mt-6 rounded-2xl border border-teal-200 bg-teal-50 dark:border-teal-900/50 dark:bg-teal-950/30/60 p-5 dark:border-teal-900/50 dark:bg-teal-950/20">
-                <p className="text-[12px] font-bold uppercase tracking-widest text-teal-700">
-                  Ready to launch
-                </p>
-                <p className="mt-1.5 text-[13px] text-teal-900/80">
-                  Double-check the preview. Once created, your course will appear on your Courses list and students can join with the code you share.
+              {/* Was `dark:bg-teal-950/30/60` — a double opacity suffix that
+                  Tailwind never emitted, so this panel had no dark background. */}
+              <div className="mt-6 rounded-2xl border border-primary/20 bg-primary/10 p-4">
+                <p className={cn(TEXT.eyebrow, "text-primary")}>Ready to launch</p>
+                <p className="mt-1.5 text-[13px] leading-relaxed text-foreground">
+                  Double-check the preview. Once created, your course appears on your Courses list and students can join with the code you share.
                 </p>
               </div>
             </motion.div>

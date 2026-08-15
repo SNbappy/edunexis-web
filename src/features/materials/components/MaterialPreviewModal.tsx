@@ -9,6 +9,9 @@ import {
 import {
   getPreviewKind, buildPreviewUrl, type PreviewKind,
 } from "@/utils/filePreview"
+import Button from "@/components/ui/Button"
+import { ICON_STROKE } from "@/components/ui/appTokens"
+import { getYouTubeEmbedUrl } from "@/utils/videoEmbed"
 import { formatFileSize } from "@/utils/fileUtils"
 
 interface MaterialPreviewModalProps {
@@ -24,6 +27,8 @@ export default function MaterialPreviewModal({
 }: MaterialPreviewModalProps) {
   const kind = getPreviewKind(fileName)
   const previewUrl = buildPreviewUrl(fileUrl, kind)
+  /** A YouTube link renders as a player and has no downloadable file. */
+  const isEmbeddedVideo = getYouTubeEmbedUrl(fileUrl) !== null
 
   useEffect(() => {
     if (!isOpen) return
@@ -70,7 +75,7 @@ export default function MaterialPreviewModal({
           style={{ zIndex: 99999 }}
         >
           <div className="flex shrink-0 items-center gap-3 border-b border-border bg-card px-5 py-3 shadow-sm">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-300">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <FileText className="h-4 w-4" />
             </div>
 
@@ -92,27 +97,27 @@ export default function MaterialPreviewModal({
               href={fileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden items-center gap-1.5 rounded-lg border border-border bg-muted px-3 py-1.5 text-[12px] font-semibold text-foreground transition-colors hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700 dark:hover:border-teal-700 dark:hover:bg-teal-950/30 dark:hover:text-teal-300 sm:inline-flex"
+              className="hidden items-center gap-1.5 rounded-lg border border-border bg-muted px-3 py-1.5 text-[12px] font-semibold text-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary sm:inline-flex"
             >
               <ExternalLink className="h-3.5 w-3.5" />
               Open in new tab
             </a>
 
-            <button
-              type="button"
-              onClick={handleDownload}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-1.5 text-[12px] font-bold text-white transition-colors hover:bg-teal-700"
-            >
-              <DownloadIcon className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Download</span>
-            </button>
+            {/* No download for an embedded video — there is no file to fetch,
+                and offering it would produce a failed request. "Open in new
+                tab" above already covers watching it on YouTube. */}
+            {!isEmbeddedVideo && (
+              <Button size="sm" onClick={handleDownload} leftIcon={<DownloadIcon strokeWidth={ICON_STROKE} />}>
+                <span className="hidden sm:inline">Download</span>
+              </Button>
+            )}
 
             <button
               type="button"
               onClick={onClose}
               aria-label="Close preview"
               title="Close (Esc)"
-              className="rounded-lg bg-muted p-1.5 text-muted-foreground transition-all hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
+              className="rounded-lg bg-muted p-1.5 text-muted-foreground transition-all hover:bg-destructive-soft hover:text-destructive"
             >
               <X className="h-4 w-4" />
             </button>
@@ -144,6 +149,32 @@ interface PreviewBodyProps {
 
 function PreviewBody({ kind, previewUrl, rawUrl, fileName, onDownload }: PreviewBodyProps) {
   const [iframeLoaded, setIframeLoaded] = useState(false)
+
+  /* YouTube plays inline.
+     Detected from the URL rather than the stored material type, so links
+     saved before the YouTube type existed still play. Everything that is
+     not recognisably YouTube falls through to the normal handling and is
+     opened in a new tab — framing arbitrary sites is both unreliable
+     (most send X-Frame-Options: DENY) and unwise. */
+  const embed = getYouTubeEmbedUrl(rawUrl)
+  if (embed) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-black p-4">
+        <div className="relative aspect-video w-full max-w-5xl overflow-hidden rounded-xl bg-black">
+          {!iframeLoaded && <PreviewLoader label="Loading video…" />}
+          <iframe
+            src={embed}
+            title={fileName}
+            onLoad={() => setIframeLoaded(true)}
+            className="absolute inset-0 h-full w-full border-0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+          />
+        </div>
+      </div>
+    )
+  }
 
   if (kind === "pdf") {
     return (
@@ -189,7 +220,7 @@ function PreviewBody({ kind, previewUrl, rawUrl, fileName, onDownload }: Preview
   if (kind === "audio") {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-6 p-8">
-        <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-300">
+        <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/10 text-primary">
           <FileText className="h-9 w-9" />
         </div>
         <p className="font-display text-[14px] font-bold text-foreground">
@@ -238,7 +269,7 @@ function PreviewBody({ kind, previewUrl, rawUrl, fileName, onDownload }: Preview
           href={rawUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted px-3 py-2 text-[12px] font-semibold text-foreground transition-colors hover:bg-stone-100 dark:hover:bg-stone-900"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted px-3 py-2 text-[12px] font-semibold text-foreground transition-colors hover:bg-muted dark:hover:bg-stone-900"
         >
           <ExternalLink className="h-3.5 w-3.5" />
           Open in new tab
@@ -246,7 +277,7 @@ function PreviewBody({ kind, previewUrl, rawUrl, fileName, onDownload }: Preview
         <button
           type="button"
           onClick={onDownload}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-2 text-[12px] font-bold text-white transition-colors hover:bg-teal-700"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-[12px] font-bold text-white transition-colors hover:bg-primary-700"
         >
           <DownloadIcon className="h-3.5 w-3.5" />
           Download
@@ -259,7 +290,7 @@ function PreviewBody({ kind, previewUrl, rawUrl, fileName, onDownload }: Preview
 function PreviewLoader({ label }: { label: string }) {
   return (
     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-card/80 backdrop-blur-sm">
-      <InlineSpinner size={24} className="text-teal-600" />
+      <InlineSpinner size={24} className="text-primary" />
       <p className="text-[12px] font-semibold text-muted-foreground">{label}</p>
     </div>
   )
@@ -286,7 +317,7 @@ function TextPreview({ url, fileName }: { url: string; fileName: string }) {
   if (error) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-3 p-8 text-center">
-        <AlertCircle className="h-8 w-8 text-red-500" />
+        <AlertCircle className="h-8 w-8 text-destructive" />
         <p className="text-[13px] font-semibold text-foreground">Could not load preview</p>
         <p className="text-[12px] text-muted-foreground">{error}</p>
       </div>

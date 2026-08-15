@@ -1,12 +1,12 @@
-﻿import { Link } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { BookOpen, ArrowRight, Archive } from "lucide-react"
 import type { PublicCourseDto } from "@/types/auth.types"
 
 const ACCENTS = [
-  "bg-teal-500",
+  "bg-primary/100",
   "bg-amber-500",
   "bg-blue-500",
-  "bg-violet-500",
+  "bg-muted0",
 ] as const
 
 function pickAccent(id: string): string {
@@ -53,7 +53,7 @@ export default function ProfileCoursesList({
               to={isSelf ? `/courses/${c.id}/stream` : "#"}
               onClick={e => { if (!isSelf) e.preventDefault() }}
               className={`group flex items-center gap-3 rounded-xl border border-border bg-card p-3 transition-colors ${isSelf
-                  ? "hover:border-teal-300 hover:bg-teal-50/30 dark:hover:border-teal-700 dark:hover:bg-teal-950/20"
+                  ? "hover:border-primary/20 hover:bg-primary/10/30 dark:hover:border-teal-700 dark:hover:bg-teal-950/20"
                   : "cursor-default"
                 } ${dim ? "opacity-70" : ""}`}
             >

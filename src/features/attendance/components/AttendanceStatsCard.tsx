@@ -1,6 +1,8 @@
 import { ClipboardList } from "lucide-react"
-import { SURFACE } from "@/components/ui/appTokens"
+import { StatRing, TrendBars, type TrendPoint } from "@/components/ui/charts"
+import { SURFACE, TEXT } from "@/components/ui/appTokens"
 import { ATTENDANCE_MIN_PERCENT } from "@/config/constants"
+import { formatDate } from "@/utils/dateUtils"
 import { cn } from "@/utils/cn"
 
 interface AttendanceStatsCardProps {
@@ -8,23 +10,21 @@ interface AttendanceStatsCardProps {
   averageAttendance: number
   totalStudents?: number
   lastSessionDate?: string
+  /** Raw sessions, so the card can draw the term's shape. */
+  sessions?: any[]
 }
 
 /**
  * Attendance summary.
  *
- * This was a 90%-high hero card with an animated count-up and a progress bar,
- * followed by three more tiles that restated the same three numbers in
- * different colours — the average appeared twice and the session count twice,
- * in ~330px, above the session list people actually came for.
- *
- * It is one row now. The average is the only figure worth emphasis, and it is
- * coloured only against the 75% requirement — the old card had four colour
- * bands and a mood caption ("Excellent class engagement") for a number whose
- * one real threshold is whether students can sit the exam.
+ * The number alone never answered the question a teacher actually has,
+ * which is not "what is the average" but "is this class drifting". Ten
+ * sessions listed as ten identical text rows hid that completely. The
+ * trend puts the term's shape next to the headline figure, with the 75%
+ * requirement drawn on it, so a run of bad weeks is visible at a glance.
  */
 export default function AttendanceStatsCard({
-  totalSessions, averageAttendance, totalStudents,
+  totalSessions, averageAttendance, totalStudents, sessions = [],
 }: AttendanceStatsCardProps) {
   if (totalSessions === 0) {
     return (
@@ -48,49 +48,57 @@ export default function AttendanceStatsCard({
   }
 
   const below = averageAttendance < ATTENDANCE_MIN_PERCENT
-  const pct   = Math.min(Math.max(averageAttendance, 0), 100)
+
+  /* Oldest first, so the trend reads left-to-right like a timeline. The
+     session list above is newest-first, which is right for "what did I
+     just do" but backwards for showing a term. */
+  const points: TrendPoint[] = [...sessions]
+    .filter(s => Array.isArray(s.records) && s.records.length > 0)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .map(s => {
+      const present = s.records.filter((r: any) => r.status === "Present").length
+      const pct = Math.round((present / s.records.length) * 100)
+      return {
+        label: formatDate(s.date, "dd MMM"),
+        value: pct,
+        detail: `${pct}% (${present} of ${s.records.length})`,
+      }
+    })
 
   return (
-    <div className={cn(SURFACE.card, "flex flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3.5")}>
-      <div className="flex items-baseline gap-2">
-        <span
-          className={cn(
-            "font-display text-[26px] font-extrabold leading-none tabular-nums",
-            below ? "text-warning" : "text-success",
-          )}
-        >
-          {averageAttendance.toFixed(1)}%
-        </span>
-        <span className="text-[12.5px] text-muted-foreground">average attendance</span>
+    <div className={cn(SURFACE.card, "flex flex-wrap items-center gap-x-8 gap-y-5 p-4 sm:flex-nowrap")}>
+      {/* Headline: the ring gives the number presence a bare figure lacked. */}
+      <div className="flex shrink-0 items-center gap-3.5">
+        <StatRing value={averageAttendance} tone={below ? "warning" : "success"} />
+        <div>
+          <p className="text-[12.5px] font-semibold text-foreground">Average attendance</p>
+          <p className={cn(TEXT.muted, "mt-0.5")}>
+            {below
+              ? `Below the ${ATTENDANCE_MIN_PERCENT}% requirement`
+              : `Above the ${ATTENDANCE_MIN_PERCENT}% requirement`}
+          </p>
+          <p className={cn(TEXT.muted, "mt-1.5")}>
+            <span className="font-semibold text-foreground">{totalSessions}</span>{" "}
+            {totalSessions === 1 ? "session" : "sessions"}
+            {totalStudents !== undefined && (
+              <>
+                {" · "}
+                <span className="font-semibold text-foreground">{totalStudents}</span>{" "}
+                {totalStudents === 1 ? "student" : "students"}
+              </>
+            )}
+          </p>
+        </div>
       </div>
 
-      {/* The bar is the only place the 75% requirement is visible, so it is
-          marked on the track rather than left implicit in the colour. */}
-      <div className="relative h-1.5 min-w-[140px] flex-1 overflow-hidden rounded-full bg-muted">
-        <div
-          className={cn("h-full rounded-full transition-[width] duration-500 ease-out", below ? "bg-warning" : "bg-success")}
-          style={{ width: `${pct}%` }}
-        />
-        <span
-          className="absolute inset-y-0 w-px bg-border-strong"
-          style={{ left: `${ATTENDANCE_MIN_PERCENT}%` }}
-          title={`${ATTENDANCE_MIN_PERCENT}% required`}
-          aria-hidden
-        />
-      </div>
-
-      <div className="flex items-center gap-4 text-[12.5px] text-muted-foreground">
-        <span>
-          <span className="font-display font-bold tabular-nums text-foreground">{totalSessions}</span>{" "}
-          {totalSessions === 1 ? "session" : "sessions"}
-        </span>
-        {totalStudents !== undefined && (
-          <span>
-            <span className="font-display font-bold tabular-nums text-foreground">{totalStudents}</span>{" "}
-            {totalStudents === 1 ? "student" : "students"}
-          </span>
-        )}
-      </div>
+      {/* Capped rather than stretched: across a full-width card ten bars
+          become 110px slabs that read as a wall instead of a trend. */}
+      {points.length > 1 && (
+        <div className="min-w-[220px] max-w-[420px] flex-1">
+          <p className={cn(TEXT.eyebrow, "mb-2")}>Across the term</p>
+          <TrendBars points={points} threshold={ATTENDANCE_MIN_PERCENT} height={56} />
+        </div>
+      )}
     </div>
   )
 }

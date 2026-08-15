@@ -135,7 +135,7 @@ export default function EditAssignmentPage() {
               {...register("instructions")}
               rows={5}
               placeholder={"Detailed instructions\u2026"}
-              className="w-full resize-none rounded-xl border border-border bg-muted/40 px-4 py-3 text-[13px] text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-teal-500 focus:bg-card focus:ring-2 focus:ring-teal-500/20"
+              className="w-full resize-none rounded-xl border border-border bg-muted/40 px-4 py-3 text-[13px] text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:bg-card focus:ring-2 focus:ring-teal-500/20"
             />
           </div>
 
@@ -147,7 +147,7 @@ export default function EditAssignmentPage() {
               {...register("rubricNotes")}
               rows={3}
               placeholder="Grading criteria…"
-              className="w-full resize-none rounded-xl border border-border bg-muted/40 px-4 py-3 text-[13px] text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-teal-500 focus:bg-card focus:ring-2 focus:ring-teal-500/20"
+              className="w-full resize-none rounded-xl border border-border bg-muted/40 px-4 py-3 text-[13px] text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:bg-card focus:ring-2 focus:ring-teal-500/20"
             />
           </div>
         </FormSection>
@@ -175,11 +175,11 @@ export default function EditAssignmentPage() {
             />
           </div>
 
-          <label className="flex cursor-pointer select-none items-center gap-3 rounded-xl border border-teal-200 bg-teal-50 p-3 dark:border-teal-800 dark:bg-teal-950/40">
+          <label className="flex cursor-pointer select-none items-center gap-3 rounded-xl border border-primary/25 bg-primary-soft p-3">
             <input type="checkbox" {...register("allowLateSubmission")} className="sr-only" />
             <div className={
               "relative h-5 w-9 shrink-0 rounded-full transition-colors " +
-              (allowLate ? "bg-teal-600" : "bg-stone-300 dark:bg-stone-700")
+              (allowLate ? "bg-primary" : "bg-stone-300 dark:bg-stone-700")
             }>
               <div className={
                 "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all " +

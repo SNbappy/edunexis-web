@@ -37,16 +37,30 @@ export function useAdmin() {
   })
 
   const grantQuotaMutation = useMutation({
-    mutationFn: ({ teacherId, totalQuota, accessDurationDays }: {
-      teacherId: string; totalQuota: number; accessDurationDays: number
-    }) => adminService.grantQuota(teacherId, totalQuota, accessDurationDays),
-    onSuccess: (res) => {
+    mutationFn: ({ teacherId, courses, accessDurationDays, note }: {
+      teacherId: string; courses: number; accessDurationDays: number; note?: string
+    }) => adminService.grantQuota(teacherId, courses, accessDurationDays, note),
+    onSuccess: (res, vars) => {
       if (res.success) {
         qc.invalidateQueries({ queryKey: ['admin', 'teachers'] })
+        qc.invalidateQueries({ queryKey: ['admin', 'grants', vars.teacherId] })
         toast.success(res.message)
       } else toast.error(res.message)
     },
-    onError: () => toast.error('Failed to update quota.'),
+    onError: () => toast.error('Failed to grant quota.'),
+  })
+
+  const revokeGrantMutation = useMutation({
+    mutationFn: ({ grantId }: { grantId: string; teacherId: string }) =>
+      adminService.revokeGrant(grantId),
+    onSuccess: (res, vars) => {
+      if (res.success) {
+        qc.invalidateQueries({ queryKey: ['admin', 'teachers'] })
+        qc.invalidateQueries({ queryKey: ['admin', 'grants', vars.teacherId] })
+        toast.success(res.message)
+      } else toast.error(res.message)
+    },
+    onError: () => toast.error('Failed to revoke grant.'),
   })
 
   return {
@@ -58,5 +72,21 @@ export function useAdmin() {
     isUpdatingSettings: updateSettingsMutation.isPending,
     grantQuota: grantQuotaMutation.mutate,
     isGrantingQuota: grantQuotaMutation.isPending,
+    revokeGrant: revokeGrantMutation.mutate,
+    isRevokingGrant: revokeGrantMutation.isPending,
   }
+}
+
+/** Grant history for one teacher. Only fetched while the drawer is open. */
+export function useTeacherGrants(teacherId: string | null) {
+  return useQuery({
+    queryKey: ['admin', 'grants', teacherId],
+    queryFn: async () => {
+      const res = await adminService.getTeacherGrants(teacherId!)
+      if (!res.success) throw new Error(res.message)
+      return res.data ?? []
+    },
+    enabled: !!teacherId,
+    staleTime: 5_000,
+  })
 }

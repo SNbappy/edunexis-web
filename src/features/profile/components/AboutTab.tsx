@@ -29,7 +29,7 @@ export default function AboutTab(props: AboutTabProps) {
     if (p.websiteUrl) window.open(p.websiteUrl, "_blank", "noopener,noreferrer")
   }
 
-  const linkClass = "break-all text-left text-foreground transition-colors hover:text-teal-700 dark:hover:text-teal-400"
+  const linkClass = "break-all text-left text-foreground transition-colors hover:text-primary dark:hover:text-teal-400"
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
@@ -54,7 +54,7 @@ export default function AboutTab(props: AboutTabProps) {
               <button
                 type="button"
                 onClick={onAddEducation}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-2.5 py-1 text-[11px] font-bold text-teal-700 transition-colors hover:bg-teal-100 dark:border-teal-800/50 dark:bg-teal-950/40 dark:text-teal-300 dark:hover:bg-teal-950/60"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-primary/20 bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary transition-colors hover:bg-primary/10 border-primary/20/50 bg-primary/10 text-primary dark:hover:bg-teal-950/60"
               >
                 <Plus className="h-3 w-3" />
                 Add
@@ -72,7 +72,7 @@ export default function AboutTab(props: AboutTabProps) {
                 <button
                   type="button"
                   onClick={onAddEducation}
-                  className="mt-2 text-[12px] font-bold text-teal-700 hover:underline dark:text-teal-400"
+                  className="mt-2 text-[12px] font-bold text-primary hover:underline text-primary"
                 >
                   Add your first entry
                 </button>
@@ -105,7 +105,7 @@ export default function AboutTab(props: AboutTabProps) {
             <div className="space-y-2.5 text-[13px]">
               {showEmail ? (
                 <div className="flex items-start gap-2.5">
-                  <Mail className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+                  <Mail className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <button type="button" onClick={openEmail} className={linkClass}>
                     {p.email}
                   </button>
@@ -113,13 +113,13 @@ export default function AboutTab(props: AboutTabProps) {
               ) : null}
               {showPhone ? (
                 <div className="flex items-start gap-2.5">
-                  <Phone className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+                  <Phone className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <span className="text-foreground">{p.phoneNumber}</span>
                 </div>
               ) : null}
               {showWebsite ? (
                 <div className="flex items-start gap-2.5">
-                  <Globe className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+                  <Globe className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <button type="button" onClick={openWebsite} className={linkClass}>
                     {websiteDisplay}
                   </button>

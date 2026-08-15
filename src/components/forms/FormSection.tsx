@@ -1,73 +1,64 @@
-﻿import { motion } from "framer-motion"
 import { Check } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
+import { ICON, ICON_STROKE, SURFACE } from "@/components/ui/appTokens"
+import { cn } from "@/utils/cn"
 
 interface FormSectionProps {
-  /** The icon shown in the header badge. */
+  /** The icon shown beside the title. */
   icon:        LucideIcon
   /** Section title, e.g. "Identity". */
   title:       string
   /** Helpful subtitle under the title. */
   subtitle?:   string
-  /** Tint for the icon badge. */
+  /**
+   * @deprecated No longer tints anything. The three tones (teal / amber /
+   * stone) coloured one badge per section in the order the sections happened to
+   * appear, which told the reader nothing. Kept so existing callers compile.
+   */
   tone?:       "teal" | "amber" | "stone"
-  /** Show a subtle "complete" check mark when all required fields are filled. */
+  /** Show a "complete" check when all required fields in the section are filled. */
   complete?:   boolean
   children:    React.ReactNode
 }
 
-const TONE_CLASSES = {
-  teal:  "bg-teal-50 text-teal-600 dark:bg-teal-950/30 dark:text-teal-300 border-teal-200",
-  amber: "bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-900/50",
-  stone: "bg-stone-100 text-stone-600 border-stone-200 dark:bg-stone-900 dark:text-stone-300 dark:border-stone-800",
-} as const
-
+/**
+ * A titled group of fields.
+ *
+ * The completion check is the one signal here that carries information — it
+ * tells you a section needs nothing more from you — so it is the only thing
+ * given colour.
+ */
 export default function FormSection({
-  icon: Icon, title, subtitle, tone = "teal", complete, children,
+  icon: Icon, title, subtitle, complete, children,
 }: FormSectionProps) {
-  const toneClass = TONE_CLASSES[tone]
-
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
-      className="rounded-2xl border border-border bg-card p-6"
-    >
-      <header className="mb-5 flex items-start gap-3">
+    <section className={cn(SURFACE.card, "p-5")}>
+      <header className="mb-4 flex items-start gap-3">
         <div
-          className={"flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border " + toneClass}
+          className={cn(
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-colors duration-150",
+            complete
+              ? "border-success/25 bg-success-soft text-success"
+              : "border-border bg-muted text-muted-foreground",
+          )}
+          aria-hidden
         >
-          <Icon className="h-4 w-4" strokeWidth={2.25} />
+          {complete
+            ? <Check className={ICON.sm} strokeWidth={2.5} />
+            : <Icon className={ICON.sm} strokeWidth={ICON_STROKE} />}
         </div>
+
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h2 className="font-display text-[16px] font-bold text-foreground">
-              {title}
-            </h2>
-            {complete && (
-              <motion.span
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-teal-600 text-white"
-                aria-label="Section complete"
-              >
-                <Check className="h-2.5 w-2.5" strokeWidth={3} />
-              </motion.span>
-            )}
-          </div>
+          <h2 className="font-display text-[15px] font-bold text-foreground">{title}</h2>
           {subtitle && (
-            <p className="mt-0.5 text-[12.5px] text-muted-foreground">
+            <p className="mt-0.5 text-[12.5px] leading-relaxed text-muted-foreground">
               {subtitle}
             </p>
           )}
         </div>
       </header>
 
-      <div className="space-y-4">
-        {children}
-      </div>
-    </motion.section>
+      <div className="space-y-4">{children}</div>
+    </section>
   )
 }

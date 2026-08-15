@@ -8,7 +8,7 @@ import NotificationsPanel from "@/features/notifications/components/Notification
 import Avatar from "@/components/ui/Avatar"
 import ThemeToggle from "@/components/ui/ThemeToggle"
 import { ROUTES } from "@/config/constants"
-import { ICON, ICON_STROKE, FOCUS, MOTION, SURFACE, TEXT } from "@/components/ui/appTokens"
+import { ICON, ICON_STROKE, FOCUS, MOTION, SURFACE, TEXT, INK } from "@/components/ui/appTokens"
 import { cn } from "@/utils/cn"
 
 const SEARCH_LINKS = [
@@ -18,9 +18,16 @@ const SEARCH_LINKS = [
   { label: "Profile",       to: ROUTES.PROFILE,   icon: User            },
 ]
 
-/** Icon buttons in the bar: one size, one shape, one hover. */
+/**
+ * Icon buttons in the bar: one size, one shape, one hover.
+ *
+ * Styled for ink, because the topbar is chrome — the same layer as the
+ * sidebar — and now shares its surface. It previously stayed light, which
+ * left it stranded between the dark sidebar and the dark course band as
+ * the one pale strip on the screen.
+ */
 const BAR_BUTTON =
-  "relative inline-flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-colors duration-120 hover:bg-muted hover:text-foreground"
+  "relative inline-flex h-9 w-9 items-center justify-center rounded-xl text-teal-100/60 transition-colors duration-120 hover:bg-white/[0.08] hover:text-white"
 
 interface Props { onMenuClick: () => void }
 
@@ -86,9 +93,9 @@ export default function Topbar({ onMenuClick }: Props) {
       <header
         className={cn(
           "sticky top-0 z-30 flex h-14 items-center gap-2 px-3 lg:px-5",
-          "bg-background/85 backdrop-blur-md",
+          INK.chrome,
           "border-b transition-colors duration-180",
-          scrolled ? "border-border" : "border-transparent",
+          scrolled ? "border-white/[0.12]" : "border-white/[0.06]",
         )}
       >
         <button
@@ -106,14 +113,14 @@ export default function Topbar({ onMenuClick }: Props) {
           onClick={() => setSearchOpen(true)}
           className={cn(
             "hidden h-9 max-w-sm flex-1 items-center gap-2.5 rounded-xl px-3 sm:flex",
-            "border border-border bg-muted/60 text-muted-foreground",
-            "text-left transition-colors duration-120 hover:border-border-strong hover:bg-muted",
+            "border border-white/10 bg-white/[0.06] text-teal-100/60",
+            "text-left transition-colors duration-120 hover:border-white/20 hover:bg-white/[0.1] hover:text-white",
             FOCUS,
           )}
         >
           <Search className={cn(ICON.sm, "shrink-0")} strokeWidth={ICON_STROKE} />
           <span className="flex-1 truncate text-[13px]">Search…</span>
-          <kbd className="hidden items-center gap-0.5 rounded-md border border-border bg-card px-1.5 py-0.5 font-mono text-[10px] font-semibold md:inline-flex">
+          <kbd className="hidden items-center gap-0.5 rounded-md border border-white/10 bg-white/[0.08] px-1.5 py-0.5 font-mono text-[10px] font-semibold text-teal-100/70 md:inline-flex">
             Ctrl K
           </kbd>
         </button>
@@ -132,7 +139,7 @@ export default function Topbar({ onMenuClick }: Props) {
           >
             <Bell className={ICON.md} strokeWidth={ICON_STROKE} />
             {badgeCount > 0 && (
-              <span className="absolute right-1.5 top-1.5 inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold leading-none text-white ring-2 ring-background">
+              <span className="absolute right-1.5 top-1.5 inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold leading-none text-white ring-2 ring-[#031f1e]">
                 {badgeCount > 9 ? "9+" : badgeCount}
               </span>
             )}
@@ -145,15 +152,16 @@ export default function Topbar({ onMenuClick }: Props) {
               aria-label="Account menu"
               aria-expanded={profileMenuOpen}
               className={cn(
-                "ml-1 flex h-9 w-9 items-center justify-center rounded-xl transition-colors duration-120 hover:bg-muted",
+                "ml-1 flex h-9 w-9 items-center justify-center rounded-xl transition-colors duration-120 hover:bg-white/[0.08]",
                 FOCUS,
-                profileMenuOpen && "bg-muted",
+                profileMenuOpen && "bg-white/[0.08]",
               )}
             >
               <Avatar
                 src={user?.profile?.profilePhotoUrl ?? undefined}
                 name={user?.profile?.fullName ?? user?.email ?? "U"}
                 size="sm"
+                className="ring-1 ring-white/20"
               />
             </button>
 
@@ -223,7 +231,7 @@ export default function Topbar({ onMenuClick }: Props) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: MOTION.fast }}
-            className="fixed inset-0 z-50 flex items-start justify-center bg-foreground/25 px-4 pt-[14vh] backdrop-blur-sm"
+            className={cn("fixed inset-0 z-50 flex items-start justify-center px-4 pt-[14vh]", SURFACE.scrim)}
             onClick={() => setSearchOpen(false)}
           >
             <motion.div

@@ -14,8 +14,9 @@ import type { AttendanceStatus } from "@/types/attendance.types"
 interface Member {
   userId: string
   fullName: string
-  studentId?: string
-  profilePhotoUrl?: string
+  /** `string | null` matches CourseMemberDto — the API sends null. */
+  studentId?: string | null
+  profilePhotoUrl?: string | null
 }
 
 interface TakeAttendanceSheetProps {

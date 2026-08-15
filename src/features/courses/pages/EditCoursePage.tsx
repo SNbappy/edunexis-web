@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -282,7 +282,7 @@ export default function EditCoursePage() {
                 optionGroups={DEPARTMENT_GROUPS}
               />
               {errors.department?.message && (
-                <p className="mt-1.5 text-[11.5px] font-semibold text-red-600">
+                <p className="mt-1.5 text-[11.5px] font-semibold text-destructive">
                   {errors.department.message}
                 </p>
               )}
@@ -342,7 +342,7 @@ export default function EditCoursePage() {
               {...register("description")}
               rows={6}
               placeholder="What the course covers, main topics, and what students should learn by the end."
-              className="w-full resize-none rounded-xl border border-border bg-card px-4 py-3 text-[14px] text-foreground placeholder:text-muted-foreground transition-all focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/30"
+              className="w-full resize-none rounded-xl border border-border bg-card px-4 py-3 text-[14px] text-foreground placeholder:text-muted-foreground transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-teal-600/30"
             />
           </div>
         </FormSection>

@@ -9,7 +9,13 @@ export function useCourseDetail(courseId: string) {
     const query = useQuery({
         queryKey: ['course', courseId],
         queryFn: async () => {
-            const res = await courseService.getCourseById(courseId)
+            /* `getById` — there is no `getCourseById` on the service, so this
+               threw a TypeError on every run. It went unnoticed because
+               useCourseAccess (in EnrollmentGuard, which wraps this route)
+               fills the same ["course", id] cache key first; the stale data
+               kept rendering while this query failed in the background every
+               8 seconds on its refetch interval. */
+            const res = await courseService.getById(courseId)
             if (!res.success) throw new Error(res.message)
             return res.data
         },

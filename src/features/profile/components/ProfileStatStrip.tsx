@@ -60,7 +60,7 @@ export default function ProfileStatStrip({ profile: p }: ProfileStatStripProps) 
                 const Icon = s.icon
                 return (
                     <div key={s.label} className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-400">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary bg-primary/10 text-primary">
                             <Icon className="h-5 w-5" strokeWidth={2} />
                         </div>
                         <div className="min-w-0">

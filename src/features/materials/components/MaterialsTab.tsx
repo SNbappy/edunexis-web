@@ -1,12 +1,17 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { FolderPlus, Upload, Search, Filter, X } from "lucide-react"
+import { FolderPlus, Upload, Search, Filter, X, Link2 } from "lucide-react"
 import MaterialsList from "./MaterialsList"
 import MaterialsBreadcrumb from "./MaterialsBreadcrumb"
 import UploadMaterialModal from "./UploadMaterialModal"
 import CreateFolderModal from "./CreateFolderModal"
+import AddLinkModal from "./AddLinkModal"
 import MaterialPreviewModal from "./MaterialPreviewModal"
 import ConfirmDialog from "@/components/ui/ConfirmDialog"
+import Button from "@/components/ui/Button"
+import Input from "@/components/ui/Input"
+import { ICON_STROKE, FOCUS } from "@/components/ui/appTokens"
+import { cn } from "@/utils/cn"
 import { useMaterials } from "../hooks/useMaterials"
 import type { FileTypeFilter } from "../hooks/useMaterials"
 import { useAuthStore } from "@/store/authStore"
@@ -23,21 +28,23 @@ const SORT_TABS = [
   { label: "Files", value: "File" },
 ] as const
 
-interface FileFilterOption {
-  label: string
-  value: FileTypeFilter
-  active: string
-  dotColor: string
-}
-
-const FILE_FILTERS: FileFilterOption[] = [
-  { label: "All", value: "all", active: "border-teal-300 bg-teal-50 text-teal-700 dark:border-teal-700 dark:bg-teal-950/50 dark:text-teal-300", dotColor: "bg-teal-500" },
-  { label: "PDF", value: "pdf", active: "border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300", dotColor: "bg-red-500" },
-  { label: "Slides", value: "presentation", active: "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300", dotColor: "bg-amber-500" },
-  { label: "Doc", value: "document", active: "border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300", dotColor: "bg-blue-500" },
-  { label: "Image", value: "image", active: "border-violet-300 bg-violet-50 text-violet-700 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-300", dotColor: "bg-violet-500" },
-  { label: "Link", value: "link", active: "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300", dotColor: "bg-emerald-500" },
-  { label: "Other", value: "other", active: "border-stone-300 bg-stone-100 text-stone-700 dark:border-stone-700 dark:bg-stone-900/40 dark:text-stone-300", dotColor: "bg-stone-500" },
+/**
+ * File-type filters.
+ *
+ * Each of the seven previously carried its own colour — red PDF, amber slides,
+ * blue doc, violet image — as border, background, text and a leading dot. Seven
+ * palettes for what is a single "pick one" control, and the colours only
+ * appeared once selected, so they taught the reader nothing while browsing.
+ * One selected treatment now, matching every other filter row in the app.
+ */
+const FILE_FILTERS: { label: string; value: FileTypeFilter }[] = [
+  { label: "All",    value: "all" },
+  { label: "PDF",    value: "pdf" },
+  { label: "Slides", value: "presentation" },
+  { label: "Doc",    value: "document" },
+  { label: "Image",  value: "image" },
+  { label: "Link",   value: "link" },
+  { label: "Other",  value: "other" },
 ]
 
 export default function MaterialsTab({ courseId }: MaterialsTabProps) {
@@ -48,6 +55,7 @@ export default function MaterialsTab({ courseId }: MaterialsTabProps) {
     materials, isLoading, breadcrumb, openFolder, navigateTo,
     createFolder, isCreatingFolder,
     uploadFile, isUploading,
+    addLink, isAddingLink,
     deleteMaterial, isDeleting,
     sortMode, setSortMode,
     isFlattenMode, fileTypeFilter, setFileTypeFilter,
@@ -55,6 +63,7 @@ export default function MaterialsTab({ courseId }: MaterialsTabProps) {
 
   const [uploadOpen, setUploadOpen] = useState(false)
   const [folderOpen, setFolderOpen] = useState(false)
+  const [linkOpen, setLinkOpen] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [previewMaterial, setPreviewMaterial] = useState<MaterialDto | null>(null)
@@ -66,65 +75,67 @@ export default function MaterialsTab({ courseId }: MaterialsTabProps) {
   const currentFolderId = breadcrumb[breadcrumb.length - 1]?.id ?? null
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
-      <div className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)]">
+    <div className="space-y-4">
+      <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
             {breadcrumb.length > 1 && !isFlattenMode ? (
               <MaterialsBreadcrumb items={breadcrumb} onNavigate={navigateTo} />
             ) : (
-              <h2 className="font-display text-[15px] font-bold text-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 {isFlattenMode ? "All files" : "Course materials"}
-              </h2>
+              </p>
             )}
           </div>
 
           {teacher && (
             <div className="flex items-center gap-2">
-              <button
-                type="button"
+              <Button
+                variant="secondary"
                 onClick={() => setFolderOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted px-3 py-2 text-[12px] font-semibold text-foreground transition-colors hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700 dark:hover:border-teal-700 dark:hover:bg-teal-950/30 dark:hover:text-teal-300"
+                leftIcon={<FolderPlus strokeWidth={ICON_STROKE} />}
               >
-                <FolderPlus className="h-3.5 w-3.5" />
                 New folder
-              </button>
-              <motion.button
-                type="button"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => setUploadOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3.5 py-2 text-[12.5px] font-bold text-white shadow-sm transition-colors hover:bg-teal-700"
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => setLinkOpen(true)}
+                leftIcon={<Link2 strokeWidth={ICON_STROKE} />}
               >
-                <Upload className="h-3.5 w-3.5" />
+                Add link
+              </Button>
+              <Button onClick={() => setUploadOpen(true)} leftIcon={<Upload strokeWidth={ICON_STROKE} />}>
                 Upload
-              </motion.button>
+              </Button>
             </div>
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="relative min-w-[200px] flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-            <input
+            <Input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search materials…"
-              className="h-9 w-full rounded-xl border border-border bg-muted/50 pl-9 pr-9 text-[13px] font-medium text-foreground placeholder:text-muted-foreground transition-all focus:border-teal-600 focus:bg-card focus:outline-none focus:ring-2 focus:ring-teal-600/30"
+              leftIcon={<Search strokeWidth={ICON_STROKE} />}
+              className={search ? "pr-9" : undefined}
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch("")}
                 aria-label="Clear search"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                className={cn(
+                  "absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors duration-120 hover:text-foreground",
+                  FOCUS,
+                )}
               >
-                <X className="h-3.5 w-3.5" />
+                <X className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
               </button>
             )}
           </div>
 
-          <div className="flex items-center gap-0.5 rounded-xl border border-border bg-muted/50 p-1">
+          <div className="flex items-center gap-0.5 rounded-xl border border-border bg-muted p-0.5">
             {SORT_TABS.map(tab => {
               const active = sortMode === tab.value
               return (
@@ -132,12 +143,14 @@ export default function MaterialsTab({ courseId }: MaterialsTabProps) {
                   type="button"
                   key={tab.value}
                   onClick={() => setSortMode(tab.value as any)}
-                  className={
-                    "rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-all " +
-                    (active
-                      ? "bg-card text-teal-700 shadow-sm dark:text-teal-300"
-                      : "text-muted-foreground hover:text-foreground")
-                  }
+                  aria-pressed={active}
+                  className={cn(
+                    "h-8 rounded-[9px] px-3 text-[12.5px] font-semibold transition-colors duration-120",
+                    FOCUS,
+                    active
+                      ? "bg-card text-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
                 >
                   {tab.label}
                 </button>
@@ -156,8 +169,8 @@ export default function MaterialsTab({ courseId }: MaterialsTabProps) {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="flex flex-wrap items-center gap-2 px-1">
-              <Filter className="h-3 w-3 shrink-0 text-muted-foreground" />
+            <div className="flex flex-wrap items-center gap-1.5 px-1">
+              <Filter className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={ICON_STROKE} />
               {FILE_FILTERS.map(opt => {
                 const active = fileTypeFilter === opt.value
                 return (
@@ -165,14 +178,15 @@ export default function MaterialsTab({ courseId }: MaterialsTabProps) {
                     type="button"
                     key={opt.value}
                     onClick={() => setFileTypeFilter(opt.value)}
-                    className={
-                      "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold transition-all " +
-                      (active
-                        ? opt.active
-                        : "border-border bg-card text-muted-foreground hover:border-stone-300 hover:text-foreground dark:hover:border-stone-700")
-                    }
+                    aria-pressed={active}
+                    className={cn(
+                      "inline-flex h-7 items-center rounded-lg border px-2.5 text-[12px] font-semibold transition-colors duration-120",
+                      FOCUS,
+                      active
+                        ? "border-primary/25 bg-primary/10 text-primary"
+                        : "border-border bg-card text-muted-foreground hover:border-border-strong hover:text-foreground",
+                    )}
                   >
-                    <span className={"h-1.5 w-1.5 rounded-full " + opt.dotColor} />
                     {opt.label}
                   </button>
                 )
@@ -198,6 +212,15 @@ export default function MaterialsTab({ courseId }: MaterialsTabProps) {
           onPreview={(m) => setPreviewMaterial(m)}
         />
       )}
+
+      <AddLinkModal
+        isOpen={linkOpen}
+        onClose={() => setLinkOpen(false)}
+        onSubmit={(data) =>
+          addLink(data, { onSuccess: () => setLinkOpen(false) } as any)
+        }
+        isLoading={isAddingLink}
+      />
 
       <UploadMaterialModal
         isOpen={uploadOpen}
@@ -237,7 +260,9 @@ export default function MaterialsTab({ courseId }: MaterialsTabProps) {
       <MaterialPreviewModal
         isOpen={!!previewMaterial}
         onClose={() => setPreviewMaterial(null)}
-        fileUrl={previewMaterial?.fileUrl ?? ""}
+        /* Link materials carry their URL in `embedUrl` and have no file, so
+           fall back to it — otherwise the player receives an empty string. */
+        fileUrl={previewMaterial?.fileUrl || previewMaterial?.embedUrl || ""}
         fileName={previewMaterial?.fileName ?? previewMaterial?.title ?? ""}
         fileSizeBytes={previewMaterial?.fileSizeBytes ?? undefined}
       />

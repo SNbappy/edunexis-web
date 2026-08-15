@@ -6,7 +6,7 @@ import Button from "@/components/ui/Button"
 import Input from "@/components/ui/Input"
 import Skeleton from "@/components/ui/Skeleton"
 import EmptyState from "@/components/ui/EmptyState"
-import { Page, PageHeader } from "@/components/ui/Page"
+import { Page, PageHero } from "@/components/ui/Page"
 import { ICON_STROKE, FOCUS, TEXT } from "@/components/ui/appTokens"
 import { cn } from "@/utils/cn"
 import {
@@ -87,13 +87,20 @@ export default function CoursesListPage() {
 
   return (
     <Page>
-      <PageHeader
+      <PageHero
+        eyebrow={teacher ? "Teaching" : "Enrolled"}
         title={teacher ? "Your courses" : "My courses"}
         description={
           teacher
-            ? "Courses you're teaching this semester."
-            : "Classes you're enrolled in."
+            ? "Everything you're running this semester — attendance, materials, assignments and marks."
+            : "Every class you've joined, with your materials, deadlines and results."
         }
+        figures={[
+          { value: enrolled.filter(c => !c.isArchived).length, label: "active" },
+          ...(enrolled.some(c => c.isArchived)
+            ? [{ value: enrolled.filter(c => c.isArchived).length, label: "archived" }]
+            : []),
+        ]}
         actions={
           teacher ? (
             <Button onClick={() => navigate("/courses/create")} leftIcon={<Plus strokeWidth={ICON_STROKE} />}>
@@ -106,6 +113,8 @@ export default function CoursesListPage() {
           )
         }
       />
+
+      <div className="h-6" />
 
       {/* Search + filter chips */}
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">

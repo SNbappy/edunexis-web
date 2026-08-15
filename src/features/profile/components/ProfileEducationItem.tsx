@@ -1,4 +1,4 @@
-﻿import InlineSpinner from "@/components/ui/InlineSpinner"
+import InlineSpinner from "@/components/ui/InlineSpinner"
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { Calendar, Pencil, Trash2, Loader2, GraduationCap } from "lucide-react"
@@ -30,7 +30,7 @@ export default function ProfileEducationItem({
       exit={{    opacity: 0, x: -10 }}
       className="group relative flex items-start gap-4 rounded-xl p-3 transition-colors hover:bg-muted"
     >
-      <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-600 dark:bg-teal-950/30 dark:text-teal-300">
+      <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary bg-primary/10 text-primary">
         <GraduationCap className="h-5 w-5" strokeWidth={2} />
       </div>
 
@@ -38,7 +38,7 @@ export default function ProfileEducationItem({
         <h3 className="truncate font-display text-[15px] font-bold text-foreground">
           {education.institution}
         </h3>
-        <p className="mt-0.5 text-[13px] font-medium text-teal-700">
+        <p className="mt-0.5 text-[13px] font-medium text-primary">
           {education.degree} — {education.fieldOfStudy}
         </p>
         <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground">

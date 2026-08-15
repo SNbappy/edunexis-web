@@ -1,9 +1,10 @@
-import { useState, useRef, useEffect } from "react"
+﻿import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
     MoreVertical, Trash2, ClipboardList, Star, XCircle, FileCheck2, Users, Award,
     Send, Pause,
 } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
 import type { PresentationDto } from "@/types/presentation.types"
@@ -18,7 +19,7 @@ interface PresentationCardProps {
 }
 
 interface MenuItemProps {
-    icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
+    icon: LucideIcon
     label: string
     variant: "default" | "danger" | "primary"
     onClick: () => void

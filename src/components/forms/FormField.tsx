@@ -1,12 +1,15 @@
-﻿import { useState, forwardRef } from "react"
+import { useState, forwardRef } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { Info } from "lucide-react"
+import { Field, FIELD_BASE, FIELD_HEIGHT, FIELD_LABEL, fieldState } from "@/components/ui/field"
+import { ICON_STROKE, FOCUS, MOTION, SURFACE } from "@/components/ui/appTokens"
+import { cn } from "@/utils/cn"
 
 interface FormFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label:     string
   /** A short optional example shown in a tooltip on hover of the info icon. */
   hint?:     string
-  /** Error message — shown in red under the field, animated in. */
+  /** Error message — shown under the field. */
   error?:    string
   /** Optional helper text under the field when no error. */
   help?:     string
@@ -14,24 +17,23 @@ interface FormFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   optional?: boolean
 }
 
+/**
+ * Labelled text input with an optional hint tooltip.
+ *
+ * Shares the field system with `Input` and `Select` now — it previously had its
+ * own 44px height and its own focus ring, so a `FormField` and a `Select` sitting
+ * in the same form row were visibly different sizes.
+ */
 const FormField = forwardRef<HTMLInputElement, FormFieldProps>(function FormField(
-  { label, hint, error, help, optional, className, ...rest }, ref,
+  { label, hint, error, help, optional, className, id, ...rest }, ref,
 ) {
   const [showHint, setShowHint] = useState(false)
-
-  const baseClass =
-    "h-11 w-full rounded-xl border bg-card px-4 text-[14px] text-foreground " +
-    "placeholder:text-muted-foreground transition-all " +
-    "focus:outline-none focus:ring-2 focus:ring-teal-600/30 "
-  const stateClass = error
-    ? "border-red-300 focus:border-red-500"
-    : "border-border focus:border-teal-600"
-  const inputClass = baseClass + stateClass + (className ? " " + className : "")
+  const fieldId = id ?? label.toLowerCase().replace(/\s+/g, "-")
 
   return (
     <div>
       <div className="mb-1.5 flex items-center gap-1.5">
-        <label className="text-[13px] font-semibold text-foreground">
+        <label htmlFor={fieldId} className={FIELD_LABEL}>
           {label}
           {optional && (
             <span className="ml-1 font-normal text-muted-foreground">(optional)</span>
@@ -48,10 +50,13 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>(function FormFiel
           >
             <button
               type="button"
-              aria-label="Show hint"
-              className="flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-teal-600"
+              aria-label={`Hint for ${label}`}
+              className={cn(
+                "flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground transition-colors duration-120 hover:text-foreground",
+                FOCUS,
+              )}
             >
-              <Info className="h-3 w-3" />
+              <Info className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
             </button>
             <AnimatePresence>
               {showHint && (
@@ -59,9 +64,12 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>(function FormFiel
                   initial={{ opacity: 0, y: -4 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.15 }}
+                  transition={{ duration: MOTION.fast, ease: MOTION.ease }}
                   role="tooltip"
-                  className="absolute left-0 top-6 z-20 w-max max-w-xs rounded-lg bg-stone-900 px-3 py-1.5 text-[11px] font-medium text-white shadow-lg"
+                  className={cn(
+                    SURFACE.raised,
+                    "absolute left-0 top-6 z-20 w-max max-w-xs px-2.5 py-1.5 text-[11.5px] font-medium text-foreground",
+                  )}
                 >
                   {hint}
                 </motion.span>
@@ -71,28 +79,22 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>(function FormFiel
         )}
       </div>
 
-      <input ref={ref} className={inputClass} {...rest} />
+      <input
+        ref={ref}
+        id={fieldId}
+        aria-invalid={!!error}
+        className={cn(FIELD_BASE, fieldState(!!error), FIELD_HEIGHT, "px-3", className)}
+        {...rest}
+      />
 
-      <AnimatePresence mode="wait">
-        {error ? (
-          <motion.p
-            key="error"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.18 }}
-            className="mt-1.5 text-[11.5px] font-semibold text-red-600"
-          >
-            {error}
-          </motion.p>
-        ) : help ? (
-          <p className="mt-1.5 text-[11.5px] text-muted-foreground">
-            {help}
-          </p>
-        ) : null}
-      </AnimatePresence>
+      {error ? (
+        <p className="mt-1.5 text-[12px] font-medium text-destructive">{error}</p>
+      ) : help ? (
+        <p className="mt-1.5 text-[12px] text-muted-foreground">{help}</p>
+      ) : null}
     </div>
   )
 })
 
 export default FormField
+export { Field }

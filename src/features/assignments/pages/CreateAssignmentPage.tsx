@@ -110,7 +110,7 @@ export default function CreateAssignmentPage() {
               {...register("instructions")}
               rows={5}
               placeholder={"Detailed instructions for students\u2026"}
-              className="w-full resize-none rounded-xl border border-border bg-muted/40 px-4 py-3 text-[13px] text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-teal-500 focus:bg-card focus:ring-2 focus:ring-teal-500/20"
+              className="w-full resize-none rounded-xl border border-border bg-muted/40 px-4 py-3 text-[13px] text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:bg-card focus:ring-2 focus:ring-teal-500/20"
             />
           </div>
 
@@ -122,7 +122,7 @@ export default function CreateAssignmentPage() {
               {...register("rubricNotes")}
               rows={3}
               placeholder="e.g. 30% code quality, 40% output, 30% report"
-              className="w-full resize-none rounded-xl border border-border bg-muted/40 px-4 py-3 text-[13px] text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-teal-500 focus:bg-card focus:ring-2 focus:ring-teal-500/20"
+              className="w-full resize-none rounded-xl border border-border bg-muted/40 px-4 py-3 text-[13px] text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:bg-card focus:ring-2 focus:ring-teal-500/20"
             />
           </div>
         </FormSection>
@@ -152,11 +152,11 @@ export default function CreateAssignmentPage() {
             />
           </div>
 
-          <label className="flex cursor-pointer select-none items-center gap-3 rounded-xl border border-teal-200 bg-teal-50 p-3 dark:border-teal-800 dark:bg-teal-950/40">
+          <label className="flex cursor-pointer select-none items-center gap-3 rounded-xl border border-primary/25 bg-primary-soft p-3">
             <input type="checkbox" {...register("allowLateSubmission")} className="sr-only" />
             <div className={
               "relative h-5 w-9 shrink-0 rounded-full transition-colors " +
-              (allowLate ? "bg-teal-600" : "bg-stone-300 dark:bg-stone-700")
+              (allowLate ? "bg-primary" : "bg-stone-300 dark:bg-stone-700")
             }>
               <div className={
                 "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all " +
@@ -179,7 +179,7 @@ export default function CreateAssignmentPage() {
           {file ? (
             <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted/40 px-3 py-2.5">
               <div className="flex min-w-0 items-center gap-2.5">
-                <Paperclip className="h-4 w-4 shrink-0 text-teal-600 dark:text-teal-400" />
+                <Paperclip className="h-4 w-4 shrink-0 text-primary" />
                 <div className="min-w-0">
                   <p className="truncate text-[13px] font-semibold text-foreground">{file.name}</p>
                   <p className="text-[11px] text-muted-foreground">{(file.size / 1024).toFixed(1)} KB</p>
@@ -188,7 +188,7 @@ export default function CreateAssignmentPage() {
               <button
                 type="button"
                 onClick={() => setFile(null)}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive-soft hover:text-destructive"
                 aria-label="Remove file"
               >
                 <XIcon className="h-4 w-4" />
@@ -197,7 +197,7 @@ export default function CreateAssignmentPage() {
           ) : (
             <label
               htmlFor="create-assignment-file"
-              className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-border bg-muted/30 px-4 py-3 transition-colors hover:border-teal-300 hover:bg-teal-50/50 dark:hover:border-teal-700 dark:hover:bg-teal-950/20"
+              className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-border bg-muted/30 px-4 py-3 transition-colors hover:border-primary/25 hover:bg-primary-soft/50/20"
             >
               <Upload className="h-4 w-4 text-muted-foreground" />
               <span className="text-[13px] font-semibold text-foreground">Choose file</span>
@@ -217,7 +217,7 @@ export default function CreateAssignmentPage() {
             }}
           />
           {errors.referenceFile?.message ? (
-            <p className="mt-1.5 text-[11.5px] font-semibold text-red-600 dark:text-red-400">
+            <p className="mt-1.5 text-[11.5px] font-semibold text-destructive">
               {errors.referenceFile.message}
             </p>
           ) : null}

@@ -8,8 +8,8 @@ import {
   FlaskConical, BookOpen, Trash2,
 } from "lucide-react"
 import Avatar from "@/components/ui/Avatar"
-import Badge from "@/components/ui/Badge"
-import { ICON, ICON_STROKE, FOCUS, MOTION, SURFACE } from "@/components/ui/appTokens"
+import InkPanel from "@/components/ui/InkPanel"
+import { ICON, ICON_STROKE, FOCUS, MOTION, SURFACE, INK } from "@/components/ui/appTokens"
 import { cn } from "@/utils/cn"
 import toast from "react-hot-toast"
 import type { CourseDto } from "@/types/course.types"
@@ -59,12 +59,16 @@ export default function CourseHeader({
   }
 
   return (
-    <header className="border-b border-border bg-card">
-      <div className="mx-auto max-w-[1400px] px-4 pb-4 pt-5 sm:px-6">
+    /* Ink band. The course screen is where a teacher spends most of their
+       time, so it carries the brand surface rather than opening on the
+       same white page as everything else — and the tabs and cards below
+       read as sitting on top of it. */
+    <InkPanel>
+      <div className="mx-auto max-w-[1400px] px-4 pb-5 pt-5 sm:px-6">
         <Link
           to="/courses"
           className={cn(
-            "-ml-1 mb-2.5 inline-flex items-center gap-1.5 rounded-lg px-1 py-0.5 text-[12.5px] font-medium text-muted-foreground transition-colors duration-120 hover:text-foreground",
+            "-ml-1 mb-3 inline-flex items-center gap-1.5 rounded-lg px-1 py-0.5 text-[12.5px] font-medium text-teal-100/70 transition-colors duration-120 hover:text-white",
             FOCUS,
           )}
         >
@@ -75,44 +79,46 @@ export default function CourseHeader({
         <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-lg border border-primary/20 bg-primary/10 px-2 py-1 font-mono text-[11.5px] font-bold tracking-wide text-primary">
+              <span className={cn(INK.chip, "px-2 py-1 font-mono text-[11.5px] font-bold tracking-wide text-teal-200")}>
                 {course.courseCode}
               </span>
-              <Badge variant="neutral" size="sm" icon={<TypeIcon strokeWidth={ICON_STROKE} />}>
+              <span className={cn(INK.chip, "inline-flex items-center gap-1.5 px-2 py-1 text-[11.5px] font-semibold text-teal-100/80")}>
+                <TypeIcon className="h-3 w-3" strokeWidth={ICON_STROKE} />
                 {course.courseType}
-              </Badge>
+              </span>
               {course.isArchived && (
-                <Badge variant="warning" size="sm" icon={<Archive strokeWidth={ICON_STROKE} />}>
+                <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300/30 bg-amber-400/15 px-2 py-1 text-[11.5px] font-semibold text-amber-200">
+                  <Archive className="h-3 w-3" strokeWidth={ICON_STROKE} />
                   Archived
-                </Badge>
+                </span>
               )}
             </div>
 
-            <h1 className="mt-2 font-display text-[22px] font-extrabold leading-tight tracking-tight text-foreground sm:text-[26px]">
+            <h1 className={cn(INK.title, "mt-2.5 text-[24px] leading-tight sm:text-[30px]")}>
               {course.title}
             </h1>
 
-            <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-2">
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
               <span className="inline-flex items-center gap-2">
                 <Avatar
                   src={course.teacherProfilePhotoUrl}
                   name={course.teacherName}
                   size="xs"
-                  className="h-5 w-5"
+                  className="h-5 w-5 ring-1 ring-white/25"
                 />
-                <span className="text-[12.5px] font-semibold text-foreground">
+                <span className="text-[12.5px] font-semibold text-white">
                   {course.teacherName}
                 </span>
               </span>
 
-              <span className="inline-flex items-center gap-1.5 text-[12.5px] text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5 text-[12.5px] text-teal-100/70">
                 <Users className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
-                <span className="font-semibold tabular-nums text-foreground">{memberCount}</span>
+                <span className="font-semibold tabular-nums text-white">{memberCount}</span>
                 {memberCount === 1 ? "member" : "members"}
               </span>
 
               {course.semester && (
-                <span className="text-[12.5px] text-muted-foreground">{course.semester}</span>
+                <span className="text-[12.5px] text-teal-100/70">{course.semester}</span>
               )}
 
               {isOwner && course.joiningCode && (
@@ -120,7 +126,8 @@ export default function CourseHeader({
                   type="button"
                   onClick={handleCopyCode}
                   className={cn(
-                    "inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted/60 px-2 py-1 text-[11.5px] font-semibold text-muted-foreground transition-colors duration-120 hover:border-border-strong hover:text-foreground",
+                    INK.chip,
+                    "inline-flex items-center gap-1.5 px-2 py-1 text-[11.5px] font-semibold transition-colors duration-120 hover:bg-white/[0.18]",
                     FOCUS,
                   )}
                   aria-label="Copy joining code"
@@ -128,13 +135,13 @@ export default function CourseHeader({
                 >
                   {copied ? (
                     <>
-                      <Check className="h-3 w-3 text-success" strokeWidth={ICON_STROKE} />
+                      <Check className="h-3 w-3 text-teal-300" strokeWidth={ICON_STROKE} />
                       Copied
                     </>
                   ) : (
                     <>
-                      <Copy className="h-3 w-3" strokeWidth={ICON_STROKE} />
-                      <span className="font-mono tracking-wider text-foreground">{course.joiningCode}</span>
+                      <Copy className="h-3 w-3 text-teal-100/70" strokeWidth={ICON_STROKE} />
+                      <span className="font-mono tracking-wider text-white">{course.joiningCode}</span>
                     </>
                   )}
                 </button>
@@ -147,7 +154,8 @@ export default function CourseHeader({
               <Link
                 to={"/courses/" + course.id + "/edit"}
                 className={cn(
-                  "inline-flex h-9 items-center gap-1.5 rounded-xl border border-border bg-card px-3 text-[13px] font-semibold text-foreground shadow-xs transition-colors duration-120 hover:bg-muted hover:border-border-strong",
+                  INK.chip,
+                  "inline-flex h-9 items-center gap-1.5 px-3 text-[13px] font-semibold transition-colors duration-120 hover:bg-white/[0.18]",
                   FOCUS,
                 )}
               >
@@ -166,7 +174,8 @@ export default function CourseHeader({
                   setMenuOpen(v => !v)
                 }}
                 className={cn(
-                  "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground shadow-xs transition-colors duration-120 hover:bg-muted hover:text-foreground",
+                  INK.chip,
+                  "inline-flex h-9 w-9 items-center justify-center transition-colors duration-120 hover:bg-white/[0.18]",
                   FOCUS,
                 )}
                 aria-label="More actions"
@@ -227,6 +236,6 @@ export default function CourseHeader({
           )}
         </div>
       </div>
-    </header>
+    </InkPanel>
   )
 }
