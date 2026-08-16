@@ -14,3 +14,16 @@ export interface CreateAnnouncementRequest {
     content: string
     attachment?: File | null
 }
+
+/** A class comment under an announcement. */
+export interface CommentDto {
+    id: string
+    announcementId: string
+    authorId: string
+    authorName: string
+    authorPhotoUrl?: string | null
+    content: string
+    createdAt: string
+    /** Whether the signed-in user may delete it (own comment, or teacher). */
+    canDelete: boolean
+}

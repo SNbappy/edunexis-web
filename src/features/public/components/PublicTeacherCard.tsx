@@ -2,6 +2,7 @@ import { useRef, useState } from "react"
 import { Link } from "react-router-dom"
 import { motion } from "framer-motion"
 import { BookOpen, ArrowUpRight } from "lucide-react"
+import { getInitials } from "@/utils/names"
 import type { PublicFacultyCardDto } from "@/types/auth.types"
 
 interface Props {
@@ -23,12 +24,10 @@ export default function PublicTeacherCard({ teacher }: Props) {
   const ref = useRef<HTMLAnchorElement>(null)
   const [tilt, setTilt] = useState({ x: 0, y: 0 })
 
-  const initials = teacher.fullName
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(s => s[0]?.toUpperCase())
-    .join("")
+  /* Shared helper: taking the first two words of "Dr. Rezaul Karim" gave "DR",
+     so the directory showed every teacher's honorific instead of their name.
+     getInitials strips titles the way the rest of the app does. */
+  const initials = getInitials(teacher.fullName, "T")
 
   const onMove = (e: React.MouseEvent) => {
     const el = ref.current
@@ -68,7 +67,7 @@ export default function PublicTeacherCard({ teacher }: Props) {
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-teal-800 to-teal-950">
             <span className="font-display text-5xl font-extrabold text-teal-200/70">
-              {initials || "T"}
+              {initials}
             </span>
           </div>
         )}

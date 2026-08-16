@@ -19,12 +19,22 @@ interface ProfileIdentityCardProps {
   onRemovePhoto?: () => void
   isUploadingPhoto?: boolean
   isRemovingPhoto?: boolean
+  /**
+   * Hide the name / designation / headline block.
+   *
+   * On the profile page the ink hero directly above already states all three,
+   * so repeating them in the card printed the person's name twice on one
+   * screen. The edit page still shows them, because there the card *is* the
+   * preview of what the identity will look like.
+   */
+  hideIdentity?: boolean
 }
 
 export default function ProfileIdentityCard(props: ProfileIdentityCardProps) {
   const {
     profile: p, isSelf, canSeeContact,
     onUploadPhoto, onRemovePhoto, isUploadingPhoto, isRemovingPhoto,
+    hideIdentity = false,
   } = props
 
   const teacher = isTeacher(p.role)
@@ -108,23 +118,27 @@ export default function ProfileIdentityCard(props: ProfileIdentityCardProps) {
 
         {/* Identity body */}
         <div className="p-5">
-          <h2 className="font-display text-xl font-extrabold leading-tight tracking-tight text-foreground">
-            {p.fullName}
-          </h2>
+          {!hideIdentity && (
+            <>
+              <h2 className="font-display text-xl font-extrabold leading-tight tracking-tight text-foreground">
+                {p.fullName}
+              </h2>
 
-          {p.designation ? (
-            <p className="mt-1 text-[13.5px] font-semibold text-primary">
-              {p.designation}
-            </p>
-          ) : null}
+              {p.designation ? (
+                <p className="mt-1 text-[13.5px] font-semibold text-primary">
+                  {p.designation}
+                </p>
+              ) : null}
 
-          {p.headline ? (
-            <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
-              {p.headline}
-            </p>
-          ) : null}
+              {p.headline ? (
+                <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+                  {p.headline}
+                </p>
+              ) : null}
 
-          <div className="my-4 border-t border-border" />
+              <div className="my-4 border-t border-border" />
+            </>
+          )}
 
           {/* Department + ID */}
           <div className="space-y-2.5 text-[13px]">

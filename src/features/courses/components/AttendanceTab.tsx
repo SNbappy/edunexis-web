@@ -14,12 +14,14 @@ import StudentAttendanceView from "@/features/attendance/components/StudentAtten
 import { useAttendance } from "@/features/attendance/hooks/useAttendance"
 import { useAttendanceStats } from "@/features/attendance/hooks/useAttendanceStats"
 import { cn } from "@/utils/cn"
+import { useCourseReadOnly } from "@/features/courses/context/CourseReadOnly"
 
 interface Props { courseId: string; courseName?: string; courseCode?: string; semester?: string; department?: string }
 
 export default function AttendanceTab({ courseId, courseName, courseCode, semester, department }: Props) {
   const { user } = useAuthStore()
   const teacher  = isTeacher(user?.role ?? "Student")
+  const readOnly = useCourseReadOnly()
 
   const [takeOpen, setTakeOpen]       = useState(false)
   const [editSession, setEditSession] = useState<any>(null)
@@ -69,9 +71,13 @@ export default function AttendanceTab({ courseId, courseName, courseCode, semest
 
         <AttendanceExportButton courseId={courseId} courseName={courseName ?? "Course"} courseCode={courseCode} semester={semester} department={department} members={members} />
 
-        <Button size="md" onClick={() => setTakeOpen(true)} leftIcon={<Plus strokeWidth={ICON_STROKE} />}>
-          Take attendance
-        </Button>
+        {/* Export stays available on an archived course — reading the record is
+            exactly what an archive is for. Only taking a new register goes. */}
+        {!readOnly && (
+          <Button size="md" onClick={() => setTakeOpen(true)} leftIcon={<Plus strokeWidth={ICON_STROKE} />}>
+            Take attendance
+          </Button>
+        )}
       </div>
 
       {/* Stats — only once there is something to summarise. With no sessions
@@ -99,8 +105,10 @@ export default function AttendanceTab({ courseId, courseName, courseCode, semest
         <AttendanceRecordsList
           sessions={sessions}
           totalStudents={stats?.studentSummaries?.length}
-          onEdit={(id) => setEditSession(sessions.find((s: any) => s.id === id) ?? null)}
-          onDelete={deleteSession}
+          /* No row actions on an archived course: the server refuses the edit
+             and the delete, so offering them only produces a 409. */
+          onEdit={readOnly ? undefined : (id) => setEditSession(sessions.find((s: any) => s.id === id) ?? null)}
+          onDelete={readOnly ? undefined : deleteSession}
         />
       ) : (
         <AttendanceCalendar sessions={sessions} />

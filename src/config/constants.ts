@@ -58,7 +58,12 @@ export const COURSE_TYPES = [
   "Sessional",
 ]
 
+/**
+ * Starts at 2018-19 so a teacher can still record an older batch's course.
+ * The list began at 2020-21, which simply made earlier sessions unenterable.
+ */
 export const ACADEMIC_SESSIONS = [
+  "2018-19", "2019-20",
   "2020-21", "2021-22", "2022-23", "2023-24", "2024-25",
   "2025-26", "2026-27", "2027-28", "2028-29", "2029-30", "2030-31",
 ]
@@ -147,6 +152,25 @@ export const DEPARTMENT_GROUPS = [
 
 export const DEPARTMENTS = DEPARTMENT_GROUPS.flatMap(g => g.options.map(o => o.value))
 
+/**
+ * Sentinel for "my department isn't listed".
+ *
+ * Deliberately not a plausible department name, so it can never collide with a
+ * real one and is obvious in a payload if it ever leaks past the form. The
+ * form swaps it for the typed name before submitting — no course is ever saved
+ * with this value.
+ */
+export const DEPARTMENT_OTHER = "__other__"
+
+/** Department options plus the escape hatch, for forms that allow a new one. */
+export const DEPARTMENT_GROUPS_WITH_OTHER = [
+  ...DEPARTMENT_GROUPS,
+  {
+    label: "Not listed",
+    options: [{ value: DEPARTMENT_OTHER, label: "Other — type a department name" }],
+  },
+]
+
 // 5th year included: some departments (e.g. Pharmacy) run a five-year programme.
 export const YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year"]
 
@@ -159,7 +183,12 @@ export const COURSE_CODE_PATTERN = /^[A-Za-z]{2,6}\s?-?\s?\d{4}$/
 export const COURSE_CODE_MESSAGE =
   "Use your department code and 4 digits, e.g. CSE-3201"
 
-export const SEMESTERS = ["1st Semester", "2nd Semester"]
+/**
+ * JUST runs two semesters a year today. The third is listed so the form does
+ * not have to be changed if that ever becomes three — it costs one option now
+ * and avoids a release later.
+ */
+export const SEMESTERS = ["1st Semester", "2nd Semester", "3rd Semester"]
 
 export const CREDIT_HOURS = [0.75, 1, 1.5, 2, 2.5, 3, 3.5, 4]
 

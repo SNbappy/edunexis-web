@@ -175,6 +175,13 @@ export interface TeacherQuotaDto {
   isStarterQuota:   boolean
   expiresInDays:    number | null
   activeGrantCount: number
+  /**
+   * Whether the platform is actually enforcing quotas (admin switch, off by
+   * default). The counts are always returned so the ledger is ready the moment
+   * it is switched on — but while this is false nothing is limited, so none of
+   * them may be shown as a limit.
+   */
+  isEnforced:       boolean
 }
 export interface DeletedCourseDto {
   id:              string

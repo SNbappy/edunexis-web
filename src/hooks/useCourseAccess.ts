@@ -21,7 +21,18 @@ export function useCourseAccess(courseId: string) {
     queryKey: ["course", courseId],
     queryFn: async () => {
       const res = await courseService.getById(courseId)
-      if (!res.success) throw new Error(res.message)
+      if (!res.success) {
+        /* The API answers these with HTTP 200 and `success: false`, so the
+           thrown error carries no status code and everything landed in the
+           transient-error branch below — a deleted course showed "the
+           connection hiccuped", inviting the user to retry something that
+           will never succeed. `definitive` marks a refusal the server made
+           on purpose, as opposed to a network failure worth retrying. */
+        throw Object.assign(new Error(res.message ?? "Course unavailable"), {
+          definitive: true,
+          serverMessage: res.message ?? "",
+        })
+      }
       return res.data
     },
     enabled: !!courseId && !!user,
@@ -62,11 +73,24 @@ export function useCourseAccess(courseId: string) {
   // INITIAL load failed (not a background refetch). This is the only case
   // where we surface a hard error status.
   if (courseQuery.isLoadingError && !course) {
-    const code = (courseQuery.error as any)?.response?.status
-    return {
-      status: (code === 404 ? "not-found" : "error") as AccessStatus,
-      course: null,
+    const err  = courseQuery.error as any
+    const code = err?.response?.status
+
+    if (code === 404) return { status: "not-found" as AccessStatus, course: null }
+
+    /* A refusal the server made deliberately. Two shapes matter to the user:
+       the course is gone, or they are simply not in it — and the second has a
+       real next step (the join page) rather than an error screen. */
+    if (err?.definitive) {
+      const msg = String(err.serverMessage ?? "")
+      const gone = /no longer exists|not found/i.test(msg)
+      return {
+        status: (gone ? "not-found" : "not-enrolled") as AccessStatus,
+        course: null,
+      }
     }
+
+    return { status: "error" as AccessStatus, course: null }
   }
 
   // No course data: only treat as not-found if the fetch genuinely returned

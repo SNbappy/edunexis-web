@@ -23,6 +23,14 @@ export default function QuotaBanner({ quota, loading }: Props) {
   if (loading) return <div className="h-12 w-full max-w-xl animate-pulse rounded-xl bg-muted/50" />
   if (!quota) return null
 
+  /* Nothing to say while quotas are switched off platform-wide.
+     The API still returns the ledger (an admin can enable enforcement at any
+     time and the numbers must already be right), but showing it here told
+     every teacher "You have 1 free course slot" on a platform where course
+     creation is in fact unlimited — inventing a restriction that does not
+     exist and would make a teacher ration their own courses. */
+  if (!quota.isEnforced) return null
+
   const {
     totalQuota, usedQuota, remainingQuota,
     isStarterQuota, isAccessActive, expiresInDays,

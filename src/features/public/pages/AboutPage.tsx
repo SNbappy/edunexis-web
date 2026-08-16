@@ -31,6 +31,7 @@ export default function AboutPage() {
       <AboutHero />
       <OriginStory />
       <InsidePanel />
+      <WhatsInside />
       <Principles />
       <AboutCta />
     </div>
@@ -496,6 +497,133 @@ function InsidePanel() {
               </motion.div>
             </AnimatePresence>
           </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ══ What's inside ════════════════════════════════════════════════
+   A full, honest inventory.
+
+   Neither public page listed what the product actually does — the home
+   page showed three things well and the About page told the origin
+   story, so a department head deciding whether to adopt this had no
+   way to check whether it covered their course. Grouped by the part of
+   the course each belongs to, because that is how the question gets
+   asked ("does it handle our class tests?").
+   ══════════════════════════════════════════════════════════════════ */
+
+const INVENTORY: { area: string; items: string[] }[] = [
+  {
+    area: "Running a course",
+    items: [
+      "Create a course with its code, credit hours, session, year and semester",
+      "Share an 8-character join code; every request needs your approval",
+      "Departments that aren't on the list can be typed in when you create the course",
+      "Archive a course at the end of term without losing any of it",
+      "Post announcements with file attachments to the whole section",
+    ],
+  },
+  {
+    area: "Attendance",
+    items: [
+      "Take the register in one tap per student, from a phone in class",
+      "Mark the whole section present at once, then correct the exceptions",
+      "Each student's running percentage updates with every session",
+      "The 75% requirement is tracked and flagged before it costs anyone marks",
+      "List and calendar views, and export the whole term to PDF or CSV",
+    ],
+  },
+  {
+    area: "Assignments",
+    items: [
+      "Post a task with instructions, a rubric and reference files",
+      "Deadlines with optional late submission, and late work flagged automatically",
+      "Students submit a file or type their answer, and get a receipt",
+      "Grade with marks and written feedback attached to the submission",
+      "Similarity check across submitted PDFs, showing the overlapping passages",
+    ],
+  },
+  {
+    area: "Tests and marks",
+    items: [
+      "Class tests with the best, worst and average answer scripts published",
+      "Presentations, vivas and any other assessment your course runs",
+      "A weighting formula you set once — attendance, CTs, assignments, tests",
+      "Totals, letter grades and GPA calculated for the whole section",
+      "Publish once; each student sees only their own result",
+      "Full gradebook export for departmental paperwork",
+    ],
+  },
+  {
+    area: "Materials",
+    items: [
+      "Files and folders, organised by week, topic or lab",
+      "YouTube links that play inside the course page",
+      "Any other link shared as a proper material, not pasted in a chat",
+      "Preview in the browser, or download the original",
+    ],
+  },
+  {
+    area: "Accounts and access",
+    items: [
+      "Sign-up restricted to @just.edu.bd and @student.just.edu.bd",
+      "Email verification on every new account",
+      "Separate teacher, student and admin roles with their own permissions",
+      "A public faculty profile with designation, interests and publications",
+      "In-app notifications for announcements, deadlines, marks and join requests",
+      "Light and dark mode across every screen",
+    ],
+  },
+]
+
+function WhatsInside() {
+  return (
+    <section className="relative overflow-hidden bg-white py-16 sm:py-20 lg:py-24">
+      <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl">
+          <Reveal>
+            <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-teal-700">
+              What's actually in it
+            </p>
+          </Reveal>
+          <RevealLines
+            as="h2"
+            className="mt-3 font-display text-3xl font-extrabold leading-[1.12] tracking-tight text-stone-900 sm:text-4xl"
+            lines={["The full list,", "with nothing coming soon."]}
+          />
+          <Reveal delay={0.1}>
+            <p className="mt-4 text-[15px] leading-relaxed text-stone-600">
+              Everything below is working in the product right now. If something your
+              course needs isn't here, it isn't here — we would rather you knew that
+              before you moved a semester onto it.
+            </p>
+          </Reveal>
+        </div>
+
+        <div className="mt-12 grid grid-cols-1 gap-x-10 gap-y-10 md:grid-cols-2 lg:grid-cols-3">
+          {INVENTORY.map((group, gi) => (
+            <motion.div
+              key={group.area}
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={REVEAL_VIEWPORT}
+              transition={{ duration: 0.5, delay: Math.min(gi, 5) * 0.07, ease: EASE }}
+            >
+              <h3 className="font-display text-[15.5px] font-bold text-stone-900">
+                {group.area}
+              </h3>
+              <ul className="mt-3 space-y-2.5">
+                {group.items.map(item => (
+                  <li key={item} className="flex gap-2.5 text-[13.5px] leading-relaxed text-stone-600">
+                    <Check className="mt-[3px] h-3.5 w-3.5 shrink-0 text-teal-600" strokeWidth={3} />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>

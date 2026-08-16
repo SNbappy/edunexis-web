@@ -17,6 +17,7 @@ import type { FileTypeFilter } from "../hooks/useMaterials"
 import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
 import type { MaterialDto } from "@/types/material.types"
+import { useCourseReadOnly } from "@/features/courses/context/CourseReadOnly"
 
 interface MaterialsTabProps {
   courseId: string
@@ -50,6 +51,7 @@ const FILE_FILTERS: { label: string; value: FileTypeFilter }[] = [
 export default function MaterialsTab({ courseId }: MaterialsTabProps) {
   const { user } = useAuthStore()
   const teacher = isTeacher(user?.role ?? "Student")
+  const readOnly = useCourseReadOnly()
 
   const {
     materials, isLoading, breadcrumb, openFolder, navigateTo,
@@ -77,8 +79,13 @@ export default function MaterialsTab({ courseId }: MaterialsTabProps) {
   return (
     <div className="space-y-4">
       <div className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="min-w-0 flex-1">
+        {/* Stacks below `sm`. As a single justify-between row the three action
+            buttons were ~330px wide against a 358px content box, so they did
+            not wrap — they overflowed and rendered on top of the "Course
+            materials" heading. On a phone the label gets its own line and the
+            buttons wrap underneath. */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <div className="min-w-0 sm:flex-1">
             {breadcrumb.length > 1 && !isFlattenMode ? (
               <MaterialsBreadcrumb items={breadcrumb} onNavigate={navigateTo} />
             ) : (
@@ -88,8 +95,8 @@ export default function MaterialsTab({ courseId }: MaterialsTabProps) {
             )}
           </div>
 
-          {teacher && (
-            <div className="flex items-center gap-2">
+          {teacher && !readOnly && (
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant="secondary"
                 onClick={() => setFolderOpen(true)}

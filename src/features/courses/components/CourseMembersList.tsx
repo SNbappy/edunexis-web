@@ -15,6 +15,7 @@ import { usePublicProfile } from "@/features/profile/hooks/usePublicProfile"
 import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
 import type { CourseMemberDto, CourseDto } from "@/types/course.types"
+import { useCourseReadOnly } from "@/features/courses/context/CourseReadOnly"
 
 interface CourseMembersListProps {
   courseId: string
@@ -26,6 +27,7 @@ type FilterTab = "all" | "students" | "requests"
 export default function CourseMembersList({ courseId, course }: CourseMembersListProps) {
   const { user } = useAuthStore()
   const teacher = isTeacher(user?.role ?? "Student")
+  const readOnly = useCourseReadOnly()
   const navigate = useNavigate()
 
   const {
@@ -173,7 +175,9 @@ export default function CourseMembersList({ courseId, course }: CourseMembersLis
                           {req.studentIdNumber}
                         </span>
                       )}
-                      <div className="flex shrink-0 items-center gap-1.5">
+                      {/* Approving or rejecting changes membership, so both are
+                          frozen on an archived course. */}
+                      <div className={cn("flex shrink-0 items-center gap-1.5", readOnly && "hidden")}>
                         <Button
                           size="sm"
                           variant="success"
@@ -301,7 +305,7 @@ export default function CourseMembersList({ courseId, course }: CourseMembersLis
                           {m.studentId}
                         </span>
                       )}
-                      {teacher && (
+                      {teacher && !readOnly && (
                         <button
                           type="button"
                           onClick={e => { e.stopPropagation(); setConfirmTarget(m) }}

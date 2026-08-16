@@ -114,12 +114,19 @@ export default function FacultyDirectoryPage() {
       </section>
 
       {/* ── Results ─────────────────────────────────────────────── */}
-      <section className="relative pb-20 sm:pb-24">
+      {/* Symmetrical top padding. The grid had `pb-20` and no `pt`, so the first
+          row of cards sat directly on the header's bottom border while the last
+          row had 80px of air beneath it — and because the cards tilt on hover,
+          the top row visibly crossed that line. */}
+      <section className="relative pt-8 pb-20 sm:pt-10 sm:pb-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {isLoading ? (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-5">
+            /* Skeleton matches the real grid exactly — same min column width and
+               same 4/5 card ratio. It used 230px/3:4, so the layout jumped both
+               horizontally and vertically the moment the data arrived. */
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-5">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="aspect-[3/4] animate-pulse rounded-2xl border border-stone-200 bg-stone-50" />
+                <div key={i} className="aspect-[4/5] animate-pulse rounded-2xl border border-stone-200 bg-stone-50" />
               ))}
             </div>
           ) : isError ? (

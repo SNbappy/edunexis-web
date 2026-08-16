@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { Pencil } from "lucide-react"
 import Button from "@/components/ui/Button"
 import Skeleton from "@/components/ui/Skeleton"
-import { Page } from "@/components/ui/Page"
+import { Page, PageHero } from "@/components/ui/Page"
 import { ICON_STROKE } from "@/components/ui/appTokens"
 import { useAuthStore } from "@/store/authStore"
 import { useProfile } from "../hooks/useProfile"
@@ -128,16 +128,51 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
     own.updateProfile(payload)
   }
 
+  const totalCourses = p.runningCoursesCount + p.archivedCoursesCount
+
   return (
     <Page>
+      {/* Ink hero, matching Dashboard, Courses and the course header.
+          Profile was the one destination page that opened straight onto a card
+          with no brand band above it, so arriving here felt like leaving the
+          product. The identity also belongs at the top of the page rather than
+          only inside a side card. */}
+      <PageHero
+        eyebrow={p.department || (teacher ? "Faculty" : "Student")}
+        title={p.fullName}
+        description={p.headline || p.designation || undefined}
+        figures={[
+          { value: totalCourses, label: totalCourses === 1 ? "course" : "courses" },
+          ...(teacher && p.publications.length > 0
+            ? [{ value: p.publications.length, label: p.publications.length === 1 ? "publication" : "publications" }]
+            : []),
+        ]}
+        actions={isSelf ? (
+          <Button
+            variant="secondary"
+            onClick={() => navigate("/profile/edit")}
+            leftIcon={<Pencil strokeWidth={ICON_STROKE} />}
+          >
+            Edit profile
+          </Button>
+        ) : undefined}
+      />
+
+      {/* Tabs sit directly under the hero, on the app's underline rail rather
+          than the floating pill group this page used on its own. */}
+      <div className="mt-6 border-b border-border">
+        <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
+      </div>
+
       {/* Two-column body — identity card persists across all tabs */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[292px_1fr]">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[292px_1fr]">
         {/* Identity card. Sticks below the 56px topbar rather than at the very
             top, where it would slide under the bar on scroll. */}
         <div className="lg:sticky lg:top-20 lg:self-start">
           <ProfileIdentityCard
             profile={p}
             isSelf={isSelf}
+            hideIdentity
             canSeeContact={canSeeContact}
             onUploadPhoto={isSelf ? own.uploadPhoto : undefined}
             onRemovePhoto={isSelf ? () => own.removePhoto() : undefined}
@@ -146,22 +181,9 @@ export default function ProfilePage({ userId, isOwnProfile = false }: ProfilePag
           />
         </div>
 
-        {/* Right column — tabs + tab content */}
+        {/* Right column — tab content (tabs and the edit action now live in
+            the header above, so this column is purely the content). */}
         <div className="min-w-0">
-          {/* Tab bar row — tabs on left, edit profile on right */}
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-            <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
-            {isSelf ? (
-              <Button
-                variant="secondary"
-                onClick={() => navigate("/profile/edit")}
-                leftIcon={<Pencil strokeWidth={ICON_STROKE} />}
-              >
-                Edit profile
-              </Button>
-            ) : null}
-          </div>
-
           {/* Tab content */}
           {activeTab === "overview" ? (
             <OverviewTab

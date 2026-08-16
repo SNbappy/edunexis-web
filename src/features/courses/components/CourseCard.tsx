@@ -111,14 +111,37 @@ export function ActiveCourseCard({ course }: ActiveCardProps) {
             </span>
           </div>
 
-          <div className="mt-auto flex items-center justify-between gap-3 pt-4 text-[12px] text-muted-foreground">
-            <span className="truncate">{course.semester}</span>
-            <span className="inline-flex shrink-0 items-center gap-1.5">
-              <Users className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
-              <span className="font-semibold tabular-nums text-foreground">
-                {course.memberCount}
+          {/* Session and department both shown.
+              A teacher who runs CSE-3201 every year had several cards with an
+              identical code, title and semester and no way to tell which was
+              which. The session is the field that actually separates them, so
+              it sits next to the semester; the department matters for anyone
+              teaching across two, and stays quiet on its own line. */}
+          <div className="mt-auto space-y-1 pt-4 text-[12px] text-muted-foreground">
+            <div className="flex items-center justify-between gap-3">
+              <span className="truncate">
+                {course.semester}
+                {course.academicSession ? (
+                  <>
+                    <span className="px-1 text-border-strong">·</span>
+                    <span className="font-semibold tabular-nums text-foreground/75">
+                      {course.academicSession}
+                    </span>
+                  </>
+                ) : null}
               </span>
-            </span>
+              <span className="inline-flex shrink-0 items-center gap-1.5">
+                <Users className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
+                <span className="font-semibold tabular-nums text-foreground">
+                  {course.memberCount}
+                </span>
+              </span>
+            </div>
+            {course.department ? (
+              <p className="truncate text-[11px] text-muted-foreground/75" title={course.department}>
+                {course.department}
+              </p>
+            ) : null}
           </div>
         </div>
       </article>

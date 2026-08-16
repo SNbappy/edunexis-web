@@ -15,6 +15,7 @@ import { useAttendance } from "@/features/attendance/hooks/useAttendance"
 import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
 import type { CTEventDto, CreateCTEventRequest } from "@/types/ct.types"
+import { useCourseReadOnly } from "@/features/courses/context/CourseReadOnly"
 
 /** `string | null` matches CourseMemberDto — the API sends null, not undefined,
  *  and the narrower type made every hook that returns members unassignable. */
@@ -25,6 +26,7 @@ type FilterTab = "all" | "draft" | "published"
 export default function CTTab({ courseId, members = [] }: Props) {
   const { user } = useAuthStore()
   const teacher = isTeacher(user?.role ?? "Student")
+  const readOnly = useCourseReadOnly()
 
   const {
     ctEvents, isLoading,
@@ -108,7 +110,7 @@ export default function CTTab({ courseId, members = [] }: Props) {
             })}
           </div>
 
-          {teacher && createButton}
+          {teacher && !readOnly && createButton}
         </div>
       </div>
 

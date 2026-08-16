@@ -16,6 +16,7 @@ import { DistributionBar } from "@/components/ui/charts"
 import { ICON_STROKE, SURFACE, TEXT } from "@/components/ui/appTokens"
 import { cn } from "@/utils/cn"
 import type { FormulaComponentType, SelectionRule } from "@/types/marks.types"
+import { useCourseReadOnly } from "@/features/courses/context/CourseReadOnly"
 
 interface MarksTabProps { courseId: string; courseTitle?: string; courseCode?: string; semester?: string; department?: string }
 interface ComponentConfig { enabled: boolean; selectionRule: SelectionRule; maxMarks: string }
@@ -65,6 +66,7 @@ const RULES: { value: SelectionRule; label: string }[] = [
 export default function MarksTab({ courseId, courseTitle, courseCode, semester, department }: MarksTabProps) {
   const { user } = useAuthStore()
   const teacher = isTeacher(user?.role ?? "Student")
+  const readOnly = useCourseReadOnly()
 
   const {
     formula, isFormulaLoading,
@@ -177,8 +179,10 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
               : <>No grading formula set yet</>}
         </p>
 
+        {/* The gradebook stays fully readable on an archived course; only
+            recalculating and publishing it are frozen. */}
         <div className="flex flex-wrap items-center gap-2">
-          {formula && (
+          {formula && !readOnly && (
             <Button
               variant="secondary"
               onClick={() => calculate()}
@@ -188,7 +192,7 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
               {hasMarks ? "Recalculate" : "Calculate"}
             </Button>
           )}
-          {hasMarks && !isPublished && (
+          {hasMarks && !isPublished && !readOnly && (
             <Button onClick={() => publish()} loading={isPublishing} leftIcon={<Send strokeWidth={ICON_STROKE} />}>
               Publish results
             </Button>
@@ -284,6 +288,7 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
                   <Switch
                     checked={cfg.enabled}
                     onChange={next => setComp(comp.key, { enabled: next })}
+                    disabled={readOnly}
                     label={`${cfg.enabled ? "Disable" : "Enable"} ${comp.label}`}
                   />
                 </div>
@@ -292,16 +297,20 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
           })}
         </ul>
 
-        <footer className="flex items-center justify-end border-t border-border bg-muted/40 px-4 py-3">
-          <Button
-            onClick={handleSave}
-            disabled={enabled.length === 0}
-            loading={isSaving}
-            leftIcon={<Check strokeWidth={ICON_STROKE} />}
-          >
-            Save formula
-          </Button>
-        </footer>
+        {/* No save row on an archived course — the formula is still shown so
+            anyone can see how the published marks were arrived at. */}
+        {!readOnly && (
+          <footer className="flex items-center justify-end border-t border-border bg-muted/40 px-4 py-3">
+            <Button
+              onClick={handleSave}
+              disabled={enabled.length === 0}
+              loading={isSaving}
+              leftIcon={<Check strokeWidth={ICON_STROKE} />}
+            >
+              Save formula
+            </Button>
+          </footer>
+        )}
       </section>
 
       {/* ── Results ───────────────────────────────────────────────── */}

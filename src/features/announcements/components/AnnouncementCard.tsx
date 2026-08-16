@@ -7,7 +7,9 @@ import {
 import Avatar from "@/components/ui/Avatar"
 import { formatRelative } from "@/utils/dateUtils"
 import { useAuthStore } from "@/store/authStore"
-import type { AnnouncementDto } from "@/types/announcement.types"
+import type { AnnouncementDto, CommentDto } from "@/types/announcement.types"
+import Linkify from "@/components/ui/Linkify"
+import CommentThread from "./CommentThread"
 
 interface AnnouncementCardProps {
   announcement: AnnouncementDto
@@ -16,6 +18,12 @@ interface AnnouncementCardProps {
   canDelete?: boolean
   onPin?: (id: string) => void
   onDelete?: (id: string) => void
+  /** Archived course: everything stays readable, nothing can be written. */
+  readOnly?: boolean
+  comments?: CommentDto[]
+  onAddComment?: (args: { announcementId: string; content: string }) => void
+  onDeleteComment?: (commentId: string) => void
+  isAddingComment?: boolean
 }
 
 function getFileName(url: string): string {
@@ -27,6 +35,7 @@ const LONG_CONTENT_THRESHOLD = 280
 
 export default function AnnouncementCard({
   announcement, index = 0, canPin = false, canDelete = false, onPin, onDelete,
+  readOnly = false, comments = [], onAddComment, onDeleteComment, isAddingComment,
 }: AnnouncementCardProps) {
   const { user } = useAuthStore()
   const [expanded, setExpanded] = useState(false)
@@ -172,7 +181,7 @@ export default function AnnouncementCard({
                 (!expanded && isLong ? "line-clamp-4" : "")
               }
             >
-              {announcement.content}
+              <Linkify>{announcement.content}</Linkify>
             </p>
             {isLong && (
               <button
@@ -214,6 +223,19 @@ export default function AnnouncementCard({
               </div>
               <ExternalLink className="h-3.5 w-3.5 shrink-0 text-teal-700 opacity-0 transition-opacity group-hover/attach:opacity-100 dark:text-teal-300" />
             </motion.a>
+          )}
+
+          {/* Class comments — the conversation that used to happen in a group
+              chat where it was detached from what it was about. */}
+          {onAddComment && onDeleteComment && (
+            <CommentThread
+              announcementId={announcement.id}
+              comments={comments}
+              readOnly={readOnly}
+              onAdd={onAddComment}
+              onDelete={onDeleteComment}
+              isAdding={isAddingComment}
+            />
           )}
         </div>
       </div>

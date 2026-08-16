@@ -8,9 +8,11 @@ import StreamRail from "./StreamRail"
 import AnnouncementCard from "./AnnouncementCard"
 import CreateAnnouncementForm from "./CreateAnnouncementForm"
 import { useAnnouncements } from "../hooks/useAnnouncements"
+import { useComments } from "../hooks/useComments"
 import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
 import type { AnnouncementDto } from "@/types/announcement.types"
+import { useCourseReadOnly } from "@/features/courses/context/CourseReadOnly"
 
 interface AnnouncementFeedProps {
   courseId: string
@@ -19,10 +21,15 @@ interface AnnouncementFeedProps {
 export default function AnnouncementFeed({ courseId }: AnnouncementFeedProps) {
   const { user } = useAuthStore()
   const teacher = isTeacher(user?.role ?? "Student")
+  const readOnly = useCourseReadOnly()
   const {
     announcements, isLoading, create, isCreating,
     deleteAnnouncement, togglePin,
   } = useAnnouncements(courseId)
+
+  /* Comments load once for the whole course and are handed to each card, so a
+     stream of thirty announcements is one request rather than thirty. */
+  const { byAnnouncement, addComment, isAdding, deleteComment } = useComments(courseId)
 
   /* Split into pinned + unpinned, preserving creation order within each group. */
   const pinned: AnnouncementDto[] = []
@@ -47,8 +54,8 @@ export default function AnnouncementFeed({ courseId }: AnnouncementFeedProps) {
   return (
     <TabSplit aside={<StreamRail courseId={courseId} />}>
       <div className="space-y-5">
-      {/* Composer — teachers only */}
-      {teacher && (
+      {/* Composer — teachers only, and not on an archived course. */}
+      {teacher && !readOnly && (
         <CreateAnnouncementForm
           courseId={courseId}
           onSubmit={create}
@@ -90,6 +97,11 @@ export default function AnnouncementFeed({ courseId }: AnnouncementFeedProps) {
                 canDelete={teacher || a.authorId === user?.id}
                 onPin={togglePin}
                 onDelete={deleteAnnouncement}
+                readOnly={readOnly}
+                comments={byAnnouncement[a.id] ?? []}
+                onAddComment={addComment}
+                onDeleteComment={deleteComment}
+                isAddingComment={isAdding}
               />
             ))}
           </div>
@@ -114,6 +126,11 @@ export default function AnnouncementFeed({ courseId }: AnnouncementFeedProps) {
                 canDelete={teacher || a.authorId === user?.id}
                 onPin={togglePin}
                 onDelete={deleteAnnouncement}
+                readOnly={readOnly}
+                comments={byAnnouncement[a.id] ?? []}
+                onAddComment={addComment}
+                onDeleteComment={deleteComment}
+                isAddingComment={isAdding}
               />
             ))}
           </div>

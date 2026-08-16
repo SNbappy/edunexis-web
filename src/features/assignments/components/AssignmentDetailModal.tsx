@@ -17,6 +17,7 @@ import { isPast, parseISO } from 'date-fns'
 import { useState } from 'react'
 import type { AssignmentDto, SubmitAssignmentRequest } from '@/types/assignment.types'
 import { cn } from '@/utils/cn'
+import Linkify from "@/components/ui/Linkify"
 
 interface Props {
     isOpen: boolean
@@ -96,7 +97,7 @@ export default function AssignmentDetailModal({ isOpen, onClose, assignment, cou
                                 <div>
                                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Instructions</p>
                                     <div className="p-4 rounded-xl bg-muted/50 border border-border">
-                                        <p className="text-sm text-foreground whitespace-pre-wrap">{assignment.instructions}</p>
+                                        <p className="text-sm text-foreground whitespace-pre-wrap"><Linkify>{assignment.instructions}</Linkify></p>
                                     </div>
                                 </div>
                             )}
@@ -104,7 +105,7 @@ export default function AssignmentDetailModal({ isOpen, onClose, assignment, cou
                                 <div>
                                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Rubric notes</p>
                                     <div className="p-4 rounded-xl bg-muted/50 border border-border">
-                                        <p className="text-sm text-foreground whitespace-pre-wrap">{assignment.rubricNotes}</p>
+                                        <p className="text-sm text-foreground whitespace-pre-wrap"><Linkify>{assignment.rubricNotes}</Linkify></p>
                                     </div>
                                 </div>
                             )}

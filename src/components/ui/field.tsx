@@ -80,18 +80,34 @@ export function Switch({
       aria-label={label}
       disabled={disabled}
       onClick={() => onChange(!checked)}
+      /* Sized 44x24 with a ring and an inset knob.
+         At 36x20 the knob was 16px of white inside a 20px track — so little
+         track showed around it that an "on" switch read as one solid coloured
+         pill rather than a control, and people could not tell there was a
+         button there at all. The larger track leaves real gutters on every
+         side, the ring outlines the control even where it has no contrast
+         against the card, and the knob keeps a shadow so it reads as sitting
+         on top of the track rather than being part of it. */
       className={cn(
-        "relative h-5 w-9 shrink-0 rounded-full transition-colors duration-150",
+        "relative h-6 w-11 shrink-0 rounded-full ring-1 transition-colors duration-150",
         FOCUS,
-        checked ? "bg-primary" : "bg-subtle",
+        checked
+          ? "bg-primary ring-primary/40"
+          : "bg-subtle ring-border-strong/60",
         disabled && "cursor-not-allowed opacity-50",
         className,
       )}
     >
+      {/* `left-0` is load-bearing. Without it the knob is absolutely positioned
+          with auto insets, so it falls at its *static* position — which inside a
+          <button> is the centred one, not the track's left edge. The transforms
+          were then measured from there, putting the knob at the right edge when
+          off and completely outside the track when on. That is why an enabled
+          switch read as a solid coloured pill with no knob in it at all. */}
       <span
         className={cn(
-          "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-150 ease-out",
-          checked ? "translate-x-[18px]" : "translate-x-0.5",
+          "absolute left-0 top-0.5 h-5 w-5 rounded-full bg-white shadow-[0_1px_2px_rgb(15_23_42/0.3)] transition-transform duration-150 ease-out",
+          checked ? "translate-x-[22px]" : "translate-x-0.5",
         )}
       />
     </button>

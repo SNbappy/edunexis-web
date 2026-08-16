@@ -125,7 +125,9 @@ export default function MaterialCard({
         aria-hidden
       />
 
-      <div className="flex items-center gap-4 px-4 py-3.5 pl-5">
+      {/* Tighter gutters on a phone: at 390px the 16px gap plus 20px left inset
+          left the title barely 200px before the action buttons. */}
+      <div className="flex items-center gap-3 px-3 py-3.5 pl-4 sm:gap-4 sm:px-4 sm:pl-5">
         <FileIcon fileName={material.fileName} type={material.type} size="md" />
 
         <div className="min-w-0 flex-1">

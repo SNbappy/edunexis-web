@@ -11,6 +11,7 @@ import { useAssignments } from "../hooks/useAssignments"
 import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
 import type { AssignmentDto } from "@/types/assignment.types"
+import { useCourseReadOnly } from "@/features/courses/context/CourseReadOnly"
 
 interface AssignmentsTabProps {
   courseId: string
@@ -20,6 +21,7 @@ export default function AssignmentsTab({ courseId }: AssignmentsTabProps) {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const teacher = isTeacher(user?.role ?? "Student")
+  const readOnly = useCourseReadOnly()
 
   const {
     assignments, isLoading,
@@ -58,7 +60,7 @@ export default function AssignmentsTab({ courseId }: AssignmentsTabProps) {
               ? `${activeCount} open \u00b7 ${total} total`
               : `${total} total \u00b7 none open`}
         </p>
-        {teacher && createButton}
+        {teacher && !readOnly && createButton}
       </div>
 
       {!isLoading && assignments.length > 0 && (

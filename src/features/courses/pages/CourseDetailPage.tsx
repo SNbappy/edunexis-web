@@ -8,6 +8,8 @@ import {
 } from "lucide-react"
 
 import CourseHeader from "../components/CourseHeader"
+import ArchivedCourseBanner from "../components/ArchivedCourseBanner"
+import { CourseReadOnlyProvider } from "../context/CourseReadOnly"
 import CourseTabNav, { type CourseTabItem } from "../components/CourseTabNav"
 import CourseMembersList from "../components/CourseMembersList"
 import AttendanceTab from "../components/AttendanceTab"
@@ -152,20 +154,33 @@ export default function CourseDetailPage() {
         activeTab={tab}
       />
 
-      {/* Tab content */}
-      <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:py-8">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={tab}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.2 }}
-          >
-            {renderTab()}
-          </motion.div>
-        </AnimatePresence>
-      </div>
+      {/* Tab content.
+          Wrapped in the read-only provider so every tab, card and modal below
+          can ask whether the course accepts writes instead of each one deciding
+          for itself — the server refuses them either way, but a button that
+          cannot work should not be offered in the first place. */}
+      <CourseReadOnlyProvider readOnly={!!course.isArchived}>
+        <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:py-8">
+          {course.isArchived && (
+            <ArchivedCourseBanner
+              isOwner={!!isOwner}
+              onUnarchive={() => setPendingAction("unarchive")}
+            />
+          )}
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={tab}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.2 }}
+            >
+              {renderTab()}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </CourseReadOnlyProvider>
 
       {/* Archive / Unarchive confirmation */}
       <ConfirmActionModal

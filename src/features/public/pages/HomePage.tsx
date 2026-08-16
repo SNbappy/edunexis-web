@@ -22,6 +22,14 @@ import {
   FileText,
   Calendar,
   ChevronRight,
+  ScanSearch,
+  PlayCircle,
+  Download,
+  KeyRound,
+  Moon,
+  Presentation,
+  Percent,
+  FolderTree,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -200,6 +208,7 @@ export default function HomePage() {
       <TryItSection />
       <WhyPanel />
       <FeatureRows />
+      <CapabilityGrid />
       <HowItStarts />
       <ForWhomPanel />
       <FinalCta />
@@ -720,6 +729,24 @@ const ROSTER = [
 const CLASS_SIZE = 47
 const CLASS_ABSENT = 4
 
+/**
+ * Sessions already held this term, before the one being marked.
+ *
+ * The roster's `attPct` is each student's record *coming into* today. Marking
+ * today then moves it, because today is one more session in the denominator —
+ * which is the whole point of the demo: the register is not a checklist, it
+ * feeds the number the teacher is actually judged on. 24 keeps a single toggle
+ * worth ~4 points, big enough to notice without looking made up.
+ */
+const PRIOR_SESSIONS = 24
+
+/** Sessions attended before today, back-derived from the running percentage. */
+const priorAttended = (attPct: number) => Math.round((attPct / 100) * PRIOR_SESSIONS)
+
+/** The running percentage once today's mark is included. */
+const livePct = (attPct: number, presentToday: boolean) =>
+  Math.round(((priorAttended(attPct) + (presentToday ? 1 : 0)) / (PRIOR_SESSIONS + 1)) * 100)
+
 type Student = (typeof ROSTER)[number]
 
 const total = (s: Student) => s.att + s.ct + s.asg + s.pres + s.mid + s.fin
@@ -846,6 +873,43 @@ function TryItSection() {
   )
 }
 
+/**
+ * A student's running attendance, including today's mark.
+ *
+ * The point of showing it here is that the register is not a checklist: every
+ * tap moves the number the student is graded on and the 75% line they have to
+ * stay above. So the bar animates to its new width and the digits re-render on
+ * change, and the colour flips the moment a toggle drops someone below 75.
+ */
+function LiveAttendancePct({ attPct, presentToday }: { attPct: number; presentToday: boolean }) {
+  const pct = livePct(attPct, presentToday)
+  const below = pct < 75
+
+  return (
+    <div className="hidden w-20 items-center justify-end gap-1.5 sm:flex">
+      <div className="h-1 w-9 overflow-hidden rounded-full bg-stone-200">
+        <motion.div
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.45, ease: EASE }}
+          className={"h-full rounded-full " + (below ? "bg-rose-500" : pct >= 80 ? "bg-teal-500" : "bg-amber-500")}
+        />
+      </div>
+      <motion.span
+        key={pct}
+        initial={{ opacity: 0.35, y: -3 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.28, ease: EASE }}
+        className={
+          "text-[10.5px] font-semibold tabular-nums " +
+          (below ? "text-rose-600" : "text-stone-500")
+        }
+      >
+        {pct}%
+      </motion.span>
+    </div>
+  )
+}
+
 /* The one genuinely interactive moment on the page. Visitors can toggle
    students and watch the counts move — that turns the mockup from something
    you look at into something you try, which is the part no screenshot and no
@@ -853,6 +917,18 @@ function TryItSection() {
 function AttendanceMockup() {
   const [absent, setAbsent] = useState<Set<string>>(
     () => new Set(ROSTER.filter(s => !s.present).map(s => s.id)),
+  )
+  /**
+   * Absentees in the part of the section scrolled out of view.
+   *
+   * State, not a derived constant. The counter reads "of 47" while only 18 rows
+   * are on screen, so the remainder has to be tracked somewhere — but as a
+   * constant it also survived "Mark all present", which then reported
+   * "46 present · 1 absent" straight after you had marked everyone present.
+   * A class-wide action has to reach the whole class.
+   */
+  const [hiddenAbsent, setHiddenAbsent] = useState(
+    () => CLASS_ABSENT - ROSTER.filter(s => !s.present).length,
   )
   const [touched, setTouched] = useState(false)
 
@@ -889,6 +965,7 @@ function AttendanceMockup() {
     setTouched(true)
     setSaveState("idle")
     setAbsent(new Set())
+    setHiddenAbsent(0)
   }
 
   const save = () => {
@@ -946,6 +1023,7 @@ function AttendanceMockup() {
     at(7600, () => {
       if (cancelled) return
       setAbsent(new Set(ROSTER.filter(s => !s.present).map(s => s.id)))
+      setHiddenAbsent(CLASS_ABSENT - ROSTER.filter(s => !s.present).length)
       setDemoDone(false)
       setCycle(c => c + 1)
     })
@@ -955,7 +1033,6 @@ function AttendanceMockup() {
 
   /* Offscreen students keep their original state; only the visible window is
      interactive, so the totals stay consistent with "1–18 of 47". */
-  const hiddenAbsent = CLASS_ABSENT - ROSTER.filter(s => !s.present).length
   const absentTotal = absent.size + hiddenAbsent
   const presentTotal = CLASS_SIZE - absentTotal
 
@@ -1056,16 +1133,12 @@ function AttendanceMockup() {
                   <p className="text-[10.5px] text-stone-400">ID {s.id}</p>
                 </div>
 
-                {/* running attendance % to date — the number teachers actually care about */}
-                <div className="hidden w-20 items-center justify-end gap-1.5 sm:flex">
-                  <div className="h-1 w-9 overflow-hidden rounded-full bg-stone-200">
-                    <div
-                      className={"h-full rounded-full " + (s.attPct >= 80 ? "bg-teal-500" : "bg-amber-500")}
-                      style={{ width: `${s.attPct}%` }}
-                    />
-                  </div>
-                  <span className="text-[10.5px] font-semibold tabular-nums text-stone-500">{s.attPct}%</span>
-                </div>
+                {/* Running attendance % to date — the number teachers actually
+                    care about, and it now includes today. It used to render the
+                    static `attPct`, so marking someone absent changed the badge
+                    but left their percentage sitting there unmoved, which made
+                    the register look disconnected from the thing it feeds. */}
+                <LiveAttendancePct attPct={s.attPct} presentToday={isPresent} />
 
                 <span
                   className={
@@ -2047,8 +2120,8 @@ const FEATURE_ROWS: FeatureRow[] = [
     eyebrow: "Course materials",
     title: ["Every slide and handout,", "where students look first."],
     body:
-      "Lecture slides, lab manuals, reference chapters and past questions live on the course page in folders. No Drive links pasted into a group chat, no “sir, can you send it again” the night before an exam.",
-    points: ["Organised in folders, not a chat log", "Works on a phone on campus wifi", "Nothing gets lost between semesters"],
+      "Lecture slides, lab manuals, reference chapters and past questions live on the course page in folders. Paste a YouTube link and it plays inside the course — students never leave for a tab full of recommendations. No Drive links in a group chat, no “sir, can you send it again” the night before an exam.",
+    points: ["Organised in folders, not a chat log", "YouTube lectures play in the course page", "Works on a phone on campus wifi"],
     render: () => <PanelMaterials />,
   },
 ]
@@ -2146,6 +2219,154 @@ function FeatureRowBlock({ row, reverse }: { row: FeatureRow; reverse: boolean }
         </ul>
       </div>
     </div>
+  )
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   CAPABILITY GRID
+
+   The three feature rows above show the three things a teacher does
+   every week, in depth. This section exists because everything else
+   the product does was simply never mentioned anywhere on the page —
+   class tests, the similarity check, exports, join approval, the
+   attendance requirement, dark mode. Someone deciding whether to move
+   a department onto this could not find out that any of it existed.
+
+   Deliberately a dense grid rather than more full-width rows: these
+   are the answers to "does it also do X", and that question is best
+   answered by letting someone scan for their own X.
+   ══════════════════════════════════════════════════════════════════ */
+
+interface Capability {
+  Icon: LucideIcon
+  title: string
+  body: string
+}
+
+const CAPABILITIES: Capability[] = [
+  {
+    Icon: ClipboardList,
+    title: "Class tests, kept properly",
+    body:
+      "Create a CT, upload the best, worst and average answer scripts, then enter marks for the section. Students see their own mark and the scripts that show them what full marks looked like.",
+  },
+  {
+    Icon: ScanSearch,
+    title: "Similarity check on submissions",
+    body:
+      "Run a check across every PDF submitted for an assignment. EduNexis reads the text, compares each pair and shows you the overlapping passages, so copied work surfaces before you mark it.",
+  },
+  {
+    Icon: Percent,
+    title: "The 75% rule, tracked live",
+    body:
+      "Every register updates each student's running attendance. They can see how close they are to the requirement while they can still do something about it, instead of finding out at the end.",
+  },
+  {
+    Icon: Presentation,
+    title: "Presentations and vivas",
+    body:
+      "Mark presentations, vivas and any other assessment your course runs, then fold them into the final result with the same weighting formula as everything else.",
+  },
+  {
+    Icon: KeyRound,
+    title: "Join codes, with approval",
+    body:
+      "Share one 8-character code with the section. Requests land in your Members tab and nobody joins your course until you approve them.",
+  },
+  {
+    Icon: Download,
+    title: "Export whenever you need it",
+    body:
+      "Attendance registers and the full gradebook export to PDF and CSV, for the departmental paperwork that still has to be handed in on paper.",
+  },
+  {
+    Icon: PlayCircle,
+    title: "Video that plays in the course",
+    body:
+      "Paste a YouTube link as course material and it plays inside EduNexis — no sidebar of recommendations pulling students away from the lecture.",
+  },
+  {
+    Icon: FolderTree,
+    title: "Materials in real folders",
+    body:
+      "Files, folders and links, organised the way you would organise them on a desk. Weeks, topics, labs — whatever matches how you actually teach the course.",
+  },
+  {
+    Icon: Bell,
+    title: "Notifications that reach people",
+    body:
+      "Announcements, new assignments, published marks and approved join requests all notify the right people in the app, so a notice board nobody checks stops being the plan.",
+  },
+  {
+    Icon: Moon,
+    title: "Dark mode, properly done",
+    body:
+      "Every screen is built in both light and dark, not dimmed as an afterthought — because a lot of this work happens late at night.",
+  },
+  {
+    Icon: Users,
+    title: "A public faculty directory",
+    body:
+      "Each teacher gets a public profile with their designation, research interests, publications and the courses they are running. Students can find who teaches what.",
+  },
+  {
+    Icon: Shield,
+    title: "University email only",
+    body:
+      "Sign-up is restricted to @just.edu.bd and @student.just.edu.bd addresses, so a course roster only ever contains people who actually belong to the university.",
+  },
+]
+
+function CapabilityGrid() {
+  return (
+    <section className="relative overflow-hidden border-t border-stone-100 bg-stone-50/60 py-16 sm:py-20 lg:py-24">
+      <div aria-hidden className="pointer-events-none absolute -top-24 right-1/4 h-[340px] w-[340px] rounded-full bg-teal-100/40 blur-3xl" />
+
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <Reveal>
+            <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-teal-700">
+              And everything else
+            </p>
+          </Reveal>
+          <RevealLines
+            className="mt-3 font-display text-3xl font-extrabold tracking-tight text-stone-900 sm:text-4xl md:text-5xl"
+            lines={["The rest of what", "a semester needs."]}
+            accentFrom={1}
+            accentClass="bg-gradient-to-r from-teal-600 to-blue-700 bg-clip-text text-transparent"
+          />
+          <Reveal delay={0.1}>
+            <p className="mt-4 text-[15px] leading-relaxed text-stone-600">
+              Not a roadmap. Every one of these is in the product today.
+            </p>
+          </Reveal>
+        </div>
+
+        <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {CAPABILITIES.map((c, i) => (
+            <motion.div
+              key={c.title}
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={REVEAL_VIEWPORT}
+              transition={{ duration: 0.45, delay: Math.min(i, 6) * 0.05, ease: EASE }}
+              className="group rounded-2xl border border-stone-200 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:border-teal-300 hover:shadow-[0_18px_40px_-20px_rgba(13,148,136,0.45)]"
+            >
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-teal-700 transition-colors duration-300 group-hover:bg-teal-100">
+                <c.Icon className="h-[18px] w-[18px]" strokeWidth={2} />
+              </span>
+              <h3 className="mt-4 font-display text-[15.5px] font-bold text-stone-900">
+                {c.title}
+              </h3>
+              <p className="mt-1.5 text-[13.5px] leading-relaxed text-stone-600">
+                {c.body}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
   )
 }
 

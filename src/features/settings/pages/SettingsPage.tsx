@@ -1,5 +1,5 @@
 import { NavLink, Navigate, Routes, Route } from "react-router-dom"
-import { Shield, Globe } from "lucide-react"
+import { Shield, Globe, Bell } from "lucide-react"
 import { lazy, Suspense } from "react"
 import type { LucideIcon } from "lucide-react"
 import BrandLoader from "@/components/ui/BrandLoader"
@@ -9,6 +9,7 @@ import { cn } from "@/utils/cn"
 
 const SecurityPage = lazy(() => import("./SecurityPage"))
 const VisibilitySettingsPage = lazy(() => import("./VisibilitySettingsPage"))
+const NotificationSettingsPage = lazy(() => import("./NotificationSettingsPage"))
 
 interface SettingsLink {
   to:    string
@@ -21,6 +22,7 @@ interface SettingsLink {
 
 const LINKS: SettingsLink[] = [
   { to: "/settings/security",   label: "Security",       hint: "Password and sessions", icon: Shield },
+  { to: "/settings/notifications", label: "Notifications", hint: "What reaches you",    icon: Bell   },
   { to: "/settings/visibility", label: "Public profile", hint: "What others can see",   icon: Globe  },
 ]
 
@@ -30,7 +32,7 @@ export default function SettingsPage() {
       <PageHero
         eyebrow="Your account"
         title="Settings"
-        description="Your password, active sessions, and what other people can see on your profile."
+        description="Your password, active sessions, which notifications reach you, and what other people can see on your profile."
       />
 
       <div className="h-6" />
@@ -89,6 +91,7 @@ export default function SettingsPage() {
             <Routes>
               <Route index element={<Navigate to="security" replace />} />
               <Route path="security" element={<SecurityPage />} />
+              <Route path="notifications" element={<NotificationSettingsPage />} />
               <Route path="visibility" element={<VisibilitySettingsPage />} />
             </Routes>
           </Suspense>

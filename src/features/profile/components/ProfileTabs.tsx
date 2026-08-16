@@ -17,17 +17,19 @@ interface ProfileTabsProps {
 /**
  * Profile section tabs.
  *
- * A segmented control on a shared track, matching the view switchers in
- * Attendance, Materials, Members and CT. It was a filled teal pill in a
- * ring-and-shadow bar, which made a set of four tabs read louder than the
- * primary action sitting next to it.
+ * An underline rail, the same shape the course tabs and the public faculty
+ * tabs use. It was a segmented control floating in its own bordered track,
+ * which read as a filter control rather than as page navigation — and it was
+ * the only place in the app where switching *pages of a profile* looked
+ * different from switching pages of a course.
  */
 export default function ProfileTabs({ tabs, active, onChange }: ProfileTabsProps) {
   return (
     <nav
       role="tablist"
       aria-label="Profile sections"
-      className="inline-flex items-center gap-0.5 rounded-xl border border-border bg-muted p-0.5"
+      className="-mb-px flex items-center gap-1 overflow-x-auto"
+      style={{ scrollbarWidth: "none" }}
     >
       {tabs.map(t => {
         const isActive = active === t.key
@@ -38,14 +40,17 @@ export default function ProfileTabs({ tabs, active, onChange }: ProfileTabsProps
             aria-selected={isActive}
             onClick={() => onChange(t.key)}
             className={cn(
-              "h-8 whitespace-nowrap rounded-[9px] px-3 text-[12.5px] font-semibold transition-colors duration-120",
+              "relative shrink-0 whitespace-nowrap px-3 pb-3 pt-1 text-[13px] transition-colors duration-120 sm:px-4",
               FOCUS,
               isActive
-                ? "bg-card text-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground",
+                ? "font-semibold text-primary"
+                : "font-medium text-muted-foreground hover:text-foreground",
             )}
           >
             {t.label}
+            {isActive && (
+              <span className="absolute inset-x-2 -bottom-px h-[2px] rounded-full bg-primary" />
+            )}
           </button>
         )
       })}

@@ -20,6 +20,8 @@ import { SkeletonCard } from '@/components/ui/Skeleton'
 import SubmissionsPanel from '../components/SubmissionsPanel'
 import SubmitAssignmentModal from '../components/SubmitAssignmentModal'
 import type { SubmitAssignmentRequest } from '@/types/assignment.types'
+import { useCourseDetail } from '@/features/courses/hooks/useCourseDetail'
+import Linkify from "@/components/ui/Linkify"
 
 function Countdown({ deadline }: { deadline: string }) {
     const [timeLeft, setTimeLeft] = useState('')
@@ -63,6 +65,13 @@ export default function AssignmentDetailPage() {
         useAssignment(courseId, assignmentId)
 
     const { submissions, isLoading: subsLoading } = useSubmissions(courseId, assignmentId)
+
+    /* This page sits on its own route, outside the course layout that provides
+       the read-only context, so it reads the course itself. An archived course
+       refuses submissions and grading server-side; hiding the buttons keeps a
+       student from writing an answer only to be rejected on submit. */
+    const { course } = useCourseDetail(courseId)
+    const readOnly = !!course?.isArchived
 
     if (isLoading) {
         return (
@@ -211,7 +220,7 @@ export default function AssignmentDetailPage() {
                                     <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Instructions</h3>
                                 </div>
                                 <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-                                    {assignment.instructions}
+                                    <Linkify>{assignment.instructions}</Linkify>
                                 </p>
                             </div>
                         )}
@@ -325,13 +334,13 @@ export default function AssignmentDetailPage() {
                                         )}
 
                                         {/* Resubmit if still open */}
-                                        {assignment.isOpen && (!isPastDue || assignment.allowLateSubmission) && (
+                                        {assignment.isOpen && !readOnly && (!isPastDue || assignment.allowLateSubmission) && (
                                             <Button size="sm" variant="secondary" className="w-full" onClick={() => setSubmitOpen(true)}>
                                                 Update Submission
                                             </Button>
                                         )}
                                     </div>
-                                ) : canSubmit ? (
+                                ) : canSubmit && !readOnly ? (
                                     <>
                                         <p className="text-sm text-muted-foreground">Submit your work before the deadline.</p>
                                         <Button className="w-full" leftIcon={<Send className="w-4 h-4" />} onClick={() => setSubmitOpen(true)}>

@@ -14,8 +14,8 @@ import Select from "@/components/ui/Select"
 import FormPageLayout from "@/components/forms/FormPageLayout"
 import FormSection from "@/components/forms/FormSection"
 import FormField from "@/components/forms/FormField"
-import { Field as FieldGroup, Textarea } from "@/components/ui/field"
-import { TEXT } from "@/components/ui/appTokens"
+import { Field as FieldGroup, Textarea, FIELD_BASE, fieldState } from "@/components/ui/field"
+import { TEXT, MOTION } from "@/components/ui/appTokens"
 import { cn } from "@/utils/cn"
 import FormStepper from "@/components/forms/FormStepper"
 import ShowAdvancedToggle from "@/components/forms/ShowAdvancedToggle"
@@ -23,7 +23,8 @@ import LivePreviewPanel from "@/components/forms/LivePreviewPanel"
 import { ActiveCourseCard } from "../components/CourseCard"
 
 import {
-  DEPARTMENT_GROUPS, YEARS, SEMESTERS, ACADEMIC_SESSIONS,
+  DEPARTMENT_GROUPS_WITH_OTHER, DEPARTMENT_OTHER,
+  YEARS, SEMESTERS, ACADEMIC_SESSIONS,
   COURSE_CODE_PATTERN, COURSE_CODE_MESSAGE,
 } from "@/config/constants"
 import { useAuthStore } from "@/store/authStore"
@@ -46,8 +47,28 @@ const schema = z.object({
   semesterInYear: z.string().min(1, "Semester is required"),
   section: z.string().optional(),
   description: z.string().optional(),
+  /** Only used when `department` is the "Other" sentinel. */
+  customDepartment: z.string().optional(),
 })
+  /* Required *conditionally*: picking "Other" and leaving the box empty would
+     otherwise submit the sentinel as the department name. */
+  .superRefine((data, ctx) => {
+    if (data.department !== DEPARTMENT_OTHER) return
+    const name = data.customDepartment?.trim() ?? ""
+    if (name.length < 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["customDepartment"],
+        message: "Type the department name",
+      })
+    }
+  })
 type FormData = z.infer<typeof schema>
+
+/** The department actually saved: the typed name when "Other" is chosen. */
+function resolveDepartment(department?: string, custom?: string) {
+  return department === DEPARTMENT_OTHER ? (custom?.trim() ?? "") : (department ?? "")
+}
 
 const STEPS = [
   { label: "Identity" },
@@ -57,7 +78,7 @@ const STEPS = [
 
 const STEP_FIELDS: ReadonlyArray<ReadonlyArray<keyof FormData>> = [
   ["title", "courseCode", "courseType", "creditHours"],
-  ["department", "academicSession", "year", "semesterInYear"],
+  ["department", "customDepartment", "academicSession", "year", "semesterInYear"],
   [],
 ]
 
@@ -68,7 +89,10 @@ export default function CreateCoursePage() {
   const { user } = useAuthStore()
   const { isCreating } = useCourses()
   const { data: quota, isLoading: quotaLoading } = useMyQuota()
-  const quotaExhausted = !!quota && quota.remainingQuota <= 0
+  /* Only a quota the platform actually enforces can block creation. Without
+     the isEnforced check this disabled the button and read "Quota exhausted"
+     on a platform with no quota system turned on. */
+  const quotaExhausted = !!quota && quota.isEnforced && quota.remainingQuota <= 0
   const [submitting, setSubmitting] = useState(false)
   const [step, setStep] = useState(0)
 
@@ -84,6 +108,7 @@ export default function CreateCoursePage() {
       title: "",
       courseCode: "",
       department: "",
+      customDepartment: "",
       academicSession: "",
       year: "",
       semesterInYear: "",
@@ -124,7 +149,7 @@ export default function CreateCoursePage() {
         title: data.title,
         courseCode: data.courseCode,
         creditHours: data.creditHours,
-        department: data.department,
+        department: resolveDepartment(data.department, data.customDepartment),
         academicSession: data.academicSession,
         year: data.year,
         semester: data.year + " - " + data.semesterInYear,
@@ -152,14 +177,15 @@ export default function CreateCoursePage() {
   const step1Complete = !!values.title && values.title.length >= 3
     && !!values.courseCode && values.courseCode.length >= 2
     && !!values.courseType && !!values.creditHours
-  const step2Complete = !!values.department && !!values.academicSession
+  const chosenDepartment = resolveDepartment(values.department, values.customDepartment)
+  const step2Complete = !!chosenDepartment && !!values.academicSession
     && !!values.year && !!values.semesterInYear
 
   const previewCourse: CourseSummaryDto = {
     id: PREVIEW_COURSE_ID,
     title: values.title?.trim() || "Your course title",
     courseCode: values.courseCode?.trim().toUpperCase() || "COURSE-0000",
-    department: values.department || "Department",
+    department: chosenDepartment || "Department",
     academicSession: values.academicSession || "",
     semester: values.year && values.semesterInYear
       ? values.year + " - " + values.semesterInYear
@@ -343,13 +369,49 @@ export default function CreateCoursePage() {
                     <Select
                       {...register("department")}
                       placeholder="Select department"
-                      optionGroups={DEPARTMENT_GROUPS}
+                      optionGroups={DEPARTMENT_GROUPS_WITH_OTHER}
                     />
                     {errors.department?.message && (
                       <p className="mt-1.5 text-[11.5px] font-semibold text-red-600">
                         {errors.department.message}
                       </p>
                     )}
+
+                    {/* New departments: the fixed list cannot cover a department
+                        that does not exist yet, so "Other" opens a box instead
+                        of making the teacher pick something untrue. */}
+                    <AnimatePresence initial={false}>
+                      {values.department === DEPARTMENT_OTHER && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2, ease: MOTION.ease }}
+                          className="overflow-hidden"
+                        >
+                          <input
+                            {...register("customDepartment")}
+                            autoFocus
+                            placeholder="e.g. Robotics and Mechatronics Engineering"
+                            aria-label="New department name"
+                            className={cn(
+                              FIELD_BASE,
+                              fieldState(!!errors.customDepartment),
+                              "mt-2",
+                            )}
+                          />
+                          {errors.customDepartment?.message ? (
+                            <p className="mt-1.5 text-[11.5px] font-semibold text-red-600">
+                              {errors.customDepartment.message}
+                            </p>
+                          ) : (
+                            <p className="mt-1.5 text-[11.5px] text-muted-foreground">
+                              Type the full department name as it should appear to students.
+                            </p>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   <div>
