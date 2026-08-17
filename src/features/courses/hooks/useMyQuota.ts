@@ -10,7 +10,7 @@ import { useAuthStore } from "@/store/authStore"
  */
 export function useMyQuota() {
   const { user } = useAuthStore()
-  const isTeacher = user?.role === "Teacher" || user?.role === "SuperAdmin" || user?.role === "DepartmentAdmin"
+  const isTeacher = user?.role === "Teacher" || user?.role === "SuperAdmin"
 
   return useQuery({
     queryKey: ["quota", "mine", user?.id],

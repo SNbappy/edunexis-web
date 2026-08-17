@@ -123,9 +123,8 @@ export default function Sidebar({ onItemClick }: { onItemClick?: () => void } = 
      is checked first because it is the more specific role. */
   const roleLabel =
     user?.role === "SuperAdmin" ? "Administrator"
-      : user?.role === "DepartmentAdmin" ? "Department admin"
-        : teacher ? "Teacher"
-          : "Student"
+      : teacher ? "Teacher"
+        : "Student"
 
   const W = collapsed ? 64 : 244
 

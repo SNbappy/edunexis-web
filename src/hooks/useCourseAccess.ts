@@ -42,15 +42,13 @@ export function useCourseAccess(courseId: string) {
   })
 
   const course = courseQuery.data
-  /* "Admin" is not a role this app has — the admin roles are DepartmentAdmin
-     and SuperAdmin. The comparison could never be true, so department admins
-     were dropped into the student membership check below and shown
-     "not enrolled" on courses they are entitled to administer. */
+  /* "Admin" is not a role this app has — the only admin role is SuperAdmin.
+     Comparing against "Admin" could never be true, which dropped admins into
+     the student membership check below and showed them "not enrolled" on
+     courses they are entitled to administer. */
   const isTeacherOrAdmin =
     !!user && !!course &&
-    (course.teacherId === user.id ||
-      user.role === "DepartmentAdmin" ||
-      user.role === "SuperAdmin")
+    (course.teacherId === user.id || user.role === "SuperAdmin")
 
   const membersQuery = useQuery({
     queryKey: ["course-members", courseId],

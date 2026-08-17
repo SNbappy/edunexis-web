@@ -277,24 +277,28 @@ The paperwork still has to be handed in on paper. Attendance registers and the f
 
 ### 18. Administration
 
-A `SuperAdmin` / `DepartmentAdmin` area covers platform settings, **teacher course quotas** with a grant ledger, and an audit log.
+A `SuperAdmin`-only area covers platform settings, **teacher course quotas** with a grant ledger, and an audit log.
 
 ---
 
 ## Roles and permissions
 
-| Capability | Student | Teacher | Dept. admin | Super admin |
-|---|:---:|:---:|:---:|:---:|
-| Join a course with a code | ● | | | |
-| Submit and update work | ● | | | |
-| See own marks and attendance | ● | | | |
-| Create and edit courses | | ● | ● | ● |
-| Approve or reject join requests | | ● | ● | ● |
-| Take attendance | | ● | ● | ● |
-| Post materials and announcements | | ● | ● | ● |
-| Grade work and publish results | | ● | ● | ● |
-| Run similarity checks | | ● | ● | ● |
-| Platform settings and quotas | | | ● | ● |
+Three roles, and the account's email domain decides which one it gets:
+
+| Capability | Student | Teacher | Super admin |
+|---|:---:|:---:|:---:|
+| Join a course with a code | ● | | |
+| Submit and update work | ● | | |
+| See own marks and attendance | ● | | |
+| Create and edit courses | | ● | ● |
+| Approve or reject join requests | | ● | ● |
+| Take attendance | | ● | ● |
+| Post materials and announcements | | ● | ● |
+| Grade work and publish results | | ● | ● |
+| Run similarity checks | | ● | ● |
+| Platform settings and teacher quotas | | | ● |
+
+`@student.just.edu.bd` registers as a **Student**, `@just.edu.bd` as a **Teacher**. **Super admin** is not self-service: an address listed in `Auth:AdminEmails` is promoted on login, and student addresses are refused promotion whatever the configuration says.
 
 Course-scoped writes are authorised centrally, so a teacher can only ever act on courses they own.
 
