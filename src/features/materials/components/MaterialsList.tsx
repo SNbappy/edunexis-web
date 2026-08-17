@@ -1,6 +1,7 @@
 import { motion } from "framer-motion"
 import { FolderOpen, Folder, FileText } from "lucide-react"
 import MaterialCard from "./MaterialCard"
+import MaterialTile from "./MaterialTile"
 import type { MaterialDto } from "@/types/material.types"
 
 interface MaterialsListProps {
@@ -36,6 +37,10 @@ function SectionLabel({ icon, label, count }: SectionLabelProps) {
   )
 }
 
+/* Files and links render as tiles in a grid; folders stay as rows.
+   A folder is navigation — a compact row you scan and click through — while a
+   file is content, and content is easier to recognise by its thumbnail than by
+   a filename stretched across a 1200px band. */
 export default function MaterialsList({
   materials, courseId, isFlattenMode, onDelete, onOpenFolder, onPreview,
 }: MaterialsListProps) {
@@ -62,22 +67,23 @@ export default function MaterialsList({
   /* Flatten mode: all rendered as a single flat list of files. */
   if (isFlattenMode) {
     return (
-      <div className="space-y-2">
+      <div>
         <SectionLabel
           icon={<FileText className="h-3.5 w-3.5" />}
           label="All files"
           count={materials.length}
         />
-        {materials.map((m, i) => (
-          <MaterialCard
-            key={m.id}
-            material={m}
-            index={i}
-            courseId={courseId}
-            onDelete={onDelete}
-            onPreview={onPreview}
-          />
-        ))}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {materials.map((m, i) => (
+            <MaterialTile
+              key={m.id}
+              material={m}
+              index={i}
+              onDelete={onDelete}
+              onPreview={onPreview}
+            />
+          ))}
+        </div>
       </div>
     )
   }
@@ -118,15 +124,13 @@ export default function MaterialsList({
             label="Files & links"
             count={files.length}
           />
-          <div className="space-y-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {files.map((m, i) => (
-              <MaterialCard
+              <MaterialTile
                 key={m.id}
                 material={m}
                 index={i}
-                courseId={courseId}
                 onDelete={onDelete}
-                onOpenFolder={onOpenFolder}
                 onPreview={onPreview}
               />
             ))}

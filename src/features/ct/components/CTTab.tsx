@@ -74,14 +74,21 @@ export default function CTTab({ courseId, members = [] }: Props) {
       {/* Status + filters + action. The tab bar already says "CT". */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-[13px] text-muted-foreground">
+          {/* A student's list is already published-only, so counting drafts
+              at them is teacher bookkeeping they cannot act on. */}
           {ctEvents.length === 0
             ? "Nothing posted yet"
-            : publishedCount > 0
-              ? `${publishedCount} published · ${ctEvents.length} total`
-              : `${ctEvents.length} total · none published`}
+            : !teacher
+              ? `${ctEvents.length} class ${ctEvents.length === 1 ? "test" : "tests"}`
+              : publishedCount > 0
+                ? `${publishedCount} published · ${ctEvents.length} total`
+                : `${ctEvents.length} total · none published`}
         </p>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* Students only ever receive published CTs, so a Draft/Published
+              filter would offer them two states they can never be in. */}
+          {teacher && (
           <div className="flex items-center gap-0.5 rounded-xl border border-border bg-muted p-0.5">
             {FILTERS.map(tab => {
               const active = filter === tab.key
@@ -109,6 +116,7 @@ export default function CTTab({ courseId, members = [] }: Props) {
               )
             })}
           </div>
+          )}
 
           {teacher && !readOnly && createButton}
         </div>

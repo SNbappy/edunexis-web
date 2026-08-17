@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { FileText, Star, ExternalLink } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
+import SubmissionAttachments from './SubmissionAttachments'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import Avatar from '@/components/ui/Avatar'
@@ -71,27 +72,9 @@ export default function GradeSubmissionModal({ isOpen, onClose, submission, maxM
                     </div>
                 )}
 
-                {submission.fileUrl && (
-                    <div className="flex items-center gap-3 p-3 rounded-xl border border-border">
-                        <FileText className="w-5 h-5 text-primary shrink-0" />
-                        <span className="text-sm text-foreground flex-1 truncate">Submitted file</span>
-                        <a href={submission.fileUrl} target="_blank" rel="noopener noreferrer">
-                            <Button size="sm" variant="secondary" leftIcon={<ExternalLink className="w-3.5 h-3.5" />}>
-                                View
-                            </Button>
-                        </a>
-                    </div>
-                )}
-
-                {submission.linkUrl && (
-                    <div className="flex items-center gap-3 p-3 rounded-xl border border-border">
-                        <ExternalLink className="w-5 h-5 text-primary shrink-0" />
-                        <span className="text-sm text-foreground flex-1 truncate">{submission.linkUrl}</span>
-                        <a href={submission.linkUrl} target="_blank" rel="noopener noreferrer">
-                            <Button size="sm" variant="secondary">Open</Button>
-                        </a>
-                    </div>
-                )}
+                {/* Every file and link, not just the first — a teacher grading a
+                    report plus its source needs to open both. */}
+                <SubmissionAttachments submission={submission} />
 
                 {/* AI & Plagiarism Analysis */}
                 {submission.textContent && (

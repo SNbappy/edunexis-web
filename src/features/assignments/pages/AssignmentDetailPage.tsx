@@ -21,6 +21,9 @@ import SubmissionsPanel from '../components/SubmissionsPanel'
 import SubmitAssignmentModal from '../components/SubmitAssignmentModal'
 import type { SubmitAssignmentRequest } from '@/types/assignment.types'
 import { useCourseDetail } from '@/features/courses/hooks/useCourseDetail'
+import SubmissionAttachments from '../components/SubmissionAttachments'
+import { useAssignmentComments } from '../hooks/useAssignmentComments'
+import CommentThread from '@/features/announcements/components/CommentThread'
 import Linkify from "@/components/ui/Linkify"
 
 function Countdown({ deadline }: { deadline: string }) {
@@ -72,6 +75,10 @@ export default function AssignmentDetailPage() {
        student from writing an answer only to be rejected on submit. */
     const { course } = useCourseDetail(courseId)
     const readOnly = !!course?.isArchived
+
+    const {
+        comments, addComment, isAdding: isAddingComment, editComment, deleteComment,
+    } = useAssignmentComments(courseId, assignmentId)
 
     if (isLoading) {
         return (
@@ -291,24 +298,11 @@ export default function AssignmentDetailPage() {
                                             </div>
                                         )}
 
-                                        {/* File link */}
-                                        {mySubmission.fileUrl && (
-                                            <a href={mySubmission.fileUrl} target="_blank" rel="noopener noreferrer"
-                                                className="flex items-center gap-2 p-3 rounded-xl border border-border bg-muted/40 hover:bg-muted transition-colors">
-                                                <FileText className="w-4 h-4 text-primary shrink-0" />
-                                                <span className="text-sm text-foreground flex-1">View submitted file</span>
-                                                <Download className="w-3.5 h-3.5 text-muted-foreground" />
-                                            </a>
-                                        )}
-
-                                        {/* Link submission */}
-                                        {mySubmission.linkUrl && (
-                                            <a href={mySubmission.linkUrl} target="_blank" rel="noopener noreferrer"
-                                                className="flex items-center gap-2 p-3 rounded-xl border border-border bg-muted/40 hover:bg-muted transition-colors">
-                                                <Send className="w-4 h-4 text-primary shrink-0" />
-                                                <span className="text-sm text-primary truncate flex-1">{mySubmission.linkUrl}</span>
-                                            </a>
-                                        )}
+                                        {/* Everything turned in.
+                                            Falls back to the legacy single
+                                            fileUrl/linkUrl for submissions made
+                                            before multi-attachment support. */}
+                                        <SubmissionAttachments submission={mySubmission} />
 
                                         {/* Grade */}
                                         {mySubmission.isGraded ? (
@@ -360,6 +354,24 @@ export default function AssignmentDetailPage() {
                                 ) : null}
                             </div>
                         )}
+
+                        {/* Class comments — questions about a task belong under
+                            the task, not in a separate chat nobody links back. */}
+                        <div className="rounded-2xl border border-border bg-card p-5">
+                            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+                                Discussion
+                            </h3>
+                            <CommentThread
+                                announcementId={assignmentId}
+                                comments={comments}
+                                readOnly={readOnly}
+                                onAdd={addComment}
+                                onEdit={editComment}
+                                onDelete={deleteComment}
+                                isAdding={isAddingComment}
+                                emptyLabel="Ask a question about this assignment"
+                            />
+                        </div>
 
                         {/* Assignment Info */}
                         <div className="rounded-2xl border border-border bg-card p-5 space-y-3">

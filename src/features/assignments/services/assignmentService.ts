@@ -1,5 +1,6 @@
 import api from '@/lib/axios'
 import type { ApiResponse } from '@/types/api.types'
+import type { CommentDto } from '@/types/announcement.types'
 import type {
     AssignmentDto, CreateAssignmentRequest, UpdateAssignmentRequest,
     SubmitAssignmentRequest, GradeSubmissionRequest, SubmissionDto
@@ -59,8 +60,9 @@ export const assignmentService = {
         const form = new FormData()
         form.append('submissionType', data.submissionType)
         if (data.textContent) form.append('textContent', data.textContent)
-        if (data.file) form.append('file', data.file)
-        if (data.linkUrl) form.append('linkUrl', data.linkUrl)
+        // Repeated fields — the API binds these as collections.
+        for (const f of data.files ?? []) form.append('files', f)
+        for (const l of data.linkUrls ?? []) form.append('linkUrls', l)
         return api
             .post<ApiResponse<SubmissionDto>>(
                 '/Assignments/assignments/' + assignmentId + '/submit', form,
@@ -87,4 +89,27 @@ export const assignmentService = {
         api
             .post<ApiResponse<null>>('/Assignments/submissions/' + submissionId + '/grade', data)
             .then((r) => r.data),
+
+    /* Class comments on an assignment. Same shape as announcement comments so
+       the UI can share one component. */
+    getComments: (courseId: string, assignmentId: string) =>
+        api.get<ApiResponse<CommentDto[]>>(
+            `/Assignments/courses/${courseId}/assignments/${assignmentId}/comments`
+        ).then(r => r.data),
+
+    addComment: (courseId: string, assignmentId: string, content: string) =>
+        api.post<ApiResponse<CommentDto>>(
+            `/Assignments/courses/${courseId}/assignments/${assignmentId}/comments`,
+            { content }
+        ).then(r => r.data),
+
+    editComment: (courseId: string, commentId: string, content: string) =>
+        api.put<ApiResponse<CommentDto>>(
+            `/Assignments/courses/${courseId}/comments/${commentId}`, { content }
+        ).then(r => r.data),
+
+    deleteComment: (courseId: string, commentId: string) =>
+        api.delete<ApiResponse>(
+            `/Assignments/courses/${courseId}/comments/${commentId}`
+        ).then(r => r.data),
 }

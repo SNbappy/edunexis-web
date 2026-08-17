@@ -42,6 +42,11 @@ export const announcementService = {
             { content }
         ).then((r) => r.data),
 
+    editComment: (courseId: string, commentId: string, content: string) =>
+        api.put<ApiResponse<CommentDto>>(
+            `/Announcements/courses/${courseId}/comments/${commentId}`, { content }
+        ).then((r) => r.data),
+
     deleteComment: (courseId: string, commentId: string) =>
         api.delete<ApiResponse>(
             `/Announcements/courses/${courseId}/comments/${commentId}`

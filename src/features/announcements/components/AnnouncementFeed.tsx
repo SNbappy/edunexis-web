@@ -29,7 +29,7 @@ export default function AnnouncementFeed({ courseId }: AnnouncementFeedProps) {
 
   /* Comments load once for the whole course and are handed to each card, so a
      stream of thirty announcements is one request rather than thirty. */
-  const { byAnnouncement, addComment, isAdding, deleteComment } = useComments(courseId)
+  const { byAnnouncement, addComment, isAdding, editComment, deleteComment } = useComments(courseId)
 
   /* Split into pinned + unpinned, preserving creation order within each group. */
   const pinned: AnnouncementDto[] = []
@@ -100,6 +100,7 @@ export default function AnnouncementFeed({ courseId }: AnnouncementFeedProps) {
                 readOnly={readOnly}
                 comments={byAnnouncement[a.id] ?? []}
                 onAddComment={addComment}
+                onEditComment={editComment}
                 onDeleteComment={deleteComment}
                 isAddingComment={isAdding}
               />
@@ -129,6 +130,7 @@ export default function AnnouncementFeed({ courseId }: AnnouncementFeedProps) {
                 readOnly={readOnly}
                 comments={byAnnouncement[a.id] ?? []}
                 onAddComment={addComment}
+                onEditComment={editComment}
                 onDeleteComment={deleteComment}
                 isAddingComment={isAdding}
               />

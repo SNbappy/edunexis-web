@@ -50,7 +50,6 @@ export default function CreatePresentationModal({
       title="New test"
       description="Create a test. You can enter marks anytime and publish when ready."
       size="lg"
-      scrollable
     >
       <form onSubmit={handleSubmit(submit)} className="space-y-4">
         <Input

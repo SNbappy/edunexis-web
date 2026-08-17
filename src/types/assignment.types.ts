@@ -34,6 +34,7 @@ export interface SubmissionDto {
     marks?: number | null
     feedback?: string | null
     isGraded: boolean
+    attachments?: SubmissionAttachmentDto[] | null
 }
 
 export interface CreateAssignmentRequest {
@@ -58,8 +59,18 @@ export interface UpdateAssignmentRequest {
 export interface SubmitAssignmentRequest {
     submissionType: 'Text' | 'File' | 'Link'
     textContent?: string
-    file?: File
-    linkUrl?: string
+    /** Every attached file. A task is often a report plus code plus a demo. */
+    files?: File[]
+    /** Every attached link. */
+    linkUrls?: string[]
+}
+
+export interface SubmissionAttachmentDto {
+    id: string
+    kind: 'File' | 'Link'
+    url: string
+    fileName?: string | null
+    fileSizeBytes?: number | null
 }
 
 export interface GradeSubmissionRequest {

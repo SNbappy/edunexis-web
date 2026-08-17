@@ -215,7 +215,6 @@ function GrantHistoryModal({
         isOpen={!!teacher}
         onClose={onClose}
         size="xl"
-        scrollable
         title={`Course allowance — ${teacher?.fullName ?? teacher?.email ?? ''}`}
         description="Every grant ever issued. Revoking withdraws unused slots only; courses already created are never removed."
       >

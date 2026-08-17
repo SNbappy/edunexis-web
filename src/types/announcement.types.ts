@@ -26,4 +26,7 @@ export interface CommentDto {
     createdAt: string
     /** Whether the signed-in user may delete it (own comment, or teacher). */
     canDelete: boolean
+    /** Author-only. Teachers may delete but not rewrite. */
+    canEdit: boolean
+    editedAt?: string | null
 }

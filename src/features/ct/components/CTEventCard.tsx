@@ -124,15 +124,17 @@ export default function CTEventCard({
             <div className="flex shrink-0 items-center gap-1.5" onClick={e => e.stopPropagation()}>
               {/* Draft vs published is the one thing worth colouring: it decides
                   whether students can see their marks. */}
-              <Badge
-                variant={isPublished ? "success" : "warning"}
-                size="sm"
-                icon={isPublished
-                  ? <CheckCircle2 strokeWidth={ICON_STROKE} />
-                  : <Edit2 strokeWidth={ICON_STROKE} />}
-              >
-                {isPublished ? "Published" : "Draft"}
-              </Badge>
+              {teacher && (
+                <Badge
+                  variant={isPublished ? "success" : "warning"}
+                  size="sm"
+                  icon={isPublished
+                    ? <CheckCircle2 strokeWidth={ICON_STROKE} />
+                    : <Edit2 strokeWidth={ICON_STROKE} />}
+                >
+                  {isPublished ? "Published" : "Draft"}
+                </Badge>
+              )}
 
               {hasMenu && (
                 <div className="relative" ref={menuRef}>

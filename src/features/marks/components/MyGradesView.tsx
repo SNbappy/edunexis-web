@@ -3,7 +3,6 @@ import { TrendingUp } from 'lucide-react'
 import EmptyState from '@/components/ui/EmptyState'
 import { SkeletonCard } from '@/components/ui/Skeleton'
 import { StatRing } from '@/components/ui/charts'
-import { GRADE_SCALE } from '@/config/constants'
 import { ICON_STROKE, SURFACE, TEXT } from '@/components/ui/appTokens'
 import { useMarks } from '../hooks/useMarks'
 import { useAuthStore } from '@/store/authStore'
@@ -14,15 +13,13 @@ interface Props { courseId: string }
 /**
  * A student's own result for a course.
  *
- * The grade comes from GRADE_SCALE, the single scale the rest of the app
- * uses. This screen previously computed its own with different cut-offs
- * — 80 for A+, 70 for A — against an official scale of 90 for A+ and 85
- * for A. A student on 82% was told "A+" when the university scale gives
- * "A-", on the one screen where being wrong matters most.
+ * Reports marks and percentage only. It used to derive a letter grade and GPA
+ * from GRADE_SCALE, which read as the official result — it is not. The
+ * university computes the transcript; a course page stating "A-" and "GPA 3.5"
+ * is at best a guess and at worst contradicts the record a student is graded
+ * on. The percentage is what this course actually produced, so that is what it
+ * shows.
  */
-function gradeFor(percent: number) {
-    return GRADE_SCALE.find(g => percent >= g.min) ?? GRADE_SCALE[GRADE_SCALE.length - 1]
-}
 
 export default function MyGradesView({ courseId }: Props) {
     const { user }                          = useAuthStore()
@@ -55,7 +52,6 @@ export default function MyGradesView({ courseId }: Props) {
 
     const totalMarks = formula?.totalMarks ?? 0
     const pct        = totalMarks > 0 ? (myMark.finalMark / totalMarks) * 100 : 0
-    const grade      = gradeFor(pct)
     const passing    = pct >= 40
 
     return (
@@ -64,9 +60,12 @@ export default function MyGradesView({ courseId }: Props) {
             animate={{ opacity: 1, y: 0 }}
             className="mx-auto max-w-2xl space-y-4"
         >
-            {/* Result. The ring carries the percentage, the numerals carry the
-                marks, and the grade letter is stated once with its label and
-                GPA so there is no ambiguity about which scale produced it. */}
+            {/* Result: marks out of total, and the percentage on the ring.
+                No letter grade, no GPA and no "Below Average" wording. A course
+                result is one input to a transcript the university computes; a
+                letter and a GPA shown here look authoritative and would be read
+                as the official grade, which this is not. The percentage is the
+                fact the course actually produced. */}
             <div className={cn(SURFACE.cardLifted, 'p-5 sm:p-6')}>
                 <div className="flex flex-wrap items-center gap-6">
                     <StatRing
@@ -90,16 +89,13 @@ export default function MyGradesView({ courseId }: Props) {
                         <div className="mt-3 flex flex-wrap items-center gap-2">
                             <span
                                 className={cn(
-                                    'inline-flex items-center rounded-lg border px-2.5 py-1 font-display text-[15px] font-extrabold',
+                                    'inline-flex items-center rounded-lg border px-2.5 py-1 font-display text-[15px] font-extrabold tabular-nums',
                                     passing
                                         ? 'border-success/25 bg-success-soft text-success'
                                         : 'border-destructive/25 bg-destructive-soft text-destructive',
                                 )}
                             >
-                                {grade.grade}
-                            </span>
-                            <span className={TEXT.muted}>
-                                {grade.label} · GPA {grade.gpa.toFixed(2)}
+                                {pct.toFixed(1)}%
                             </span>
                         </div>
                     </div>

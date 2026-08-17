@@ -3,7 +3,6 @@ import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Search, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react'
 import Avatar from '@/components/ui/Avatar'
-import Badge from '@/components/ui/Badge'
 import { cn } from '@/utils/cn'
 import type { GradebookRowDto, GradebookDto } from '@/types/marks.types'
 
@@ -12,15 +11,9 @@ interface Props { gradebook: GradebookDto }
 type SortField = 'name' | 'percentage' | 'attendance'
 type SortDir = 'asc' | 'desc'
 
-function GradeBadge({ grade }: { grade: string }) {
-    const map: Record<string, 'success' | 'default' | 'warning' | 'danger' | 'muted'> = {
-        'A+': 'success', 'A': 'success', 'A-': 'success',
-        'B+': 'default', 'B': 'default', 'B-': 'default',
-        'C+': 'warning', 'C': 'warning',
-        'D': 'danger', 'F': 'danger',
-    }
-    return <Badge variant={map[grade] ?? 'muted'}>{grade}</Badge>
-}
+/* No letter-grade column. The gradebook reports marks and percentage; the
+   letter and GPA belong to the university's transcript, and showing a derived
+   one here invites it being quoted as the official result. */
 
 function MarkCell({ obtained, total, isAbsent }: { obtained: number | null; total: number; isAbsent?: boolean }) {
     if (isAbsent) return <span className="text-xs text-destructive font-medium">ABS</span>
@@ -143,8 +136,6 @@ export default function GradebookTable({ gradebook }: Props) {
                                     </button>
                                 </th>
 
-                                {/* Grade */}
-                                <th className="text-center px-4 py-3 font-semibold text-foreground min-w-[70px]">Grade</th>
                             </tr>
 
                             {/* Column averages row */}
@@ -264,10 +255,6 @@ export default function GradebookTable({ gradebook }: Props) {
                                         </div>
                                     </td>
 
-                                    {/* Grade */}
-                                    <td className="text-center px-4 py-3">
-                                        <GradeBadge grade={row.grade} />
-                                    </td>
                                 </motion.tr>
                             ))}
                         </tbody>

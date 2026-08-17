@@ -125,7 +125,6 @@ export default function TakeAttendanceSheet({
           : "Mark each student present or absent."
       }
       size="xl"
-      scrollable
       footer={
         <>
           {counts.unmarked > 0 && (

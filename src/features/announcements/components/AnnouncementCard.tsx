@@ -22,6 +22,7 @@ interface AnnouncementCardProps {
   readOnly?: boolean
   comments?: CommentDto[]
   onAddComment?: (args: { announcementId: string; content: string }) => void
+  onEditComment?: (args: { commentId: string; content: string }) => void
   onDeleteComment?: (commentId: string) => void
   isAddingComment?: boolean
 }
@@ -35,7 +36,7 @@ const LONG_CONTENT_THRESHOLD = 280
 
 export default function AnnouncementCard({
   announcement, index = 0, canPin = false, canDelete = false, onPin, onDelete,
-  readOnly = false, comments = [], onAddComment, onDeleteComment, isAddingComment,
+  readOnly = false, comments = [], onAddComment, onEditComment, onDeleteComment, isAddingComment,
 }: AnnouncementCardProps) {
   const { user } = useAuthStore()
   const [expanded, setExpanded] = useState(false)
@@ -233,6 +234,7 @@ export default function AnnouncementCard({
               comments={comments}
               readOnly={readOnly}
               onAdd={onAddComment}
+              onEdit={onEditComment}
               onDelete={onDeleteComment}
               isAdding={isAddingComment}
             />

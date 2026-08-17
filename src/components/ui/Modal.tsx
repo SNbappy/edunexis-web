@@ -17,7 +17,6 @@ export interface ModalProps {
   hideHeader?: boolean
   /** Pinned action bar. Stays visible while the body scrolls. */
   footer?: React.ReactNode
-  scrollable?: boolean
 }
 
 const SIZES = {
@@ -29,7 +28,7 @@ const SIZES = {
 
 function ModalContent({
   isOpen, onClose, title, description, children,
-  size = "md", hideClose, hideHeader, footer, scrollable,
+  size = "md", hideClose, hideHeader, footer,
 }: ModalProps) {
   useEffect(() => {
     if (!isOpen) return
@@ -54,7 +53,7 @@ function ModalContent({
           role="dialog"
           aria-modal="true"
           aria-label={title}
-          className="fixed inset-0 flex items-center justify-center p-4"
+          className="fixed inset-0 flex items-center justify-center overflow-y-auto p-3 sm:p-4"
           style={{ zIndex: 99999 }}
         >
           <motion.div
@@ -77,7 +76,7 @@ function ModalContent({
               SURFACE.overlay,
               "relative flex w-full flex-col overflow-hidden",
               SIZES[size],
-              scrollable ? "max-h-[88vh]" : "max-h-[92vh]",
+              "max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)]",
             )}
           >
             {showHeader && (
@@ -110,12 +109,20 @@ function ModalContent({
               </div>
             )}
 
+            {/* The body always scrolls.
+                It used to scroll only when `scrollable` or a footer was set, so
+                any modal taller than the viewport without either simply had its
+                overflow clipped by the container — the bottom of the form,
+                including its buttons, became unreachable. Making this
+                unconditional means a long modal degrades to a scroll instead of
+                losing content, whatever the caller passed.
+
+                `scrollbar-hide` keeps the track invisible while the content
+                still scrolls, so a short modal does not gain a stray gutter. */}
             <div
               className={cn(
-                "px-5 py-4",
-                // Always scrollable when there is a pinned footer, otherwise the
-                // footer can be pushed out of the viewport by a long body.
-                (scrollable || footer) && "flex-1 overflow-y-auto",
+                "min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4",
+                "scrollbar-hide",
               )}
             >
               {children}

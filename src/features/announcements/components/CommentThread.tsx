@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { MessageSquare, Send, Trash2 } from "lucide-react"
+import { MessageSquare, Send, Trash2, Pencil, Check, X } from "lucide-react"
 import Avatar from "@/components/ui/Avatar"
 import Linkify from "@/components/ui/Linkify"
 import InlineSpinner from "@/components/ui/InlineSpinner"
@@ -22,18 +22,38 @@ const MAX = 1000
  */
 export default function CommentThread({
   announcementId, comments, readOnly,
-  onAdd, onDelete, isAdding,
+  onAdd, onDelete, onEdit, isAdding,
+  emptyLabel = "Add a class comment",
 }: {
   announcementId: string
   comments: CommentDto[]
   readOnly?: boolean
   onAdd: (args: { announcementId: string; content: string }) => void
   onDelete: (commentId: string) => void
+  /** Omit to disable editing. */
+  onEdit?: (args: { commentId: string; content: string }) => void
   isAdding?: boolean
+  emptyLabel?: string
 }) {
   const { user } = useAuthStore()
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState("")
+
+  // Which comment is being rewritten, and the working copy of its text.
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editDraft, setEditDraft] = useState("")
+
+  // Which comment has its delete armed and is waiting for a second click.
+  const [confirmingId, setConfirmingId] = useState<string | null>(null)
+
+  const startEdit = (c: CommentDto) => { setConfirmingId(null); setEditingId(c.id); setEditDraft(c.content) }
+  const cancelEdit = () => { setEditingId(null); setEditDraft("") }
+  const commitEdit = () => {
+    const content = editDraft.trim()
+    if (!content || !editingId) return
+    onEdit?.({ commentId: editingId, content })
+    cancelEdit()
+  }
 
   const count = comments.length
   const canWrite = !readOnly
@@ -64,7 +84,7 @@ export default function CommentThread({
         >
           <MessageSquare className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
           {count === 0
-            ? "Add a class comment"
+            ? emptyLabel
             : `${count} ${count === 1 ? "comment" : "comments"}`}
         </button>
       </div>
@@ -90,23 +110,122 @@ export default function CommentThread({
                     {formatRelative(c.createdAt)}
                   </span>
                 </div>
-                <p className="whitespace-pre-wrap break-words text-[13px] leading-relaxed text-foreground/90">
-                  <Linkify>{c.content}</Linkify>
-                </p>
+                {editingId === c.id ? (
+                  <div className="mt-1">
+                    <textarea
+                      value={editDraft}
+                      onChange={e => setEditDraft(e.target.value.slice(0, MAX))}
+                      onKeyDown={e => {
+                        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); commitEdit() }
+                        if (e.key === "Escape") cancelEdit()
+                      }}
+                      rows={2}
+                      autoFocus
+                      className="w-full resize-none rounded-xl border border-border bg-card px-3 py-2 text-[13px] text-foreground focus:border-primary focus:outline-none focus:shadow-[0_0_0_3px_rgb(var(--ring)/0.18)]"
+                    />
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={commitEdit}
+                        disabled={!editDraft.trim()}
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1 text-[11.5px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40",
+                          FOCUS,
+                        )}
+                      >
+                        <Check className="h-3 w-3" strokeWidth={ICON_STROKE} />
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelEdit}
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11.5px] font-semibold text-muted-foreground transition-colors hover:text-foreground",
+                          FOCUS,
+                        )}
+                      >
+                        <X className="h-3 w-3" strokeWidth={ICON_STROKE} />
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="whitespace-pre-wrap break-words text-[13px] leading-relaxed text-foreground/90">
+                    <Linkify>{c.content}</Linkify>
+                    {c.editedAt && (
+                      <span className="ml-1.5 text-[11px] italic text-muted-foreground">
+                        (edited)
+                      </span>
+                    )}
+                  </p>
+                )}
               </div>
 
-              {c.canDelete && !readOnly && (
-                <button
-                  type="button"
-                  onClick={() => onDelete(c.id)}
-                  aria-label="Delete comment"
-                  className={cn(
-                    "h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground opacity-0 transition-all duration-120 hover:bg-destructive-soft hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100 flex",
-                    FOCUS,
+              {!readOnly && editingId !== c.id && (
+                <div className={cn(
+                  "flex shrink-0 items-center gap-0.5 transition-opacity duration-120 focus-within:opacity-100 group-hover:opacity-100",
+                  // An armed delete must stay on screen even if the pointer leaves.
+                  confirmingId === c.id ? "opacity-100" : "opacity-0",
+                )}>
+                  {/* Authors edit their own words; a teacher can remove a
+                      comment but never rewrite one in someone else's name. */}
+                  {c.canEdit && onEdit && (
+                    <button
+                      type="button"
+                      onClick={() => startEdit(c)}
+                      aria-label="Edit comment"
+                      className={cn(
+                        "flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                        FOCUS,
+                      )}
+                    >
+                      <Pencil className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
+                    </button>
                   )}
-                >
-                  <Trash2 className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
-                </button>
+                  {/* Deleting is permanent, so the first click only arms it.
+                      A stray tap on a hover-revealed icon should not silently
+                      destroy someone's question. */}
+                  {c.canDelete && (
+                    confirmingId === c.id ? (
+                      <div className="flex items-center gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => { setConfirmingId(null); onDelete(c.id) }}
+                          aria-label="Confirm delete comment"
+                          className={cn(
+                            "rounded-lg bg-destructive-soft px-2 py-1 text-[11px] font-bold text-destructive transition-colors hover:bg-destructive hover:text-white",
+                            FOCUS,
+                          )}
+                        >
+                          Delete
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmingId(null)}
+                          aria-label="Cancel delete comment"
+                          className={cn(
+                            "flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                            FOCUS,
+                          )}
+                        >
+                          <X className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmingId(c.id)}
+                        aria-label="Delete comment"
+                        className={cn(
+                          "flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive-soft hover:text-destructive",
+                          FOCUS,
+                        )}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
+                      </button>
+                    )
+                  )}
+                </div>
               )}
             </li>
           ))}

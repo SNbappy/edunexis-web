@@ -61,9 +61,13 @@ export default function PresentationsTab({ courseId }: Props) {
               Other tests
             </h2>
             <p className="text-[11.5px] text-muted-foreground">
+              {/* Students receive published tests only, so a published/total
+                  split counts drafts they will never see. */}
               {presentations.length === 0
                 ? "No tests yet"
-                : publishedCount + " published \u00b7 " + presentations.length + " total"}
+                : !teacher
+                  ? presentations.length + (presentations.length === 1 ? " test" : " tests")
+                  : publishedCount + " published \u00b7 " + presentations.length + " total"}
             </p>
           </div>
         </div>

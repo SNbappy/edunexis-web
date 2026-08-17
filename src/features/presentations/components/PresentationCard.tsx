@@ -103,9 +103,13 @@ export default function PresentationCard({
                         </h3>
 
                         <div className="flex shrink-0 items-center gap-1.5" onClick={e => e.stopPropagation()}>
-                            <span className={"inline-flex items-center rounded-full px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wider " + stateBadge}>
-                                {published ? "Published" : "Draft"}
-                            </span>
+                            {/* A student's list is published-only, so the badge
+                                would read "Published" on every single card. */}
+                            {teacher && (
+                                <span className={"inline-flex items-center rounded-full px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wider " + stateBadge}>
+                                    {published ? "Published" : "Draft"}
+                                </span>
+                            )}
 
                             {hasMenu && (
                                 <div className="relative" ref={menuRef}>

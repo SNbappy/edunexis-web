@@ -41,6 +41,16 @@ export function useComments(courseId: string) {
     onError: () => toast.error("Could not post the comment."),
   })
 
+  const { mutate: editComment } = useMutation({
+    mutationFn: ({ commentId, content }: { commentId: string; content: string }) =>
+      announcementService.editComment(courseId, commentId, content),
+    onSuccess: res => {
+      if (res.success) qc.invalidateQueries({ queryKey: key })
+      else toast.error(res.message ?? "Could not update the comment.")
+    },
+    onError: () => toast.error("Could not update the comment."),
+  })
+
   const { mutate: deleteComment } = useMutation({
     mutationFn: (commentId: string) => announcementService.deleteComment(courseId, commentId),
     onSuccess: res => {
@@ -53,5 +63,5 @@ export function useComments(courseId: string) {
     onError: () => toast.error("Could not delete the comment."),
   })
 
-  return { byAnnouncement, isLoading, addComment, isAdding, deleteComment }
+  return { byAnnouncement, isLoading, addComment, isAdding, editComment, deleteComment }
 }

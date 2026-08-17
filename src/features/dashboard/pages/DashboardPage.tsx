@@ -7,6 +7,7 @@ import NotificationItem from "@/features/notifications/components/NotificationIt
 import { useNotifications } from "@/features/notifications/hooks/useNotifications"
 import { isTeacher } from "@/utils/roleGuard"
 import { getFirstName } from "@/utils/names"
+import { getGreeting } from "@/utils/greeting"
 import { ROUTES } from "@/config/constants"
 import Button from "@/components/ui/Button"
 import EmptyState from "@/components/ui/EmptyState"
@@ -28,8 +29,7 @@ export default function DashboardPage() {
   const firstName = getFirstName(user?.profile?.fullName)
   const active    = courses.filter((c: any) => !c.isArchived)
 
-  const hour     = new Date().getHours()
-  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening"
+  const greeting = getGreeting()
   const today    = new Date().toLocaleDateString("en-US", {
     weekday: "long", month: "long", day: "numeric",
   })
