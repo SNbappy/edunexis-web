@@ -112,10 +112,18 @@ export default function AnalysisPanel({ submission }: Props) {
     }
 
     if (!hasText) {
+        // Two different reasons land here: there is no written answer at all, or
+        // there is one but it is too short for a score to mean anything. Saying
+        // "only text submissions" in the second case reads as a bug to teachers.
+        const hasSomeText = text.trim().length > 0
         return (
             <div className="p-4 rounded-xl bg-muted/40 border border-border text-center space-y-1">
                 <p className="text-sm font-medium text-muted-foreground">Analysis unavailable</p>
-                <p className="text-xs text-muted-foreground">Only text submissions can be analysed for AI content and web plagiarism.</p>
+                <p className="text-xs text-muted-foreground">
+                    {hasSomeText
+                        ? `This written answer is too short to analyse — at least 50 characters are needed (this one has ${text.trim().length}).`
+                        : 'Only submissions with a written answer can be analysed for AI content and web plagiarism.'}
+                </p>
             </div>
         )
     }

@@ -65,6 +65,7 @@ export interface PublicCourseDto {
   title: string
   courseCode: string
   department: string
+  academicSession: string
   semester: string
   courseType: string
   isArchived: boolean
@@ -194,16 +195,6 @@ export interface PublicFacultyCardDto {
   headline: string | null
   profilePhotoUrl: string | null
   coursesTaught: number
-}
-
-export interface PublicCourseDto {
-  id: string
-  title: string
-  courseCode: string
-  department: string
-  semester: string
-  courseType: string
-  isArchived: boolean
 }
 
 export interface PublicFacultyProfileDto {

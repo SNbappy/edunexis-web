@@ -285,7 +285,7 @@ export default function AssignmentDetailPage() {
                                                 <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Submitted</p>
                                                 <p className="text-xs text-muted-foreground">
                                                     {formatDateTime(mySubmission.submittedAt)}
-                                                    {mySubmission.isLate ? ' ? Late' : ''}
+                                                    {mySubmission.isLate ? ' · Late' : ''}
                                                 </p>
                                             </div>
                                         </div>
@@ -423,6 +423,7 @@ export default function AssignmentDetailPage() {
                 isOpen={submitOpen}
                 onClose={() => setSubmitOpen(false)}
                 assignment={assignment}
+                existing={mySubmission}
                 onSubmit={(data: SubmitAssignmentRequest) =>
                     submitAssignment(data, { onSuccess: () => setSubmitOpen(false) })
                 }

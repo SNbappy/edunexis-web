@@ -1,21 +1,44 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Send, Clock, Award, Link2, X, Plus, FileText, Paperclip } from "lucide-react"
 import Modal from "@/components/ui/Modal"
 import Button from "@/components/ui/Button"
 import FileDropzone from "@/components/ui/FileDropzone"
 import Linkify from "@/components/ui/Linkify"
 import { formatDateTime } from "@/utils/dateUtils"
-import { normaliseUrl } from "@/utils/videoEmbed"
+import { formatFileSize } from "@/utils/fileUtils"
+import { normaliseUrl, getLinkHost } from "@/utils/videoEmbed"
 import { FOCUS, ICON_STROKE } from "@/components/ui/appTokens"
 import { cn } from "@/utils/cn"
-import type { AssignmentDto, SubmitAssignmentRequest } from "@/types/assignment.types"
+import type {
+  AssignmentDto, SubmitAssignmentRequest, SubmissionDto, SubmissionAttachmentDto,
+} from "@/types/assignment.types"
 
 interface SubmitAssignmentModalProps {
   isOpen: boolean
   onClose: () => void
   assignment: AssignmentDto
+  /** The student's current submission, when they are updating rather than turning in. */
+  existing?: SubmissionDto | null
   onSubmit: (d: SubmitAssignmentRequest) => void
   isLoading?: boolean
+}
+
+/**
+ * Attachments already on the submission, oldest first. Falls back to the legacy
+ * single fileUrl/linkUrl for work submitted before multi-attachment support, so
+ * those students can still see and remove what they turned in.
+ */
+function existingAttachments(sub: SubmissionDto | null | undefined): SubmissionAttachmentDto[] {
+  if (!sub) return []
+  if (sub.attachments && sub.attachments.length > 0) return sub.attachments
+  return [
+    ...(sub.fileUrl
+      ? [{ id: "legacy-file", kind: "File" as const, url: sub.fileUrl, fileName: null, fileSizeBytes: null }]
+      : []),
+    ...(sub.linkUrl
+      ? [{ id: "legacy-link", kind: "Link" as const, url: sub.linkUrl, fileName: null, fileSizeBytes: null }]
+      : []),
+  ]
 }
 
 /**
@@ -31,23 +54,41 @@ interface SubmitAssignmentModalProps {
  * than being mutually exclusive modes.
  */
 export default function SubmitAssignmentModal({
-  isOpen, onClose, assignment, onSubmit, isLoading,
+  isOpen, onClose, assignment, existing, onSubmit, isLoading,
 }: SubmitAssignmentModalProps) {
   const [files, setFiles] = useState<File[]>([])
   const [links, setLinks] = useState<string[]>([])
   const [linkDraft, setLinkDraft] = useState("")
   const [textContent, setTextContent] = useState("")
+  /** Already-submitted attachments the student has not removed. */
+  const [kept, setKept] = useState<SubmissionAttachmentDto[]>([])
+  /** Bumped on open so FileDropzone drops any files staged in a previous visit. */
+  const [dropzoneKey, setDropzoneKey] = useState(0)
 
-  const reset = () => { setFiles([]); setLinks([]); setLinkDraft(""); setTextContent("") }
-  const handleClose = () => { reset(); onClose() }
+  /* Seeded on open rather than cleared on close: closing after a successful
+     submit bypasses the cancel path, and the stale files, links and answer from
+     the previous submission were still staged the next time it opened. */
+  useEffect(() => {
+    if (!isOpen) return
+    setFiles([])
+    setLinks([])
+    setLinkDraft("")
+    setTextContent(existing?.textContent ?? "")
+    setKept(existingAttachments(existing))
+    setDropzoneKey(k => k + 1)
+  }, [isOpen, existing])
 
+  const handleClose = () => onClose()
+
+  const isUpdate = !!existing
   const hasText = textContent.trim().length > 0
-  const canSubmit = files.length > 0 || links.length > 0 || hasText
+  const canSubmit = files.length > 0 || links.length > 0 || kept.length > 0 || hasText
 
   const addLink = () => {
     const url = normaliseUrl(linkDraft.trim())
     if (!url) return
-    if (links.includes(url)) { setLinkDraft(""); return }
+    const alreadyKept = kept.some(a => a.kind === "Link" && a.url === url)
+    if (links.includes(url) || alreadyKept) { setLinkDraft(""); return }
     setLinks(l => [...l, url])
     setLinkDraft("")
   }
@@ -56,15 +97,22 @@ export default function SubmitAssignmentModal({
     if (!canSubmit) return
     /* The type still describes the *primary* nature of the submission, because
        the API and the existing views key off it — but every attachment goes
-       regardless of which one it is. */
-    const submissionType =
-      files.length > 0 ? "File" : links.length > 0 ? "Link" : "Text"
+       regardless of which one it is. Kept attachments count: a student who keeps
+       a file and uploads nothing new is still turning in a file submission. */
+    const anyFile = files.length > 0 || kept.some(a => a.kind === "File")
+    const anyLink = links.length > 0 || kept.some(a => a.kind === "Link")
+    const submissionType = anyFile ? "File" : anyLink ? "Link" : "Text"
 
     onSubmit({
       submissionType,
       textContent: hasText ? textContent : undefined,
       files,
       linkUrls: links,
+      // Legacy rows have synthetic ids the server does not know; sending them
+      // would look like "keep nothing real". Those submissions have no attachment
+      // records to preserve anyway.
+      keepAttachmentIds: kept.map(a => a.id).filter(id => !id.startsWith("legacy-")),
+      manageAttachments: isUpdate,
     })
   }
 
@@ -72,7 +120,7 @@ export default function SubmitAssignmentModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Submit assignment"
+      title={isUpdate ? "Update submission" : "Submit assignment"}
       size="lg"
       footer={
         <>
@@ -86,7 +134,7 @@ export default function SubmitAssignmentModal({
             loading={isLoading}
             leftIcon={<Send strokeWidth={ICON_STROKE} />}
           >
-            Submit assignment
+            {isUpdate ? "Update submission" : "Submit assignment"}
           </Button>
         </>
       }
@@ -114,11 +162,72 @@ export default function SubmitAssignmentModal({
           )}
         </div>
 
+        {/* Already turned in — shown so a student can see what the teacher has
+            and drop individual pieces instead of re-uploading everything. */}
+        {kept.length > 0 && (
+          <section>
+            <h3 className="mb-2 inline-flex items-center gap-1.5 text-[12px] font-bold text-foreground">
+              <Paperclip className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={ICON_STROKE} />
+              Already turned in
+              <span className="font-normal text-muted-foreground">
+                ({kept.length})
+              </span>
+            </h3>
+
+            <ul className="space-y-1.5">
+              {kept.map(a => (
+                <li
+                  key={a.id}
+                  className="flex items-center gap-2.5 rounded-xl border border-border bg-muted/40 px-3 py-2"
+                >
+                  {a.kind === "Link" ? (
+                    <Link2 className="h-3.5 w-3.5 shrink-0 text-primary" strokeWidth={ICON_STROKE} />
+                  ) : (
+                    <FileText className="h-3.5 w-3.5 shrink-0 text-primary" strokeWidth={ICON_STROKE} />
+                  )}
+
+                  <a
+                    href={a.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="min-w-0 flex-1 truncate text-[12.5px] text-foreground hover:underline"
+                  >
+                    {a.kind === "Link" ? getLinkHost(a.url) : a.fileName ?? "Submitted file"}
+                  </a>
+
+                  {a.fileSizeBytes ? (
+                    <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+                      {formatFileSize(a.fileSizeBytes)}
+                    </span>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    onClick={() => setKept(prev => prev.filter(k => k.id !== a.id))}
+                    aria-label={`Remove ${a.kind === "Link" ? a.url : a.fileName ?? "attachment"}`}
+                    className={cn(
+                      "shrink-0 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-destructive-soft hover:text-destructive",
+                      FOCUS,
+                    )}
+                  >
+                    <X className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              These stay attached unless you remove them. Anything you add below is
+              turned in alongside.
+            </p>
+          </section>
+        )}
+
         {/* Files */}
         <section>
           <h3 className="mb-2 inline-flex items-center gap-1.5 text-[12px] font-bold text-foreground">
             <Paperclip className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={ICON_STROKE} />
-            Files
+            {kept.length > 0 ? "Add more files" : "Files"}
             <span className="font-normal text-muted-foreground">(optional)</span>
           </h3>
 
@@ -126,6 +235,7 @@ export default function SubmitAssignmentModal({
               back the full accumulated set on every change, so appending counted
               each file again on the next pick. */}
           <FileDropzone
+            key={dropzoneKey}
             onFilesSelected={setFiles}
             multiple
             accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar,.txt,.py,.java,.cpp,.c,.cs,.js,.ts,.png,.jpg,.jpeg"
@@ -211,7 +321,9 @@ export default function SubmitAssignmentModal({
 
         {!canSubmit && (
           <p className="text-[12px] text-muted-foreground">
-            Attach at least one file, link or written answer.
+            {isUpdate
+              ? "You have removed everything. Attach a file, link or written answer to update."
+              : "Attach at least one file, link or written answer."}
           </p>
         )}
       </div>

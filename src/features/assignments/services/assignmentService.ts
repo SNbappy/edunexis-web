@@ -63,6 +63,12 @@ export const assignmentService = {
         // Repeated fields — the API binds these as collections.
         for (const f of data.files ?? []) form.append('files', f)
         for (const l of data.linkUrls ?? []) form.append('linkUrls', l)
+        if (data.manageAttachments) {
+            // Sent even when the list is empty — that is how "the student removed
+            // everything they had turned in" is expressed.
+            form.append('manageAttachments', 'true')
+            for (const id of data.keepAttachmentIds ?? []) form.append('keepAttachmentIds', id)
+        }
         return api
             .post<ApiResponse<SubmissionDto>>(
                 '/Assignments/assignments/' + assignmentId + '/submit', form,

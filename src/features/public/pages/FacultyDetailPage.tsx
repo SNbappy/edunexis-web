@@ -382,6 +382,9 @@ function CourseRow({ course, active }: { course: PublicCourseDto; active: boolea
         <p className="mt-0.5 text-[11.5px] font-mono text-stone-500">
           {course.courseCode} | {course.semester}
         </p>
+        <p className="mt-0.5 truncate text-[11.5px] text-stone-500">
+          {[course.department, course.academicSession].filter(Boolean).join(" · ")}
+        </p>
       </div>
       {active ? (
         <span className="shrink-0 rounded-full bg-teal-50 px-2 py-0.5 text-[10.5px] font-bold uppercase text-teal-700">

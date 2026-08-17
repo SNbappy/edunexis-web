@@ -249,7 +249,7 @@ export default function PlagiarismReportModal({ isOpen, onClose, report, isCheck
                                     {report.cannotCheck.length > 0 && (
                                         <div className="p-3 rounded-xl bg-muted/40 border border-border space-y-2">
                                             <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-                                                <FileX className="w-3.5 h-3.5" /> Cannot auto-check (file/link submissions)
+                                                <FileX className="w-3.5 h-3.5" /> Cannot auto-check — reason shown per student
                                             </p>
                                             <div className="flex flex-wrap gap-1.5">
                                                 {report.cannotCheck.map((name) => (

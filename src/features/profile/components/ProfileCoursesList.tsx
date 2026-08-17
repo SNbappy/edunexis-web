@@ -77,6 +77,9 @@ export default function ProfileCoursesList({
                   <span>·</span>
                   <span className="truncate">{c.semester}</span>
                 </p>
+                <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                  {[c.department, c.academicSession].filter(Boolean).join(" · ")}
+                </p>
               </div>
               {isSelf && (
                 <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />

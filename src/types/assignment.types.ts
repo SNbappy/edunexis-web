@@ -63,6 +63,18 @@ export interface SubmitAssignmentRequest {
     files?: File[]
     /** Every attached link. */
     linkUrls?: string[]
+    /**
+     * Ids of already-submitted attachments to keep when updating a submission.
+     * Only honoured alongside `manageAttachments`; the server keeps the previous
+     * set untouched otherwise.
+     */
+    keepAttachmentIds?: string[]
+    /**
+     * Marks this client as one that shows existing attachments and lets the
+     * student remove them, so the server may act on `keepAttachmentIds` —
+     * including removing all of them.
+     */
+    manageAttachments?: boolean
 }
 
 export interface SubmissionAttachmentDto {

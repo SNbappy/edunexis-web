@@ -152,6 +152,10 @@ export async function checkPlagiarismAsync(submissions: CheckInput[]): Promise<P
             }
         } else if (sub.submissionType === 'Link') {
             cannotCheck.push(sub.studentName + ' (link submission)')
+        } else if (sub.textContent && sub.textContent.trim().length > 0) {
+            // Has a written answer, just too short to compare meaningfully.
+            // Reporting this as "no content" reads as a bug to teachers.
+            cannotCheck.push(sub.studentName + ' (answer too short to compare)')
         } else {
             cannotCheck.push(sub.studentName + ' (no content)')
         }
