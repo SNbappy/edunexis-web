@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import {
     ArrowLeft, Upload, CheckCircle2, FileText, X, XCircle,
     Send, Calendar, BookOpen, Star, Trophy, TrendingDown, BarChart3,
-    AlertCircle, Clock, Loader2,
+    AlertCircle, Clock, Loader2, Lock,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -104,7 +104,7 @@ export default function CTEventPage() {
     }, [marksData, students, initialized, teacher])
 
     const performSave = async (currentInputs: Record<string, MarkInput>) => {
-        if (!teacher || students.length === 0 || !ct?.khataUploaded) return
+        if (!teacher || isPublished || students.length === 0 || !ct?.khataUploaded) return
 
         const hasInvalid = students.some(m => {
             const inp = currentInputs[m.userId]
@@ -143,10 +143,13 @@ export default function CTEventPage() {
         }
     }
 
-    const updateMark = (uid: string, field: keyof MarkInput, val: string | boolean) =>
+    const updateMark = (uid: string, field: keyof MarkInput, val: string | boolean) => {
+        if (isPublished) return
         setMarkInputs(prev => ({ ...prev, [uid]: { ...prev[uid], [field]: val } }))
+    }
 
     const toggleAbsent = (userId: string) => {
+        if (isPublished) return
         setMarkInputs(prev => {
             const cur = prev[userId] ?? { obtainedMarks: '', isAbsent: false, remarks: '' }
             const nextAbsent = !cur.isAbsent
@@ -164,6 +167,7 @@ export default function CTEventPage() {
     }
 
     const setAllAbsent = (absent: boolean) => {
+        if (isPublished) return
         setMarkInputs(prev => {
             const next = { ...prev }
             students.forEach(m => {
@@ -266,7 +270,7 @@ export default function CTEventPage() {
 
     // Debounced autosave effect
     useEffect(() => {
-        if (!teacher || !initialized || students.length === 0) return
+        if (!teacher || isPublished || !initialized || students.length === 0) return
         if (isFirstRun.current) {
             isFirstRun.current = false
             return
@@ -281,7 +285,7 @@ export default function CTEventPage() {
         return () => {
             if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
         }
-    }, [markInputs, hasUnsavedChanges, hasInvalidMarks, initialized, students, teacher])
+    }, [markInputs, hasUnsavedChanges, hasInvalidMarks, initialized, students, teacher, isPublished])
 
     const canPublish = isDraft && (ct?.khataUploaded ?? false) && students.length > 0 && pendingCount === 0 && !hasInvalidMarks && !hasUnsavedChanges && saveStatus !== 'saving' && !isSaving
 
@@ -652,7 +656,11 @@ export default function CTEventPage() {
                         <div className="flex items-center gap-2.5">
                             {/* Autosave Status Indicator */}
                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-[85px] justify-end">
-                                {saveStatus === 'saving' || isSaving ? (
+                                {isPublished ? (
+                                    <span className="inline-flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-medium text-[11.5px]">
+                                        <Lock className="w-3 h-3 shrink-0" /> Locked
+                                    </span>
+                                ) : saveStatus === 'saving' || isSaving ? (
                                     <span className="inline-flex items-center gap-1.5 text-primary font-medium text-[11.5px]">
                                         <Loader2 className="w-3 h-3 animate-spin shrink-0" /> Saving...
                                     </span>
@@ -669,14 +677,16 @@ export default function CTEventPage() {
                             <button
                                 type="button"
                                 onClick={() => setAllAbsent(false)}
-                                className="rounded-lg border border-border bg-card px-3 py-1.5 text-[11.5px] font-bold text-foreground transition-colors hover:bg-muted"
+                                disabled={isPublished}
+                                className="rounded-lg border border-border bg-card px-3 py-1.5 text-[11.5px] font-bold text-foreground transition-colors hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Clear absent
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setAllAbsent(true)}
-                                className="rounded-lg border border-destructive/25 bg-destructive-soft px-3 py-1.5 text-[11.5px] font-bold text-destructive transition-colors hover:opacity-90"
+                                disabled={isPublished}
+                                className="rounded-lg border border-destructive/25 bg-destructive-soft px-3 py-1.5 text-[11.5px] font-bold text-destructive transition-colors hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Mark all absent
                             </button>
@@ -689,6 +699,13 @@ export default function CTEventPage() {
                         <span><span className="font-display text-base text-destructive">{absentCount}</span> Absent</span>
                         <span><span className="font-display text-base text-foreground">{pendingCount}</span> Pending</span>
                     </div>
+
+                    {isPublished && (
+                        <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 px-3.5 py-2.5 text-xs text-blue-700 dark:text-blue-300 flex items-center gap-2">
+                            <Lock className="w-4 h-4 shrink-0 text-blue-600 dark:text-blue-400" />
+                            <span><strong>Marks Locked:</strong> Results are published. Click <strong>Unpublish</strong> in the header above if you need to edit marks.</span>
+                        </div>
+                    )}
 
                     {isDraft && pendingCount > 0 && (
                         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-xs text-amber-700 dark:text-amber-300">
@@ -750,9 +767,10 @@ export default function CTEventPage() {
                                         <button
                                             type="button"
                                             onClick={() => toggleAbsent(m.userId)}
+                                            disabled={isPublished}
                                             aria-pressed={inp.isAbsent}
                                             className={
-                                                'inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11.5px] font-bold transition-colors ' +
+                                                'inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11.5px] font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ' +
                                                 (inp.isAbsent
                                                     ? 'border-destructive/25 bg-destructive-soft text-destructive'
                                                     : 'border-border bg-card text-muted-foreground hover:border-destructive/25 hover:text-destructive')
@@ -773,11 +791,12 @@ export default function CTEventPage() {
                                                 max={ct.maxMarks}
                                                 step={0.5}
                                                 value={inp.obtainedMarks}
+                                                disabled={isPublished}
                                                 onChange={e => updateMark(m.userId, 'obtainedMarks', e.target.value)}
                                                 placeholder="—"
                                                 aria-label={'Marks for ' + m.fullName}
                                                 className={cn(
-                                                    "h-9 w-16 shrink-0 rounded-xl border bg-background text-center text-[13px] font-semibold tabular-nums text-foreground outline-none transition-all focus:ring-2",
+                                                    "h-9 w-16 shrink-0 rounded-xl border bg-background text-center text-[13px] font-semibold tabular-nums text-foreground outline-none transition-all focus:ring-2 disabled:opacity-75 disabled:cursor-not-allowed disabled:bg-muted/40",
                                                     isInvalid
                                                         ? "border-destructive text-destructive focus:border-destructive focus:ring-destructive/20"
                                                         : "border-border focus:border-primary focus:ring-primary/20"
@@ -788,10 +807,11 @@ export default function CTEventPage() {
                                         <input
                                             type="text"
                                             value={inp.remarks}
+                                            disabled={isPublished}
                                             onChange={e => updateMark(m.userId, 'remarks', e.target.value)}
                                             placeholder="Remarks (optional)"
                                             aria-label={'Remarks for ' + m.fullName}
-                                            className="h-9 w-full min-w-0 rounded-xl border border-border bg-background px-3 text-[12.5px] outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 sm:w-44"
+                                            className="h-9 w-full min-w-0 rounded-xl border border-border bg-background px-3 text-[12.5px] outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-75 disabled:cursor-not-allowed disabled:bg-muted/40 sm:w-44"
                                         />
                                     </div>
                                 )

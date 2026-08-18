@@ -147,6 +147,20 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
   const isPublished = marks.length > 0 && marks.every((m: any) => m.isPublished)
   const hasMarks = marks.length > 0
 
+  const isFormulaDirty = useMemo(() => {
+    if (!formula) return true
+    for (const comp of COMPONENTS) {
+      const cfg = config[comp.key]
+      const savedComp = formula.components?.find((c: any) => c.componentType === comp.type)
+      if (cfg.enabled !== !!savedComp) return true
+      if (cfg.enabled && savedComp) {
+        if (comp.showRule && cfg.selectionRule !== savedComp.selectionRule) return true
+        if ((parseFloat(cfg.maxMarks) || 0) !== Number(savedComp.maxMarks)) return true
+      }
+    }
+    return false
+  }, [config, formula])
+
   const handleSave = () => {
     if (enabled.length === 0) {
       toast.error("Enable at least one component.")
@@ -185,18 +199,8 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
         </p>
 
         {/* The gradebook stays fully readable on an archived course; only
-            recalculating and publishing it are frozen. */}
+            publishing it is frozen. */}
         <div className="flex flex-wrap items-center gap-2">
-          {formula && !readOnly && (
-            <Button
-              variant="secondary"
-              onClick={() => calculate()}
-              disabled={isCalculating}
-              leftIcon={<RefreshCw className={isCalculating ? "animate-spin" : ""} strokeWidth={ICON_STROKE} />}
-            >
-              {hasMarks ? "Recalculate" : "Calculate"}
-            </Button>
-          )}
           {hasMarks && !isPublished && !readOnly && (
             <Button onClick={() => publish()} loading={isPublishing} leftIcon={<Send strokeWidth={ICON_STROKE} />}>
               Publish results
@@ -326,11 +330,11 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
                 when they were not. */}
             <Button
               onClick={handleSave}
-              disabled={enabled.length === 0}
+              disabled={enabled.length === 0 || (!isFormulaDirty && hasMarks) || isSaving}
               loading={isSaving}
               leftIcon={<RefreshCw className={isSaving ? "animate-spin" : ""} strokeWidth={ICON_STROKE} />}
             >
-              {hasMarks ? "Save & recalculate" : "Save & calculate"}
+              {hasMarks ? (isFormulaDirty ? "Save & recalculate" : "Saved & calculated") : "Save & calculate"}
             </Button>
           </footer>
         )}

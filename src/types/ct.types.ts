@@ -18,6 +18,9 @@ export interface CTEventDto {
     createdAt: string
     myObtainedMarks?: number | null
     myIsAbsent?: boolean | null
+    gradedStudentsCount?: number
+    totalStudentsCount?: number
+    isMarksComplete?: boolean
 }
 
 export interface CTMarksResultDto {

@@ -268,6 +268,25 @@ export default function CTEventCard({
                     Scripts pending
                   </span>
             )}
+
+            {teacher && (
+              ct.isMarksComplete ? (
+                <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400">
+                  <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
+                  Marks given
+                </span>
+              ) : (ct.gradedStudentsCount ?? 0) > 0 ? (
+                <span className="inline-flex items-center gap-1.5 font-semibold text-amber-600 dark:text-amber-400">
+                  <ClipboardList className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
+                  Marks partial ({ct.gradedStudentsCount}/{ct.totalStudentsCount})
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                  <ClipboardList className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
+                  Marks pending
+                </span>
+              )
+            )}
           </div>
         </div>
       </div>
