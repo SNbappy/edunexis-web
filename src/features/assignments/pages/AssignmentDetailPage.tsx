@@ -194,9 +194,14 @@ export default function AssignmentDetailPage() {
                             {assignment.allowLateSubmission && (
                                 <Badge variant="muted">Late submission allowed</Badge>
                             )}
-                            {!teacher && mySubmission && (
+                            {!teacher && mySubmission?.isTurnedIn && (
                                 <Badge variant="success">
                                     <CheckCircle2 className="w-3 h-3 inline mr-1" />Submitted
+                                </Badge>
+                            )}
+                            {!teacher && mySubmission && !mySubmission.isTurnedIn && (
+                                <Badge variant="warning">
+                                    <Clock3 className="w-3 h-3 inline mr-1" />Draft attached
                                 </Badge>
                             )}
                         </div>
@@ -414,10 +419,7 @@ export default function AssignmentDetailPage() {
                                         ) : null}
 
                                         {/* Turn in / take back / edit.
-                                            The primary action depends on where the work is:
-                                            a draft needs handing in, and something already
-                                            handed in can be taken back while the window is
-                                            still open. */}
+                                            When turned in, the student must unsubmit first to modify work. */}
                                         {assignment.isOpen && !readOnly && (!isPastDue || assignment.allowLateSubmission) && (
                                             <div className="space-y-2">
                                                 {!mySubmission.isTurnedIn ? (
@@ -435,23 +437,18 @@ export default function AssignmentDetailPage() {
                                                         </Button>
                                                     </>
                                                 ) : (
-                                                    <>
-                                                        <Button size="sm" variant="secondary" className="w-full" onClick={() => setSubmitOpen(true)}>
-                                                            Update submission
+                                                    !mySubmission.isGraded && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="secondary"
+                                                            className="w-full"
+                                                            leftIcon={<Undo2 className="w-4 h-4" />}
+                                                            onClick={() => unsubmit()}
+                                                            loading={isUnsubmitting}
+                                                        >
+                                                            Unsubmit
                                                         </Button>
-                                                        {!mySubmission.isGraded && (
-                                                            <Button
-                                                                size="sm"
-                                                                variant="secondary"
-                                                                className="w-full"
-                                                                leftIcon={<Undo2 className="w-4 h-4" />}
-                                                                onClick={() => unsubmit()}
-                                                                loading={isUnsubmitting}
-                                                            >
-                                                                Unsubmit
-                                                            </Button>
-                                                        )}
-                                                    </>
+                                                    )
                                                 )}
                                             </div>
                                         )}

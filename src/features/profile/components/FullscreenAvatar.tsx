@@ -1,9 +1,10 @@
-﻿import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, Upload, Trash2, AlertTriangle } from "lucide-react"
 import Avatar from "@/components/ui/Avatar"
 import InlineSpinner from "@/components/ui/InlineSpinner"
+import ImageCropModal from "@/components/ui/ImageCropModal"
 
 interface FullscreenAvatarProps {
     open:          boolean
@@ -24,6 +25,7 @@ export default function FullscreenAvatar({
 }: FullscreenAvatarProps) {
     const fileRef = useRef<HTMLInputElement>(null)
     const [confirmDelete, setConfirmDelete] = useState(false)
+    const [cropFile, setCropFile] = useState<File | null>(null)
 
     useEffect(() => {
         if (!open) return
@@ -45,7 +47,7 @@ export default function FullscreenAvatar({
     const handlePick = () => fileRef.current?.click()
     const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
-        if (file && onUpload) onUpload(file)
+        if (file) setCropFile(file)
         e.target.value = ""
     }
     const handleDelete = () => {
@@ -160,6 +162,16 @@ export default function FullscreenAvatar({
                     </motion.div>
                 </motion.div>
             )}
+
+            <ImageCropModal
+                isOpen={Boolean(cropFile)}
+                imageFile={cropFile}
+                onClose={() => setCropFile(null)}
+                onCropComplete={cropped => {
+                    setCropFile(null)
+                    if (onUpload) onUpload(cropped)
+                }}
+            />
         </AnimatePresence>,
         document.body,
     )

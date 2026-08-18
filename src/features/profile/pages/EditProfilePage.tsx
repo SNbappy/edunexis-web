@@ -28,6 +28,7 @@ import type { UpdateProfileRequest } from "../services/profileService"
 import type { PublicProfileDto, UserRole } from "@/types/auth.types"
 import ProfileIdentityCard from "../components/ProfileIdentityCard"
 import PublicVisibilityHeroCard from "../components/PublicVisibilityHeroCard"
+import ImageCropModal from "@/components/ui/ImageCropModal"
 
 /* ── Schema ──────────────────────────────────── */
 
@@ -95,6 +96,7 @@ export default function EditProfilePage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const own = useProfile()
+  const [cropFile, setCropFile] = useState<File | null>(null)
 
   const role: UserRole = user?.role ?? "Student"
   const teacher = isTeacher(role)
@@ -392,7 +394,7 @@ export default function EditProfilePage() {
                       className="hidden"
                       onChange={e => {
                         const f = e.target.files?.[0]
-                        if (f) own.uploadPhoto(f)
+                        if (f) setCropFile(f)
                         e.target.value = ""
                       }}
                     />
@@ -679,6 +681,16 @@ export default function EditProfilePage() {
           ) : null}
         </AnimatePresence>
       </form>
+
+      <ImageCropModal
+        isOpen={Boolean(cropFile)}
+        imageFile={cropFile}
+        onClose={() => setCropFile(null)}
+        onCropComplete={cropped => {
+          setCropFile(null)
+          own.uploadPhoto(cropped)
+        }}
+      />
     </FormPageLayout>
   )
 }
