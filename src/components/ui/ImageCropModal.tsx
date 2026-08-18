@@ -15,22 +15,21 @@ interface ImageCropModalProps {
   title?: string
 }
 
-const VIEWPORT_SIZE = 280 // px square viewport
-const OUTPUT_SIZE = 600 // px square exported resolution
+const VIEWPORT_SIZE = 300 // px square crop viewport
+const OUTPUT_SIZE = 600 // px square exported image resolution
 
 export default function ImageCropModal({
   isOpen,
   imageFile,
   onClose,
   onCropComplete,
-  aspectRatio = 1,
-  title = "Adjust profile photo",
+  title = "Crop & adjust photo",
 }: ImageCropModalProps) {
   const [imageSrc, setImageSrc] = useState<string | null>(null)
   const [naturalSize, setNaturalSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 })
   const [isSquare, setIsSquare] = useState(false)
   const [zoom, setZoom] = useState(1)
-  const [rotation, setRotation] = useState(0) // degrees (0, 90, 180, 270)
+  const [rotation, setRotation] = useState(0) // 0, 90, 180, 270
   const [offset, setOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
@@ -52,7 +51,7 @@ export default function ImageCropModal({
     img.onload = () => {
       setNaturalSize({ width: img.naturalWidth, height: img.naturalHeight })
       const diff = Math.abs(img.naturalWidth - img.naturalHeight)
-      setIsSquare(diff <= 4) // within 4px is virtually square
+      setIsSquare(diff <= 6)
       setZoom(1)
       setRotation(0)
       setOffset({ x: 0, y: 0 })
@@ -63,6 +62,45 @@ export default function ImageCropModal({
       URL.revokeObjectURL(url)
     }
   }, [imageFile, isOpen])
+
+  // Compute effective dimensions based on rotation
+  const isRotated90or270 = rotation === 90 || rotation === 270
+  const effectiveW = isRotated90or270 ? naturalSize.height : naturalSize.width
+  const effectiveH = isRotated90or270 ? naturalSize.width : naturalSize.height
+
+  // Cover scale: ensures the image fills 100% of the viewport (no empty space)
+  const coverScale = (effectiveW > 0 && effectiveH > 0)
+    ? Math.max(VIEWPORT_SIZE / effectiveW, VIEWPORT_SIZE / effectiveH)
+    : 1
+
+  const baseW = naturalSize.width * coverScale
+  const baseH = naturalSize.height * coverScale
+
+  // Visual size when rotated and zoomed
+  const renderedW = (isRotated90or270 ? baseH : baseW) * zoom
+  const renderedH = (isRotated90or270 ? baseW : baseH) * zoom
+
+  // Strict boundary clamping so the image always covers the entire circle
+  const maxOffsetX = Math.max(0, (renderedW - VIEWPORT_SIZE) / 2)
+  const maxOffsetY = Math.max(0, (renderedH - VIEWPORT_SIZE) / 2)
+
+  const clampOffset = useCallback((x: number, y: number, currentZoom = zoom, currentRot = rotation) => {
+    const isRot = currentRot === 90 || currentRot === 270
+    const effW = isRot ? naturalSize.height : naturalSize.width
+    const effH = isRot ? naturalSize.width : naturalSize.height
+    const cScale = (effW > 0 && effH > 0) ? Math.max(VIEWPORT_SIZE / effW, VIEWPORT_SIZE / effH) : 1
+    const bW = naturalSize.width * cScale
+    const bH = naturalSize.height * cScale
+    const rW = (isRot ? bH : bW) * currentZoom
+    const rH = (isRot ? bW : bH) * currentZoom
+    const maxX = Math.max(0, (rW - VIEWPORT_SIZE) / 2)
+    const maxY = Math.max(0, (rH - VIEWPORT_SIZE) / 2)
+
+    return {
+      x: Math.min(Math.max(x, -maxX), maxX),
+      y: Math.min(Math.max(y, -maxY), maxY),
+    }
+  }, [naturalSize])
 
   // Drag handlers
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -75,10 +113,9 @@ export default function ImageCropModal({
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!isDragging) return
     e.preventDefault()
-    setOffset({
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y,
-    })
+    const rawX = e.clientX - dragStart.x
+    const rawY = e.clientY - dragStart.y
+    setOffset(clampOffset(rawX, rawY))
   }
 
   const handlePointerUp = (e: React.PointerEvent) => {
@@ -90,16 +127,30 @@ export default function ImageCropModal({
     }
   }
 
-  // Wheel zoom
+  // Wheel zoom (clamped between 1.0 and 3.0)
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault()
     const delta = e.deltaY * -0.0015
-    setZoom(prev => Math.min(Math.max(prev + delta, 0.6), 3.5))
+    setZoom(prev => {
+      const next = Math.min(Math.max(prev + delta, 1.0), 3.0)
+      setOffset(cur => clampOffset(cur.x, cur.y, next))
+      return next
+    })
+  }
+
+  const handleZoomChange = (newZoom: number) => {
+    const clampedZoom = Math.min(Math.max(newZoom, 1.0), 3.0)
+    setZoom(clampedZoom)
+    setOffset(cur => clampOffset(cur.x, cur.y, clampedZoom))
   }
 
   // Rotate 90 deg clockwise
   const handleRotate = () => {
-    setRotation(prev => (prev + 90) % 360)
+    setRotation(prev => {
+      const nextRot = (prev + 90) % 360
+      setOffset(cur => clampOffset(cur.x, cur.y, zoom, nextRot))
+      return nextRot
+    })
   }
 
   // Reset adjustments
@@ -124,34 +175,32 @@ export default function ImageCropModal({
     }
 
     const img = imageRef.current
-    const scale = (OUTPUT_SIZE / VIEWPORT_SIZE) * zoom
+    const factor = OUTPUT_SIZE / VIEWPORT_SIZE
 
     ctx.save()
-    // Fill white background in case of transparent PNG/WebP
+    // High quality interpolation
+    ctx.imageSmoothingEnabled = true
+    ctx.imageSmoothingQuality = "high"
+
+    // Background
     ctx.fillStyle = "#ffffff"
     ctx.fillRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE)
 
-    // Move to canvas center
+    // Center canvas coordinate system
     ctx.translate(OUTPUT_SIZE / 2, OUTPUT_SIZE / 2)
-    ctx.translate(offset.x * (OUTPUT_SIZE / VIEWPORT_SIZE), offset.y * (OUTPUT_SIZE / VIEWPORT_SIZE))
+
+    // Apply translation from user pan
+    ctx.translate(offset.x * factor, offset.y * factor)
+
+    // Apply rotation
     ctx.rotate((rotation * Math.PI) / 180)
-    ctx.scale(scale, scale)
 
-    // Calculate aspect ratio fitting for base rendering
-    let renderW = VIEWPORT_SIZE
-    let renderH = VIEWPORT_SIZE
-    if (naturalSize.width && naturalSize.height) {
-      const imgAspect = naturalSize.width / naturalSize.height
-      if (imgAspect > 1) {
-        renderH = VIEWPORT_SIZE
-        renderW = VIEWPORT_SIZE * imgAspect
-      } else {
-        renderW = VIEWPORT_SIZE
-        renderH = VIEWPORT_SIZE / imgAspect
-      }
-    }
+    // Apply zoom & cover scale
+    const totalScale = coverScale * zoom * factor
+    ctx.scale(totalScale, totalScale)
 
-    ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH)
+    // Draw image centered at origin
+    ctx.drawImage(img, -naturalSize.width / 2, -naturalSize.height / 2, naturalSize.width, naturalSize.height)
     ctx.restore()
 
     canvas.toBlob(
@@ -165,61 +214,47 @@ export default function ImageCropModal({
         onCropComplete(croppedFile)
       },
       "image/jpeg",
-      0.92
+      0.93
     )
-  }, [imageFile, zoom, rotation, offset, naturalSize, onCropComplete])
+  }, [imageFile, zoom, rotation, offset, naturalSize, coverScale, onCropComplete])
 
   if (!isOpen || !imageFile || !imageSrc) return null
-
-  // Calculate dimensions for preview inside viewport
-  let baseW = VIEWPORT_SIZE
-  let baseH = VIEWPORT_SIZE
-  if (naturalSize.width && naturalSize.height) {
-    const imgAspect = naturalSize.width / naturalSize.height
-    if (imgAspect > 1) {
-      baseH = VIEWPORT_SIZE
-      baseW = VIEWPORT_SIZE * imgAspect
-    } else {
-      baseW = VIEWPORT_SIZE
-      baseH = VIEWPORT_SIZE / imgAspect
-    }
-  }
 
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-        {/* Backdrop */}
+        {/* Dark Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+          className="absolute inset-0 bg-black/85 backdrop-blur-md"
           onClick={onClose}
         />
 
         {/* Modal Window */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.94, y: 10 }}
+          initial={{ opacity: 0, scale: 0.95, y: 8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.94, y: 10 }}
+          exit={{ opacity: 0, scale: 0.95, y: 8 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
           onClick={e => e.stopPropagation()}
-          className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border border-border bg-card shadow-2xl"
+          className="relative z-10 w-full max-w-[420px] overflow-hidden rounded-3xl border border-stone-800 bg-stone-900 text-stone-100 shadow-2xl"
         >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <div className="flex items-center justify-between border-b border-stone-800 px-6 py-4">
             <div>
-              <h2 className="font-display text-base font-bold text-foreground">
+              <h2 className="font-display text-base font-bold text-white">
                 {title}
               </h2>
-              <p className="text-xs text-muted-foreground">
-                Drag to reposition · Scroll or slider to zoom
+              <p className="text-xs text-stone-400">
+                Drag to frame your photo · Slider to zoom
               </p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="rounded-full p-1.5 text-stone-400 transition-colors hover:bg-stone-800 hover:text-white"
               aria-label="Close"
             >
               <X className="h-5 w-5" />
@@ -227,8 +262,8 @@ export default function ImageCropModal({
           </div>
 
           {/* Body / Cropper Area */}
-          <div className="flex flex-col items-center bg-stone-950/90 px-6 py-6 dark:bg-black/90">
-            {/* Viewport Box */}
+          <div className="flex flex-col items-center bg-black/95 px-6 py-6">
+            {/* Viewport Box (Circle Crop Mask) */}
             <div
               ref={viewportRef}
               onPointerDown={handlePointerDown}
@@ -237,7 +272,7 @@ export default function ImageCropModal({
               onPointerCancel={handlePointerUp}
               onWheel={handleWheel}
               style={{ width: VIEWPORT_SIZE, height: VIEWPORT_SIZE }}
-              className="relative cursor-grab overflow-hidden rounded-full border-2 border-primary/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.55)] active:cursor-grabbing"
+              className="relative cursor-grab overflow-hidden rounded-full border-2 border-teal-400/90 shadow-[0_0_0_9999px_rgba(0,0,0,0.65)] ring-1 ring-white/20 active:cursor-grabbing"
             >
               {/* Image being manipulated */}
               <div
@@ -245,7 +280,7 @@ export default function ImageCropModal({
                 style={{
                   transform: `translate(-50%, -50%) translate(${offset.x}px, ${offset.y}px) rotate(${rotation}deg) scale(${zoom})`,
                   transformOrigin: "center center",
-                  transition: isDragging ? "none" : "transform 0.08s ease-out",
+                  transition: isDragging ? "none" : "transform 0.06s ease-out",
                 }}
               >
                 <img
@@ -262,16 +297,20 @@ export default function ImageCropModal({
                 />
               </div>
 
-              {/* Grid overlay for alignment */}
-              <div className="pointer-events-none absolute inset-0 grid grid-cols-3 grid-rows-3 opacity-20">
-                <div className="border-b border-r border-white" />
-                <div className="border-b border-r border-white" />
-                <div className="border-b border-white" />
-                <div className="border-b border-r border-white" />
-                <div className="border-b border-r border-white" />
-                <div className="border-b border-white" />
-                <div className="border-r border-white" />
-                <div className="border-r border-white" />
+              {/* Grid overlay for alignment (shows when dragging or hovering) */}
+              <div
+                className={`pointer-events-none absolute inset-0 grid grid-cols-3 grid-rows-3 transition-opacity duration-200 ${
+                  isDragging ? "opacity-35" : "opacity-15"
+                }`}
+              >
+                <div className="border-b border-r border-white/60" />
+                <div className="border-b border-r border-white/60" />
+                <div className="border-b border-white/60" />
+                <div className="border-b border-r border-white/60" />
+                <div className="border-b border-r border-white/60" />
+                <div className="border-b border-white/60" />
+                <div className="border-r border-white/60" />
+                <div className="border-r border-white/60" />
                 <div />
               </div>
             </div>
@@ -279,18 +318,19 @@ export default function ImageCropModal({
             {isSquare && (
               <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-teal-500/30 bg-teal-500/10 px-3 py-1 text-[11px] font-semibold text-teal-300">
                 <Sparkles className="h-3 w-3 text-teal-400" />
-                Square image detected · ready as-is or adjust below
+                Photo is square · framed automatically
               </div>
             )}
 
-            {/* Controls Bar */}
-            <div className="mt-5 flex w-full flex-col gap-3.5">
+            {/* Controls Bar (LinkedIn Style) */}
+            <div className="mt-5 flex w-full flex-col gap-3.5 px-2">
               {/* Zoom Slider */}
               <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => setZoom(z => Math.max(0.6, z - 0.15))}
-                  className="rounded-lg p-1.5 text-stone-300 transition-colors hover:bg-white/10 hover:text-white"
+                  onClick={() => handleZoomChange(zoom - 0.15)}
+                  disabled={zoom <= 1.0}
+                  className="rounded-lg p-1.5 text-stone-300 transition-colors hover:bg-stone-800 hover:text-white disabled:opacity-30"
                   title="Zoom out"
                 >
                   <ZoomOut className="h-4 w-4" />
@@ -298,18 +338,19 @@ export default function ImageCropModal({
 
                 <input
                   type="range"
-                  min="0.6"
+                  min="1.0"
                   max="3.0"
-                  step="0.02"
+                  step="0.01"
                   value={zoom}
-                  onChange={e => setZoom(parseFloat(e.target.value))}
-                  className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-stone-700 accent-primary"
+                  onChange={e => handleZoomChange(parseFloat(e.target.value))}
+                  className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-stone-700 accent-teal-400"
                 />
 
                 <button
                   type="button"
-                  onClick={() => setZoom(z => Math.min(3.0, z + 0.15))}
-                  className="rounded-lg p-1.5 text-stone-300 transition-colors hover:bg-white/10 hover:text-white"
+                  onClick={() => handleZoomChange(zoom + 0.15)}
+                  disabled={zoom >= 3.0}
+                  className="rounded-lg p-1.5 text-stone-300 transition-colors hover:bg-stone-800 hover:text-white disabled:opacity-30"
                   title="Zoom in"
                 >
                   <ZoomIn className="h-4 w-4" />
@@ -321,7 +362,7 @@ export default function ImageCropModal({
                 <button
                   type="button"
                   onClick={handleRotate}
-                  className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-semibold text-stone-200 transition-colors hover:bg-white/10 hover:text-white"
+                  className="flex items-center gap-1.5 rounded-xl border border-stone-700 bg-stone-800/80 px-2.5 py-1.5 text-xs font-semibold text-stone-200 transition-colors hover:bg-stone-700 hover:text-white"
                   title="Rotate 90°"
                 >
                   <RotateCw className="h-3.5 w-3.5" />
@@ -332,8 +373,8 @@ export default function ImageCropModal({
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="flex items-center gap-1 rounded-xl p-1.5 text-xs font-semibold text-stone-400 transition-colors hover:text-stone-200"
-                  title="Reset"
+                  className="flex items-center gap-1 rounded-xl p-1.5 text-xs font-semibold text-stone-400 transition-colors hover:bg-stone-800 hover:text-stone-200"
+                  title="Reset to default"
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
                 </button>
@@ -342,15 +383,15 @@ export default function ImageCropModal({
           </div>
 
           {/* Footer Actions */}
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border bg-card px-6 py-4">
+          <div className="flex items-center justify-between border-t border-stone-800 bg-stone-900 px-6 py-4">
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => onCropComplete(imageFile)}
-              className="text-xs text-muted-foreground hover:text-foreground"
+              className="text-xs text-stone-400 hover:bg-stone-800 hover:text-white"
             >
-              Use original
+              Use as is
             </Button>
 
             <div className="flex items-center gap-2">
@@ -359,6 +400,7 @@ export default function ImageCropModal({
                 variant="secondary"
                 size="sm"
                 onClick={onClose}
+                className="border-stone-700 bg-stone-800 text-stone-200 hover:bg-stone-700 hover:text-white"
               >
                 Cancel
               </Button>
@@ -369,6 +411,7 @@ export default function ImageCropModal({
                 size="sm"
                 leftIcon={<Check className="h-3.5 w-3.5" />}
                 onClick={handleApplyCrop}
+                className="bg-teal-500 font-bold text-stone-950 hover:bg-teal-400"
               >
                 Save photo
               </Button>
