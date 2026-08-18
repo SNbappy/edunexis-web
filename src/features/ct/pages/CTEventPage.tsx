@@ -6,6 +6,7 @@ import {
     Save, Send, Calendar, BookOpen, Star, Trophy, TrendingDown, BarChart3,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import toast from 'react-hot-toast'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import Avatar from '@/components/ui/Avatar'
@@ -162,7 +163,34 @@ export default function CTEventPage() {
         })
     }
 
+    const gradedCount = students.filter(m => {
+        const e = markInputs[m.userId]
+        if (!e || e.isAbsent || e.obtainedMarks.trim() === '') return false
+        const val = parseFloat(e.obtainedMarks)
+        return !isNaN(val) && val >= 0 && (ct ? val <= ct.maxMarks : true)
+    }).length
+    const absentCount = students.filter(m => markInputs[m.userId]?.isAbsent).length
+    const pendingCount = students.length - gradedCount - absentCount
+
+    const hasInvalidMarks = students.some(m => {
+        const inp = markInputs[m.userId]
+        if (!inp || inp.isAbsent || inp.obtainedMarks.trim() === '') return false
+        const val = parseFloat(inp.obtainedMarks)
+        return isNaN(val) || val < 0 || (ct ? val > ct.maxMarks : false)
+    })
+
+    const canSave = students.length > 0 && pendingCount === 0 && !hasInvalidMarks
+
     const handleSave = () => {
+        if (students.length === 0) return
+        if (pendingCount > 0) {
+            toast.error(`Cannot save marks: All ${students.length} students must have marks entered or be marked absent (${pendingCount} pending).`)
+            return
+        }
+        if (hasInvalidMarks) {
+            toast.error(`Cannot save marks: Some marks are invalid or exceed max marks (${ct?.maxMarks ?? ''}).`)
+            return
+        }
         const entries = students.map(m => {
             const inp = markInputs[m.userId] ?? { obtainedMarks: '', isAbsent: false, remarks: '' }
             return {
@@ -287,13 +315,6 @@ export default function CTEventPage() {
     }
 
     /* --- Teacher View --- */
-    const gradedCount = students.filter(m => {
-        const e = markInputs[m.userId]
-        return e && !e.isAbsent && e.obtainedMarks !== ''
-    }).length
-    const absentCount = students.filter(m => markInputs[m.userId]?.isAbsent).length
-    const pendingCount = students.length - gradedCount - absentCount
-
     return (
         <div className="max-w-4xl mx-auto space-y-6 pt-5 sm:pt-7 pb-10">
 
@@ -546,7 +567,14 @@ export default function CTEventPage() {
                                 leftIcon={<Save className="w-4 h-4" />}
                                 loading={isSaving}
                                 onClick={handleSave}
-                                disabled={students.length === 0}
+                                disabled={!canSave || isSaving}
+                                title={
+                                    pendingCount > 0
+                                        ? `All ${students.length} students must have marks entered or be marked absent before saving (${pendingCount} pending)`
+                                        : hasInvalidMarks
+                                        ? `Some marks exceed max marks (${ct.maxMarks}) or are invalid`
+                                        : undefined
+                                }
                             >
                                 Save Marks
                             </Button>
@@ -560,9 +588,15 @@ export default function CTEventPage() {
                         <span><span className="font-display text-base text-foreground">{pendingCount}</span> Pending</span>
                     </div>
 
-                    {isDraft && pendingCount > 0 && (
+                    {pendingCount > 0 && (
                         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-xs text-amber-700 dark:text-amber-300">
-                            <strong>Publish Requirement:</strong> All {students.length} students must be graded or marked absent before results can be published ({pendingCount} pending).
+                            <strong>Requirement:</strong> All {students.length} students must have marks entered or be marked absent before marks can be saved or published ({pendingCount} pending).
+                        </div>
+                    )}
+
+                    {hasInvalidMarks && (
+                        <div className="rounded-xl border border-destructive/30 bg-destructive-soft px-3.5 py-2.5 text-xs font-semibold text-destructive">
+                            <strong>Validation Error:</strong> Some marks are invalid or exceed the maximum allowed marks ({ct.maxMarks}).
                         </div>
                     )}
 
@@ -579,13 +613,16 @@ export default function CTEventPage() {
                             {students.map(m => {
                                 const inp = markInputs[m.userId] ?? { obtainedMarks: '', isAbsent: false, remarks: '' }
                                 const marksN = parseFloat(inp.obtainedMarks)
-                                const hasMarks = !inp.isAbsent && inp.obtainedMarks !== '' && !isNaN(marksN)
+                                const isInvalid = !inp.isAbsent && inp.obtainedMarks.trim() !== '' && (isNaN(marksN) || marksN < 0 || marksN > ct.maxMarks)
+                                const hasMarks = !inp.isAbsent && inp.obtainedMarks.trim() !== '' && !isNaN(marksN) && !isInvalid
                                 const pct = hasMarks && ct.maxMarks > 0 ? (marksN / ct.maxMarks) * 100 : 0
                                 const rowCls = inp.isAbsent
                                     ? 'flex flex-wrap items-center gap-3 rounded-xl border border-destructive/25 bg-destructive-soft/60 p-3'
-                                    : hasMarks
-                                        ? 'flex flex-wrap items-center gap-3 rounded-xl border border-success/25 bg-success-soft/40 p-3'
-                                        : 'flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-3'
+                                    : isInvalid
+                                        ? 'flex flex-wrap items-center gap-3 rounded-xl border border-destructive/35 bg-destructive-soft/30 p-3'
+                                        : hasMarks
+                                            ? 'flex flex-wrap items-center gap-3 rounded-xl border border-success/25 bg-success-soft/40 p-3'
+                                            : 'flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-3'
                                 return (
                                     <div key={m.userId} className={rowCls}>
                                         <Avatar src={m.profilePhotoUrl} name={m.fullName} size="sm" />
@@ -637,7 +674,12 @@ export default function CTEventPage() {
                                                 onChange={e => updateMark(m.userId, 'obtainedMarks', e.target.value)}
                                                 placeholder="—"
                                                 aria-label={'Marks for ' + m.fullName}
-                                                className="h-9 w-16 shrink-0 rounded-xl border border-border bg-background text-center text-[13px] font-semibold tabular-nums text-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                                className={cn(
+                                                    "h-9 w-16 shrink-0 rounded-xl border bg-background text-center text-[13px] font-semibold tabular-nums text-foreground outline-none transition-all focus:ring-2",
+                                                    isInvalid
+                                                        ? "border-destructive text-destructive focus:border-destructive focus:ring-destructive/20"
+                                                        : "border-border focus:border-primary focus:ring-primary/20"
+                                                )}
                                             />
                                         )}
 
