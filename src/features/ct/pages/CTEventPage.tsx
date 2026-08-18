@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     ArrowLeft, Upload, CheckCircle2, FileText, X, XCircle,
-    Save, Send, Calendar, BookOpen, Star, Trophy, TrendingDown, BarChart3,
+    Send, Calendar, BookOpen, Star, Trophy, TrendingDown, BarChart3,
+    AlertCircle,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -12,6 +13,7 @@ import Badge from '@/components/ui/Badge'
 import Avatar from '@/components/ui/Avatar'
 import ProgressBar from '@/components/ui/ProgressBar'
 import BrandLoader from '@/components/ui/BrandLoader'
+import InlineSpinner from '@/components/ui/InlineSpinner'
 import { formatDate } from '@/utils/dateUtils'
 import { sortByRoll } from '@/utils/roster'
 import { cn } from '@/utils/cn'
@@ -53,11 +55,10 @@ const MAX_SIZE_BYTES = 10 * 1024 * 1024 // matches the Cloudinary raw-upload cap
 export default function CTEventPage() {
     const { courseId, ctId } = useParams<{ courseId: string; ctId: string }>()
     const navigate = useNavigate()
-    const { user } = useAuthStore()
     const teacher = isTeacher(user?.role ?? 'Student')
 
     const { ctEvents, isLoading: eventsLoading, publishCT, unpublishCT } = useCTEvents(courseId!)
-    const { marksData, isLoading: marksLoading, uploadKhata, isUploading, gradeStudents, isSaving } = useCTMarks(ctId!)
+    const { marksData, isLoading: marksLoading, uploadKhata, isUploading, gradeStudentsAsync, isSaving } = useCTMarks(ctId!)
     const { members } = useAttendance(courseId!)
 
     const ct = ctEvents.find(e => e.id === ctId)
@@ -76,6 +77,9 @@ export default function CTEventPage() {
     const [sizeError, setSizeError] = useState<string | null>(null)
     const [markInputs, setMarkInputs] = useState<Record<string, MarkInput>>({})
     const [initialized, setInit] = useState(false)
+    const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+    const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+    const isFirstRun = useRef(true)
 
     const bestRef = useRef<HTMLInputElement>(null)
     const worstRef = useRef<HTMLInputElement>(null)
@@ -97,6 +101,46 @@ export default function CTEventPage() {
         if (marksData !== undefined) setInit(true)
     }, [marksData, students, initialized])
 
+    const performSave = async (currentInputs: Record<string, MarkInput>) => {
+        if (students.length === 0 || !ct?.khataUploaded) return
+
+        const hasInvalid = students.some(m => {
+            const inp = currentInputs[m.userId]
+            if (!inp || inp.isAbsent || inp.obtainedMarks.trim() === '') return false
+            const val = parseFloat(inp.obtainedMarks)
+            return isNaN(val) || val < 0 || (ct ? val > ct.maxMarks : false)
+        })
+        if (hasInvalid) return
+
+        const entries = students.map(m => {
+            const inp = currentInputs[m.userId] ?? { obtainedMarks: '', isAbsent: false, remarks: '' }
+            return {
+                studentId: m.userId,
+                obtainedMarks: inp.isAbsent
+                    ? 0
+                    : inp.obtainedMarks.trim() === ''
+                    ? null
+                    : isNaN(parseFloat(inp.obtainedMarks))
+                    ? null
+                    : parseFloat(inp.obtainedMarks),
+                isAbsent: inp.isAbsent,
+                remarks: inp.remarks.trim() || undefined,
+            }
+        })
+
+        try {
+            setSaveStatus('saving')
+            const res = await gradeStudentsAsync({ marks: entries })
+            if (res.success) {
+                setSaveStatus('saved')
+            } else {
+                setSaveStatus('error')
+            }
+        } catch {
+            setSaveStatus('error')
+        }
+    }
+
     const updateMark = (uid: string, field: keyof MarkInput, val: string | boolean) =>
         setMarkInputs(prev => ({ ...prev, [uid]: { ...prev[uid], [field]: val } }))
 
@@ -104,7 +148,7 @@ export default function CTEventPage() {
         setMarkInputs(prev => {
             const cur = prev[userId] ?? { obtainedMarks: '', isAbsent: false, remarks: '' }
             const nextAbsent = !cur.isAbsent
-            return {
+            const next = {
                 ...prev,
                 [userId]: {
                     ...cur,
@@ -112,10 +156,12 @@ export default function CTEventPage() {
                     obtainedMarks: nextAbsent ? '0' : '',
                 }
             }
+            performSave(next)
+            return next
         })
     }
 
-    const setAllAbsent = (absent: boolean) =>
+    const setAllAbsent = (absent: boolean) => {
         setMarkInputs(prev => {
             const next = { ...prev }
             students.forEach(m => {
@@ -125,8 +171,10 @@ export default function CTEventPage() {
                     obtainedMarks: absent ? '0' : '',
                 }
             })
+            performSave(next)
             return next
         })
+    }
 
     const pickFile = (key: KhataSlot['key'], file: File | undefined) => {
         if (file && file.size > MAX_SIZE_BYTES) {
@@ -191,17 +239,6 @@ export default function CTEventPage() {
         return map
     }, [marksData])
 
-    // Saved pending count: checks marks currently saved in the database
-    const savedPendingCount = useMemo(() => {
-        if (!students.length) return 0
-        return students.filter(m => {
-            const saved = savedMarkMap[m.userId]
-            if (!saved) return true
-            if (saved.isAbsent) return false
-            return saved.obtainedMarks == null || isNaN(saved.obtainedMarks) || saved.obtainedMarks < 0 || (ct ? saved.obtainedMarks > ct.maxMarks : false)
-        }).length
-    }, [students, savedMarkMap, ct])
-
     // Check whether the teacher has unsaved edits on screen
     const hasUnsavedChanges = useMemo(() => {
         if (!initialized || students.length === 0) return false
@@ -225,52 +262,42 @@ export default function CTEventPage() {
         })
     }, [students, markInputs, savedMarkMap, initialized])
 
-    const areAllMarksSaved = students.length > 0 && savedPendingCount === 0 && !hasUnsavedChanges
-    const canPublish = isDraft && (ct?.khataUploaded ?? false) && areAllMarksSaved && !hasInvalidMarks
+    // Debounced autosave effect
+    useEffect(() => {
+        if (!initialized || students.length === 0) return
+        if (isFirstRun.current) {
+            isFirstRun.current = false
+            return
+        }
+        if (!hasUnsavedChanges || hasInvalidMarks) return
+
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+        saveTimeoutRef.current = setTimeout(() => {
+            performSave(markInputs)
+        }, 500)
+
+        return () => {
+            if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+        }
+    }, [markInputs, hasUnsavedChanges, hasInvalidMarks, initialized, students])
+
+    const canPublish = isDraft && (ct?.khataUploaded ?? false) && students.length > 0 && pendingCount === 0 && !hasInvalidMarks && !hasUnsavedChanges && saveStatus !== 'saving' && !isSaving
 
     const handlePublish = () => {
         if (students.length === 0) return
-        if (hasUnsavedChanges) {
-            toast.error("Please click 'Save Marks' to save your changes before publishing.")
-            return
-        }
-        if (savedPendingCount > 0) {
-            toast.error(`Cannot publish: All ${students.length} students must have marks saved first (${savedPendingCount} pending).`)
+        if (pendingCount > 0) {
+            toast.error(`Cannot publish: All ${students.length} students must have marks entered or be marked absent (${pendingCount} pending).`)
             return
         }
         if (hasInvalidMarks) {
             toast.error(`Cannot publish: Some marks are invalid or exceed max marks (${Number(ct?.maxMarks) || 0}).`)
             return
         }
+        if (hasUnsavedChanges || saveStatus === 'saving' || isSaving) {
+            toast.error("Marks are currently saving. Please wait a moment before publishing.")
+            return
+        }
         publishCT(ct.id)
-    }
-
-    const canSave = students.length > 0 && pendingCount === 0 && !hasInvalidMarks
-
-    const handleSave = () => {
-        if (students.length === 0) return
-        if (pendingCount > 0) {
-            toast.error(`Cannot save marks: All ${students.length} students must have marks entered or be marked absent (${pendingCount} pending).`)
-            return
-        }
-        if (hasInvalidMarks) {
-            toast.error(`Cannot save marks: Some marks are invalid or exceed max marks (${Number(ct?.maxMarks) || 0}).`)
-            return
-        }
-        const entries = students.map(m => {
-            const inp = markInputs[m.userId] ?? { obtainedMarks: '', isAbsent: false, remarks: '' }
-            return {
-                studentId: m.userId,
-                obtainedMarks: inp.isAbsent
-                    ? 0
-                    : inp.obtainedMarks === ''
-                    ? null
-                    : parseFloat(inp.obtainedMarks),
-                isAbsent: inp.isAbsent,
-                remarks: inp.remarks || undefined,
-            }
-        })
-        gradeStudents({ marks: entries })
     }
 
     const backUrl = '/courses/' + courseId + '/ct'
@@ -404,10 +431,10 @@ export default function CTEventPage() {
                             disabled={!canPublish || isPublishing}
                             loading={isPublishing}
                             title={
-                                hasUnsavedChanges
-                                    ? "Please click 'Save Marks' to save your changes before publishing"
-                                    : savedPendingCount > 0
-                                    ? `All ${students.length} students must have marks saved before publishing (${savedPendingCount} pending)`
+                                hasUnsavedChanges || saveStatus === 'saving' || isSaving
+                                    ? "Saving changes..."
+                                    : pendingCount > 0
+                                    ? `All ${students.length} students must have marks entered or be marked absent before publishing (${pendingCount} pending)`
                                     : hasInvalidMarks
                                     ? `Some marks exceed max marks (${Number(ct.maxMarks)}) or are invalid`
                                     : undefined
@@ -622,7 +649,23 @@ export default function CTEventPage() {
                                 {students.length} students · Max: {ct.maxMarks} marks
                             </p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2.5">
+                            {/* Autosave Status Indicator */}
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mr-1">
+                                {saveStatus === 'saving' || isSaving ? (
+                                    <span className="flex items-center gap-1.5 text-primary font-medium">
+                                        <InlineSpinner size="xs" /> Saving...
+                                    </span>
+                                ) : saveStatus === 'saved' || (!hasUnsavedChanges && initialized) ? (
+                                    <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
+                                        <CheckCircle2 className="w-3.5 h-3.5" /> Autosaved
+                                    </span>
+                                ) : saveStatus === 'error' ? (
+                                    <span className="flex items-center gap-1.5 text-destructive font-medium">
+                                        <AlertCircle className="w-3.5 h-3.5" /> Save failed
+                                    </span>
+                                ) : null}
+                            </div>
                             <button
                                 type="button"
                                 onClick={() => setAllAbsent(false)}
@@ -637,22 +680,6 @@ export default function CTEventPage() {
                             >
                                 Mark all absent
                             </button>
-                            <Button
-                                size="sm"
-                                leftIcon={<Save className="w-4 h-4" />}
-                                loading={isSaving}
-                                onClick={handleSave}
-                                disabled={!canSave || isSaving}
-                                title={
-                                    pendingCount > 0
-                                        ? `All ${students.length} students must have marks entered or be marked absent before saving (${pendingCount} pending)`
-                                        : hasInvalidMarks
-                                        ? `Some marks exceed max marks (${Number(ct.maxMarks)}) or are invalid`
-                                        : undefined
-                                }
-                            >
-                                Save Marks
-                            </Button>
                         </div>
                     </div>
 
@@ -663,21 +690,9 @@ export default function CTEventPage() {
                         <span><span className="font-display text-base text-foreground">{pendingCount}</span> Pending</span>
                     </div>
 
-                    {isDraft && hasUnsavedChanges && (
+                    {isDraft && pendingCount > 0 && (
                         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-xs text-amber-700 dark:text-amber-300">
-                            <strong>Unsaved Changes:</strong> You have unsaved mark changes. Click <strong>Save Marks</strong> before results can be published.
-                        </div>
-                    )}
-
-                    {isDraft && !hasUnsavedChanges && savedPendingCount > 0 && (
-                        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-xs text-amber-700 dark:text-amber-300">
-                            <strong>Publish Requirement:</strong> All {students.length} students must have marks saved or be marked absent before results can be published ({savedPendingCount} pending).
-                        </div>
-                    )}
-
-                    {pendingCount > 0 && !hasUnsavedChanges && (
-                        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-xs text-amber-700 dark:text-amber-300">
-                            <strong>Requirement:</strong> All {students.length} students must have marks entered or be marked absent before marks can be saved ({pendingCount} pending).
+                            <strong>Publish Requirement:</strong> All {students.length} students must have marks entered or be marked absent before results can be published ({pendingCount} pending).
                         </div>
                     )}
 

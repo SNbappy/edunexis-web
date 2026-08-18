@@ -105,8 +105,9 @@ export function useCTMarks(ctEventId: string) {
         onSuccess: (res) => {
             if (res.success) {
                 qc.invalidateQueries({ queryKey: key })
-                toast.success('Marks saved!')
-            } else toast.error(res.message)
+            } else {
+                toast.error(res.message)
+            }
         },
         onError: () => toast.error('Failed to save marks.'),
     })
@@ -127,6 +128,7 @@ export function useCTMarks(ctEventId: string) {
         marksData: query.data ?? null,
         isLoading: query.isLoading,
         gradeStudents: gradeMutation.mutate,
+        gradeStudentsAsync: gradeMutation.mutateAsync,
         isSaving: gradeMutation.isPending,
         uploadKhata: uploadKhataMutation.mutate,
         isUploading: uploadKhataMutation.isPending,
