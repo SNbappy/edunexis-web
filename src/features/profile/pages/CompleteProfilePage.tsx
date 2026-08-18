@@ -34,7 +34,7 @@ function buildSchema(teacher: boolean) {
       ? z.string().trim().min(2, "Student ID is required for students")
       : z.string().optional(),
     phoneNumber: z.string().optional(),
-    bio: z.string().max(2000, "Bio must be under 2000 characters").optional(),
+    bio: z.string().max(2500, "Bio must be under 2500 characters").optional(),
     linkedInUrl: z.string().optional(),
     gitHubUrl: z.string().optional(),
     twitterUrl: z.string().optional(),
@@ -142,6 +142,8 @@ export default function CompleteProfilePage() {
   })
 
   const values = watch()
+  const bioLength = values.bio?.length ?? 0
+  const bioTooLong = bioLength > 2500
 
   /* Fields per step (for validation gating) */
   const STEP_FIELDS: ReadonlyArray<ReadonlyArray<keyof FormData>> = [
@@ -233,7 +235,7 @@ export default function CompleteProfilePage() {
       )}
 
       {!isLastStep ? (
-        <Button type="button" onClick={nextStep} disabled={isUpdating}>
+        <Button type="button" onClick={nextStep} disabled={isUpdating || (step === 1 && bioTooLong)}>
           Next step
           <ChevronRight className="h-3.5 w-3.5" />
         </Button>
@@ -406,8 +408,8 @@ export default function CompleteProfilePage() {
                       {errors.bio.message}
                     </p>
                   )}
-                  <p className="mt-1.5 text-[11.5px] text-muted-foreground">
-                    {(values.bio?.length ?? 0)} / 2000 characters
+                  <p className={"mt-1.5 text-[11.5px] " + (bioTooLong ? "font-semibold text-destructive" : "text-muted-foreground")}>
+                    {bioLength} / 2500 characters
                   </p>
                 </div>
               </FormSection>

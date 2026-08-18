@@ -303,7 +303,7 @@ export default function CreateCoursePage() {
                     {...register("courseCode")}
                     label="Course code"
                     placeholder="e.g. CSE-3201"
-                    hint="Short code like CSE-301 or MATH-101."
+                    hint="e.g. CSE-3102 — first 2 digits are year (31), last 2 are semester (02)."
                     error={errors.courseCode?.message}
                   />
                   <div>

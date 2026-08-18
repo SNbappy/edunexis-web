@@ -43,7 +43,7 @@ function buildSchema(teacher: boolean) {
       : z.string().optional(),
     headline: z.string().max(160, "Keep headline under 160 characters").optional(),
 
-    bio: z.string().max(2000, "Bio must be under 2000 characters").optional(),
+    bio: z.string().max(2500, "Bio must be under 2500 characters").optional(),
 
     officeLocation: z.string().max(120).optional(),
     officeHours: z.string().max(160).optional(),
@@ -495,8 +495,8 @@ export default function EditProfilePage() {
                     <p className="text-[11.5px] text-muted-foreground">
                       Markdown not supported. Use plain text and paragraph breaks.
                     </p>
-                    <p className="text-[11.5px] text-muted-foreground">
-                      {(values.bio?.length ?? 0)} / 1000
+                    <p className={"text-[11.5px] " + ((values.bio?.length ?? 0) > 2500 ? "font-semibold text-destructive" : "text-muted-foreground")}>
+                      {(values.bio?.length ?? 0)} / 2500
                     </p>
                   </div>
                   {errors.bio?.message ? (
