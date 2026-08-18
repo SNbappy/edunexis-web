@@ -167,8 +167,9 @@ export default function MaterialsTab({ courseId }: MaterialsTabProps) {
         </div>
       </div>
 
+      {/* Shown on "All" too, not only on "Files". */}
       <AnimatePresence>
-        {isFlattenMode && (
+        {sortMode !== "Folder" && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}

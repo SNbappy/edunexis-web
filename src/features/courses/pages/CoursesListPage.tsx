@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
-import { Plus, LogIn, Search, BookOpen, Archive as ArchiveIcon, Inbox, Trash2 } from "lucide-react"
+import { Plus, LogIn, Search, BookOpen, Archive as ArchiveIcon, Inbox, Trash2, Mail } from "lucide-react"
 import Button from "@/components/ui/Button"
 import Input from "@/components/ui/Input"
 import Skeleton from "@/components/ui/Skeleton"
@@ -14,6 +14,7 @@ import {
 } from "../components/CourseCard"
 import DeletedCourseCard from "../components/DeletedCourseCard"
 import { useCourses } from "../hooks/useCourses"
+import { useMyCourseInvitations } from "../hooks/useCourseTeachers"
 import { useDeletedCourses } from "../hooks/useDeletedCourses"
 import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
@@ -50,6 +51,12 @@ export default function CoursesListPage() {
 
   const requestCount = pending.length + rejected.length
   const hasRequests  = !teacher && requestCount > 0
+
+  /* Co-teaching invitations addressed to this teacher. Surfaced here rather
+     than only in notifications: a notification is easy to miss, and an
+     invitation that is never answered leaves the sender waiting. */
+  const { invitations, respond, isResponding } = useMyCourseInvitations(teacher)
+  const hasInvitations = teacher && invitations.length > 0
 
   // Filter enrolled courses by search + archive status
   const filteredEnrolled = useMemo(() => {
@@ -162,6 +169,49 @@ export default function CoursesListPage() {
           )}
         </div>
       </div>
+
+      {/* Co-teaching invitations, above the grid — an unanswered invitation is
+          somebody waiting on you, so it should not be buried under the list of
+          courses you already have. */}
+      {hasInvitations && (
+        <div className="mb-4 space-y-2">
+          {invitations.map((inv: any) => (
+            <div
+              key={inv.id}
+              className="flex flex-wrap items-center gap-3 rounded-2xl border border-primary/30 bg-primary-soft px-4 py-3"
+            >
+              <Mail className="h-4 w-4 shrink-0 text-primary" strokeWidth={2} />
+              <div className="min-w-0 flex-1">
+                <p className="text-[13px] font-semibold text-foreground">
+                  {inv.invitedByName} invited you to co-teach {inv.courseCode} — {inv.courseTitle}
+                </p>
+                {inv.message && (
+                  <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
+                    “{inv.message}”
+                  </p>
+                )}
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={isResponding}
+                  onClick={() => respond({ invitationId: inv.id, accept: false })}
+                >
+                  Decline
+                </Button>
+                <Button
+                  size="sm"
+                  loading={isResponding}
+                  onClick={() => respond({ invitationId: inv.id, accept: true })}
+                >
+                  Accept
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Grid */}
       {showingEnrolled && filteredEnrolled.length === 0 && (

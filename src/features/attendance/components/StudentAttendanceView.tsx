@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState } from "react"
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion"
-import { CheckCircle2, XCircle, Clock, TrendingUp, Award } from "lucide-react"
+import { CheckCircle2, XCircle, Clock, TrendingUp } from "lucide-react"
 import { useMyAttendance } from "../hooks/useAttendanceStats"
 
 interface StudentAttendanceViewProps { courseId: string }
@@ -13,43 +13,47 @@ interface ToneClasses {
   border: string
 }
 
-function getTone(pct: number): { tone: ToneClasses; status: string } {
+/**
+ * Colour band for an attendance percentage.
+ *
+ * Green at 75 and above, amber from 50 to 74, red below 50 — the same ramp the
+ * gradebook and the PDF export use, so one figure never changes meaning between
+ * two screens.
+ *
+ * Deliberately returns no wording. This used to carry "Good standing", "At risk"
+ * and "Critical", plus a line telling a student how many sessions they still had
+ * to attend. That is the platform editorialising on someone's record: the number
+ * and its colour say everything the reader needs, and what to do about it is not
+ * the software's call.
+ */
+function getTone(pct: number): ToneClasses {
   if (pct >= 75) return {
-    tone: {
-      ring: "stroke-emerald-500",
-      text: "text-emerald-700 dark:text-emerald-300",
-      bar: "bg-emerald-500",
-      bg: "bg-emerald-50 dark:bg-emerald-950/40",
-      border: "border-emerald-200 dark:border-emerald-800",
-    },
-    status: "Good standing",
+    ring: "stroke-emerald-500",
+    text: "text-emerald-700 dark:text-emerald-300",
+    bar: "bg-emerald-500",
+    bg: "bg-emerald-50 dark:bg-emerald-950/40",
+    border: "border-emerald-200 dark:border-emerald-800",
   }
   if (pct >= 50) return {
-    tone: {
-      ring: "stroke-amber-500",
-      text: "text-amber-700 dark:text-amber-300",
-      bar: "bg-amber-500",
-      bg: "bg-amber-50 dark:bg-amber-950/40",
-      border: "border-amber-200 dark:border-amber-800",
-    },
-    status: "At risk — below 75%",
+    ring: "stroke-amber-500",
+    text: "text-amber-700 dark:text-amber-300",
+    bar: "bg-amber-500",
+    bg: "bg-amber-50 dark:bg-amber-950/40",
+    border: "border-amber-200 dark:border-amber-800",
   }
   return {
-    tone: {
-      ring: "stroke-red-500",
-      text: "text-red-700 dark:text-red-300",
-      bar: "bg-red-500",
-      bg: "bg-red-50 dark:bg-red-950/40",
-      border: "border-red-200 dark:border-red-800",
-    },
-    status: "Critical — below 50%",
+    ring: "stroke-red-500",
+    text: "text-red-700 dark:text-red-300",
+    bar: "bg-red-500",
+    bg: "bg-red-50 dark:bg-red-950/40",
+    border: "border-red-200 dark:border-red-800",
   }
 }
 
 export default function StudentAttendanceView({ courseId }: StudentAttendanceViewProps) {
   const { data: summary, isLoading } = useMyAttendance(courseId)
   const pct = summary?.attendancePercent ?? 0
-  const { tone, status } = getTone(pct)
+  const tone = getTone(pct)
 
   /* Animated count + bar (Framer Motion, no GSAP) */
   const animatedNum = useMotionValue(0)
@@ -157,11 +161,8 @@ export default function StudentAttendanceView({ courseId }: StudentAttendanceVie
           </div>
 
           <div className="flex-1">
-            <p className="font-display text-lg font-extrabold text-foreground">
+            <p className="mb-3 font-display text-lg font-extrabold text-foreground">
               Attendance rate
-            </p>
-            <p className={"mb-3 text-[13px] font-semibold " + tone.text}>
-              {status}
             </p>
             <div className="h-2.5 overflow-hidden rounded-full bg-muted">
               <motion.div
@@ -208,24 +209,6 @@ export default function StudentAttendanceView({ courseId }: StudentAttendanceVie
         })}
       </div>
 
-      {/* Below-threshold message */}
-      {pct < 75 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/40"
-        >
-          <Award className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
-          <p className="text-[13px] text-amber-900 dark:text-amber-200">
-            You need{" "}
-            <strong className="font-bold">
-              {Math.max(0, Math.ceil((75 * summary.totalSessions / 100) - summary.presentCount))} more
-            </strong>{" "}
-            attended sessions to reach 75% attendance.
-          </p>
-        </motion.div>
-      )}
     </motion.div>
   )
 }

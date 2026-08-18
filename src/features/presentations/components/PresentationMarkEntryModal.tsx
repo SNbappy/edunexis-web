@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button'
 import Avatar from '@/components/ui/Avatar'
 import ProgressBar from '@/components/ui/ProgressBar'
 import { usePresentationResults } from '../hooks/usePresentations'
+import { sortByRoll } from '@/utils/roster'
 import { cn } from '@/utils/cn'
 import type { PresentationDto, PresentationMarkEntry } from '@/types/presentation.types'
 
@@ -86,10 +87,10 @@ export default function PresentationMarkEntryModal({ isOpen, onClose, presentati
             isOpen={isOpen}
             onClose={onClose}
             title={`Enter marks — ${presentation.title}`}
-            description={`Total marks: ${totalMarks}`}
+            description={`Type each student's score out of ${totalMarks}, or mark them absent.`}
             size="xl"
         >
-            <div className="space-y-5">
+            <div className="space-y-3">
                 <div className="flex items-center gap-4 flex-wrap text-sm">
                     <span className="flex items-center gap-1.5 text-success font-medium">
                         <CheckCircle2 className="w-4 h-4" /> {gradedCount} graded
@@ -110,13 +111,31 @@ export default function PresentationMarkEntryModal({ isOpen, onClose, presentati
                     </div>
                 </div>
 
+                {/* Column headings.
+                    Without these the marks box read as an anonymous 64px input
+                    sitting next to an Absent button — nothing on first view said
+                    it was where you type the score, or what it was out of. */}
+                {members.length > 0 && !isLoading && (
+                    <div className="flex items-center gap-3 rounded-lg bg-muted/50 px-3 py-2">
+                        <span className="min-w-0 flex-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                            Student
+                        </span>
+                        <span className="w-[132px] shrink-0 text-center text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                            Marks out of {totalMarks}
+                        </span>
+                        <span className="w-[92px] shrink-0 text-center text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                            Absent
+                        </span>
+                    </div>
+                )}
+
                 {isLoading ? (
                     <div className="space-y-2">
                         {[1, 2, 3].map((i) => <div key={i} className="h-14 rounded-xl bg-muted animate-pulse" />)}
                     </div>
                 ) : (
                     <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1 no-scrollbar">
-                        {[...members].sort((a, b) => (a.studentId ?? "").localeCompare(b.studentId ?? "", undefined, { numeric: true }) || a.fullName.localeCompare(b.fullName)).map((member, i) => {
+                        {sortByRoll(members).map((member, i) => {
                             const e = entries[member.userId] ?? { marks: '', absent: false, topic: '', feedback: '' }
                             const marksNum = parseFloat(e.marks)
                             const pct = !isNaN(marksNum) && totalMarks > 0 ? (marksNum / totalMarks) * 100 : 0
@@ -148,30 +167,61 @@ export default function PresentationMarkEntryModal({ isOpen, onClose, presentati
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2 shrink-0">
-                                        <button
-                                            onClick={() => setField(member.userId, 'absent', !e.absent)}
-                                            className={cn(
-                                                'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all shrink-0',
-                                                e.absent
-                                                    ? 'bg-destructive/10 text-destructive border-destructive/30'
-                                                    : 'border-border text-muted-foreground hover:text-destructive hover:border-destructive/30'
+                                        {/* Marks first, absent second: entering a
+                                            score is the job, marking somebody
+                                            absent is the exception. */}
+                                        <div className="flex w-[132px] shrink-0 items-center justify-center">
+                                            {!e.absent ? (
+                                                <div className="flex items-center gap-1.5">
+                                                    <input
+                                                        type="number"
+                                                        value={e.marks}
+                                                        onChange={(ev) => setField(member.userId, 'marks', ev.target.value)}
+                                                        min={0} max={totalMarks} step={0.5}
+                                                        placeholder="0"
+                                                        aria-label={`Marks for ${member.fullName} out of ${totalMarks}`}
+                                                        className={cn(
+                                                            'h-10 w-[74px] rounded-xl border-2 bg-card text-center font-display text-[15px] font-bold tabular-nums text-foreground transition-all',
+                                                            'placeholder:font-normal placeholder:text-muted-foreground/50',
+                                                            'focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30',
+                                                            e.marks !== '' ? 'border-primary/40' : 'border-dashed border-border-strong',
+                                                        )}
+                                                    />
+                                                    <span className="text-[13px] font-semibold tabular-nums text-muted-foreground">
+                                                        / {totalMarks}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <span className="font-display text-[13px] font-bold text-destructive">
+                                                    ABSENT
+                                                </span>
                                             )}
-                                        >
-                                            <XCircle className="w-3.5 h-3.5" /> Absent
-                                        </button>
-                                        {!e.absent ? (
-                                            <input
-                                                type="number"
-                                                value={e.marks}
-                                                onChange={(ev) => setField(member.userId, 'marks', ev.target.value)}
-                                                min={0} max={totalMarks} step={0.5}
-                                                placeholder="—"
-                                                className="w-16 h-9 text-center rounded-xl border border-border bg-card text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                                            />
-                                        ) : (
-                                            <div className="w-16 h-9 flex items-center justify-center text-destructive text-sm font-bold">ABS</div>
-                                        )}
+                                        </div>
+
+                                        <div className="flex w-[92px] shrink-0 justify-center">
+                                            <button
+                                                onClick={() => setField(member.userId, 'absent', !e.absent)}
+                                                aria-pressed={e.absent}
+                                                aria-label={`Mark ${member.fullName} absent`}
+                                                className={cn(
+                                                    'flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-all',
+                                                    e.absent
+                                                        ? 'border-destructive/30 bg-destructive/10 text-destructive'
+                                                        : 'border-border text-muted-foreground hover:border-destructive/30 hover:text-destructive'
+                                                )}
+                                            >
+                                                <XCircle className="h-3.5 w-3.5" />
+                                                {/* Always "Absent".
+                                                    It read "Mark" until pressed,
+                                                    under a column headed Absent
+                                                    and beside a marks box — so the
+                                                    one control that does not enter
+                                                    a mark was the one labelled
+                                                    "Mark". Same behaviour; the
+                                                    pressed state is carried by the
+                                                    red fill and aria-pressed. */}
+                                                Absent
+                                            </button>
                                         </div>
                                     </div>
 

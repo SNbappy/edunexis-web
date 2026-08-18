@@ -52,6 +52,21 @@ export function useCourseMembers(courseId: string) {
     onError: () => toast.error("Failed to review request."),
   })
 
+  /* Appointing a class representative.
+     CourseMember has carried IsCR from the start and several handlers already
+     honour it, but nothing could ever set it — so in practice no CR existed. */
+  const setClassRepMutation = useMutation({
+    mutationFn: ({ studentId, isCr }: { studentId: string; isCr: boolean }) =>
+      courseService.setClassRepresentative(courseId, studentId, isCr),
+    onSuccess: (res, { isCr }) => {
+      if (res.success) {
+        qc.invalidateQueries({ queryKey: ["course-members", courseId] })
+        toast.success(isCr ? "Class representative appointed." : "Class representative removed.")
+      } else toast.error(res.message)
+    },
+    onError: () => toast.error("Failed to update class representative."),
+  })
+
   const removeMemberMutation = useMutation({
     mutationFn: (studentId: string) => courseService.removeMember(courseId, studentId),
     onSuccess: (res) => {
@@ -72,6 +87,8 @@ export function useCourseMembers(courseId: string) {
     isReviewing:       reviewMutation.isPending,
     removeMember:      removeMemberMutation.mutate,
     isRemoving:        removeMemberMutation.isPending,
+    setClassRep:       setClassRepMutation.mutate,
+    isSettingClassRep: setClassRepMutation.isPending,
     refetchRequests:   joinRequestsQuery.refetch,
     refetchMembers:    membersQuery.refetch,
   }

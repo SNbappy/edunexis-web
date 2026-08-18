@@ -56,6 +56,29 @@ export const assignmentService = {
             .delete<ApiResponse<null>>(courseBase(courseId) + '/' + assignmentId)
             .then((r) => r.data),
 
+    /** Hands a saved draft in, making it visible to the teacher. */
+    turnIn: (assignmentId: string) =>
+        api
+            .post<ApiResponse<SubmissionDto>>(
+                '/Assignments/assignments/' + assignmentId + '/turn-in')
+            .then((r) => r.data),
+
+    /** Takes work back for further editing while the assignment is still open. */
+    unsubmit: (assignmentId: string) =>
+        api
+            .post<ApiResponse<SubmissionDto>>(
+                '/Assignments/assignments/' + assignmentId + '/unsubmit')
+            .then((r) => r.data),
+
+    /** Closes the assignment; by default marks every non-submitter 0. */
+    close: (courseId: string, assignmentId: string, awardZeroToNonSubmitters = true) =>
+        api
+            .post<ApiResponse<{ zerosAwarded: number; alreadySubmitted: number }>>(
+                courseBase(courseId) + '/' + assignmentId + '/close',
+                null,
+                { params: { awardZeroToNonSubmitters } })
+            .then((r) => r.data),
+
     submit: (assignmentId: string, data: SubmitAssignmentRequest) => {
         const form = new FormData()
         form.append('submissionType', data.submissionType)
@@ -103,10 +126,13 @@ export const assignmentService = {
             `/Assignments/courses/${courseId}/assignments/${assignmentId}/comments`
         ).then(r => r.data),
 
-    addComment: (courseId: string, assignmentId: string, content: string) =>
+    addComment: (
+        courseId: string, assignmentId: string, content: string,
+        parentCommentId?: string,
+    ) =>
         api.post<ApiResponse<CommentDto>>(
             `/Assignments/courses/${courseId}/assignments/${assignmentId}/comments`,
-            { content }
+            { content, parentCommentId }
         ).then(r => r.data),
 
     editComment: (courseId: string, commentId: string, content: string) =>

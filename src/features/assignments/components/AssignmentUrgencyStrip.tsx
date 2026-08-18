@@ -37,32 +37,64 @@ export default function AssignmentUrgencyStrip({
   const { user } = useAuthStore()
   const teacher = isTeacher(user?.role ?? "Student")
 
-  const items = useMemo(() => {
-    return assignments
-      .map(a => ({
-        assignment: a,
-        display: teacher ? getTeacherDisplay(a) : getStudentDisplay(a),
-      }))
+  const decorated = useMemo(
+    () => assignments.map(a => ({
+      assignment: a,
+      display: teacher ? getTeacherDisplay(a) : getStudentDisplay(a),
+      ungraded: Math.max(0, (a.submissionCount ?? 0) - (a.gradedCount ?? 0)),
+      pastDue: new Date(a.deadline).getTime() < Date.now(),
+    })),
+    [assignments, teacher],
+  )
+
+  /* Students keep a single "Due soon" shortcut. */
+  if (!teacher) {
+    const due = decorated
       .filter(x => x.display.urgencyRank <= URGENCY_THRESHOLD)
       .sort((a, b) => a.display.urgencyRank - b.display.urgencyRank)
       .slice(0, MAX_ITEMS)
-  }, [assignments, teacher])
 
-  if (items.length === 0) return null
+    if (due.length === 0 || due.length >= assignments.length) return null
 
-  /* A shortcut is only a shortcut if it saves scanning. When the strip would
-     list every assignment the tab already shows in full below it, the same
-     cards render twice on one screen and the "needs your attention" heading
-     stops meaning anything — it is just the list again with a louder title. */
-  if (items.length >= assignments.length) return null
+    return <Strip title="Due soon" items={due} onView={onView} />
+  }
 
+  /* Teachers get one strip, and it is deliberately NOT "needs grading".
+     The list below already has a "Needs grading" group, so a strip with that
+     same heading printed the identical cards twice on one screen under the
+     identical title.
+
+     What the list cannot express is urgency: it groups by status, so an
+     assignment whose deadline shut yesterday sits in the same block as one that
+     closed last term. That is what this strip is for — the window has passed
+     and it is now genuinely on the teacher, either because nobody submitted or
+     because what arrived is still unmarked. Marking work before the deadline is
+     normal and is not called out here. */
+  const needsAttention = decorated
+    .filter(x => x.pastDue && (x.ungraded > 0 || (x.assignment.submissionCount ?? 0) === 0))
+    .sort((a, b) => a.display.urgencyRank - b.display.urgencyRank)
+    .slice(0, MAX_ITEMS)
+
+  if (needsAttention.length === 0) return null
+
+  return <Strip title="Needs your attention" items={needsAttention} onView={onView} />
+}
+
+function Strip({
+  title, items, onView, count,
+}: {
+  title: string
+  items: { assignment: AssignmentDto; display: AssignmentDisplay }[]
+  onView: (a: AssignmentDto) => void
+  count?: string
+}) {
   return (
-    <section aria-label={teacher ? "Needs your attention" : "Due soon"}>
+    <section aria-label={title}>
       <div className="mb-2.5 flex items-center gap-2">
         <Clock className="h-3.5 w-3.5 text-warning" strokeWidth={ICON_STROKE} />
-        <h3 className={TEXT.eyebrow}>{teacher ? "Needs your attention" : "Due soon"}</h3>
+        <h3 className={TEXT.eyebrow}>{title}</h3>
         <span className="rounded-full bg-warning-soft px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-warning">
-          {items.length}
+          {count ?? items.length}
         </span>
       </div>
 

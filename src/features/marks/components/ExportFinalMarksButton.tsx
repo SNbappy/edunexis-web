@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Download, FileText, FileImage, Printer } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Button from '@/components/ui/Button'
+import { SURFACE } from '@/components/ui/appTokens'
+import { cn } from '@/utils/cn'
 import type { FinalMarkDto, GradingFormulaDto } from '@/types/marks.types'
 import {
     getCsvLetterheadRows,
@@ -17,10 +19,13 @@ interface Props {
     semester?: string | null
     department?: string | null
     members?: Array<{ userId: string; studentId?: string | null; fullName: string }>
+    /** Drives the DRAFT marking. Results can be exported before publishing. */
+    isPublished?: boolean
 }
 
 export default function ExportFinalMarksButton({
     marks, formula, courseTitle, courseCode, semester, department, members = [],
+    isPublished = false,
 }: Props) {
     const [open, setOpen] = useState(false)
     const title = courseTitle ?? 'Course'
@@ -39,8 +44,12 @@ export default function ExportFinalMarksButton({
         a.studentName.localeCompare(b.studentName)
     )
 
+    /* An unpublished export is a working copy: the students have not been shown
+       these figures and they may still change. Saying so in the title is the
+       difference between a draft a teacher checks and a document somebody files
+       as the final result. */
     const letterhead: LetterheadOpts = {
-        reportTitle: 'Final Marks',
+        reportTitle: isPublished ? 'Final Marks' : 'Final Marks — DRAFT (not published)',
         courseCode, courseTitle: title, semester, department,
         studentCount: sorted.length,
     }
@@ -203,7 +212,12 @@ export default function ExportFinalMarksButton({
                             initial={{ opacity: 0, scale: 0.9, y: -4 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: -4 }}
-                            className="absolute right-0 top-full mt-2 w-48 glass-card rounded-xl shadow-xl border border-border z-20 overflow-hidden"
+                            /* This carried `glass-card`, a class that no longer
+                               exists in the stylesheet — so the menu had no
+                               background at all and the marks table showed
+                               straight through its three labels. The shared
+                               raised surface is what every other menu uses. */
+                            className={cn(SURFACE.raised, "absolute right-0 top-full z-20 mt-2 w-48 overflow-hidden")}
                         >
                             <button onClick={exportCSV}
                                 className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors">

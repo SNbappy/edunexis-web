@@ -46,7 +46,7 @@ export default function GradeSubmissionModal({ isOpen, onClose, submission, maxM
             <div className="space-y-5">
                 {/* Student info */}
                 <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/50 border border-border">
-                    <Avatar name={submission.studentName} size="md" />
+                    <Avatar src={submission.studentPhotoUrl} name={submission.studentName} size="md" />
                     <div>
                         <p className="font-semibold text-foreground">{submission.studentName}</p>
                         <p className="text-xs text-muted-foreground">

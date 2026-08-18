@@ -63,6 +63,8 @@ export default function TakeAttendanceSheet({
   const [topic, setTopic] = useState(initialTopic ?? "")
   const [statuses, setStatuses] = useState<StatusMap>({})
   const [search, setSearch] = useState("")
+  /** Narrows the roster to one status. "All" is the default. */
+  const [filter, setFilter] = useState<"All" | AttendanceStatus>("All")
 
   useEffect(() => {
     if (!isOpen || !members.length) return
@@ -76,6 +78,7 @@ export default function TakeAttendanceSheet({
     setDate(initialDate ?? todayISO())
     setTopic(initialTopic ?? "")
     setSearch("")
+    setFilter("All")
   }, [isOpen, members, initialDate, initialTopic, initialStatuses])
 
   const filtered = useMemo(() => {
@@ -83,13 +86,16 @@ export default function TakeAttendanceSheet({
       (a.studentId ?? "").localeCompare(b.studentId ?? "", undefined, { numeric: true }) ||
       a.fullName.localeCompare(b.fullName)
     )
-    if (!search.trim()) return sorted
+    const byStatus = filter === "All"
+      ? sorted
+      : sorted.filter(m => (statuses[m.userId] ?? "Unmarked") === filter)
+    if (!search.trim()) return byStatus
     const q = search.toLowerCase()
-    return sorted.filter(m =>
+    return byStatus.filter(m =>
       m.fullName.toLowerCase().includes(q) ||
       m.studentId?.toLowerCase().includes(q)
     )
-  }, [members, search])
+  }, [members, search, filter, statuses])
 
   const setStatus = (userId: string, status: AttendanceStatus) =>
     setStatuses(prev => ({ ...prev, [userId]: status }))
@@ -119,11 +125,6 @@ export default function TakeAttendanceSheet({
       isOpen={isOpen}
       onClose={onClose}
       title={initialStatuses ? "Edit attendance" : "Take attendance"}
-      description={
-        initialStatuses
-          ? "Update attendance for this session."
-          : "Mark each student present or absent."
-      }
       size="xl"
       footer={
         <>
@@ -146,34 +147,59 @@ export default function TakeAttendanceSheet({
         </>
       }
     >
-      <div className="space-y-4">
-        {/* Session details */}
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Session date" htmlFor="attendance-date">
-            <input
-              id="attendance-date"
-              type="date"
-              value={date}
-              onChange={e => setDate(e.target.value)}
-              className={cn(FIELD_BASE, fieldState(false), FIELD_HEIGHT, "px-3")}
-            />
-          </Field>
+      <div className="space-y-2.5">
+        {/* Session details and search share one row.
+            This block used to stack four things — a two-column date/topic grid
+            with a hint line, a tally bar, then a full-width search — which cost
+            roughly 190px above the roster and pushed the students, the only
+            part anyone is here to touch, below the fold on a laptop. */}
+        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,150px)_minmax(0,1fr)_minmax(0,1fr)]">
+          <input
+            id="attendance-date"
+            type="date"
+            aria-label="Session date"
+            value={date}
+            onChange={e => setDate(e.target.value)}
+            className={cn(FIELD_BASE, fieldState(false), FIELD_HEIGHT, "px-3")}
+          />
           <Input
-            label="Topic"
-            hint="Optional — shows on the session list"
             value={topic}
             onChange={e => setTopic(e.target.value)}
-            placeholder="e.g. Normalization — BCNF"
+            placeholder="Topic (optional)"
+            aria-label="Topic"
+          />
+          <Input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search name or ID…"
+            aria-label="Search students"
+            leftIcon={<Search strokeWidth={ICON_STROKE} />}
           />
         </div>
 
         {/* Tally + bulk actions. The tally is live, so you can see the register
             fill up without counting rows yourself. */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-border bg-muted/40 px-3 py-2.5">
-          <div className="flex items-center gap-3">
-            <Tally value={counts.present}  label="present"  className="text-success" />
-            <Tally value={counts.absent}   label="absent"   className="text-destructive" />
-            <Tally value={counts.unmarked} label="unmarked" className={counts.unmarked ? "text-warning" : "text-muted-foreground"} />
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-border bg-muted/40 px-3 py-1.5">
+          {/* The tallies double as filters — "4 unmarked" is only useful if you
+              can then see which four without scrolling the whole roster. */}
+          <div className="flex items-center gap-1">
+            <Tally
+              value={members.length} label="all"
+              active={filter === "All"} onClick={() => setFilter("All")}
+            />
+            <Tally
+              value={counts.present} label="present" className="text-success"
+              active={filter === "Present"} onClick={() => setFilter("Present")}
+            />
+            <Tally
+              value={counts.absent} label="absent" className="text-destructive"
+              active={filter === "Absent"} onClick={() => setFilter("Absent")}
+            />
+            <Tally
+              value={counts.unmarked} label="unmarked"
+              className={counts.unmarked ? "text-warning" : "text-muted-foreground"}
+              active={filter === "Unmarked"} onClick={() => setFilter("Unmarked")}
+            />
           </div>
           <div className="ml-auto flex items-center gap-2">
             <Button type="button" size="sm" variant="secondary" onClick={() => setAll("Present")}>
@@ -184,14 +210,6 @@ export default function TakeAttendanceSheet({
             </Button>
           </div>
         </div>
-
-        {/* Search */}
-        <Input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search by name or student ID…"
-          leftIcon={<Search strokeWidth={ICON_STROKE} />}
-        />
 
         {/* Roster */}
         {members.length === 0 ? (
@@ -206,7 +224,11 @@ export default function TakeAttendanceSheet({
             variant="panel"
             icon={<Search strokeWidth={ICON_STROKE} />}
             title="No matches"
-            description={`No student matches “${search}”.`}
+            description={
+              search.trim()
+                ? `No student matches “${search}”${filter === "All" ? "" : ` in ${filter.toLowerCase()}`}.`
+                : `No student is currently ${filter.toLowerCase()}.`
+            }
           />
         ) : (
           <div className="max-h-[46vh] overflow-y-auto rounded-xl border border-border">
@@ -257,14 +279,31 @@ export default function TakeAttendanceSheet({
   )
 }
 
-function Tally({ value, label, className }: { value: number; label: string; className?: string }) {
+function Tally({
+  value, label, className, active, onClick,
+}: {
+  value: number
+  label: string
+  className?: string
+  active?: boolean
+  onClick?: () => void
+}) {
   return (
-    <span className="inline-flex items-baseline gap-1.5">
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "inline-flex items-baseline gap-1.5 rounded-lg px-2 py-1 transition-colors",
+        active ? "bg-card ring-1 ring-border-strong" : "hover:bg-card/60",
+        FOCUS,
+      )}
+    >
       <span className={cn("font-display text-[15px] font-extrabold tabular-nums", className)}>
         {value}
       </span>
       <span className="text-[11.5px] text-muted-foreground">{label}</span>
-    </span>
+    </button>
   )
 }
 

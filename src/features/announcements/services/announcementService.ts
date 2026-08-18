@@ -36,10 +36,13 @@ export const announcementService = {
             `/Announcements/courses/${courseId}/comments`
         ).then((r) => r.data),
 
-    addComment: (courseId: string, announcementId: string, content: string) =>
+    addComment: (
+        courseId: string, announcementId: string, content: string,
+        parentCommentId?: string,
+    ) =>
         api.post<ApiResponse<CommentDto>>(
             `/Announcements/courses/${courseId}/announcements/${announcementId}/comments`,
-            { content }
+            { content, parentCommentId }
         ).then((r) => r.data),
 
     editComment: (courseId: string, commentId: string, content: string) =>

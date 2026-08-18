@@ -29,4 +29,8 @@ export interface CommentDto {
     /** Author-only. Teachers may delete but not rewrite. */
     canEdit: boolean
     editedAt?: string | null
+    /** The comment this one answers, or null at the top level. One level only. */
+    parentCommentId?: string | null
+    /** Who is being answered, so a reply reads as a reply. */
+    replyToName?: string | null
 }

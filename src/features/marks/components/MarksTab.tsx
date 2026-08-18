@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react"
-import { RefreshCw, Send, Check } from "lucide-react"
+import { RefreshCw, Send } from "lucide-react"
 import toast from "react-hot-toast"
 import { useMarks } from "../hooks/useMarks"
 import { useAttendance } from "@/features/attendance/hooks/useAttendance"
@@ -175,7 +175,12 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
           {isPublished
             ? <>Results published to <span className="font-semibold text-foreground">{marks.length}</span> students</>
             : formula
-              ? <>Formula saved · {hasMarks ? `${marks.length} calculated, not yet published` : "not calculated yet"}</>
+              ? hasMarks
+                ? <>
+                    <span className="font-semibold text-foreground">{marks.length}</span> calculated ·
+                    {" "}not published, so students cannot see them yet
+                  </>
+                : <>Formula saved · not calculated yet</>
               : <>No grading formula set yet</>}
         </p>
 
@@ -197,8 +202,18 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
               Publish results
             </Button>
           )}
-          {isPublished && formula && (
-            <ExportFinalMarksButton marks={marks} formula={formula} courseTitle={courseTitle} courseCode={courseCode} semester={semester} department={department} members={members} />
+          {/* Exporting is not the same act as publishing.
+              This used to require publishing first, which forced a teacher to
+              show every student their result before they could so much as print
+              a copy for the department. Unpublished exports are watermarked
+              DRAFT so one cannot be mistaken for a final result. */}
+          {hasMarks && formula && (
+            <ExportFinalMarksButton
+              marks={marks} formula={formula}
+              courseTitle={courseTitle} courseCode={courseCode}
+              semester={semester} department={department}
+              members={members} isPublished={isPublished}
+            />
           )}
         </div>
       </div>
@@ -209,7 +224,9 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
           <div>
             <h3 className={TEXT.section}>Grading formula</h3>
             <p className={cn(TEXT.muted, "mt-0.5")}>
-              {formula ? "Edit and save again to update." : "Define how final marks are calculated."}
+              {formula
+                ? "Saving recalculates every student's total straight away."
+                : "Define how final marks are calculated."}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -301,13 +318,19 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
             anyone can see how the published marks were arrived at. */}
         {!readOnly && (
           <footer className="flex items-center justify-end border-t border-border bg-muted/40 px-4 py-3">
+            {/* The label says what the button does.
+                Saving already recalculates every total (see useMarks), but it
+                still read "Save formula", so a teacher who changed a weight
+                naturally went looking for a separate Recalculate afterwards —
+                and if they missed it, assumed the on-screen totals were stale
+                when they were not. */}
             <Button
               onClick={handleSave}
               disabled={enabled.length === 0}
               loading={isSaving}
-              leftIcon={<Check strokeWidth={ICON_STROKE} />}
+              leftIcon={<RefreshCw className={isSaving ? "animate-spin" : ""} strokeWidth={ICON_STROKE} />}
             >
-              Save formula
+              {hasMarks ? "Save & recalculate" : "Save & calculate"}
             </Button>
           </footer>
         )}

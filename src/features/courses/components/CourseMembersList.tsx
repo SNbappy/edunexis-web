@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Users, UserCheck, UserX, Clock, UserMinus, AlertTriangle } from "lucide-react"
+import { Users, UserCheck, UserX, Clock, UserMinus, AlertTriangle, Shield, ShieldOff, UserPlus } from "lucide-react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import Avatar from "@/components/ui/Avatar"
 import Badge from "@/components/ui/Badge"
@@ -8,9 +8,12 @@ import Button from "@/components/ui/Button"
 import Modal from "@/components/ui/Modal"
 import Skeleton from "@/components/ui/Skeleton"
 import EmptyState from "@/components/ui/EmptyState"
+import RowMenu from "@/components/ui/RowMenu"
 import { ICON_STROKE, FOCUS, SURFACE, TEXT } from "@/components/ui/appTokens"
 import { cn } from "@/utils/cn"
+import Input from "@/components/ui/Input"
 import { useCourseMembers } from "../hooks/useCourseMembers"
+import { useCourseTeachers } from "../hooks/useCourseTeachers"
 import { usePublicProfile } from "@/features/profile/hooks/usePublicProfile"
 import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
@@ -33,7 +36,15 @@ export default function CourseMembersList({ courseId, course }: CourseMembersLis
   const {
     members, joinRequests, isMembersLoading, isRequestsLoading,
     removeMember, isRemoving, reviewRequest, isReviewing,
+    setClassRep,
   } = useCourseMembers(courseId)
+  const {
+    teachers, invitations, invite, isInviting, revoke, removeTeacher,
+  } = useCourseTeachers(courseId, teacher)
+  const isOwner = !!user && !!course && course.teacherId === user.id
+  const [inviteOpen, setInviteOpen] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState("")
+  const [inviteMessage, setInviteMessage] = useState("")
   const { data: teacherProfile } = usePublicProfile(course?.teacherId)
 
   const [confirmTarget, setConfirmTarget] = useState<CourseMemberDto | null>(null)
@@ -213,44 +224,126 @@ export default function CourseMembersList({ courseId, course }: CourseMembersLis
           </AnimatePresence>
         )}
 
-        {/* Instructor */}
+        {/* Teaching team.
+            A course can be run by more than one person, so this is a list with
+            an invite action rather than the single "Instructor" card it used to
+            be. Only the owner can archive or delete the course; a colleague can
+            do everything else, including inviting a further colleague. */}
         {course && (filter === "all" || filter === "students") && (
           <div>
-            <p className={cn(TEXT.eyebrow, "mb-2 px-1")}>Instructor</p>
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={() => handleVisitProfile(course.teacherId, {
-                userId: course.teacherId,
-                fullName: course.teacherName,
-                role: "Teacher",
-              })}
-              onKeyDown={e => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault()
-                  handleVisitProfile(course.teacherId, {
-                    userId: course.teacherId,
-                    fullName: course.teacherName,
-                    role: "Teacher",
-                  })
-                }
-              }}
-              className={cn(SURFACE.cardInteractive, FOCUS, "flex cursor-pointer items-center gap-3 p-3.5")}
-            >
-              <Avatar
-                src={teacherProfile?.profilePhotoUrl ?? course.teacherProfilePhotoUrl}
-                name={teacherProfile?.fullName ?? course.teacherName ?? "Instructor"}
-                size="md"
-                className="h-10 w-10 shrink-0"
-              />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[13.5px] font-semibold text-foreground">
-                  {teacherProfile?.fullName ?? course.teacherName ?? "Course Instructor"}
-                </p>
-                <p className="text-[11.5px] text-muted-foreground">Course teacher</p>
-              </div>
-              <Badge variant="primary" size="sm">Teacher</Badge>
+            <div className="mb-2 flex items-center justify-between gap-3 px-1">
+              <p className={TEXT.eyebrow}>
+                Teachers{teachers.length > 1 ? ` (${teachers.length})` : ""}
+              </p>
+              {teacher && !readOnly && (
+                <button
+                  type="button"
+                  onClick={() => setInviteOpen(true)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11.5px] font-semibold text-primary transition-colors hover:bg-primary-soft",
+                    FOCUS,
+                  )}
+                >
+                  <UserPlus className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
+                  Invite teacher
+                </button>
+              )}
             </div>
+
+            <div className={cn(SURFACE.card, "overflow-hidden")}>
+              <ul className="divide-y divide-border">
+                {(teachers.length > 0 ? teachers : [{
+                  userId: course.teacherId,
+                  fullName: teacherProfile?.fullName ?? course.teacherName ?? "Course Instructor",
+                  email: "",
+                  profilePhotoUrl: teacherProfile?.profilePhotoUrl ?? course.teacherProfilePhotoUrl,
+                  designation: null,
+                  isOwner: true,
+                  addedAt: "",
+                }]).map((t: any) => (
+                  <li
+                    key={t.userId}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleVisitProfile(t.userId, {
+                      userId: t.userId, fullName: t.fullName, role: "Teacher",
+                    })}
+                    onKeyDown={e => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault()
+                        handleVisitProfile(t.userId, {
+                          userId: t.userId, fullName: t.fullName, role: "Teacher",
+                        })
+                      }
+                    }}
+                    className={cn(
+                      "flex cursor-pointer items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/50",
+                      FOCUS,
+                    )}
+                  >
+                    <Avatar src={t.profilePhotoUrl} name={t.fullName} size="sm" className="h-9 w-9 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13px] font-semibold text-foreground">
+                        {t.fullName}
+                      </p>
+                      <p className="truncate text-[11.5px] text-muted-foreground">
+                        {t.designation ?? (t.isOwner ? "Course owner" : "Co-teacher")}
+                      </p>
+                    </div>
+                    <Badge variant={t.isOwner ? "primary" : "neutral"} size="sm">
+                      {t.isOwner ? "Owner" : "Teacher"}
+                    </Badge>
+                    {/* The owner can remove a colleague; a colleague can only
+                        step down themselves. Nobody can remove the owner. */}
+                    {!t.isOwner && !readOnly &&
+                      (isOwner || t.userId === user?.id) && (
+                        <div onClick={e => e.stopPropagation()}>
+                          <RowMenu
+                            label={`Actions for ${t.fullName}`}
+                            items={[{
+                              label: t.userId === user?.id ? "Leave course" : "Remove teacher",
+                              icon: <UserMinus className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />,
+                              onSelect: () => removeTeacher(t.userId),
+                              danger: true,
+                            }]}
+                          />
+                        </div>
+                      )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Outstanding invitations */}
+            {teacher && invitations.length > 0 && (
+              <div className="mt-2">
+                <p className={cn(TEXT.eyebrow, "mb-1.5 px-1")}>
+                  Invited · awaiting reply ({invitations.length})
+                </p>
+                <ul className={cn(SURFACE.card, "divide-y divide-border overflow-hidden")}>
+                  {invitations.map((inv: any) => (
+                    <li key={inv.id} className="flex items-center gap-3 px-3 py-2.5">
+                      <Clock className="h-4 w-4 shrink-0 text-warning" strokeWidth={ICON_STROKE} />
+                      <p className="min-w-0 flex-1 truncate text-[12.5px] text-foreground">
+                        {inv.invitedByName}
+                      </p>
+                      {!readOnly && (
+                        <button
+                          type="button"
+                          onClick={() => revoke(inv.id)}
+                          className={cn(
+                            "shrink-0 rounded-lg px-2 py-1 text-[11.5px] font-semibold text-muted-foreground transition-colors hover:bg-destructive-soft hover:text-destructive",
+                            FOCUS,
+                          )}
+                        >
+                          Withdraw
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
 
@@ -306,17 +399,26 @@ export default function CourseMembersList({ courseId, course }: CourseMembersLis
                         </span>
                       )}
                       {teacher && !readOnly && (
-                        <button
-                          type="button"
-                          onClick={e => { e.stopPropagation(); setConfirmTarget(m) }}
-                          aria-label={"Remove " + m.fullName}
-                          className={cn(
-                            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground opacity-0 transition-all duration-120 hover:bg-destructive-soft hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100",
-                            FOCUS,
-                          )}
-                        >
-                          <UserMinus className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
-                        </button>
+                        <div onClick={e => e.stopPropagation()}>
+                          <RowMenu
+                            label={`Actions for ${m.fullName}`}
+                            items={[
+                              {
+                                label: m.isCR ? "Remove as CR" : "Make CR",
+                                icon: m.isCR
+                                  ? <ShieldOff className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
+                                  : <Shield className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />,
+                                onSelect: () => setClassRep({ studentId: m.userId, isCr: !m.isCR }),
+                              },
+                              {
+                                label: "Remove from course",
+                                icon: <UserMinus className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />,
+                                onSelect: () => setConfirmTarget(m),
+                                danger: true,
+                              },
+                            ]}
+                          />
+                        </div>
                       )}
                     </li>
                   ))}
@@ -326,6 +428,58 @@ export default function CourseMembersList({ courseId, course }: CourseMembersLis
           )
         )}
       </div>
+
+      {/* Invite a colleague to co-teach */}
+      <Modal
+        isOpen={inviteOpen}
+        onClose={() => { setInviteOpen(false); setInviteEmail(""); setInviteMessage("") }}
+        title="Invite a teacher"
+        description="They can do everything on this course except archive or delete it."
+        size="sm"
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => { setInviteOpen(false); setInviteEmail(""); setInviteMessage("") }}
+            >
+              Cancel
+            </Button>
+            <Button
+              loading={isInviting}
+              disabled={!inviteEmail.trim()}
+              onClick={() =>
+                invite(
+                  { email: inviteEmail.trim(), message: inviteMessage.trim() || undefined },
+                  {
+                    onSuccess: () => {
+                      setInviteOpen(false); setInviteEmail(""); setInviteMessage("")
+                    },
+                  },
+                )
+              }
+            >
+              Send invitation
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <Input
+            label="Their university email"
+            type="email"
+            value={inviteEmail}
+            onChange={e => setInviteEmail(e.target.value)}
+            placeholder="colleague@just.edu.bd"
+            hint="They need an EduNexis teacher account already."
+          />
+          <Input
+            label="Message"
+            value={inviteMessage}
+            onChange={e => setInviteMessage(e.target.value)}
+            placeholder="Optional — why you are asking"
+          />
+        </div>
+      </Modal>
 
       {/* Confirm remove modal */}
       <Modal

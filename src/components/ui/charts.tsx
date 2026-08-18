@@ -37,11 +37,14 @@ export function TrendBars({
   threshold,
   className,
   height = 64,
+  showLabels = false,
 }: {
   points: TrendPoint[]
   threshold?: number
   className?: string
   height?: number
+  /** Print each bar's percentage above it and its date below. */
+  showLabels?: boolean
 }) {
   if (points.length === 0) return null
 
@@ -107,14 +110,36 @@ export function TrendBars({
         })}
       </div>
 
-      {/* Only the ends are labelled — ten rotated dates would be unreadable
-          and the shape is the message. The floor is stated because the axis
-          is truncated; without it the bars would overstate the differences. */}
-      <div className="mt-1.5 flex items-center justify-between text-[10.5px] tabular-nums text-muted-foreground">
-        <span>{points[0].label}</span>
-        <span className="text-muted-foreground/70">scale from {floor}%</span>
-        <span>{points[points.length - 1].label}</span>
-      </div>
+      {showLabels ? (
+        /* Every session carries its own date and figure. A teacher asked for
+           the number on the bar rather than only in a hover tooltip, which is
+           invisible on a touch screen and on a printed screenshot. */
+        <div className="mt-1 flex gap-[3px]">
+          {points.map((p, i) => {
+            const low = threshold !== undefined && p.value < threshold
+            return (
+              <div key={i} className="min-w-[6px] flex-1 text-center leading-tight">
+                <div
+                  className={cn(
+                    "text-[10px] font-bold tabular-nums",
+                    low ? "text-warning" : "text-foreground",
+                  )}
+                >
+                  {p.value}%
+                </div>
+                <div className="truncate text-[9.5px] tabular-nums text-muted-foreground">
+                  {p.label}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="mt-1.5 flex items-center justify-between text-[10.5px] tabular-nums text-muted-foreground">
+          <span>{points[0].label}</span>
+          <span>{points[points.length - 1].label}</span>
+        </div>
+      )}
     </div>
   )
 }

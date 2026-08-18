@@ -3,6 +3,7 @@ import EmptyState from "@/components/ui/EmptyState"
 import { ICON, ICON_STROKE, FOCUS, SURFACE } from "@/components/ui/appTokens"
 import { ATTENDANCE_MIN_PERCENT } from "@/config/constants"
 import { formatDate, getDayName } from "@/utils/dateUtils"
+import RowMenu from "@/components/ui/RowMenu"
 import { cn } from "@/utils/cn"
 import type { AttendanceSessionDto } from "@/types/attendance.types"
 
@@ -66,7 +67,27 @@ export default function AttendanceRecordsList({
           return (
             <li
               key={session.id}
-              className="group flex items-center gap-3 px-3 py-2.5 transition-colors duration-120 hover:bg-muted/50 sm:gap-4 sm:px-4"
+              // The whole row opens the register. Reaching for a 32px pencil
+              // that only appeared on hover was the slowest possible way to do
+              // the most common thing on this screen — and impossible on touch.
+              role={onEdit ? "button" : undefined}
+              tabIndex={onEdit ? 0 : undefined}
+              onClick={onEdit ? () => onEdit(session.id) : undefined}
+              onKeyDown={
+                onEdit
+                  ? e => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault()
+                        onEdit(session.id)
+                      }
+                    }
+                  : undefined
+              }
+              className={cn(
+                "group flex items-center gap-3 px-3 py-2.5 transition-colors duration-120 hover:bg-muted/50 sm:gap-4 sm:px-4",
+                onEdit && "cursor-pointer",
+                onEdit && FOCUS,
+              )}
             >
               {/* Date — one line, tabular, so the column aligns down the list. */}
               <div className="w-[74px] shrink-0">
@@ -99,36 +120,33 @@ export default function AttendanceRecordsList({
                 {pct}%
               </span>
 
-              {/* Actions stay in the layout at all times and only fade in, so
-                  rows never reflow under the pointer. */}
-              <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-120 focus-within:opacity-100 group-hover:opacity-100">
-                {onEdit && (
-                  <button
-                    type="button"
-                    onClick={() => onEdit(session.id)}
-                    aria-label={`Edit session on ${formatDate(session.date, "dd MMM")}`}
-                    className={cn(
-                      "flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors duration-120 hover:bg-muted hover:text-foreground",
-                      FOCUS,
-                    )}
-                  >
-                    <Pencil className={ICON.xs} strokeWidth={ICON_STROKE} />
-                  </button>
-                )}
-                {onDelete && (
-                  <button
-                    type="button"
-                    onClick={() => onDelete(session.id)}
-                    aria-label={`Delete session on ${formatDate(session.date, "dd MMM")}`}
-                    className={cn(
-                      "flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors duration-120 hover:bg-destructive-soft hover:text-destructive",
-                      FOCUS,
-                    )}
-                  >
-                    <Trash2 className={ICON.xs} strokeWidth={ICON_STROKE} />
-                  </button>
-                )}
-              </div>
+              {/* One always-visible menu rather than two icons that appeared on
+                  hover. stopPropagation so opening it does not also open the
+                  register underneath. */}
+              {(onEdit || onDelete) && (
+                <div onClick={e => e.stopPropagation()}>
+                  <RowMenu
+                    label={`Actions for the session on ${formatDate(session.date, "dd MMM")}`}
+                    items={[
+                      ...(onEdit
+                        ? [{
+                            label: "Edit attendance",
+                            icon: <Pencil className={ICON.xs} strokeWidth={ICON_STROKE} />,
+                            onSelect: () => onEdit(session.id),
+                          }]
+                        : []),
+                      ...(onDelete
+                        ? [{
+                            label: "Delete session",
+                            icon: <Trash2 className={ICON.xs} strokeWidth={ICON_STROKE} />,
+                            onSelect: () => onDelete(session.id),
+                            danger: true,
+                          }]
+                        : []),
+                    ]}
+                  />
+                </div>
+              )}
             </li>
           )
         })}

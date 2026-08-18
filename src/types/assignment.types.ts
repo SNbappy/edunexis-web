@@ -35,6 +35,13 @@ export interface SubmissionDto {
     feedback?: string | null
     isGraded: boolean
     attachments?: SubmissionAttachmentDto[] | null
+    /** False while the student is still assembling a draft only they can see. */
+    isTurnedIn: boolean
+    turnedInAt?: string | null
+    /** A 0 recorded automatically because nothing was turned in before close. */
+    isAutoZero?: boolean
+    /** Shown instead of initials wherever the student appears. */
+    studentPhotoUrl?: string | null
 }
 
 export interface CreateAssignmentRequest {
@@ -75,6 +82,14 @@ export interface SubmitAssignmentRequest {
      * including removing all of them.
      */
     manageAttachments?: boolean
+}
+
+export interface TurnInState {
+    /** False while the student is still assembling a draft only they can see. */
+    isTurnedIn: boolean
+    turnedInAt?: string | null
+    /** A 0 recorded automatically because nothing was turned in before close. */
+    isAutoZero?: boolean
 }
 
 export interface SubmissionAttachmentDto {

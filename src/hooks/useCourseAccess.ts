@@ -42,13 +42,35 @@ export function useCourseAccess(courseId: string) {
   })
 
   const course = courseQuery.data
+  const isOwnerOrAdmin =
+    !!user && !!course &&
+    (course.teacherId === user.id || user.role === "SuperAdmin")
+
+  /* A course can be taught by more than one person, and a co-teacher is not on
+     the student roster — so without this they failed both the owner check and
+     the membership check and were bounced to "request to join" on a course they
+     had just accepted an invitation to. Only queried when the cheaper owner
+     check has already failed. */
+  const teachersQuery = useQuery({
+    queryKey: ["course-teachers", courseId],
+    queryFn: async () => {
+      const res = await courseService.getTeachers(courseId)
+      if (!res.success) throw new Error(res.message)
+      return res.data ?? []
+    },
+    enabled: !!course && !!user && !isOwnerOrAdmin,
+    retry: false,
+    staleTime: 30_000,
+  })
+
+  const isCoTeacher =
+    !!user && (teachersQuery.data ?? []).some(t => t.userId === user.id)
+
   /* "Admin" is not a role this app has — the only admin role is SuperAdmin.
      Comparing against "Admin" could never be true, which dropped admins into
      the student membership check below and showed them "not enrolled" on
      courses they are entitled to administer. */
-  const isTeacherOrAdmin =
-    !!user && !!course &&
-    (course.teacherId === user.id || user.role === "SuperAdmin")
+  const isTeacherOrAdmin = isOwnerOrAdmin || isCoTeacher
 
   const membersQuery = useQuery({
     queryKey: ["course-members", courseId],
@@ -57,7 +79,10 @@ export function useCourseAccess(courseId: string) {
       if (!res.success) throw new Error(res.message)
       return res.data
     },
-    enabled: !!course && !!user && !isTeacherOrAdmin,
+    // Wait for the co-teacher answer before falling back to the roster check,
+    // or the redirect fires on the first render and the user never sees the
+    // course they do have access to.
+    enabled: !!course && !!user && !isOwnerOrAdmin && teachersQuery.isFetched && !isCoTeacher,
     retry: false,
     refetchOnWindowFocus: true,
     staleTime: 15_000,
@@ -109,6 +134,13 @@ export function useCourseAccess(courseId: string) {
 
   if (isTeacherOrAdmin) {
     return { status: "granted" as AccessStatus, course }
+  }
+
+  /* The co-teacher lookup has to settle before the roster check can decide
+     anything: treating "not answered yet" as "not a co-teacher" is what sent an
+     invited colleague to the join page on first load. */
+  if (!isOwnerOrAdmin && teachersQuery.isLoading && !teachersQuery.data) {
+    return { status: "loading" as AccessStatus, course: null }
   }
 
   // For students: check membership. Same pattern — only treat initial load as blocking.

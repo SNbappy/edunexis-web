@@ -34,15 +34,6 @@ export function useMarks(courseId: string) {
         staleTime: 15_000,
     })
 
-    const saveFormulaMutation = useMutation({
-        mutationFn: (data: GradingFormulaRequest) => marksService.saveFormula(courseId, data),
-        onSuccess: (res) => {
-            if (res.success) { qc.invalidateQueries({ queryKey: formulaKey }); toast.success('Formula saved!') }
-            else toast.error(res.message)
-        },
-        onError: () => toast.error('Failed to save formula.'),
-    })
-
     const calculateMutation = useMutation({
         mutationFn: () => marksService.calculate(courseId),
         onSuccess: (res) => {
@@ -50,6 +41,36 @@ export function useMarks(courseId: string) {
             else toast.error(res.message)
         },
         onError: () => toast.error('Failed to calculate marks.'),
+    })
+
+    /**
+     * Saving a formula recalculates immediately.
+     *
+     * Previously these were two separate buttons and nothing connected them, so
+     * changing a weight and saving left the old totals on screen looking
+     * current. A teacher could then export or publish figures produced by a
+     * formula that no longer existed. Recalculating is cheap and is what saving
+     * a formula means, so it is no longer something you can forget to do.
+     */
+    const saveFormulaMutation = useMutation({
+        mutationFn: async (data: GradingFormulaRequest) => {
+            const saved = await marksService.saveFormula(courseId, data)
+            if (!saved.success) return saved
+            const recalculated = await marksService.calculate(courseId)
+            return { ...saved, recalculated: recalculated.success }
+        },
+        onSuccess: (res: any) => {
+            if (res.success) {
+                qc.invalidateQueries({ queryKey: formulaKey })
+                qc.invalidateQueries({ queryKey: marksKey })
+                toast.success(
+                    res.recalculated
+                        ? 'Formula saved and results recalculated.'
+                        : 'Formula saved, but the results could not be recalculated.',
+                )
+            } else toast.error(res.message)
+        },
+        onError: () => toast.error('Failed to save formula.'),
     })
 
     const publishMutation = useMutation({

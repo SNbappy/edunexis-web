@@ -3,6 +3,7 @@ import type { ApiResponse } from "@/types/api.types"
 import type {
   CourseDto, CourseMemberDto, MyCoursesDto, CourseByCodeDto,
   CreateCourseRequest, UpdateCourseRequest, TeacherQuotaDto, DeletedCourseDto,
+  CourseTeacherDto, CourseInvitationDto,
 } from "@/types/course.types"
 
 export const courseService = {
@@ -63,6 +64,41 @@ export const courseService = {
 
   removeMember: (courseId: string, studentId: string) =>
     api.delete<ApiResponse>(`/Courses/${courseId}/members/${studentId}`).then(r => r.data),
+
+  /** Appoints or removes a class representative. A course may have several. */
+  setClassRepresentative: (courseId: string, studentId: string, isCr: boolean) =>
+    api
+      .patch<ApiResponse>(`/Courses/${courseId}/members/${studentId}/cr`, null, {
+        params: { isCr },
+      })
+      .then(r => r.data),
+
+  /* ── Co-teaching ──────────────────────────────────────────────── */
+
+  getTeachers: (courseId: string) =>
+    api.get<ApiResponse<CourseTeacherDto[]>>(`/Courses/${courseId}/teachers`).then(r => r.data),
+
+  getCourseInvitations: (courseId: string) =>
+    api.get<ApiResponse<CourseInvitationDto[]>>(`/Courses/${courseId}/invitations`).then(r => r.data),
+
+  inviteTeacher: (courseId: string, email: string, message?: string) =>
+    api.post<ApiResponse>(`/Courses/${courseId}/invitations`, { email, message }).then(r => r.data),
+
+  revokeInvitation: (courseId: string, invitationId: string) =>
+    api.delete<ApiResponse>(`/Courses/${courseId}/invitations/${invitationId}`).then(r => r.data),
+
+  removeCoTeacher: (courseId: string, teacherId: string) =>
+    api.delete<ApiResponse>(`/Courses/${courseId}/teachers/${teacherId}`).then(r => r.data),
+
+  getMyInvitations: () =>
+    api.get<ApiResponse<CourseInvitationDto[]>>(`/Courses/invitations/mine`).then(r => r.data),
+
+  respondToInvitation: (invitationId: string, accept: boolean) =>
+    api
+      .post<ApiResponse>(`/Courses/invitations/${invitationId}/respond`, null, {
+        params: { accept },
+      })
+      .then(r => r.data),
 
   getJoinRequests: (id: string) =>
     api.get<ApiResponse<any[]>>(`/Courses/${id}/join-requests`).then(r => r.data),

@@ -1,29 +1,24 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { Plus } from "lucide-react"
 import Button from "@/components/ui/Button"
 import Skeleton from "@/components/ui/Skeleton"
 import { ICON_STROKE, FOCUS } from "@/components/ui/appTokens"
 import { cn } from "@/utils/cn"
 import CTEventsList from "./CTEventsList"
-import CTEventDetailModal from "./CTEventDetailModal"
 import CreateCTEventModal from "./CreateCTEventModal"
-import CTMarkEntryModal from "./CTMarkEntryModal"
-import UploadKhataModal from "./UploadKhataModal"
 import ConfirmDialog from "@/components/ui/ConfirmDialog"
 import { useCTEvents } from "../hooks/useCTEvents"
-import { useAttendance } from "@/features/attendance/hooks/useAttendance"
 import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
 import type { CTEventDto, CreateCTEventRequest } from "@/types/ct.types"
 import { useCourseReadOnly } from "@/features/courses/context/CourseReadOnly"
 
-/** `string | null` matches CourseMemberDto — the API sends null, not undefined,
- *  and the narrower type made every hook that returns members unassignable. */
-interface Member { userId: string; fullName: string; studentId?: string | null; profilePhotoUrl?: string | null }
-interface Props { courseId: string; members?: Member[] }
+interface Props { courseId: string }
 type FilterTab = "all" | "draft" | "published"
 
-export default function CTTab({ courseId, members = [] }: Props) {
+export default function CTTab({ courseId }: Props) {
+  const navigate = useNavigate()
   const { user } = useAuthStore()
   const teacher = isTeacher(user?.role ?? "Student")
   const readOnly = useCourseReadOnly()
@@ -35,14 +30,7 @@ export default function CTTab({ courseId, members = [] }: Props) {
     publishCT, unpublishCT,
   } = useCTEvents(courseId)
 
-  const { members: courseMembers } = useAttendance(courseId)
-  const memberList = members.length > 0 ? members : courseMembers
-
   const [createOpen, setCreateOpen] = useState(false)
-  const [selected, setSelected] = useState<CTEventDto | null>(null)
-  const [detailOpen, setDetailOpen] = useState(false)
-  const [marksTarget, setMarksTarget] = useState<CTEventDto | null>(null)
-  const [khataTarget, setKhataTarget] = useState<CTEventDto | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<CTEventDto | null>(null)
   const [filter, setFilter] = useState<FilterTab>("all")
 
@@ -55,7 +43,12 @@ export default function CTTab({ courseId, members = [] }: Props) {
     return true
   })
 
-  const handleView = (ct: CTEventDto) => { setSelected(ct); setDetailOpen(true) }
+  /* A class test is a workspace, not a summary: it carries the scripts, the
+     whole roster, the marks and the publish decision. That never fitted a
+     modal — opening marks meant a modal on top of a modal, and nothing about
+     it could be linked to or reloaded. It now works exactly like an
+     assignment: its own URL, opened by the card or by any of its actions. */
+  const openCT = (ct: CTEventDto) => navigate("/courses/" + courseId + "/ct/" + ct.id)
 
   const FILTERS = [
     { key: "all" as FilterTab, label: "All", count: ctEvents.length },
@@ -130,12 +123,12 @@ export default function CTTab({ courseId, members = [] }: Props) {
       ) : (
         <CTEventsList
           ctEvents={filtered}
-          onView={handleView}
+          onView={openCT}
           onDelete={teacher ? (ct: any) => setDeleteTarget(ct) : undefined}
           onPublish={teacher ? (id: string) => publishCT(id) : undefined}
           onUnpublish={teacher ? (id: string) => unpublishCT(id) : undefined}
-          onUploadKhata={teacher ? (ct: any) => setKhataTarget(ct) : undefined}
-          onEnterMarks={teacher ? (ct: any) => setMarksTarget(ct) : undefined}
+          onUploadKhata={teacher ? openCT : undefined}
+          onEnterMarks={teacher ? openCT : undefined}
           emptyTitle={filter === "all" ? "No class tests yet" : "No " + filter + " class tests"}
           emptyDescription={teacher
             ? "Create your first CT, upload the marked scripts, then enter student marks."
@@ -153,32 +146,6 @@ export default function CTTab({ courseId, members = [] }: Props) {
         isLoading={isCreating}
       />
 
-      <CTEventDetailModal
-        isOpen={detailOpen}
-        onClose={() => setDetailOpen(false)}
-        ct={selected}
-        onEnterMarks={teacher ? (ct: any) => { setDetailOpen(false); setMarksTarget(ct) } : undefined}
-        onUploadKhata={teacher ? (ct: any) => { setDetailOpen(false); setKhataTarget(ct) } : undefined}
-        onPublish={teacher ? (id: string) => { setDetailOpen(false); publishCT(id) } : undefined}
-      />
-
-      {marksTarget && (
-        <CTMarkEntryModal
-          isOpen={!!marksTarget}
-          onClose={() => setMarksTarget(null)}
-          ct={marksTarget}
-          members={memberList}
-        />
-      )}
-
-      {khataTarget && (
-        <UploadKhataModal
-          isOpen={!!khataTarget}
-          onClose={() => setKhataTarget(null)}
-          ct={khataTarget}
-          members={memberList}
-        />
-      )}
 
       <ConfirmDialog
         isOpen={!!deleteTarget}

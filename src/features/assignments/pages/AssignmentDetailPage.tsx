@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import {
     ArrowLeft, Clock, BookOpen, Users, Download,
     Send, AlertCircle, CheckCircle2, FileText,
-    CalendarClock, Award, Paperclip,
+    CalendarClock, Award, Paperclip, Clock3, Undo2,
 } from 'lucide-react'
 import { isPast, parseISO, formatDistanceToNow, differenceInSeconds } from 'date-fns'
 import { useAssignment } from '../hooks/useAssignments'
@@ -64,8 +64,10 @@ export default function AssignmentDetailPage() {
     const [activeTab, setActiveTab] = useState<'details' | 'submissions'>('details')
     const [submitOpen, setSubmitOpen] = useState(false)
 
-    const { assignment, isLoading, isFetched, mySubmission, submitAssignment, isSubmitting } =
-        useAssignment(courseId, assignmentId)
+    const {
+        assignment, isLoading, isFetched, mySubmission, submitAssignment, isSubmitting,
+        turnIn, isTurningIn, unsubmit, isUnsubmitting,
+    } = useAssignment(courseId, assignmentId)
 
     const { submissions, isLoading: subsLoading } = useSubmissions(courseId, assignmentId)
 
@@ -278,17 +280,31 @@ export default function AssignmentDetailPage() {
 
                                 {mySubmission ? (
                                     <div className="space-y-3">
-                                        {/* Submitted badge */}
-                                        <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                                            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Submitted</p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {formatDateTime(mySubmission.submittedAt)}
-                                                    {mySubmission.isLate ? ' · Late' : ''}
-                                                </p>
+                                        {/* Draft vs handed in. The distinction is the whole
+                                            point of the turn-in step: until it is turned in
+                                            the teacher cannot see any of this. */}
+                                        {mySubmission.isTurnedIn ? (
+                                            <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                                                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Turned in</p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {formatDateTime(mySubmission.turnedInAt ?? mySubmission.submittedAt)}
+                                                        {mySubmission.isLate ? ' · Late' : ''}
+                                                    </p>
+                                                </div>
                                             </div>
-                                        </div>
+                                        ) : (
+                                            <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                                                <Clock3 className="w-4 h-4 text-amber-500 shrink-0" />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">Draft — not turned in</p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Only you can see this. Turn it in for your teacher to receive it.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
 
                                         {/* Text preview */}
                                         {mySubmission.textContent && (
@@ -318,27 +334,63 @@ export default function AssignmentDetailPage() {
                                                     </div>
                                                 )}
                                             </div>
-                                        ) : (
+                                        ) : mySubmission.isTurnedIn ? (
                                             /* Leading "?" removed — a character an ANSI save had
                                                flattened, which students saw literally as
                                                "? Awaiting grade from teacher". */
                                             <p className="py-1 text-center text-xs text-muted-foreground">
                                                 Awaiting grade from teacher
                                             </p>
-                                        )}
+                                        ) : null}
 
-                                        {/* Resubmit if still open */}
+                                        {/* Turn in / take back / edit.
+                                            The primary action depends on where the work is:
+                                            a draft needs handing in, and something already
+                                            handed in can be taken back while the window is
+                                            still open. */}
                                         {assignment.isOpen && !readOnly && (!isPastDue || assignment.allowLateSubmission) && (
-                                            <Button size="sm" variant="secondary" className="w-full" onClick={() => setSubmitOpen(true)}>
-                                                Update Submission
-                                            </Button>
+                                            <div className="space-y-2">
+                                                {!mySubmission.isTurnedIn ? (
+                                                    <>
+                                                        <Button
+                                                            className="w-full"
+                                                            leftIcon={<Send className="w-4 h-4" />}
+                                                            onClick={() => turnIn()}
+                                                            loading={isTurningIn}
+                                                        >
+                                                            Turn in
+                                                        </Button>
+                                                        <Button size="sm" variant="secondary" className="w-full" onClick={() => setSubmitOpen(true)}>
+                                                            Edit attachments
+                                                        </Button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Button size="sm" variant="secondary" className="w-full" onClick={() => setSubmitOpen(true)}>
+                                                            Update submission
+                                                        </Button>
+                                                        {!mySubmission.isGraded && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="secondary"
+                                                                className="w-full"
+                                                                leftIcon={<Undo2 className="w-4 h-4" />}
+                                                                onClick={() => unsubmit()}
+                                                                loading={isUnsubmitting}
+                                                            >
+                                                                Unsubmit
+                                                            </Button>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </div>
                                         )}
                                     </div>
                                 ) : canSubmit && !readOnly ? (
                                     <>
-                                        <p className="text-sm text-muted-foreground">Submit your work before the deadline.</p>
+                                        <p className="text-sm text-muted-foreground">Attach your work, then turn it in before the deadline.</p>
                                         <Button className="w-full" leftIcon={<Send className="w-4 h-4" />} onClick={() => setSubmitOpen(true)}>
-                                            Submit Assignment
+                                            Add your work
                                         </Button>
                                     </>
                                 ) : isPastDue && !assignment.allowLateSubmission ? (

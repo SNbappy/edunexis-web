@@ -18,8 +18,10 @@ export function useAssignmentComments(courseId: string, assignmentId: string) {
   const invalidate = () => qc.invalidateQueries({ queryKey: key })
 
   const { mutate: addComment, isPending: isAdding } = useMutation({
-    mutationFn: ({ content }: { announcementId: string; content: string }) =>
-      assignmentService.addComment(courseId, assignmentId, content),
+    mutationFn: ({ content, parentCommentId }: {
+      announcementId: string; content: string; parentCommentId?: string
+    }) =>
+      assignmentService.addComment(courseId, assignmentId, content, parentCommentId),
     onSuccess: res => {
       if (res.success) invalidate()
       else toast.error(res.message ?? "Could not post the comment.")

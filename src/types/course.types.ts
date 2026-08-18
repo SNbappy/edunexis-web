@@ -193,3 +193,28 @@ export interface DeletedCourseDto {
   restoreDeadline: string
   canRestore:      boolean
 }
+
+/* ── Co-teaching ────────────────────────────────────────────────── */
+
+export interface CourseTeacherDto {
+  userId:           string
+  fullName:         string
+  email:            string
+  profilePhotoUrl?: string | null
+  designation?:     string | null
+  /** True for the one owner; false for invited colleagues. */
+  isOwner:          boolean
+  addedAt:          string
+}
+
+export interface CourseInvitationDto {
+  id:             string
+  courseId:       string
+  courseTitle:    string
+  courseCode:     string
+  /** On a course's own list this is the invitee; on "my invitations" it is the sender. */
+  invitedByName:  string
+  message?:       string | null
+  status:         "Pending" | "Accepted" | "Declined" | "Revoked"
+  createdAt:      string
+}

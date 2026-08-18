@@ -47,7 +47,11 @@ export function useMaterials(courseId: string) {
 
     const setSortMode = (mode: SortMode) => {
         setSortModeState(mode)
-        if (mode !== 'File') setFileTypeFilter('all')
+        /* The type filter is cleared only for Folders, where it cannot mean
+           anything. It used to be cleared on leaving "Files" as well, which is
+           why picking "PDF" and then going back to "All" silently dropped the
+           filter — and why the filter row was hidden on "All" at all. */
+        if (mode === 'Folder') setFileTypeFilter('all')
     }
 
     const createFolderMutation = useMutation({
@@ -108,8 +112,14 @@ export function useMaterials(courseId: string) {
     const materials = useMemo(() => {
         let items = allMaterials
         if (sortMode === 'Folder') items = items.filter((m) => m.type === 'Folder')
-        if (sortMode === 'File' && fileTypeFilter !== 'all')
-            items = items.filter((m) => getFileCategory(m) === fileTypeFilter)
+
+        /* Applies on "All" as well as "Files".
+           "All" is the tab people actually browse in, and it was the one tab
+           where you could not narrow to PDFs — the filter existed but only
+           after switching to a different view. Folders drop out while a type
+           filter is on, because a folder is not a PDF or an image. */
+        if (sortMode !== 'Folder' && fileTypeFilter !== 'all')
+            items = items.filter((m) => m.type !== 'Folder' && getFileCategory(m) === fileTypeFilter)
         return items
     }, [allMaterials, sortMode, fileTypeFilter])
 

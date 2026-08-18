@@ -1,12 +1,14 @@
-﻿import { useState } from "react"
+﻿import { useMemo, useState } from "react"
 import { motion } from "framer-motion"
-import { CheckCircle2, AlertCircle, Star, ShieldAlert, Clock } from "lucide-react"
+import { CheckCircle2, AlertCircle, Star, ShieldAlert, Clock, UserX } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import Avatar from "@/components/ui/Avatar"
 import Button from "@/components/ui/Button"
 import GradeSubmissionModal from "./GradeSubmissionModal"
 import PlagiarismReportModal from "./PlagiarismReportModal"
+import SubmissionAttachments from "./SubmissionAttachments"
 import { useSubmissions } from "../hooks/useSubmissions"
+import { useCourseMembers } from "@/features/courses/hooks/useCourseMembers"
 import { checkPlagiarismAsync } from "../utils/plagiarismChecker"
 import { formatRelative } from "@/utils/dateUtils"
 import type { SubmissionDto, PlagiarismReport } from "@/types/assignment.types"
@@ -51,6 +53,7 @@ export default function SubmissionsPanel({
   courseId, assignmentId, maxMarks,
 }: SubmissionsPanelProps) {
   const { submissions, isLoading, gradeSubmission, isGrading } = useSubmissions(courseId, assignmentId)
+  const { members } = useCourseMembers(courseId)
   const [grading, setGrading] = useState<SubmissionDto | null>(null)
   const [plagReport, setPlagReport] = useState<PlagiarismReport | null>(null)
   const [plagOpen, setPlagOpen] = useState(false)
@@ -67,6 +70,18 @@ export default function SubmissionsPanel({
       setIsChecking(false)
     }
   }
+
+  /* Who has NOT turned anything in.
+     The panel listed only the students who submitted, so answering "who is
+     missing" meant the teacher cross-referencing the roster by hand. */
+  const notSubmitted = useMemo(() => {
+    const submitted = new Set(submissions.map(s => s.studentId))
+    return members
+      .filter((m: any) => !submitted.has(m.userId))
+      .sort((a: any, b: any) =>
+        (a.studentId ?? "").localeCompare(b.studentId ?? "", undefined, { numeric: true }) ||
+        a.fullName.localeCompare(b.fullName))
+  }, [members, submissions])
 
   if (isLoading) {
     return (
@@ -94,6 +109,12 @@ export default function SubmissionsPanel({
           <Stat value={graded} label="Graded" tone="emerald" />
           <div className="h-8 w-px bg-border" />
           <Stat value={pending} label="Pending" tone="amber" />
+          {notSubmitted.length > 0 && (
+            <>
+              <div className="h-8 w-px bg-border" />
+              <Stat value={notSubmitted.length} label="Not submitted" tone="red" />
+            </>
+          )}
         </div>
 
         {submissions.length >= 2 && (
@@ -132,39 +153,90 @@ export default function SubmissionsPanel({
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: Math.min(i * 0.04, 0.3) }}
-                className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:border-teal-200 hover:shadow-sm dark:hover:border-teal-800"
+                className="rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:border-teal-200 hover:shadow-sm dark:hover:border-teal-800"
               >
-                <Avatar name={sub.studentName} size="sm" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13px] font-bold text-foreground">
-                    {sub.studentName}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {formatRelative(sub.submittedAt)}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  {sub.isGraded && sub.marks != null && (
-                    <span className="font-display text-[13px] font-extrabold tabular-nums text-emerald-700 dark:text-emerald-300">
-                      {sub.marks}/{maxMarks}
+                <div className="flex items-center gap-3">
+                  <Avatar src={sub.studentPhotoUrl} name={sub.studentName} size="sm" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-bold text-foreground">
+                      {sub.studentName}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {formatRelative(sub.submittedAt)}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {sub.isGraded && sub.marks != null && (
+                      <span className="font-display text-[13px] font-extrabold tabular-nums text-emerald-700 dark:text-emerald-300">
+                        {sub.marks}/{maxMarks}
+                      </span>
+                    )}
+                    <span className={"inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wider " + cfg.classes}>
+                      <Icon className="h-2.5 w-2.5" strokeWidth={2.5} />
+                      {status}
                     </span>
+                    <Button
+                      size="sm"
+                      variant={sub.isGraded ? "secondary" : "primary"}
+                      onClick={() => setGrading(sub)}
+                    >
+                      {sub.isGraded ? "Edit" : "Grade"}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* The work itself, on the row. It was previously only reachable
+                    by opening the grading modal, so a teacher could not see what
+                    a student had turned in while deciding whom to mark next. */}
+                <div className="mt-2.5 pl-11">
+                  <SubmissionAttachments submission={sub} />
+                  {sub.textContent && (
+                    <p className="mt-2 line-clamp-2 rounded-lg bg-muted/40 px-3 py-2 text-[12px] leading-relaxed text-muted-foreground">
+                      {sub.textContent}
+                    </p>
                   )}
-                  <span className={"inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wider " + cfg.classes}>
-                    <Icon className="h-2.5 w-2.5" strokeWidth={2.5} />
-                    {status}
-                  </span>
-                  <Button
-                    size="sm"
-                    variant={sub.isGraded ? "secondary" : "primary"}
-                    onClick={() => setGrading(sub)}
-                  >
-                    {sub.isGraded ? "Edit" : "Grade"}
-                  </Button>
                 </div>
               </motion.div>
             )
           })}
         </div>
+      )}
+
+      {/* Who is missing */}
+      {notSubmitted.length > 0 && (
+        <section>
+          <div className="mb-2 flex items-center gap-2">
+            <UserX className="h-3.5 w-3.5 text-destructive" strokeWidth={2} />
+            <h3 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              Not submitted
+            </h3>
+            <span className="rounded-full bg-destructive-soft px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-destructive">
+              {notSubmitted.length}
+            </span>
+          </div>
+          <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border">
+            {notSubmitted.map((m: any) => (
+              <li key={m.userId} className="flex items-center gap-3 bg-card px-4 py-2.5">
+                <Avatar src={m.profilePhotoUrl} name={m.fullName} size="sm" />
+                <div className="min-w-0 flex-1">
+                  {m.studentId ? (
+                    <>
+                      <p className="font-mono text-[12px] font-bold leading-tight text-foreground">
+                        {m.studentId}
+                      </p>
+                      <p className="truncate text-[11.5px] text-muted-foreground">{m.fullName}</p>
+                    </>
+                  ) : (
+                    <p className="truncate text-[13px] font-semibold text-foreground">{m.fullName}</p>
+                  )}
+                </div>
+                <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Nothing turned in
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       <GradeSubmissionModal
@@ -194,14 +266,15 @@ export default function SubmissionsPanel({
 interface StatProps {
   value: number
   label: string
-  tone: "muted" | "emerald" | "amber"
+  tone: "muted" | "emerald" | "amber" | "red"
 }
 
 function Stat({ value, label, tone }: StatProps) {
   const colorClass =
     tone === "emerald" ? "text-emerald-700 dark:text-emerald-300"
       : tone === "amber" ? "text-amber-700 dark:text-amber-300"
-        : "text-foreground"
+        : tone === "red" ? "text-red-700 dark:text-red-300"
+          : "text-foreground"
 
   return (
     <div className="text-center">

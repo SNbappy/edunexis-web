@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bot, Globe, ShieldAlert, ChevronDown, ChevronUp, Loader2, AlertTriangle, CheckCircle2, ExternalLink } from 'lucide-react'
+import { Bot, AlertTriangle } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import Button from '@/components/ui/Button'
 import { analysisService, type AiDetectionResult } from '../services/analysisService'
@@ -74,9 +74,6 @@ export default function AnalysisPanel({ submission }: Props) {
     const [aiResult, setAiResult] = useState<AiDetectionResult | null>(null)
     const [aiLoading, setAiLoading] = useState(false)
     const [aiError, setAiError] = useState<string | null>(null)
-    const [webLoading, setWebLoading] = useState(false)
-    const [webResult, setWebResult] = useState<{ scanId: string; message: string; checkUrl: string } | null>(null)
-    const [webError, setWebError] = useState<string | null>(null)
 
     const text = submission.textContent ?? ''
     const hasText = text.trim().length > 50
@@ -93,21 +90,6 @@ export default function AnalysisPanel({ submission }: Props) {
             setAiError('Could not connect to AI detection service')
         } finally {
             setAiLoading(false)
-        }
-    }
-
-    const runWebPlagiarism = async () => {
-        if (!hasText) return
-        setWebLoading(true)
-        setWebError(null)
-        try {
-            const res = await analysisService.checkWebPlagiarism(text)
-            if (res.success && res.data) setWebResult(res.data)
-            else setWebError(res.message ?? 'Check failed')
-        } catch {
-            setWebError('Could not connect to Copyleaks')
-        } finally {
-            setWebLoading(false)
         }
     }
 
@@ -173,70 +155,6 @@ export default function AnalysisPanel({ submission }: Props) {
                 </AnimatePresence>
             </div>
 
-            {/* Web Plagiarism */}
-            <div className="rounded-xl border border-border bg-card overflow-hidden">
-                <div className="flex items-center justify-between gap-3 p-3">
-                    <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                            <Globe className="w-3.5 h-3.5 text-blue-500" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-semibold text-foreground">Web plagiarism check</p>
-                            <p className="text-[11px] text-muted-foreground">Powered by Copyleaks</p>
-                        </div>
-                    </div>
-                    {!webResult && (
-                        <Button size="sm" variant="secondary" loading={webLoading} onClick={runWebPlagiarism}
-                            leftIcon={!webLoading ? <Globe className="w-3.5 h-3.5" /> : undefined}>
-                            {webLoading ? 'Submitting…' : 'Check web'}
-                        </Button>
-                    )}
-                    {!webResult && !webLoading && (
-                        <span className="text-[10px] text-muted-foreground italic">API key required</span>
-                    )}
-                </div>
-                <AnimatePresence>
-                    {(webResult || webError) && (
-                        <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
-                            <div className="px-3 pb-3 border-t border-border/50 pt-3 space-y-2">
-                                {webError ? (
-                                    webError.includes('not configured') ? (
-                                        <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/50 border border-border">
-                                            <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
-                                            <div>
-                                                <p className="text-sm font-medium text-muted-foreground">Copyleaks not configured</p>
-                                                <p className="text-xs text-muted-foreground">Add your API key in <code className="bg-muted px-1 rounded">appsettings.json</code> before deployment.</p>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center gap-2 text-sm text-destructive">
-                                            <AlertTriangle className="w-4 h-4 shrink-0" />
-                                            <span>{webError}</span>
-                                        </div>
-                                    )
-                                ) : webResult && (
-                                    <>
-                                        <div className="flex items-start gap-2 p-3 rounded-xl bg-blue-500/5 border border-blue-500/20">
-                                            <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-                                            <div className="flex-1">
-                                                <p className="text-sm font-medium text-foreground">Scan submitted</p>
-                                                <p className="text-xs text-muted-foreground mt-0.5">{webResult.message}</p>
-                                                <p className="text-xs text-muted-foreground">Scan ID: <code className="bg-muted px-1 rounded">{webResult.scanId}</code></p>
-                                            </div>
-                                        </div>
-                                        <a href={webResult.checkUrl} target="_blank" rel="noopener noreferrer">
-                                            <Button size="sm" variant="secondary" className="w-full"
-                                                leftIcon={<ExternalLink className="w-3.5 h-3.5" />}>
-                                                View full report on Copyleaks
-                                            </Button>
-                                        </a>
-                                    </>
-                                    )}
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
         </div>
     )
 }

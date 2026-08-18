@@ -141,10 +141,42 @@ export function useAssignment(courseId: string, assignmentId: string) {
         onError: () => toast.error('Submission failed.'),
     })
 
+    /* Turning in and taking back are separate from saving attachments, so they
+       are their own mutations rather than another flag on submit. Both write
+       the returned submission straight into the cache: the student must see the
+       state flip immediately, not after the next 8-second poll. */
+    const turnInMutation = useMutation({
+        mutationFn: () => assignmentService.turnIn(assignmentId),
+        onSuccess: (res) => {
+            if (res.success) {
+                if (res.data) qc.setQueryData(mySubKey, res.data)
+                qc.invalidateQueries({ queryKey: ['assignments', courseId] })
+                toast.success(res.message ?? 'Turned in.')
+            } else toast.error(res.message)
+        },
+        onError: () => toast.error('Could not turn this in.'),
+    })
+
+    const unsubmitMutation = useMutation({
+        mutationFn: () => assignmentService.unsubmit(assignmentId),
+        onSuccess: (res) => {
+            if (res.success) {
+                if (res.data) qc.setQueryData(mySubKey, res.data)
+                qc.invalidateQueries({ queryKey: ['assignments', courseId] })
+                toast.success(res.message ?? 'Taken back.')
+            } else toast.error(res.message)
+        },
+        onError: () => toast.error('Could not take this back.'),
+    })
+
     return {
         assignment: query.data ?? null,
         isLoading: query.isLoading,
         isError: query.isError,
+        turnIn: turnInMutation.mutate,
+        isTurningIn: turnInMutation.isPending,
+        unsubmit: unsubmitMutation.mutate,
+        isUnsubmitting: unsubmitMutation.isPending,
         /* Callers guard "not found" with this. It was never returned, so
            `isFetched && !assignment` read as `undefined && …` — always false —
            which made every not-found branch dead code and let the pages walk

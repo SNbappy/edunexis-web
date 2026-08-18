@@ -8,6 +8,7 @@ import App from "./App"
 import { queryClient } from "./lib/queryClient"
 import ThemeProvider from "./components/ThemeProvider"
 import ScrollToTop from "./components/ScrollToTop"
+import NavigationProgress from "./components/ui/NavigationProgress"
 import "./index.css"
 
 /**
@@ -28,20 +29,48 @@ function Root() {
       <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
         <ThemeProvider>
           <ScrollToTop />
+          <NavigationProgress />
           <App />
+          {/* Toasts must sit above dialogs.
+              react-hot-toast defaults its container to z-index 9999, but Modal
+              renders at 99999 — so every "Saved", "Grading failed" or validation
+              error raised from inside a dialog appeared *underneath* the modal's
+              blurred scrim: visible as a smear in the corner, and unreadable.
+              Since most toasts in this app are fired by an action taken inside a
+              modal, that was almost all of them.
+
+              The palette also uses the theme tokens rather than fixed light-mode
+              greens and reds, which were near-illegible over a dark background. */}
           <Toaster
             position="top-right"
             gutter={8}
+            containerStyle={{ zIndex: 100000 }}
             toastOptions={{
               duration: 4000,
-              style: { borderRadius: "12px", fontSize: "13px", fontWeight: "500" },
+              style: {
+                borderRadius: "12px",
+                fontSize: "13px",
+                fontWeight: "500",
+                background: "rgb(var(--card))",
+                color: "rgb(var(--foreground))",
+                border: "1px solid rgb(var(--border))",
+                boxShadow: "0 10px 30px -10px rgb(0 0 0 / 0.35)",
+              },
               success: {
-                style: { background: "rgb(240 253 244)", color: "rgb(22 101 52)", border: "1px solid rgb(187 247 208)" },
-                iconTheme: { primary: "rgb(34 197 94)", secondary: "rgb(240 253 244)" },
+                style: {
+                  background: "rgb(var(--success-soft))",
+                  color: "rgb(var(--success))",
+                  border: "1px solid rgb(var(--success) / 0.25)",
+                },
+                iconTheme: { primary: "rgb(var(--success))", secondary: "rgb(var(--card))" },
               },
               error: {
-                style: { background: "rgb(254 242 242)", color: "rgb(153 27 27)", border: "1px solid rgb(254 202 202)" },
-                iconTheme: { primary: "rgb(239 68 68)", secondary: "rgb(254 242 242)" },
+                style: {
+                  background: "rgb(var(--destructive-soft))",
+                  color: "rgb(var(--destructive))",
+                  border: "1px solid rgb(var(--destructive) / 0.25)",
+                },
+                iconTheme: { primary: "rgb(var(--destructive))", secondary: "rgb(var(--card))" },
               },
             }}
           />

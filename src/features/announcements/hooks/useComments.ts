@@ -29,8 +29,10 @@ export function useComments(courseId: string) {
   }, {})
 
   const { mutate: addComment, isPending: isAdding } = useMutation({
-    mutationFn: ({ announcementId, content }: { announcementId: string; content: string }) =>
-      announcementService.addComment(courseId, announcementId, content),
+    mutationFn: ({ announcementId, content, parentCommentId }: {
+      announcementId: string; content: string; parentCommentId?: string
+    }) =>
+      announcementService.addComment(courseId, announcementId, content, parentCommentId),
     onSuccess: res => {
       if (res.success) {
         qc.invalidateQueries({ queryKey: key })

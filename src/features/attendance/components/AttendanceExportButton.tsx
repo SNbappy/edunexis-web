@@ -22,54 +22,129 @@ interface Props {
   members?: Array<{ userId: string; studentId?: string | null; fullName: string }>
 }
 
-function getStudentStatus(s: AttendanceSessionDto, studentId: string) {
-  return s.records.find(r => r.studentId === studentId)?.status?.[0] ?? "U"
+/**
+ * One student's mark for one session, as a single letter.
+ *
+ * Takes the *user id*, which on a summary row is `studentId` — there is no
+ * `id` field on AttendanceSummaryDto. Passing `s.id` here silently resolved
+ * to undefined, matched no record, and fell through to "U", so every cell in
+ * every export read "unmarked" regardless of what was actually registered.
+ */
+function getStudentStatus(s: AttendanceSessionDto, userId: string) {
+  return s.records.find(r => r.studentId === userId)?.status?.[0] ?? "U"
 }
 
-function buildPrintHTML(letterheadHtml: string, sessions: AttendanceSessionDto[], studentSummaries: any[]) {
+const STATUS_LEGEND = [
+  { key: "P", label: "Present", rgb: [5, 150, 105] as [number, number, number], hex: "#059669", bg: "#ecfdf5" },
+  { key: "A", label: "Absent", rgb: [220, 38, 38] as [number, number, number], hex: "#dc2626", bg: "#fef2f2" },
+  { key: "U", label: "Not marked", rgb: [148, 163, 184] as [number, number, number], hex: "#94a3b8", bg: "#f8fafc" },
+]
+
+/** Colour ramp shared by the PDF and the print sheet, matching the app. */
+function percentRgb(n: number): [number, number, number] {
+  if (n >= 75) return [5, 150, 105]
+  if (n >= 50) return [217, 119, 6]
+  return [220, 38, 38]
+}
+function percentHex(n: number): string {
+  return n >= 75 ? "#059669" : n >= 50 ? "#d97706" : "#dc2626"
+}
+
+/**
+ * Print sheet.
+ *
+ * Deliberately mirrors the PDF: same key, same status tinting, same three
+ * summary cards under the register, same footer. A teacher printing rather than
+ * downloading should hand in a document that looks like the same report, not a
+ * second design.
+ */
+function buildPrintHTML(
+  letterheadHtml: string,
+  sessions: AttendanceSessionDto[],
+  studentSummaries: any[],
+  meta: { courseCode?: string | null; courseName: string },
+) {
+  const TEAL = "#0f766e"
+
+  const legend = STATUS_LEGEND.map(l =>
+    `<span style="display:inline-flex;align-items:center;gap:6px;margin-right:18px">
+       <span style="width:9px;height:9px;border-radius:50%;background:${l.hex};display:inline-block"></span>
+       <strong style="color:${l.hex};font-size:11px">${l.key}</strong>
+       <span style="color:#475569;font-size:11px">= ${l.label}</span>
+     </span>`
+  ).join("")
+
   const sessionHeaders = sessions.map((s, i) =>
-    `<th style="padding:7px 8px;border:1px solid #ddd;font-size:11px;background:#f0fdfa;white-space:nowrap">
-      ${s.topic ? `S${i + 1} - ${s.topic}` : `S${i + 1}<br/><small style="color:#888">${formatDate(s.date)}</small>`}
-    </th>`
+    `<th style="padding:6px 4px;border:1px solid ${TEAL};font-size:10px;background:${TEAL};color:#fff;white-space:nowrap;font-weight:700">
+       S${i + 1}<br/><span style="font-weight:400;opacity:.85">${formatDate(s.date, "dd MMM")}</span>
+     </th>`
   ).join("")
 
   const rows = studentSummaries.map((s, ri) => {
     const statusCells = sessions.map(session => {
-      const st = getStudentStatus(session, s.id)
-      const color = st === "P" ? "#059669" : st === "A" ? "#dc2626" : "#9ca3af"
-      const bg = st === "P" ? "#f0fdf4" : st === "A" ? "#fef2f2" : "#f9fafb"
-      return `<td style="text-align:center;color:${color};font-weight:700;font-size:12px;padding:7px 4px;border:1px solid #e5e7eb;background:${bg}">${st}</td>`
+      const st = getStudentStatus(session, s.studentId)
+      const l = STATUS_LEGEND.find(x => x.key === st)!
+      return `<td style="text-align:center;color:${l.hex};font-weight:700;font-size:11.5px;padding:6px 4px;border:1px solid #e2e8f0;background:${l.bg}">${st}</td>`
     }).join("")
-    const pctColor = s.attendancePercent >= 75 ? "#059669" : s.attendancePercent >= 50 ? "#d97706" : "#dc2626"
-    const rowBg = ri % 2 === 0 ? "#ffffff" : "#f9fafb"
+    const rowBg = ri % 2 === 0 ? "#ffffff" : "#f8fafc"
     return `<tr style="background:${rowBg}">
-      <td style="padding:8px 12px;border:1px solid #e5e7eb;font-size:12px;font-weight:700;white-space:nowrap;font-family:ui-monospace,monospace">${s.rollNumber}</td>
-      <td style="padding:8px 12px;border:1px solid #e5e7eb;font-size:12px;white-space:nowrap">${s.studentName}</td>
+      <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;color:#94a3b8;text-align:center">${ri + 1}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;font-size:11.5px;font-weight:700;white-space:nowrap;font-family:ui-monospace,monospace">${s.rollNumber || "—"}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;font-size:11.5px;white-space:nowrap">${s.studentName}</td>
       ${statusCells}
-      <td style="text-align:center;color:#059669;font-weight:700;padding:7px;border:1px solid #e5e7eb;font-size:12px">${s.presentCount}</td>
-      <td style="text-align:center;color:#dc2626;font-weight:700;padding:7px;border:1px solid #e5e7eb;font-size:12px">${s.absentCount}</td>
-      <td style="text-align:center;color:#9ca3af;font-weight:600;padding:7px;border:1px solid #e5e7eb;font-size:12px">${s.unmarkedCount}</td>
-      <td style="text-align:center;color:${pctColor};font-weight:800;padding:7px;border:1px solid #e5e7eb;font-size:13px">${s.attendancePercent}%</td>
+      <td style="text-align:center;color:#059669;font-weight:700;padding:6px;border:1px solid #e2e8f0;font-size:11.5px">${s.presentCount}</td>
+      <td style="text-align:center;color:#dc2626;font-weight:700;padding:6px;border:1px solid #e2e8f0;font-size:11.5px">${s.absentCount}</td>
+      <td style="text-align:center;color:#94a3b8;font-weight:600;padding:6px;border:1px solid #e2e8f0;font-size:11.5px">${s.unmarkedCount}</td>
+      <td style="text-align:center;color:${percentHex(s.attendancePercent)};font-weight:800;padding:6px;border:1px solid #e2e8f0;font-size:12px">${s.attendancePercent}%</td>
     </tr>`
   }).join("")
 
+  const classAvg = Math.round(
+    studentSummaries.reduce((t: number, s: any) => t + s.attendancePercent, 0) /
+    (studentSummaries.length || 1),
+  )
+  const card = (label: string, value: string, color: string) =>
+    `<div style="flex:1;border:1px solid #e2e8f0;background:#f8fafc;border-radius:6px;padding:10px 14px">
+       <div style="font-size:9px;letter-spacing:.06em;color:#64748b;font-weight:600">${label.toUpperCase()}</div>
+       <div style="font-size:18px;font-weight:800;color:${color};margin-top:3px">${value}</div>
+     </div>`
+
   return `
-    <div style="font-family:system-ui,-apple-system,sans-serif;color:#111;padding:24px">
+    <div style="font-family:system-ui,-apple-system,sans-serif;color:#0f172a;padding:22px">
       ${letterheadHtml}
-      <table style="width:100%;border-collapse:collapse;font-size:13px">
+
+      <div style="margin:0 0 10px 0;display:flex;align-items:center;flex-wrap:wrap">
+        <strong style="font-size:10px;letter-spacing:.06em;color:#64748b;margin-right:14px">KEY</strong>
+        ${legend}
+        <span style="color:#94a3b8;font-size:10.5px">Percentage: green &ge; 75%, amber 50–74%, red &lt; 50%</span>
+      </div>
+
+      <table style="width:100%;border-collapse:collapse">
         <thead>
           <tr>
-            <th style="text-align:left;padding:9px 12px;border:1px solid #ddd;font-size:12px;background:#f0fdfa;min-width:80px">Student ID</th>
-            <th style="text-align:left;padding:9px 12px;border:1px solid #ddd;font-size:12px;background:#f0fdfa;min-width:160px">Name</th>
+            <th style="padding:6px 4px;border:1px solid ${TEAL};font-size:10px;background:${TEAL};color:#fff">#</th>
+            <th style="text-align:left;padding:6px 10px;border:1px solid ${TEAL};font-size:10.5px;background:${TEAL};color:#fff;min-width:70px">Student ID</th>
+            <th style="text-align:left;padding:6px 10px;border:1px solid ${TEAL};font-size:10.5px;background:${TEAL};color:#fff;min-width:150px">Name</th>
             ${sessionHeaders}
-            <th style="padding:8px;border:1px solid #ddd;font-size:11px;background:#dcfce7;color:#059669">P</th>
-            <th style="padding:8px;border:1px solid #ddd;font-size:11px;background:#fee2e2;color:#dc2626">A</th>
-            <th style="padding:8px;border:1px solid #ddd;font-size:11px;background:#f3f4f6;color:#6b7280">U</th>
-            <th style="padding:8px;border:1px solid #ddd;font-size:11px;background:#f5f3ff;color:#7c3aed">%</th>
+            <th style="padding:6px;border:1px solid ${TEAL};font-size:10.5px;background:${TEAL};color:#fff">P</th>
+            <th style="padding:6px;border:1px solid ${TEAL};font-size:10.5px;background:${TEAL};color:#fff">A</th>
+            <th style="padding:6px;border:1px solid ${TEAL};font-size:10.5px;background:${TEAL};color:#fff">U</th>
+            <th style="padding:6px;border:1px solid ${TEAL};font-size:10.5px;background:${TEAL};color:#fff">%</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
       </table>
+
+      <div style="display:flex;gap:10px;margin-top:14px;page-break-inside:avoid">
+        ${card("Students", String(studentSummaries.length), "#1f2937")}
+        ${card("Sessions", String(sessions.length), "#1f2937")}
+        ${card("Class average", `${classAvg}%`, percentHex(classAvg))}
+      </div>
+
+      <div style="margin-top:14px;padding-top:8px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;color:#94a3b8;font-size:10px">
+        <span>${[meta.courseCode, meta.courseName].filter(Boolean).join(" · ")} · Attendance report</span>
+        <span>Generated ${new Date().toLocaleString()}</span>
+      </div>
     </div>`
 }
 
@@ -104,22 +179,61 @@ export default function AttendanceExportButton({
   }
 
   const exportCSV = () => {
-    const headerRows = getCsvLetterheadRows(letterhead)
-      .map(r => r.map(cell => `"${cell.replace(/"/g, '""')}"`).join(","))
+    // Everything goes through this so a topic containing a comma, a quote or a
+    // newline cannot shift every following column. The old version quoted only
+    // the two name fields and emitted the rest raw.
+    const q = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`
+    const line = (cells: unknown[]) => cells.map(q).join(",")
 
-    const headers = [
-      "Student ID", "Name",
-      ...sessions.map((s, i) => s.topic ? `S${i + 1}-${s.topic}` : `S${i + 1}-${formatDate(s.date)}`),
-      "Present", "Absent", "Unmarked", "Attendance%",
-    ]
-    const rows = sorted.map((s: any) => [
-      `"${s.rollNumber}"`,
-      `"${s.studentName}"`,
-      ...sessions.map(session => getStudentStatus(session, s.id)),
-      s.presentCount, s.absentCount, s.unmarkedCount, `${s.attendancePercent}%`,
-    ])
-    const csv = [...headerRows, headers.join(","), ...rows.map(r => r.join(","))].join("\n")
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" })
+    const classAvg = Math.round(
+      sorted.reduce((t: number, s: any) => t + s.attendancePercent, 0) / (sorted.length || 1),
+    )
+
+    const out: string[] = []
+
+    // Letterhead
+    out.push(...getCsvLetterheadRows(letterhead).map(r => line(r)))
+
+    // Key, so the single letters in the grid are readable on their own
+    out.push(line(["Key"]))
+    STATUS_LEGEND.forEach(l => out.push(line([l.key, l.label])))
+    out.push(line([]))
+
+    // Session reference \u2014 number, date and topic, so the S1..Sn columns below
+    // stay narrow without losing what each one was.
+    out.push(line(["Session", "Date", "Topic"]))
+    sessions.forEach((s, i) =>
+      out.push(line([`S${i + 1}`, formatDate(s.date, "dd MMM yyyy"), s.topic ?? ""])),
+    )
+    out.push(line([]))
+
+    // Register
+    out.push(line([
+      "#", "Student ID", "Name",
+      ...sessions.map((_, i) => `S${i + 1}`),
+      "Present", "Absent", "Not marked", "Attendance %",
+    ]))
+    sorted.forEach((s: any, i: number) =>
+      out.push(line([
+        i + 1,
+        s.rollNumber,
+        s.studentName,
+        ...sessions.map(session => getStudentStatus(session, s.studentId)),
+        s.presentCount, s.absentCount, s.unmarkedCount,
+        // A bare number, not "83%" \u2014 a percent sign makes Excel treat the whole
+        // column as text and refuse to average it.
+        s.attendancePercent,
+      ])),
+    )
+
+    // Summary, matching the PDF and print sheet
+    out.push(line([]))
+    out.push(line(["Summary"]))
+    out.push(line(["Students", sorted.length]))
+    out.push(line(["Sessions", sessions.length]))
+    out.push(line(["Class average %", classAvg]))
+
+    const blob = new Blob(["\uFEFF" + out.join("\r\n")], { type: "text/csv;charset=utf-8;" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
@@ -139,47 +253,168 @@ export default function AttendanceExportButton({
       ])
 
       const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" })
-      const startY = await addPdfLetterhead(doc, letterhead, 297)
+      const PAGE_W = 297
+      const PAGE_H = 210
+      const M = 14
+      let y = await addPdfLetterhead(doc, letterhead, PAGE_W)
+
+      const classAvg = Math.round(
+        sorted.reduce((t: number, s: any) => t + s.attendancePercent, 0) / (sorted.length || 1),
+      )
+
+      /* ── Legend ───────────────────────────────────────────────────
+         The table is a grid of single letters; without this the reader
+         has to infer what P/A/U mean. */
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(7.5)
+      doc.setTextColor(100, 116, 139)
+      doc.text("KEY", M, y + 3)
+      let lx = M + 12
+      STATUS_LEGEND.forEach(l => {
+        doc.setFillColor(...l.rgb)
+        doc.circle(lx + 1.4, y + 1.9, 1.4, "F")
+        doc.setFont("helvetica", "bold")
+        doc.setFontSize(7.5)
+        doc.setTextColor(...l.rgb)
+        doc.text(l.key, lx + 4.6, y + 3)
+        doc.setFont("helvetica", "normal")
+        doc.setTextColor(71, 85, 105)
+        doc.text(`= ${l.label}`, lx + 8.4, y + 3)
+        lx += 8.4 + doc.getTextWidth(`= ${l.label}`) + 8
+      })
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(7.5)
+      doc.setTextColor(148, 163, 184)
+      doc.text("Percentage column: green >= 75%, amber 50-74%, red < 50%", lx + 2, y + 3)
+      y += 8
 
       const head = [
-        ["ID", "Name",
-          ...sessions.map((s, i) => s.topic ? `S${i + 1}\n${s.topic}` : `S${i + 1}\n${formatDate(s.date)}`),
+        ["#", "Student ID", "Name",
+          ...sessions.map((s, i) =>
+            `S${i + 1}\n${formatDate(s.date, "dd MMM")}`),
           "P", "A", "U", "%"],
       ]
-      const body = sorted.map((s: any) => [
-        s.rollNumber,
+      const body = sorted.map((s: any, i: number) => [
+        String(i + 1),
+        s.rollNumber || "—",
         s.studentName,
-        ...sessions.map(session => getStudentStatus(session, s.id)),
+        ...sessions.map(session => getStudentStatus(session, s.studentId)),
         s.presentCount, s.absentCount, s.unmarkedCount, `${s.attendancePercent}%`,
       ])
 
+      const firstSessionCol = 3
+      const lastSessionCol = firstSessionCol + sessions.length - 1
+
       autoTable(doc, {
         head, body,
-        startY,
+        startY: y,
         theme: "grid",
-        headStyles: { fillColor: [13, 148, 136], textColor: 255, fontSize: 8, fontStyle: "bold", halign: "center" },
-        bodyStyles: { fontSize: 8, cellPadding: 2 },
+        styles: {
+          font: "helvetica",
+          lineColor: [226, 232, 240],
+          lineWidth: 0.15,
+          textColor: [31, 41, 55],
+          valign: "middle",
+        },
+        headStyles: {
+          fillColor: [15, 118, 110],
+          textColor: 255,
+          fontSize: 7.5,
+          fontStyle: "bold",
+          halign: "center",
+          valign: "middle",
+          cellPadding: { top: 2.4, bottom: 2.4, left: 1, right: 1 },
+          lineColor: [13, 148, 136],
+        },
+        bodyStyles: { fontSize: 8, cellPadding: { top: 2, bottom: 2, left: 2, right: 2 } },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
         columnStyles: {
-          0: { halign: "left", fontStyle: "bold", cellWidth: 28 },
-          1: { halign: "left", cellWidth: 50 },
+          0: { halign: "center", cellWidth: 8, textColor: [148, 163, 184], fontSize: 7 },
+          1: { halign: "left", cellWidth: 22, fontStyle: "bold" },
+          2: { halign: "left", cellWidth: 42 },
         },
         didParseCell: (data) => {
-          if (data.section === "body") {
-            const val = String(data.cell.raw)
-            if (val === "P") { data.cell.styles.textColor = [5, 150, 105]; data.cell.styles.halign = "center" }
-            else if (val === "A") { data.cell.styles.textColor = [220, 38, 38]; data.cell.styles.halign = "center" }
-            else if (val === "U") { data.cell.styles.textColor = [156, 163, 175]; data.cell.styles.halign = "center" }
-            else if (val.endsWith("%")) {
-              const n = parseFloat(val)
-              data.cell.styles.textColor = n >= 75 ? [5, 150, 105] : n >= 50 ? [217, 119, 6] : [220, 38, 38]
-              data.cell.styles.halign = "center"
+          const col = data.column.index
+          // Status grid: tint the whole cell, not just the glyph, so the
+          // pattern of absences is visible when scanning a column.
+          if (data.section === "body" && col >= firstSessionCol && col <= lastSessionCol) {
+            const v = String(data.cell.raw)
+            const l = STATUS_LEGEND.find(x => x.key === v)
+            data.cell.styles.halign = "center"
+            data.cell.styles.fontStyle = "bold"
+            if (l) {
+              data.cell.styles.textColor = l.rgb
+              data.cell.styles.fillColor =
+                v === "P" ? [236, 253, 245] : v === "A" ? [254, 242, 242] : [248, 250, 252]
+            }
+          }
+          if (data.section === "body" && col > lastSessionCol) {
+            data.cell.styles.halign = "center"
+            const v = String(data.cell.raw)
+            if (v.endsWith("%")) {
+              data.cell.styles.textColor = percentRgb(parseFloat(v))
               data.cell.styles.fontStyle = "bold"
+              data.cell.styles.fontSize = 8.5
             }
           }
         },
-        alternateRowStyles: { fillColor: [249, 250, 251] },
-        margin: { left: 14, right: 14 },
+        margin: { left: M, right: M, bottom: 16 },
       })
+
+      /* ── Summary, under the register ──────────────────────────────
+         Placed after the table rather than before it: the register is
+         the report, and totals read as a conclusion drawn from the
+         rows above rather than a dashboard the reader must scroll
+         past to reach the data. */
+      let sy = (doc as any).lastAutoTable?.finalY ?? y
+      const cards: Array<[string, string, [number, number, number]]> = [
+        ["Students", String(sorted.length), [31, 41, 55]],
+        ["Sessions", String(sessions.length), [31, 41, 55]],
+        ["Class average", `${classAvg}%`, percentRgb(classAvg)],
+      ]
+      const cardW = (PAGE_W - M * 2 - 6 * 2) / 3
+      const cardH = 16
+
+      // Start a page if the band would collide with the footer rule.
+      if (sy + 8 + cardH > PAGE_H - 16) {
+        doc.addPage()
+        sy = 18
+      } else {
+        sy += 8
+      }
+
+      cards.forEach(([label, value, rgb], i) => {
+        const x = M + i * (cardW + 6)
+        doc.setFillColor(248, 250, 252)
+        doc.setDrawColor(226, 232, 240)
+        doc.setLineWidth(0.2)
+        doc.roundedRect(x, sy, cardW, cardH, 1.6, 1.6, "FD")
+        doc.setFont("helvetica", "normal")
+        doc.setFontSize(7)
+        doc.setTextColor(100, 116, 139)
+        doc.text(label.toUpperCase(), x + 4, sy + 5.6)
+        doc.setFont("helvetica", "bold")
+        doc.setFontSize(12)
+        doc.setTextColor(...rgb)
+        doc.text(value, x + 4, sy + 12.6)
+      })
+
+      /* ── Footer on every page ─────────────────────────────────── */
+      const pages = doc.getNumberOfPages()
+      for (let p = 1; p <= pages; p++) {
+        doc.setPage(p)
+        doc.setDrawColor(226, 232, 240)
+        doc.setLineWidth(0.2)
+        doc.line(M, PAGE_H - 11, PAGE_W - M, PAGE_H - 11)
+        doc.setFont("helvetica", "normal")
+        doc.setFontSize(7.5)
+        doc.setTextColor(148, 163, 184)
+        doc.text(
+          `${[courseCode, courseName].filter(Boolean).join(" · ")}  ·  Attendance report`,
+          M, PAGE_H - 7,
+        )
+        doc.text(`Page ${p} of ${pages}`, PAGE_W - M, PAGE_H - 7, { align: "right" })
+      }
 
       doc.save(`Attendance-${courseName}-${new Date().toISOString().split("T")[0]}.pdf`)
     } catch (e) {
@@ -200,7 +435,7 @@ export default function AttendanceExportButton({
         body{font-family:system-ui,-apple-system,sans-serif;background:#fff;color:#111}
         @media print{@page{size:A4 landscape;margin:15mm} button{display:none!important}}
       </style>
-    </head><body>${buildPrintHTML(getHtmlLetterhead(letterhead), sessions, sorted)}</body></html>`)
+    </head><body>${buildPrintHTML(getHtmlLetterhead(letterhead), sessions, sorted, { courseCode, courseName })}</body></html>`)
     w.document.close()
     setTimeout(() => w.print(), 700)
     setOpen(false)
