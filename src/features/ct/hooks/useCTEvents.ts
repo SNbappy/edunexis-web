@@ -102,9 +102,20 @@ export function useCTMarks(ctEventId: string) {
 
     const gradeMutation = useMutation({
         mutationFn: (data: GradeCTRequest) => ctService.grade(ctEventId, data),
-        onSuccess: (res) => {
+        onSuccess: (res, variables) => {
             if (res.success) {
-                qc.invalidateQueries({ queryKey: key })
+                qc.setQueryData(key, (old: any) => {
+                    if (!old) return old
+                    return {
+                        ...old,
+                        marks: variables.marks.map((m: any) => ({
+                            studentId: m.studentId,
+                            obtainedMarks: m.obtainedMarks,
+                            isAbsent: m.isAbsent,
+                            remarks: m.remarks ?? null,
+                        })),
+                    }
+                })
             } else {
                 toast.error(res.message)
             }

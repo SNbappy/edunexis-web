@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import {
     ArrowLeft, Upload, CheckCircle2, FileText, X, XCircle,
     Send, Calendar, BookOpen, Star, Trophy, TrendingDown, BarChart3,
-    AlertCircle, Clock,
+    AlertCircle, Clock, Loader2,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -13,7 +13,6 @@ import Badge from '@/components/ui/Badge'
 import Avatar from '@/components/ui/Avatar'
 import ProgressBar from '@/components/ui/ProgressBar'
 import BrandLoader from '@/components/ui/BrandLoader'
-import InlineSpinner from '@/components/ui/InlineSpinner'
 import { formatDate } from '@/utils/dateUtils'
 import { sortByRoll } from '@/utils/roster'
 import { cn } from '@/utils/cn'
@@ -652,18 +651,18 @@ export default function CTEventPage() {
                         </div>
                         <div className="flex items-center gap-2.5">
                             {/* Autosave Status Indicator */}
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mr-1">
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-[85px] justify-end">
                                 {saveStatus === 'saving' || isSaving ? (
-                                    <span className="flex items-center gap-1.5 text-primary font-medium">
-                                        <InlineSpinner size="xs" /> Saving...
+                                    <span className="inline-flex items-center gap-1.5 text-primary font-medium text-[11.5px]">
+                                        <Loader2 className="w-3 h-3 animate-spin shrink-0" /> Saving...
                                     </span>
                                 ) : saveStatus === 'saved' || (!hasUnsavedChanges && initialized) ? (
-                                    <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
-                                        <CheckCircle2 className="w-3.5 h-3.5" /> Autosaved
+                                    <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium text-[11.5px]">
+                                        <CheckCircle2 className="w-3 h-3 shrink-0" /> Autosaved
                                     </span>
                                 ) : saveStatus === 'error' ? (
-                                    <span className="flex items-center gap-1.5 text-destructive font-medium">
-                                        <AlertCircle className="w-3.5 h-3.5" /> Save failed
+                                    <span className="inline-flex items-center gap-1.5 text-destructive font-medium text-[11.5px]">
+                                        <AlertCircle className="w-3 h-3 shrink-0" /> Save failed
                                     </span>
                                 ) : null}
                             </div>
@@ -703,7 +702,7 @@ export default function CTEventPage() {
                         </div>
                     )}
 
-                    {marksLoading ? (
+                    {!initialized && marksLoading ? (
                         <div className="space-y-2">
                             {[1, 2, 3].map(i => <div key={i} className="h-14 rounded-xl bg-muted animate-pulse" />)}
                         </div>
