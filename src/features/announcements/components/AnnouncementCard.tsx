@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   FileText, ChevronDown, ChevronUp, MoreVertical,
@@ -9,6 +9,7 @@ import { formatRelative } from "@/utils/dateUtils"
 import { useAuthStore } from "@/store/authStore"
 import type { AnnouncementDto, CommentDto } from "@/types/announcement.types"
 import Linkify from "@/components/ui/Linkify"
+import UserLink from "@/components/ui/UserLink"
 import CommentThread from "./CommentThread"
 
 interface AnnouncementCardProps {
@@ -81,20 +82,27 @@ export default function AnnouncementCard({
 
       <div className={"relative space-y-4 p-5 " + (isPinned ? "pl-6" : "")}>
         <div className="flex items-start gap-3">
-          <div className="shrink-0">
-            <Avatar
-              src={photoUrl}
-              name={announcement.authorName}
-              size="sm"
-              className="h-10 w-10"
-            />
-          </div>
+          <UserLink
+            userId={announcement.authorId}
+            name={announcement.authorName}
+            photoUrl={isOwn ? (user?.profile?.profilePhotoUrl ?? null) : null}
+            avatarSize="sm"
+            avatarClassName="h-10 w-10"
+            avatarOnly
+            className="shrink-0"
+          />
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <p className="truncate font-display text-[14px] font-bold text-foreground">
-                {announcement.authorName}
-              </p>
+              <UserLink
+                userId={announcement.authorId}
+                name={announcement.authorName}
+                photoUrl={isOwn ? (user?.profile?.profilePhotoUrl ?? null) : null}
+                avatarOnly={false}
+                avatarSize="xs"
+                avatarClassName="hidden"
+                nameClassName="font-display text-[14px] font-bold text-foreground"
+              />
               {isPinned && (
                 <motion.span
                   initial={{ scale: 0 }}

@@ -46,6 +46,7 @@ export interface CourseSummaryDto {
   semester:                string
   courseType:              CourseType
   coverImageUrl:           string
+  teacherId:               string
   teacherName:             string
   teacherProfilePhotoUrl:  string | null
   isArchived:              boolean

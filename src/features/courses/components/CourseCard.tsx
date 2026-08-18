@@ -1,8 +1,9 @@
-﻿import { Link } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { motion } from "framer-motion"
 import { Archive, Users, X, Clock, XCircle } from "lucide-react"
 import Avatar from "@/components/ui/Avatar"
 import Badge from "@/components/ui/Badge"
+import UserLink from "@/components/ui/UserLink"
 import { ICON_STROKE, FOCUS, SURFACE } from "@/components/ui/appTokens"
 import { cn } from "@/utils/cn"
 import { getInitials } from "@/utils/names"
@@ -100,15 +101,15 @@ export function ActiveCourseCard({ course }: ActiveCardProps) {
           </h3>
 
           <div className="mt-2.5 flex items-center gap-2">
-            <Avatar
-              src={course.teacherProfilePhotoUrl}
+            <UserLink
+              userId={course.teacherId}
               name={course.teacherName}
-              size="xs"
-              className="h-5 w-5 shrink-0"
+              photoUrl={course.teacherProfilePhotoUrl}
+              avatarSize="xs"
+              avatarClassName="h-5 w-5 shrink-0"
+              nameClassName="text-[12.5px] text-muted-foreground"
+              stopPropagation
             />
-            <span className="truncate text-[12.5px] text-muted-foreground">
-              {course.teacherName}
-            </span>
           </div>
 
           {/* Session and department both shown.

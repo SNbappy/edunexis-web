@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { MessageSquare, Send, Trash2, Pencil, Check, X, CornerDownRight } from "lucide-react"
 import Avatar from "@/components/ui/Avatar"
+import UserLink from "@/components/ui/UserLink"
 import Linkify from "@/components/ui/Linkify"
 import InlineSpinner from "@/components/ui/InlineSpinner"
 import RowMenu from "@/components/ui/RowMenu"
@@ -151,17 +152,25 @@ export default function CommentThread({
         highlightId === c.id && "bg-primary-soft ring-1 ring-primary/30 -mx-2 px-2 py-1.5",
       )}
     >
-      <Avatar
-        src={c.authorPhotoUrl ?? undefined}
+      <UserLink
+        userId={c.authorId}
         name={c.authorName}
-        size="xs"
-        className={cn("mt-0.5 shrink-0", isReply ? "h-5 w-5" : "h-6 w-6")}
+        photoUrl={c.authorPhotoUrl ?? null}
+        avatarSize="xs"
+        avatarClassName={cn("mt-0.5 shrink-0", isReply ? "h-5 w-5" : "h-6 w-6")}
+        avatarOnly
       />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2">
-          <span className="text-[12.5px] font-semibold text-foreground">
-            {c.authorName}
-          </span>
+          <UserLink
+            userId={c.authorId}
+            name={c.authorName}
+            photoUrl={c.authorPhotoUrl ?? null}
+            avatarOnly={false}
+            avatarSize="xs"
+            avatarClassName="hidden"
+            nameClassName="text-[12.5px] font-semibold text-foreground"
+          />
           {isReply && c.replyToName && (
             <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
               <CornerDownRight className="h-3 w-3" strokeWidth={ICON_STROKE} />

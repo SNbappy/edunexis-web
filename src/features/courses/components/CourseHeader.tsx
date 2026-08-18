@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 import Avatar from "@/components/ui/Avatar"
 import InkPanel from "@/components/ui/InkPanel"
+import UserLink from "@/components/ui/UserLink"
 import { ICON, ICON_STROKE, FOCUS, MOTION, SURFACE, INK } from "@/components/ui/appTokens"
 import { cn } from "@/utils/cn"
 import toast from "react-hot-toast"
@@ -100,17 +101,15 @@ export default function CourseHeader({
             </h1>
 
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-              <span className="inline-flex items-center gap-2">
-                <Avatar
-                  src={course.teacherProfilePhotoUrl}
-                  name={course.teacherName}
-                  size="xs"
-                  className="h-5 w-5 ring-1 ring-white/25"
-                />
-                <span className="text-[12.5px] font-semibold text-white">
-                  {course.teacherName}
-                </span>
-              </span>
+              <UserLink
+                userId={course.teacherId}
+                name={course.teacherName}
+                photoUrl={course.teacherProfilePhotoUrl}
+                avatarSize="xs"
+                avatarClassName="h-5 w-5 ring-1 ring-white/25"
+                nameClassName="text-[12.5px] font-semibold text-white"
+                className="text-white/90 hover:opacity-80"
+              />
 
               <span className="inline-flex items-center gap-1.5 text-[12.5px] text-teal-100/70">
                 <Users className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
