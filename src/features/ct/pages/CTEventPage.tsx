@@ -89,7 +89,7 @@ export default function CTEventPage() {
     const fileRefs = { best: bestRef, worst: worstRef, avg: avgRef }
 
     useEffect(() => {
-        if (initialized || students.length === 0) return
+        if (!teacher || initialized || students.length === 0) return
         const inputs: Record<string, MarkInput> = {}
         students.forEach(m => {
             const ex = (marksData?.marks ?? []).find((mk: any) => mk.studentId === m.userId)
@@ -101,10 +101,10 @@ export default function CTEventPage() {
         })
         setMarkInputs(inputs)
         if (marksData !== undefined) setInit(true)
-    }, [marksData, students, initialized])
+    }, [marksData, students, initialized, teacher])
 
     const performSave = async (currentInputs: Record<string, MarkInput>) => {
-        if (students.length === 0 || !ct?.khataUploaded) return
+        if (!teacher || students.length === 0 || !ct?.khataUploaded) return
 
         const hasInvalid = students.some(m => {
             const inp = currentInputs[m.userId]
@@ -266,7 +266,7 @@ export default function CTEventPage() {
 
     // Debounced autosave effect
     useEffect(() => {
-        if (!initialized || students.length === 0) return
+        if (!teacher || !initialized || students.length === 0) return
         if (isFirstRun.current) {
             isFirstRun.current = false
             return
@@ -281,7 +281,7 @@ export default function CTEventPage() {
         return () => {
             if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
         }
-    }, [markInputs, hasUnsavedChanges, hasInvalidMarks, initialized, students])
+    }, [markInputs, hasUnsavedChanges, hasInvalidMarks, initialized, students, teacher])
 
     const canPublish = isDraft && (ct?.khataUploaded ?? false) && students.length > 0 && pendingCount === 0 && !hasInvalidMarks && !hasUnsavedChanges && saveStatus !== 'saving' && !isSaving
 
