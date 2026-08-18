@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion"
 import { CheckCircle2, XCircle, Clock, TrendingUp } from "lucide-react"
 import { useMyAttendance } from "../hooks/useAttendanceStats"
@@ -91,7 +91,7 @@ export default function StudentAttendanceView({ courseId }: StudentAttendanceVie
     )
   }
 
-  if (!summary) {
+  if (!summary || summary.totalSessions === 0) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 12 }}
@@ -102,7 +102,7 @@ export default function StudentAttendanceView({ courseId }: StudentAttendanceVie
           <Clock className="h-7 w-7 text-teal-700 dark:text-teal-200" strokeWidth={1.75} />
         </div>
         <p className="mt-5 font-display text-[14px] font-bold text-foreground">
-          No attendance records yet
+          No attendance yet
         </p>
         <p className="mt-1 text-[12px] text-muted-foreground">
           Your attendance will appear here once the teacher takes a session.

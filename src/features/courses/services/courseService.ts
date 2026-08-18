@@ -111,8 +111,8 @@ export const courseService = {
   dismissJoinRequest: (requestId: string) =>
     api.post<ApiResponse>(`/Courses/join-requests/${requestId}/dismiss`).then(r => r.data),
 
-  leave: (id: string) =>
-    api.post<ApiResponse>(`/Courses/${id}/leave`).then(r => r.data),
+  leave: (id: string, password: string) =>
+    api.post<ApiResponse>(`/Courses/${id}/leave`, { password }).then(r => r.data),
 
   reviewJoinRequest: (courseId: string, requestId: string, approve: boolean) =>
     api

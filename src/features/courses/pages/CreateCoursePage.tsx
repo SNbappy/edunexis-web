@@ -303,7 +303,7 @@ export default function CreateCoursePage() {
                     {...register("courseCode")}
                     label="Course code"
                     placeholder="e.g. CSE-3201"
-                    hint="e.g. CSE-3102 — first 2 digits are year (31), last 2 are semester (02)."
+                    hint="e.g. CSE-3102 or CSE-2201"
                     error={errors.courseCode?.message}
                   />
                   <div>
@@ -394,11 +394,7 @@ export default function CreateCoursePage() {
                             autoFocus
                             placeholder="e.g. Robotics and Mechatronics Engineering"
                             aria-label="New department name"
-                            className={cn(
-                              FIELD_BASE,
-                              fieldState(!!errors.customDepartment),
-                              "mt-2",
-                            )}
+                            className="mt-2 h-11 w-full rounded-xl border border-border bg-card px-4 text-[14px] text-foreground placeholder:text-muted-foreground transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-teal-600/30"
                           />
                           {errors.customDepartment?.message ? (
                             <p className="mt-1.5 text-[11.5px] font-semibold text-red-600">

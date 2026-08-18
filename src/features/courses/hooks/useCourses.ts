@@ -96,6 +96,18 @@ export function useCourses() {
     onError: () => toast.error("Failed to permanently delete course."),
   })
 
+  const leaveMutation = useMutation({
+    mutationFn: ({ id, password }: { id: string; password: string }) =>
+      courseService.leave(id, password),
+    onSuccess: (res) => {
+      if (res.success) {
+        qc.invalidateQueries({ queryKey: ["courses"] })
+        toast.success("You have left the course.")
+      } else toast.error(res.message ?? "Failed to leave course.")
+    },
+    onError: () => toast.error("Failed to leave course."),
+  })
+
   const deleteMutation = useMutation({
     mutationFn: (
       { id, password, courseCodeConfirmation }:
@@ -142,6 +154,8 @@ export function useCourses() {
     isRestoring:     restoreMutation.isPending,
     permanentlyDeleteCourse: permanentDeleteMutation.mutate,
     isPermanentlyDeleting:   permanentDeleteMutation.isPending,
+    leaveCourse:  leaveMutation.mutate,
+    isLeaving:    leaveMutation.isPending,
   }
 }
 

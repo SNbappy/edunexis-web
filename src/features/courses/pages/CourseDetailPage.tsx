@@ -15,6 +15,7 @@ import CourseMembersList from "../components/CourseMembersList"
 import AttendanceTab from "../components/AttendanceTab"
 import ConfirmActionModal from "../components/ConfirmActionModal"
 import DeleteCourseModal from "../components/DeleteCourseModal"
+import LeaveCourseModal from "../components/LeaveCourseModal"
 import { useCourseDetail } from "../hooks/useCourseDetail"
 import { useCourseMembers } from "../hooks/useCourseMembers"
 import { useCourses } from "../hooks/useCourses"
@@ -30,7 +31,7 @@ import CTTab from "@/features/ct/components/CTTab"
 import PresentationsTab from "@/features/presentations/components/PresentationsTab"
 import MarksTab from "@/features/marks/components/MarksTab"
 
-type PendingAction = "archive" | "unarchive" | "delete" | null
+type PendingAction = "archive" | "unarchive" | "delete" | "leave" | null
 
 export default function CourseDetailPage() {
   const { courseId, tab } = useParams()
@@ -42,7 +43,7 @@ export default function CourseDetailPage() {
   const { course, isLoading, isFetched } = useCourseDetail(courseId!)
   const { members, joinRequests } = useCourseMembers(courseId!)
 
-  const { archiveCourse, unarchiveCourse, isArchiving, isUnarchiving, deleteCourse, isDeleting } = useCourses()
+  const { archiveCourse, unarchiveCourse, isArchiving, isUnarchiving, deleteCourse, isDeleting, leaveCourse, isLeaving } = useCourses()
 
   const [pendingAction, setPendingAction] = useState<PendingAction>(null)
 
@@ -121,6 +122,17 @@ export default function CourseDetailPage() {
     )
   }
 
+  const handleLeave = (password: string) => {
+    leaveCourse({ id: course.id, password }, {
+      onSuccess: (res: any) => {
+        if (res?.success !== false) {
+          setPendingAction(null)
+          navigate("/courses")
+        }
+      },
+    } as any)
+  }
+
   const renderTab = () => {
     switch (tab) {
       case COURSE_TABS.STREAM: return <AnnouncementFeed courseId={courseId!} />
@@ -145,6 +157,7 @@ export default function CourseDetailPage() {
         onArchive={() => setPendingAction("archive")}
         onUnarchive={() => setPendingAction("unarchive")}
         onDelete={() => setPendingAction("delete")}
+        onLeave={!isOwner && !teacher ? () => setPendingAction("leave") : undefined}
       />
 
       {/* Sticky tab navigation */}
@@ -212,6 +225,15 @@ export default function CourseDetailPage() {
         courseTitle={course.title}
         courseCode={course.courseCode}
         isLoading={isDeleting}
+      />
+
+      <LeaveCourseModal
+        isOpen={pendingAction === "leave"}
+        onClose={() => setPendingAction(null)}
+        onConfirm={handleLeave}
+        courseTitle={course.title}
+        courseCode={course.courseCode}
+        isLoading={isLeaving}
       />
     </div>
   )

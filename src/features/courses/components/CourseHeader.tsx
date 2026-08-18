@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 import {
   ArrowLeft, Settings, MoreHorizontal,
   Archive, ArchiveRestore, Users, Copy, Check,
-  FlaskConical, BookOpen, Trash2,
+  FlaskConical, BookOpen, Trash2, LogOut,
 } from "lucide-react"
 import Avatar from "@/components/ui/Avatar"
 import InkPanel from "@/components/ui/InkPanel"
@@ -21,6 +21,7 @@ interface CourseHeaderProps {
   onArchive?: () => void
   onUnarchive?: () => void
   onDelete?: () => void
+  onLeave?: () => void
 }
 
 /**
@@ -36,7 +37,7 @@ interface CourseHeaderProps {
  * scroll frame to save ~120px on a header that is now only 96px to begin with.
  */
 export default function CourseHeader({
-  course, isOwner, memberCount, onArchive, onUnarchive, onDelete,
+  course, isOwner, memberCount, onArchive, onUnarchive, onDelete, onLeave,
 }: CourseHeaderProps) {
   const menuButtonRef = useRef<HTMLButtonElement>(null)
   const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null)
@@ -233,6 +234,22 @@ export default function CourseHeader({
                 document.body
               )}
             </div>
+          )}
+
+          {!isOwner && onLeave && (
+            <button
+              type="button"
+              onClick={onLeave}
+              className={cn(
+                INK.chip,
+                "inline-flex h-9 items-center gap-1.5 px-3 text-[13px] font-semibold text-red-300 transition-colors duration-120 hover:bg-red-500/20 hover:text-red-200",
+                FOCUS,
+              )}
+              aria-label="Leave course"
+            >
+              <LogOut className={ICON.sm} strokeWidth={ICON_STROKE} />
+              Leave
+            </button>
           )}
         </div>
       </div>
