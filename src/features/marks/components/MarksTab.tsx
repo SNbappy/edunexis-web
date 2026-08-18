@@ -3,6 +3,9 @@ import { RefreshCw, Send, Lock, EyeOff } from "lucide-react"
 import toast from "react-hot-toast"
 import { useMarks } from "../hooks/useMarks"
 import { useAttendance } from "@/features/attendance/hooks/useAttendance"
+import { useCTEvents } from "@/features/ct/hooks/useCTEvents"
+import { useAssignments } from "@/features/assignments/hooks/useAssignments"
+import { usePresentations } from "@/features/presentations/hooks/usePresentations"
 import { useAuthStore } from "@/store/authStore"
 import { isTeacher } from "@/utils/roleGuard"
 import MyGradesView from "./MyGradesView"
@@ -56,13 +59,6 @@ const COMPONENTS: ComponentMeta[] = [
   { key: "attendance",   label: "Attendance",   abbr: "ATT", type: "Attendance",   showRule: false },
 ]
 
-const RULES: { value: SelectionRule; label: string }[] = [
-  { value: "Best1", label: "Best 1" },
-  { value: "Best2", label: "Best 2" },
-  { value: "Best3", label: "Best 3" },
-  { value: "All",   label: "Average of all" },
-]
-
 export default function MarksTab({ courseId, courseTitle, courseCode, semester, department }: MarksTabProps) {
   const { user } = useAuthStore()
   const teacher = isTeacher(user?.role ?? "Student")
@@ -76,7 +72,33 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
     publish, isPublishing,
     unpublish, isUnpublishing,
   } = useMarks(courseId)
-  const { members } = useAttendance(courseId)
+  const { members, sessions } = useAttendance(courseId)
+  const { ctEvents } = useCTEvents(courseId)
+  const { assignments } = useAssignments(courseId)
+  const { presentations } = usePresentations(courseId)
+
+  const itemCounts: Record<keyof FormulaState, number> = useMemo(() => ({
+    ct: ctEvents?.length ?? 0,
+    assignment: assignments?.length ?? 0,
+    presentation: presentations?.length ?? 0,
+    attendance: sessions?.length ?? 0,
+  }), [ctEvents, assignments, presentations, sessions])
+
+  const itemLabels: Record<keyof FormulaState, { singular: string; plural: string }> = {
+    ct: { singular: "CT", plural: "CTs" },
+    assignment: { singular: "assignment", plural: "assignments" },
+    presentation: { singular: "presentation", plural: "presentations" },
+    attendance: { singular: "session", plural: "sessions" },
+  }
+
+  const getAvailableRules = (count: number) => {
+    const available: { value: SelectionRule; label: string }[] = []
+    if (count >= 1) available.push({ value: "Best1", label: "Best 1" })
+    if (count >= 2) available.push({ value: "Best2", label: "Best 2" })
+    if (count >= 3) available.push({ value: "Best3", label: "Best 3" })
+    available.push({ value: "All", label: "Average of all" })
+    return available
+  }
 
   const [config, setConfig] = useState<FormulaState>(DEFAULT_FORMULA)
   const [loaded, setLoaded] = useState(false)
@@ -94,6 +116,31 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
     setConfig(next)
     setLoaded(true)
   }, [formula, loaded])
+
+  useEffect(() => {
+    if (!loaded) return
+    setConfig(prev => {
+      let changed = false
+      const next = { ...prev }
+      ;(Object.keys(next) as (keyof FormulaState)[]).forEach(key => {
+        const count = itemCounts[key]
+        const cfg = next[key]
+        if (count === 0 && cfg.enabled) {
+          next[key] = { ...cfg, enabled: false }
+          changed = true
+        } else if (cfg.enabled) {
+          if (cfg.selectionRule === "Best3" && count < 3) {
+            next[key] = { ...cfg, selectionRule: count === 2 ? "Best2" : count === 1 ? "Best1" : "All" }
+            changed = true
+          } else if (cfg.selectionRule === "Best2" && count < 2) {
+            next[key] = { ...cfg, selectionRule: count === 1 ? "Best1" : "All" }
+            changed = true
+          }
+        }
+      })
+      return changed ? next : prev
+    })
+  }, [itemCounts, loaded])
 
   /** Student IDs by user id, so the results table can key on the roll number. */
   const studentIdOf = useMemo(() => {
@@ -257,6 +304,11 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
         <ul className="divide-y divide-border">
           {COMPONENTS.map(comp => {
             const cfg = config[comp.key]
+            const count = itemCounts[comp.key]
+            const hasItems = count > 0
+            const availableRules = getAvailableRules(count)
+            const unitLabel = count === 1 ? itemLabels[comp.key].singular : itemLabels[comp.key].plural
+
             /* Weight is what a formula is actually about, so it is shown
                alongside the raw marks rather than left for the reader to work
                out from four numbers and a total. */
@@ -278,14 +330,31 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
                     {comp.abbr}
                   </span>
 
-                  <span className={cn(
-                    "min-w-0 flex-1 text-[13.5px] font-semibold",
-                    cfg.enabled ? "text-foreground" : "text-muted-foreground",
-                  )}>
-                    {comp.label}
-                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={cn(
+                        "text-[13.5px] font-semibold",
+                        cfg.enabled ? "text-foreground" : "text-muted-foreground",
+                      )}>
+                        {comp.label}
+                      </span>
+                      <span className={cn(
+                        "text-[11px] font-medium px-1.5 py-0.5 rounded",
+                        hasItems
+                          ? "bg-muted text-muted-foreground"
+                          : "bg-warning/10 text-warning"
+                      )}>
+                        {hasItems ? `${count} ${unitLabel}` : "0 created"}
+                      </span>
+                    </div>
+                    {!hasItems && (
+                      <p className="text-[11.5px] text-muted-foreground mt-0.5">
+                        Create at least 1 {itemLabels[comp.key].singular} before including in the formula.
+                      </p>
+                    )}
+                  </div>
 
-                  {cfg.enabled && (
+                  {cfg.enabled && hasItems && (
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                       {comp.showRule && (
                         <label className="flex items-center gap-1.5">
@@ -298,7 +367,7 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
                             style={{ colorScheme: "light dark" }}
                             className={cn(FIELD_BASE, fieldState(false), "h-8 cursor-pointer px-2 text-[12.5px] disabled:opacity-60 disabled:cursor-not-allowed")}
                           >
-                            {RULES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                            {availableRules.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                           </select>
                         </label>
                       )}
@@ -323,8 +392,14 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
 
                   <Switch
                     checked={cfg.enabled}
-                    onChange={next => setComp(comp.key, { enabled: next })}
-                    disabled={readOnly || isPublished}
+                    onChange={next => {
+                      if (next && !hasItems) {
+                        toast.error(`Create at least 1 ${itemLabels[comp.key].singular} before enabling.`)
+                        return
+                      }
+                      setComp(comp.key, { enabled: next })
+                    }}
+                    disabled={readOnly || isPublished || !hasItems}
                     label={`${cfg.enabled ? "Disable" : "Enable"} ${comp.label}`}
                   />
                 </div>
