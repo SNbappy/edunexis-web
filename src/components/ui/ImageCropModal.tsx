@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react"
-import { motion, AnimatePresence } from "framer-motion"
 import {
-  ZoomIn, ZoomOut, RotateCw, Check, X,
+  ZoomIn, ZoomOut, RotateCw, Check,
   RefreshCw, Sparkles,
 } from "lucide-react"
+import Modal from "@/components/ui/Modal"
 import Button from "@/components/ui/Button"
 
 interface ImageCropModalProps {
@@ -15,7 +15,7 @@ interface ImageCropModalProps {
   title?: string
 }
 
-const VIEWPORT_SIZE = 300 // px square crop viewport
+const VIEWPORT_SIZE = 280 // px square crop viewport
 const OUTPUT_SIZE = 600 // px square exported image resolution
 
 export default function ImageCropModal({
@@ -23,7 +23,7 @@ export default function ImageCropModal({
   imageFile,
   onClose,
   onCropComplete,
-  title = "Crop & adjust photo",
+  title = "Crop profile photo",
 }: ImageCropModalProps) {
   const [imageSrc, setImageSrc] = useState<string | null>(null)
   const [naturalSize, setNaturalSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 })
@@ -79,10 +79,6 @@ export default function ImageCropModal({
   // Visual size when rotated and zoomed
   const renderedW = (isRotated90or270 ? baseH : baseW) * zoom
   const renderedH = (isRotated90or270 ? baseW : baseH) * zoom
-
-  // Strict boundary clamping so the image always covers the entire circle
-  const maxOffsetX = Math.max(0, (renderedW - VIEWPORT_SIZE) / 2)
-  const maxOffsetY = Math.max(0, (renderedH - VIEWPORT_SIZE) / 2)
 
   const clampOffset = useCallback((x: number, y: number, currentZoom = zoom, currentRot = rotation) => {
     const isRot = currentRot === 90 || currentRot === 270
@@ -178,28 +174,19 @@ export default function ImageCropModal({
     const factor = OUTPUT_SIZE / VIEWPORT_SIZE
 
     ctx.save()
-    // High quality interpolation
     ctx.imageSmoothingEnabled = true
     ctx.imageSmoothingQuality = "high"
 
-    // Background
     ctx.fillStyle = "#ffffff"
     ctx.fillRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE)
 
-    // Center canvas coordinate system
     ctx.translate(OUTPUT_SIZE / 2, OUTPUT_SIZE / 2)
-
-    // Apply translation from user pan
     ctx.translate(offset.x * factor, offset.y * factor)
-
-    // Apply rotation
     ctx.rotate((rotation * Math.PI) / 180)
 
-    // Apply zoom & cover scale
     const totalScale = coverScale * zoom * factor
     ctx.scale(totalScale, totalScale)
 
-    // Draw image centered at origin
     ctx.drawImage(img, -naturalSize.width / 2, -naturalSize.height / 2, naturalSize.width, naturalSize.height)
     ctx.restore()
 
@@ -218,207 +205,167 @@ export default function ImageCropModal({
     )
   }, [imageFile, zoom, rotation, offset, naturalSize, coverScale, onCropComplete])
 
-  if (!isOpen || !imageFile || !imageSrc) return null
+  const footer = (
+    <div className="flex w-full items-center justify-between gap-2">
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => imageFile && onCropComplete(imageFile)}
+        className="text-xs text-muted-foreground hover:text-foreground"
+      >
+        Use as is
+      </Button>
+
+      <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={onClose}
+        >
+          Cancel
+        </Button>
+
+        <Button
+          type="button"
+          variant="primary"
+          size="sm"
+          leftIcon={<Check className="h-4 w-4" />}
+          onClick={handleApplyCrop}
+        >
+          Save photo
+        </Button>
+      </div>
+    </div>
+  )
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-        {/* Dark Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/85 backdrop-blur-md"
-          onClick={onClose}
-        />
-
-        {/* Modal Window */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 8 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 8 }}
-          transition={{ duration: 0.2, ease: "easeOut" }}
-          onClick={e => e.stopPropagation()}
-          className="relative z-10 w-full max-w-[420px] overflow-hidden rounded-3xl border border-stone-800 bg-stone-900 text-stone-100 shadow-2xl"
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      description="Drag to frame your photo. Adjust zoom or rotate if needed."
+      size="md"
+      footer={footer}
+    >
+      <div className="flex flex-col items-center py-2">
+        {/* Crop Viewport Box */}
+        <div
+          ref={viewportRef}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          onWheel={handleWheel}
+          style={{ width: VIEWPORT_SIZE, height: VIEWPORT_SIZE }}
+          className="relative cursor-grab overflow-hidden rounded-full border-2 border-primary shadow-[0_0_0_9999px_rgba(0,0,0,0.55)] ring-2 ring-background active:cursor-grabbing"
         >
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-stone-800 px-6 py-4">
-            <div>
-              <h2 className="font-display text-base font-bold text-white">
-                {title}
-              </h2>
-              <p className="text-xs text-stone-400">
-                Drag to frame your photo · Slider to zoom
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-full p-1.5 text-stone-400 transition-colors hover:bg-stone-800 hover:text-white"
-              aria-label="Close"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
-          {/* Body / Cropper Area */}
-          <div className="flex flex-col items-center bg-black/95 px-6 py-6">
-            {/* Viewport Box (Circle Crop Mask) */}
-            <div
-              ref={viewportRef}
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onPointerCancel={handlePointerUp}
-              onWheel={handleWheel}
-              style={{ width: VIEWPORT_SIZE, height: VIEWPORT_SIZE }}
-              className="relative cursor-grab overflow-hidden rounded-full border-2 border-teal-400/90 shadow-[0_0_0_9999px_rgba(0,0,0,0.65)] ring-1 ring-white/20 active:cursor-grabbing"
-            >
-              {/* Image being manipulated */}
-              <div
-                className="pointer-events-none absolute left-1/2 top-1/2 select-none"
+          {/* Image */}
+          <div
+            className="pointer-events-none absolute left-1/2 top-1/2 select-none"
+            style={{
+              transform: `translate(-50%, -50%) translate(${offset.x}px, ${offset.y}px) rotate(${rotation}deg) scale(${zoom})`,
+              transformOrigin: "center center",
+              transition: isDragging ? "none" : "transform 0.06s ease-out",
+            }}
+          >
+            {imageSrc && (
+              <img
+                ref={imageRef}
+                src={imageSrc}
+                alt="Crop preview"
+                draggable={false}
                 style={{
-                  transform: `translate(-50%, -50%) translate(${offset.x}px, ${offset.y}px) rotate(${rotation}deg) scale(${zoom})`,
-                  transformOrigin: "center center",
-                  transition: isDragging ? "none" : "transform 0.06s ease-out",
+                  width: baseW,
+                  height: baseH,
+                  maxWidth: "none",
                 }}
-              >
-                <img
-                  ref={imageRef}
-                  src={imageSrc}
-                  alt="Crop preview"
-                  draggable={false}
-                  style={{
-                    width: baseW,
-                    height: baseH,
-                    maxWidth: "none",
-                  }}
-                  className="pointer-events-none select-none object-contain"
-                />
-              </div>
-
-              {/* Grid overlay for alignment (shows when dragging or hovering) */}
-              <div
-                className={`pointer-events-none absolute inset-0 grid grid-cols-3 grid-rows-3 transition-opacity duration-200 ${
-                  isDragging ? "opacity-35" : "opacity-15"
-                }`}
-              >
-                <div className="border-b border-r border-white/60" />
-                <div className="border-b border-r border-white/60" />
-                <div className="border-b border-white/60" />
-                <div className="border-b border-r border-white/60" />
-                <div className="border-b border-r border-white/60" />
-                <div className="border-b border-white/60" />
-                <div className="border-r border-white/60" />
-                <div className="border-r border-white/60" />
-                <div />
-              </div>
-            </div>
-
-            {isSquare && (
-              <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-teal-500/30 bg-teal-500/10 px-3 py-1 text-[11px] font-semibold text-teal-300">
-                <Sparkles className="h-3 w-3 text-teal-400" />
-                Photo is square · framed automatically
-              </div>
+                className="pointer-events-none select-none object-contain"
+              />
             )}
-
-            {/* Controls Bar (LinkedIn Style) */}
-            <div className="mt-5 flex w-full flex-col gap-3.5 px-2">
-              {/* Zoom Slider */}
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => handleZoomChange(zoom - 0.15)}
-                  disabled={zoom <= 1.0}
-                  className="rounded-lg p-1.5 text-stone-300 transition-colors hover:bg-stone-800 hover:text-white disabled:opacity-30"
-                  title="Zoom out"
-                >
-                  <ZoomOut className="h-4 w-4" />
-                </button>
-
-                <input
-                  type="range"
-                  min="1.0"
-                  max="3.0"
-                  step="0.01"
-                  value={zoom}
-                  onChange={e => handleZoomChange(parseFloat(e.target.value))}
-                  className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-stone-700 accent-teal-400"
-                />
-
-                <button
-                  type="button"
-                  onClick={() => handleZoomChange(zoom + 0.15)}
-                  disabled={zoom >= 3.0}
-                  className="rounded-lg p-1.5 text-stone-300 transition-colors hover:bg-stone-800 hover:text-white disabled:opacity-30"
-                  title="Zoom in"
-                >
-                  <ZoomIn className="h-4 w-4" />
-                </button>
-
-                <div className="h-4 w-px bg-stone-700" />
-
-                {/* Rotate Button */}
-                <button
-                  type="button"
-                  onClick={handleRotate}
-                  className="flex items-center gap-1.5 rounded-xl border border-stone-700 bg-stone-800/80 px-2.5 py-1.5 text-xs font-semibold text-stone-200 transition-colors hover:bg-stone-700 hover:text-white"
-                  title="Rotate 90°"
-                >
-                  <RotateCw className="h-3.5 w-3.5" />
-                  <span>Rotate</span>
-                </button>
-
-                {/* Reset Button */}
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="flex items-center gap-1 rounded-xl p-1.5 text-xs font-semibold text-stone-400 transition-colors hover:bg-stone-800 hover:text-stone-200"
-                  title="Reset to default"
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </div>
           </div>
 
-          {/* Footer Actions */}
-          <div className="flex items-center justify-between border-t border-stone-800 bg-stone-900 px-6 py-4">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => onCropComplete(imageFile)}
-              className="text-xs text-stone-400 hover:bg-stone-800 hover:text-white"
-            >
-              Use as is
-            </Button>
-
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={onClose}
-                className="border-stone-700 bg-stone-800 text-stone-200 hover:bg-stone-700 hover:text-white"
-              >
-                Cancel
-              </Button>
-
-              <Button
-                type="button"
-                variant="primary"
-                size="sm"
-                leftIcon={<Check className="h-3.5 w-3.5" />}
-                onClick={handleApplyCrop}
-                className="bg-teal-500 font-bold text-stone-950 hover:bg-teal-400"
-              >
-                Save photo
-              </Button>
-            </div>
+          {/* Grid overlay for alignment */}
+          <div
+            className={`pointer-events-none absolute inset-0 grid grid-cols-3 grid-rows-3 transition-opacity duration-200 ${
+              isDragging ? "opacity-35" : "opacity-15"
+            }`}
+          >
+            <div className="border-b border-r border-white/80" />
+            <div className="border-b border-r border-white/80" />
+            <div className="border-b border-white/80" />
+            <div className="border-b border-r border-white/80" />
+            <div className="border-b border-r border-white/80" />
+            <div className="border-b border-white/80" />
+            <div className="border-r border-white/80" />
+            <div className="border-r border-white/80" />
+            <div />
           </div>
-        </motion.div>
+        </div>
+
+        {isSquare && (
+          <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-teal-500/20 bg-teal-500/10 px-3 py-1 text-[11px] font-semibold text-teal-600 dark:text-teal-400">
+            <Sparkles className="h-3 w-3" />
+            Photo is square · framed automatically
+          </div>
+        )}
+
+        {/* Zoom & Rotation Controls Bar */}
+        <div className="mt-5 flex w-full max-w-xs items-center gap-2.5 rounded-2xl border border-border bg-muted/30 p-2.5">
+          <button
+            type="button"
+            onClick={() => handleZoomChange(zoom - 0.15)}
+            disabled={zoom <= 1.0}
+            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+            title="Zoom out"
+          >
+            <ZoomOut className="h-4 w-4" />
+          </button>
+
+          <input
+            type="range"
+            min="1.0"
+            max="3.0"
+            step="0.01"
+            value={zoom}
+            onChange={e => handleZoomChange(parseFloat(e.target.value))}
+            className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-muted-foreground/20 accent-primary"
+          />
+
+          <button
+            type="button"
+            onClick={() => handleZoomChange(zoom + 0.15)}
+            disabled={zoom >= 3.0}
+            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+            title="Zoom in"
+          >
+            <ZoomIn className="h-4 w-4" />
+          </button>
+
+          <div className="h-4 w-px bg-border" />
+
+          {/* Rotate Button */}
+          <button
+            type="button"
+            onClick={handleRotate}
+            className="flex items-center gap-1 rounded-lg border border-border bg-card px-2 py-1 text-xs font-semibold text-foreground shadow-sm transition-colors hover:bg-muted"
+            title="Rotate 90°"
+          >
+            <RotateCw className="h-3.5 w-3.5" />
+          </button>
+
+          {/* Reset Button */}
+          <button
+            type="button"
+            onClick={handleReset}
+            className="rounded-lg p-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            title="Reset"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
-    </AnimatePresence>
+    </Modal>
   )
 }
