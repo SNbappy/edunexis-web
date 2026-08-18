@@ -20,7 +20,7 @@ import Avatar from "@/components/ui/Avatar"
 import InlineSpinner from "@/components/ui/InlineSpinner"
 import BrandLoader from "@/components/ui/BrandLoader"
 
-import { DEPARTMENT_GROUPS } from "@/config/constants"
+import { DEPARTMENT_GROUPS, DEPARTMENT_GROUPS_WITH_OTHER, DEPARTMENT_OTHER } from "@/config/constants"
 import { useAuthStore } from "@/store/authStore"
 import { useProfile } from "../hooks/useProfile"
 import { isTeacher } from "@/utils/roleGuard"
@@ -56,12 +56,23 @@ function buildSchema(teacher: boolean) {
     twitterUrl: z.string().url("Enter a valid URL").optional().or(z.literal("")),
     facebookUrl: z.string().url("Enter a valid URL").optional().or(z.literal("")),
     websiteUrl: z.string().url("Enter a valid URL").optional().or(z.literal("")),
+    customDepartment: z.string().optional(),
+  }).superRefine((data, ctx) => {
+    if (data.department !== DEPARTMENT_OTHER) return
+    if (!data.customDepartment?.trim() || data.customDepartment.trim().length < 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["customDepartment"],
+        message: "Type your department name",
+      })
+    }
   })
 }
 
 type FormData = {
   fullName: string
   department: string
+  customDepartment?: string
   designation?: string
   studentId?: string
   headline?: string
@@ -117,6 +128,7 @@ export default function EditProfilePage() {
     defaultValues: {
       fullName: "",
       department: "",
+      customDepartment: "",
       designation: "",
       studentId: "",
       headline: "",
@@ -141,6 +153,7 @@ export default function EditProfilePage() {
     reset({
       fullName: p.fullName ?? "",
       department: p.department ?? "",
+      customDepartment: "",
       designation: p.designation ?? "",
       studentId: p.studentId ?? "",
       headline: p.headline ?? "",
@@ -180,9 +193,12 @@ export default function EditProfilePage() {
   }
 
   const submit = (data: FormData) => {
+    const resolvedDepartment = data.department === DEPARTMENT_OTHER
+      ? (data.customDepartment?.trim() ?? "")
+      : data.department
     const payload: UpdateProfileRequest = {
       fullName: data.fullName,
-      department: data.department,
+      department: resolvedDepartment,
       designation: data.designation || undefined,
       studentId: data.studentId || undefined,
       bio: data.bio || undefined,
@@ -424,13 +440,41 @@ export default function EditProfilePage() {
                     <Select
                       {...register("department")}
                       placeholder="Select department"
-                      optionGroups={DEPARTMENT_GROUPS}
+                      optionGroups={DEPARTMENT_GROUPS_WITH_OTHER}
                     />
                     {errors.department?.message ? (
                       <p className="mt-1.5 text-[11.5px] font-semibold text-destructive">
                         {errors.department.message}
                       </p>
                     ) : null}
+                    <AnimatePresence initial={false}>
+                      {values.department === DEPARTMENT_OTHER && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
+                          <input
+                            {...register("customDepartment")}
+                            autoFocus
+                            placeholder="e.g. Robotics and Mechatronics Engineering"
+                            aria-label="Department name"
+                            className="mt-2 h-11 w-full rounded-xl border border-border bg-card px-4 text-[14px] text-foreground placeholder:text-muted-foreground transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-teal-600/30"
+                          />
+                          {(errors as any).customDepartment?.message ? (
+                            <p className="mt-1.5 text-[11.5px] font-semibold text-destructive">
+                              {(errors as any).customDepartment.message}
+                            </p>
+                          ) : (
+                            <p className="mt-1.5 text-[11.5px] text-muted-foreground">
+                              Type the full department name.
+                            </p>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   {teacher ? (
