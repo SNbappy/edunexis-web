@@ -55,6 +55,7 @@ const MAX_SIZE_BYTES = 10 * 1024 * 1024 // matches the Cloudinary raw-upload cap
 export default function CTEventPage() {
     const { courseId, ctId } = useParams<{ courseId: string; ctId: string }>()
     const navigate = useNavigate()
+    const { user } = useAuthStore()
     const teacher = isTeacher(user?.role ?? 'Student')
 
     const { ctEvents, isLoading: eventsLoading, publishCT, unpublishCT } = useCTEvents(courseId!)
