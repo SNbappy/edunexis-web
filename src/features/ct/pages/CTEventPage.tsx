@@ -63,6 +63,8 @@ export default function CTEventPage() {
     const { members } = useAttendance(courseId!)
 
     const ct = ctEvents.find(e => e.id === ctId)
+    const isDraft = ct?.status === 'Draft'
+    const isPublished = ct?.status === 'Published'
 
     /* Roll order, not join order. The teacher marks from a printed script pile
        that is itself in roll order, so any other ordering means hunting for
@@ -316,8 +318,6 @@ export default function CTEventPage() {
         )
     }
 
-    const isDraft = ct.status === 'Draft'
-    const isPublished = ct.status === 'Published'
     const pageTitle = `CT ${ct.ctNumber}: ${ct.title}`
     const selectedFilesCount = (files.best ? 1 : 0) + (files.worst ? 1 : 0) + (files.avg ? 1 : 0)
 
