@@ -58,7 +58,7 @@ export default function CTEventPage() {
     const { user } = useAuthStore()
     const teacher = isTeacher(user?.role ?? 'Student')
 
-    const { ctEvents, isLoading: eventsLoading, publishCT, unpublishCT } = useCTEvents(courseId!)
+    const { ctEvents, isLoading: eventsLoading, publishCT, isPublishing, unpublishCT } = useCTEvents(courseId!)
     const { marksData, isLoading: marksLoading, uploadKhata, isUploading, gradeStudentsAsync, isSaving } = useCTMarks(ctId!)
     const { members } = useAttendance(courseId!)
 
