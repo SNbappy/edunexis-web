@@ -98,6 +98,21 @@ export default function CTEventPage() {
     const updateMark = (uid: string, field: keyof MarkInput, val: string | boolean) =>
         setMarkInputs(prev => ({ ...prev, [uid]: { ...prev[uid], [field]: val } }))
 
+    const toggleAbsent = (userId: string) => {
+        setMarkInputs(prev => {
+            const cur = prev[userId] ?? { obtainedMarks: '', isAbsent: false, remarks: '' }
+            const nextAbsent = !cur.isAbsent
+            return {
+                ...prev,
+                [userId]: {
+                    ...cur,
+                    isAbsent: nextAbsent,
+                    obtainedMarks: nextAbsent ? '0' : '',
+                }
+            }
+        })
+    }
+
     const setAllAbsent = (absent: boolean) =>
         setMarkInputs(prev => {
             const next = { ...prev }
@@ -105,7 +120,7 @@ export default function CTEventPage() {
                 next[m.userId] = {
                     ...(next[m.userId] ?? { obtainedMarks: '', isAbsent: false, remarks: '' }),
                     isAbsent: absent,
-                    obtainedMarks: absent ? '' : next[m.userId]?.obtainedMarks ?? '',
+                    obtainedMarks: absent ? '0' : '',
                 }
             })
             return next
@@ -126,16 +141,24 @@ export default function CTEventPage() {
     }
 
     const handleUpload = () => {
-        if (!files.best || !files.worst || !files.avg) return
+        const hasFiles = !!files.best || !!files.worst || !!files.avg
+        if (!hasFiles) return
         const fd = new FormData()
-        fd.append('bestCopy', files.best)
-        fd.append('worstCopy', files.worst)
-        fd.append('avgCopy', files.avg)
+        if (files.best) fd.append('bestCopy', files.best)
+        if (files.worst) fd.append('worstCopy', files.worst)
+        if (files.avg) fd.append('avgCopy', files.avg)
         KHATA_SLOTS.forEach(s => {
             const owner = scriptOwners[s.studentKey]
             if (owner) fd.append(s.studentKey, owner)
         })
-        uploadKhata(fd, { onSuccess: () => { setFiles({}); setScriptOwners({}) } })
+        uploadKhata(fd, {
+            onSuccess: () => {
+                setFiles({})
+                Object.values(fileRefs).forEach(r => {
+                    if (r.current) r.current.value = ''
+                })
+            }
+        })
     }
 
     const handleSave = () => {
@@ -143,7 +166,9 @@ export default function CTEventPage() {
             const inp = markInputs[m.userId] ?? { obtainedMarks: '', isAbsent: false, remarks: '' }
             return {
                 studentId: m.userId,
-                obtainedMarks: inp.isAbsent || inp.obtainedMarks === ''
+                obtainedMarks: inp.isAbsent
+                    ? 0
+                    : inp.obtainedMarks === ''
                     ? null
                     : parseFloat(inp.obtainedMarks),
                 isAbsent: inp.isAbsent,
@@ -158,77 +183,71 @@ export default function CTEventPage() {
     if (eventsLoading) return <BrandLoader variant="page" />
 
     /* `!ct` alone, not `!eventsLoading && !ct`. The loading branch above has
-       already returned, so the extra clause was redundant at runtime — but it
-       stopped TypeScript narrowing `ct`, which is why every access below was
-       reported as possibly-undefined. */
-    if (!ct) return (
-        <div className="p-6 text-center text-muted-foreground">CT event not found.</div>
-    )
+       already returned, so TypeScript knows eventsLoading is false here. */
+    if (!ct) {
+        return (
+            <div className="text-center py-12 space-y-3">
+                <p className="text-muted-foreground">Class test not found.</p>
+                <Button variant="secondary" onClick={() => navigate(backUrl)}>Back to CTs</Button>
+            </div>
+        )
+    }
 
     const isDraft = ct.status === 'Draft'
     const isPublished = ct.status === 'Published'
-    const allFiles = !!files.best && !!files.worst && !!files.avg
-    const pageTitle = 'CT ' + ct.ctNumber + ' - ' + ct.title
-    const khataColor = ct.khataUploaded ? 'font-semibold text-emerald-500' : 'font-semibold text-amber-500'
-    const khataLabel = ct.khataUploaded ? 'Uploaded' : 'Pending'
+    const pageTitle = `CT ${ct.ctNumber}: ${ct.title}`
+    const selectedFilesCount = (files.best ? 1 : 0) + (files.worst ? 1 : 0) + (files.avg ? 1 : 0)
 
     /* --- Student View --- */
     if (!teacher) {
-        const myMark = (marksData?.marks ?? []).find((m: any) => m.studentId === user?.id)
-        const resultClass = myMark?.isAbsent
-            ? 'p-6 rounded-2xl border bg-destructive/5 border-destructive/20 space-y-3'
-            : 'p-6 rounded-2xl border bg-emerald-500/5 border-emerald-500/20 space-y-3'
-
+        const myMark = marksData?.marks?.find(m => m.studentId === user?.id)
         return (
-            <div className="max-w-2xl mx-auto space-y-6 pb-10">
+            <div className="max-w-3xl mx-auto space-y-6 pb-10">
                 <div className="flex items-center gap-3">
                     <button onClick={() => navigate(backUrl)}
                         className="p-2 rounded-xl hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
                         <ArrowLeft className="w-5 h-5" />
                     </button>
-                    <div className="flex-1 min-w-0">
-                        <h1 className="text-xl font-bold text-foreground truncate">{pageTitle}</h1>
-                        <p className="text-sm text-muted-foreground">Class Test Result</p>
-                    </div>
-                    <Badge variant={isPublished ? 'success' : 'default'}>{ct.status}</Badge>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                    <div className="p-4 rounded-2xl bg-card border border-border space-y-1">
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <Calendar className="w-3.5 h-3.5" /> Date Held
-                        </div>
-                        <p className="font-semibold text-foreground">
-                            {ct.heldOn ? formatDate(ct.heldOn, 'dd MMM yyyy') : 'Not set'}
+                    <div>
+                        <h1 className="text-xl font-bold text-foreground">{pageTitle}</h1>
+                        <p className="text-sm text-muted-foreground">
+                            {ct.heldOn ? formatDate(ct.heldOn, 'dd MMM yyyy') : 'Date TBA'} · Total marks: {ct.maxMarks}
                         </p>
                     </div>
-                    <div className="p-4 rounded-2xl bg-card border border-border space-y-1">
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <BookOpen className="w-3.5 h-3.5" /> Total Marks
-                        </div>
-                        <p className="font-semibold text-foreground">{ct.maxMarks}</p>
-                    </div>
+                    <Badge className="ml-auto" variant={isPublished ? 'success' : 'default'}>{ct.status}</Badge>
                 </div>
 
-                {isDraft ? (
-                    <div className="p-6 rounded-2xl bg-muted/50 border border-border text-center text-sm text-muted-foreground">
-                        Results will be visible once the teacher publishes this CT.
+                {!isPublished ? (
+                    <div className="p-8 rounded-2xl bg-card border border-border text-center space-y-2">
+                        <Clock className="w-8 h-8 text-muted-foreground mx-auto" />
+                        <p className="font-semibold text-foreground">Results Not Published Yet</p>
+                        <p className="text-sm text-muted-foreground">
+                            Results will be visible once the teacher publishes this CT.
+                        </p>
                     </div>
-                ) : marksLoading ? (
-                    <div className="h-24 rounded-2xl bg-muted animate-pulse" />
                 ) : !myMark ? (
-                    <div className="p-6 rounded-2xl bg-muted/50 border border-border text-center text-sm text-muted-foreground">
-                        Your marks have not been entered yet.
+                    <div className="p-8 rounded-2xl bg-card border border-border text-center space-y-2">
+                        <p className="font-semibold text-foreground">No Result Record</p>
+                        <p className="text-sm text-muted-foreground">No marks recorded for your account.</p>
                     </div>
                 ) : (
-                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className={resultClass}>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Your Result</p>
+                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                        className="p-6 rounded-2xl bg-card border border-border space-y-4">
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Your Result</span>
+                            <Badge variant={myMark.isAbsent ? 'destructive' : 'success'}>
+                                {myMark.isAbsent ? 'Absent' : 'Present'}
+                            </Badge>
+                        </div>
                         {myMark.isAbsent ? (
                             <div className="flex items-center gap-3 text-destructive">
                                 <XCircle className="w-8 h-8" />
                                 <div>
-                                    <p className="text-lg font-bold">Absent</p>
-                                    <p className="text-sm text-muted-foreground">You were marked absent for this CT</p>
+                                    <p className="text-3xl font-bold text-destructive">
+                                        0
+                                        <span className="text-base text-muted-foreground font-normal"> / {ct.maxMarks}</span>
+                                    </p>
+                                    <p className="text-sm text-destructive/80 font-medium">Marked Absent (0 Marks)</p>
                                 </div>
                             </div>
                         ) : (
@@ -247,21 +266,6 @@ export default function CTEventPage() {
                             <p className="text-sm text-muted-foreground border-t border-border/50 pt-3">Remarks: {myMark.remarks}</p>
                         )}
                     </motion.div>
-                )}
-
-                {/* The sample scripts, once published. Seeing the best and worst
-                    answer beside your own mark is the point of the khata. */}
-                {isPublished && ct.khataUploaded && (
-                    <div className="grid grid-cols-3 gap-3">
-                        {KHATA_SLOTS.map(s => (
-                            <a key={s.key} href={ct[s.urlKey] ?? '#'} target="_blank" rel="noopener noreferrer"
-                                className="flex flex-col items-center gap-1.5 rounded-xl border border-border bg-card p-3 transition-colors hover:border-primary/40">
-                                <s.icon className="h-4 w-4 text-primary" />
-                                <p className="text-xs font-medium text-foreground">{s.label}</p>
-                                <p className="text-xs text-primary underline">View</p>
-                            </a>
-                        ))}
-                    </div>
                 )}
             </div>
         )
@@ -291,7 +295,13 @@ export default function CTEventPage() {
                 <div className="flex items-center gap-2">
                     <Badge variant={isPublished ? 'success' : 'default'}>{ct.status}</Badge>
                     {isDraft && ct.khataUploaded && (
-                        <Button size="sm" leftIcon={<Send className="w-4 h-4" />} onClick={() => publishCT(ct.id)}>
+                        <Button
+                            size="sm"
+                            leftIcon={<Send className="w-4 h-4" />}
+                            onClick={() => publishCT(ct.id)}
+                            disabled={pendingCount > 0}
+                            title={pendingCount > 0 ? `All ${students.length} students must be marked before publishing (${pendingCount} pending)` : undefined}
+                        >
                             Publish Results
                         </Button>
                     )}
@@ -323,22 +333,26 @@ export default function CTEventPage() {
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <FileText className="w-3.5 h-3.5" /> Khata Scripts
                     </div>
-                    <p className={khataColor}>{khataLabel}</p>
+                    <p className={ct.khataUploaded ? 'font-semibold text-emerald-500' : 'font-semibold text-amber-500'}>
+                        {ct.khataUploaded ? 'Uploaded' : 'Pending'}
+                    </p>
                 </div>
             </div>
 
             {/* -- Khata Section -- */}
             <div className="p-5 rounded-2xl bg-card border border-border space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-2">
                     <div>
                         <h2 className="font-semibold text-foreground">Khata Scripts</h2>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                            {ct.khataUploaded ? 'Scripts uploaded — re-upload to replace' : 'Upload all 3 scripts to enable mark entry'}
+                            {ct.khataUploaded
+                                ? 'Sample scripts are uploaded. You can re-upload any script to replace it.'
+                                : 'Upload all 3 sample scripts to proceed with class test grading.'}
                         </p>
                     </div>
                     {ct.khataUploaded && (
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-500">
-                            <CheckCircle2 className="w-4 h-4" /> All uploaded
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> All 3 Scripts Active
                         </div>
                     )}
                 </div>
@@ -353,60 +367,90 @@ export default function CTEventPage() {
                     </div>
                 )}
 
-                {/* View uploaded files */}
-                {ct.khataUploaded && (
-                    <div className="grid grid-cols-3 gap-3">
-                        {KHATA_SLOTS.map(s => (
-                            <a key={s.key} href={ct[s.urlKey] ?? '#'} target="_blank" rel="noopener noreferrer"
-                                className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 transition-all group">
-                                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                                <p className="text-xs font-medium text-foreground">{s.label}</p>
-                                <p className="text-xs text-primary underline group-hover:opacity-80">View File</p>
-                            </a>
-                        ))}
-                    </div>
-                )}
-
-                {/* Upload new files */}
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {/* 3 Slot Cards */}
+                <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
                     {KHATA_SLOTS.map(slot => {
                         const file = files[slot.key]
+                        const currentUrl = ct[slot.urlKey]
                         const ref = fileRefs[slot.key]
-                        const cardCls = file
-                            ? 'p-4 rounded-xl border border-primary/30 bg-primary/5 space-y-2 transition-all'
-                            : 'p-4 rounded-xl border border-dashed border-border space-y-2 transition-all hover:border-primary/40 hover:bg-muted/30'
+
                         return (
-                            <div key={slot.key} className={cardCls}>
-                                <div className="flex items-start justify-between">
-                                    <div>
-                                        <p className="text-sm font-semibold text-foreground">{slot.label}</p>
-                                        <p className="text-xs text-muted-foreground">{slot.description}</p>
+                            <div
+                                key={slot.key}
+                                className={cn(
+                                    "p-4 rounded-xl border space-y-3 transition-all",
+                                    file
+                                        ? "border-primary/50 bg-primary/5 ring-1 ring-primary/20"
+                                        : currentUrl
+                                        ? "border-border bg-card"
+                                        : "border-dashed border-border bg-muted/20"
+                                )}
+                            >
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                            <slot.icon className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-foreground leading-tight">{slot.label}</p>
+                                            <p className="text-[11px] text-muted-foreground">{slot.description}</p>
+                                        </div>
                                     </div>
                                     {file && (
                                         <button
+                                            type="button"
                                             onClick={() => {
                                                 pickFile(slot.key, undefined)
                                                 if (ref.current) ref.current.value = ''
                                             }}
-                                            className="p-0.5 rounded-full text-muted-foreground hover:text-destructive transition-colors"
+                                            title="Remove replacement"
+                                            className="p-1 rounded-md text-muted-foreground hover:bg-destructive-soft hover:text-destructive transition-colors"
                                         >
                                             <X className="w-3.5 h-3.5" />
                                         </button>
                                     )}
                                 </div>
+
+                                {/* Current Uploaded File link */}
+                                {currentUrl && !file && (
+                                    <div className="flex items-center justify-between rounded-lg border border-border/70 bg-muted/40 px-2.5 py-1.5 text-xs">
+                                        <span className="flex items-center gap-1.5 text-muted-foreground truncate">
+                                            <FileText className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                            <span className="truncate">Active script</span>
+                                        </span>
+                                        <a
+                                            href={currentUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="font-medium text-primary hover:underline shrink-0 ml-2"
+                                        >
+                                            View ↗
+                                        </a>
+                                    </div>
+                                )}
+
+                                {/* Selected replacement file preview */}
                                 {file ? (
-                                    <div className="flex items-center gap-1.5 text-xs text-primary font-medium">
-                                        <FileText className="w-3.5 h-3.5 shrink-0" />
-                                        <span className="truncate">{file.name}</span>
+                                    <div className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1.5 text-xs text-primary font-medium">
+                                        <span className="flex items-center gap-1.5 truncate">
+                                            <FileText className="w-3.5 h-3.5 shrink-0" />
+                                            <span className="truncate">{file.name}</span>
+                                        </span>
+                                        <span className="text-[10.5px] text-primary/70 shrink-0 ml-1.5 tabular-nums">
+                                            {(file.size / 1024).toFixed(0)} KB
+                                        </span>
                                     </div>
                                 ) : (
                                     <button
+                                        type="button"
                                         onClick={() => ref.current?.click()}
-                                        className="w-full text-xs py-2 rounded-lg text-primary hover:bg-primary/10 transition-colors border border-dashed border-primary/30 font-medium"
+                                        className="w-full text-xs py-2 rounded-lg text-primary hover:bg-primary/10 transition-colors border border-dashed border-primary/40 font-medium flex items-center justify-center gap-1.5"
                                     >
-                                        Choose File
+                                        <Upload className="w-3.5 h-3.5" />
+                                        {currentUrl ? 'Replace File' : 'Choose File'}
                                     </button>
                                 )}
+
                                 <input
                                     ref={ref}
                                     type="file"
@@ -415,9 +459,7 @@ export default function CTEventPage() {
                                     onChange={e => pickFile(slot.key, e.target.files?.[0])}
                                 />
 
-                                {/* Whose script this is. Optional, and listed in
-                                    roll order so it can be picked off the pile
-                                    without hunting through a name-sorted list. */}
+                                {/* Student Selector */}
                                 {students.length > 0 && (
                                     <select
                                         value={scriptOwners[slot.studentKey] ?? ''}
@@ -428,7 +470,7 @@ export default function CTEventPage() {
                                         aria-label={slot.label + ' student'}
                                         className="h-8 w-full rounded-lg border border-border bg-card px-2 text-[12px] text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                                     >
-                                        <option value="">Student (optional)</option>
+                                        <option value="">Select Student (optional)</option>
                                         {students.map(m => (
                                             <option key={m.userId} value={m.userId}>
                                                 {m.studentId ? m.studentId + ' — ' : ''}{m.fullName}
@@ -441,14 +483,17 @@ export default function CTEventPage() {
                     })}
                 </div>
 
-                {allFiles && (
+                {/* Upload / Re-upload Action Button */}
+                {selectedFilesCount > 0 && (
                     <Button
                         leftIcon={<Upload className="w-4 h-4" />}
                         loading={isUploading}
                         onClick={handleUpload}
                         className="w-full"
                     >
-                        Upload Selected Khata Scripts
+                        {ct.khataUploaded
+                            ? `Re-upload / Replace Selected ${selectedFilesCount === 1 ? 'Script' : `${selectedFilesCount} Scripts`}`
+                            : `Upload All 3 Khata Scripts (${selectedFilesCount}/3 selected)`}
                     </Button>
                 )}
             </div>
@@ -500,6 +545,12 @@ export default function CTEventPage() {
                         <span><span className="font-display text-base text-foreground">{pendingCount}</span> Pending</span>
                     </div>
 
+                    {isDraft && pendingCount > 0 && (
+                        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-xs text-amber-700 dark:text-amber-300">
+                            <strong>Publish Requirement:</strong> All {students.length} students must be graded or marked absent before results can be published ({pendingCount} pending).
+                        </div>
+                    )}
+
                     {marksLoading ? (
                         <div className="space-y-2">
                             {[1, 2, 3].map(i => <div key={i} className="h-14 rounded-xl bg-muted animate-pulse" />)}
@@ -544,7 +595,7 @@ export default function CTEventPage() {
 
                                         <button
                                             type="button"
-                                            onClick={() => updateMark(m.userId, 'isAbsent', !inp.isAbsent)}
+                                            onClick={() => toggleAbsent(m.userId)}
                                             aria-pressed={inp.isAbsent}
                                             className={
                                                 'inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11.5px] font-bold transition-colors ' +
