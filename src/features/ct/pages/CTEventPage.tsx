@@ -179,6 +179,72 @@ export default function CTEventPage() {
         return isNaN(val) || val < 0 || (ct ? val > ct.maxMarks : false)
     })
 
+    const savedMarkMap = useMemo(() => {
+        const map: Record<string, { obtainedMarks: number | null; isAbsent: boolean; remarks: string }> = {}
+        ;(marksData?.marks ?? []).forEach((m: any) => {
+            map[m.studentId] = {
+                obtainedMarks: m.obtainedMarks != null ? Number(m.obtainedMarks) : null,
+                isAbsent: m.isAbsent ?? false,
+                remarks: m.remarks ?? '',
+            }
+        })
+        return map
+    }, [marksData])
+
+    // Saved pending count: checks marks currently saved in the database
+    const savedPendingCount = useMemo(() => {
+        if (!students.length) return 0
+        return students.filter(m => {
+            const saved = savedMarkMap[m.userId]
+            if (!saved) return true
+            if (saved.isAbsent) return false
+            return saved.obtainedMarks == null || isNaN(saved.obtainedMarks) || saved.obtainedMarks < 0 || (ct ? saved.obtainedMarks > ct.maxMarks : false)
+        }).length
+    }, [students, savedMarkMap, ct])
+
+    // Check whether the teacher has unsaved edits on screen
+    const hasUnsavedChanges = useMemo(() => {
+        if (!initialized || students.length === 0) return false
+        return students.some(m => {
+            const inp = markInputs[m.userId]
+            const saved = savedMarkMap[m.userId]
+            if (!inp && !saved) return false
+            if (!inp && saved) return true
+            if (inp && !saved) {
+                return inp.isAbsent || inp.obtainedMarks.trim() !== '' || inp.remarks.trim() !== ''
+            }
+            if (inp.isAbsent !== saved.isAbsent) return true
+
+            const inpMarkNum = inp.isAbsent ? 0 : (inp.obtainedMarks.trim() !== '' ? parseFloat(inp.obtainedMarks) : null)
+            const savedMarkNum = saved.isAbsent ? 0 : saved.obtainedMarks
+            if (inpMarkNum !== savedMarkNum) return true
+
+            if ((inp.remarks.trim() || '') !== (saved.remarks?.trim() || '')) return true
+
+            return false
+        })
+    }, [students, markInputs, savedMarkMap, initialized])
+
+    const areAllMarksSaved = students.length > 0 && savedPendingCount === 0 && !hasUnsavedChanges
+    const canPublish = isDraft && (ct?.khataUploaded ?? false) && areAllMarksSaved && !hasInvalidMarks
+
+    const handlePublish = () => {
+        if (students.length === 0) return
+        if (hasUnsavedChanges) {
+            toast.error("Please click 'Save Marks' to save your changes before publishing.")
+            return
+        }
+        if (savedPendingCount > 0) {
+            toast.error(`Cannot publish: All ${students.length} students must have marks saved first (${savedPendingCount} pending).`)
+            return
+        }
+        if (hasInvalidMarks) {
+            toast.error(`Cannot publish: Some marks are invalid or exceed max marks (${Number(ct?.maxMarks) || 0}).`)
+            return
+        }
+        publishCT(ct.id)
+    }
+
     const canSave = students.length > 0 && pendingCount === 0 && !hasInvalidMarks
 
     const handleSave = () => {
@@ -334,9 +400,18 @@ export default function CTEventPage() {
                         <Button
                             size="sm"
                             leftIcon={<Send className="w-4 h-4" />}
-                            onClick={() => publishCT(ct.id)}
-                            disabled={pendingCount > 0}
-                            title={pendingCount > 0 ? `All ${students.length} students must be marked before publishing (${pendingCount} pending)` : undefined}
+                            onClick={handlePublish}
+                            disabled={!canPublish || isPublishing}
+                            loading={isPublishing}
+                            title={
+                                hasUnsavedChanges
+                                    ? "Please click 'Save Marks' to save your changes before publishing"
+                                    : savedPendingCount > 0
+                                    ? `All ${students.length} students must have marks saved before publishing (${savedPendingCount} pending)`
+                                    : hasInvalidMarks
+                                    ? `Some marks exceed max marks (${Number(ct.maxMarks)}) or are invalid`
+                                    : undefined
+                            }
                         >
                             Publish Results
                         </Button>
@@ -588,9 +663,21 @@ export default function CTEventPage() {
                         <span><span className="font-display text-base text-foreground">{pendingCount}</span> Pending</span>
                     </div>
 
-                    {pendingCount > 0 && (
+                    {isDraft && hasUnsavedChanges && (
                         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-xs text-amber-700 dark:text-amber-300">
-                            <strong>Requirement:</strong> All {students.length} students must have marks entered or be marked absent before marks can be saved or published ({pendingCount} pending).
+                            <strong>Unsaved Changes:</strong> You have unsaved mark changes. Click <strong>Save Marks</strong> before results can be published.
+                        </div>
+                    )}
+
+                    {isDraft && !hasUnsavedChanges && savedPendingCount > 0 && (
+                        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-xs text-amber-700 dark:text-amber-300">
+                            <strong>Publish Requirement:</strong> All {students.length} students must have marks saved or be marked absent before results can be published ({savedPendingCount} pending).
+                        </div>
+                    )}
+
+                    {pendingCount > 0 && !hasUnsavedChanges && (
+                        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-xs text-amber-700 dark:text-amber-300">
+                            <strong>Requirement:</strong> All {students.length} students must have marks entered or be marked absent before marks can be saved ({pendingCount} pending).
                         </div>
                     )}
 
