@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useNavigate, useParams } from "react-router-dom"
-import { ClipboardList, Calendar, Paperclip, X as XIcon, Upload } from "lucide-react"
+import { ClipboardList, Calendar, Paperclip, X as XIcon, File as FileIcon } from "lucide-react"
 import { addDays } from "date-fns"
 
 import Button from "@/components/ui/Button"
@@ -11,6 +11,8 @@ import Input from "@/components/ui/Input"
 import FormPageLayout from "@/components/forms/FormPageLayout"
 import FormSection from "@/components/forms/FormSection"
 import FormField from "@/components/forms/FormField"
+import FileDropzone from "@/components/ui/FileDropzone"
+import { formatFileSize } from "@/utils/fileUtils"
 import { useAssignments } from "../hooks/useAssignments"
 import type { CreateAssignmentRequest } from "@/types/assignment.types"
 
@@ -21,10 +23,6 @@ const schema = z.object({
   maxMarks: z.coerce.number().min(1).max(1000),
   allowLateSubmission: z.boolean(),
   rubricNotes: z.string().optional(),
-  referenceFile: z
-    .instanceof(File)
-    .optional()
-    .refine(f => !f || f.size <= 10 * 1024 * 1024, "File must be 10 MB or less"),
 })
 type FormData = z.infer<typeof schema>
 
@@ -38,7 +36,7 @@ export default function CreateAssignmentPage() {
   const { courseId } = useParams<{ courseId: string }>()
   const navigate = useNavigate()
   const { createAssignment, isCreating } = useAssignments(courseId!)
-  const [file, setFile] = useState<File | null>(null)
+  const [files, setFiles] = useState<File[]>([])
 
   const { register, handleSubmit, watch, formState: { errors, isValid } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -56,11 +54,15 @@ export default function CreateAssignmentPage() {
     const payload: CreateAssignmentRequest = {
       ...d,
       deadline: new Date(d.deadline).toISOString(),
-      referenceFile: file ?? undefined,
+      referenceFiles: files.length > 0 ? files : undefined,
     }
     createAssignment(payload, {
       onSuccess: () => navigate("/courses/" + courseId + "/assignments"),
     })
+  }
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index))
   }
 
   const footer = (
@@ -79,7 +81,7 @@ export default function CreateAssignmentPage() {
       backLabel="Back to assignments"
       backTo={"/courses/" + courseId + "/assignments"}
       title="New assignment"
-      subtitle="Set up a task for your students. You can attach a reference file like a problem statement or rubric."
+      subtitle="Set up a task for your students. You can attach reference files like problem statements, datasets, or rubrics."
       footer={footer}
     >
       <form
@@ -172,55 +174,18 @@ export default function CreateAssignmentPage() {
         <FormSection
           icon={Paperclip}
           title="Reference materials"
-          subtitle="Optional file students can download — a PDF, problem set, dataset, or starter code."
+          subtitle="Optional files students can download — PDFs, problem sets, datasets, or starter code."
           tone="stone"
-          complete={Boolean(file)}
+          complete={files.length > 0}
         >
-          {file ? (
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted/40 px-3 py-2.5">
-              <div className="flex min-w-0 items-center gap-2.5">
-                <Paperclip className="h-4 w-4 shrink-0 text-primary" />
-                <div className="min-w-0">
-                  <p className="truncate text-[13px] font-semibold text-foreground">{file.name}</p>
-                  <p className="text-[11px] text-muted-foreground">{(file.size / 1024).toFixed(1)} KB</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setFile(null)}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive-soft hover:text-destructive"
-                aria-label="Remove file"
-              >
-                <XIcon className="h-4 w-4" />
-              </button>
-            </div>
-          ) : (
-            <label
-              htmlFor="create-assignment-file"
-              className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-border bg-muted/30 px-4 py-3 transition-colors hover:border-primary/25 hover:bg-primary-soft/50/20"
-            >
-              <Upload className="h-4 w-4 text-muted-foreground" />
-              <span className="text-[13px] font-semibold text-foreground">Choose file</span>
-              <span className="text-[12px] text-muted-foreground">PDF, DOCX, ZIP, or images. Max 10 MB.</span>
-            </label>
-          )}
-          <input
-            id="create-assignment-file"
-            type="file"
-            accept=".pdf,.doc,.docx,.zip,image/*"
-            className="hidden"
-            onChange={e => {
-              const f = e.target.files?.[0]
-              if (f && f.size > 10 * 1024 * 1024) { e.target.value = ""; return }
-              setFile(f ?? null)
-              e.target.value = ""
-            }}
-          />
-          {errors.referenceFile?.message ? (
-            <p className="mt-1.5 text-[11.5px] font-semibold text-destructive">
-              {errors.referenceFile.message}
-            </p>
-          ) : null}
+          <div className="space-y-3">
+            <FileDropzone
+              onFilesSelected={setFiles}
+              multiple={true}
+              maxSizeMB={10}
+              accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar,.txt,.py,.java,.cpp,.c,.cs,.js,.ts,.png,.jpg,.jpeg"
+            />
+          </div>
         </FormSection>
       </form>
     </FormPageLayout>

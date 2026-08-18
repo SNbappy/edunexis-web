@@ -48,8 +48,7 @@ export default function AnnouncementCard({
   const showMenu = canPin || canDelete
   const isPinned = announcement.isPinned
   const isOwn = announcement.authorId === user?.id
-
-  const photoUrl = isOwn ? user?.profile?.profilePhotoUrl ?? undefined : undefined
+  const photoUrl = announcement.authorPhotoUrl ?? (isOwn ? user?.profile?.profilePhotoUrl ?? null : null)
 
   useEffect(() => {
     if (!menuOpen) return
@@ -85,7 +84,7 @@ export default function AnnouncementCard({
           <UserLink
             userId={announcement.authorId}
             name={announcement.authorName}
-            photoUrl={isOwn ? (user?.profile?.profilePhotoUrl ?? null) : null}
+            photoUrl={photoUrl}
             avatarSize="sm"
             avatarClassName="h-10 w-10"
             avatarOnly
@@ -97,7 +96,7 @@ export default function AnnouncementCard({
               <UserLink
                 userId={announcement.authorId}
                 name={announcement.authorName}
-                photoUrl={isOwn ? (user?.profile?.profilePhotoUrl ?? null) : null}
+                photoUrl={photoUrl}
                 avatarOnly={false}
                 avatarSize="xs"
                 avatarClassName="hidden"

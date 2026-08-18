@@ -1,4 +1,4 @@
-﻿export type AssignmentMyStatus = 'NotSubmitted' | 'Submitted' | 'Graded'
+export type AssignmentMyStatus = 'NotSubmitted' | 'Submitted' | 'Graded'
 
 export interface AssignmentDto {
     id: string
@@ -52,6 +52,7 @@ export interface CreateAssignmentRequest {
     maxMarks: number
     rubricNotes?: string
     referenceFile?: File
+    referenceFiles?: File[]
 }
 
 export interface UpdateAssignmentRequest {
@@ -61,6 +62,10 @@ export interface UpdateAssignmentRequest {
     allowLateSubmission: boolean
     maxMarks: number
     rubricNotes?: string
+    referenceFile?: File
+    referenceFiles?: File[]
+    keepReferenceFileUrls?: string[]
+    manageReferenceFiles?: boolean
 }
 
 export interface SubmitAssignmentRequest {

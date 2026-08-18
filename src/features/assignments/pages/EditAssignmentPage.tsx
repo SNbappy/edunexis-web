@@ -1,9 +1,9 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useNavigate, useParams } from "react-router-dom"
-import { Calendar, Pencil } from "lucide-react"
+import { Calendar, Pencil, Paperclip, X as XIcon, FileText, ExternalLink } from "lucide-react"
 
 import Button from "@/components/ui/Button"
 import Input from "@/components/ui/Input"
@@ -11,6 +11,8 @@ import FormPageLayout from "@/components/forms/FormPageLayout"
 import FormSection from "@/components/forms/FormSection"
 import FormField from "@/components/forms/FormField"
 import BrandLoader from "@/components/ui/BrandLoader"
+import FileDropzone from "@/components/ui/FileDropzone"
+import { parseReferenceFileUrls, getFileName } from "@/utils/fileUtils"
 import { useAssignment, useAssignments } from "../hooks/useAssignments"
 import type { UpdateAssignmentRequest } from "@/types/assignment.types"
 
@@ -38,6 +40,9 @@ export default function EditAssignmentPage() {
   const { assignment, isLoading, isFetched } = useAssignment(courseId!, assignmentId!)
   const { updateAssignment, isUpdating } = useAssignments(courseId!)
 
+  const [keptUrls, setKeptUrls] = useState<string[]>([])
+  const [newFiles, setNewFiles] = useState<File[]>([])
+
   const { register, handleSubmit, reset, watch, formState: { errors, isValid } } = useForm<FormData>({
     resolver: zodResolver(schema),
     mode: "onChange",
@@ -54,6 +59,8 @@ export default function EditAssignmentPage() {
       allowLateSubmission: assignment.allowLateSubmission,
       rubricNotes: assignment.rubricNotes ?? "",
     })
+    setKeptUrls(parseReferenceFileUrls(assignment.referenceFileUrl))
+    setNewFiles([])
   }, [assignment, reset])
 
   if (isLoading) {
@@ -79,6 +86,9 @@ export default function EditAssignmentPage() {
     const payload: UpdateAssignmentRequest = {
       ...d,
       deadline: new Date(d.deadline).toISOString(),
+      manageReferenceFiles: true,
+      keepReferenceFileUrls: keptUrls,
+      referenceFiles: newFiles.length > 0 ? newFiles : undefined,
     }
     updateAssignment(
       { assignmentId: assignment.id, data: payload },
@@ -86,6 +96,10 @@ export default function EditAssignmentPage() {
         onSuccess: () => navigate("/courses/" + courseId + "/assignments/" + assignment.id),
       }
     )
+  }
+
+  const removeKeptUrl = (index: number) => {
+    setKeptUrls(prev => prev.filter((_, i) => i !== index))
   }
 
   const footer = (
@@ -104,7 +118,7 @@ export default function EditAssignmentPage() {
       backLabel="Back to assignment"
       backTo={"/courses/" + courseId + "/assignments/" + assignment.id}
       title="Edit assignment"
-      subtitle="Update the title, deadline, marks, or instructions. Reference materials can’t be changed here yet."
+      subtitle="Update the title, deadline, marks, instructions, or reference materials."
       footer={footer}
     >
       <form
@@ -194,6 +208,71 @@ export default function EditAssignmentPage() {
           <p className="text-[11px] text-muted-foreground">
             Switching this off does not invalidate any late submissions already received.
           </p>
+        </FormSection>
+
+        <FormSection
+          icon={Paperclip}
+          title="Reference materials"
+          subtitle="Reference files for students — problem statements, datasets, rubrics, or starter code."
+          tone="stone"
+          complete={keptUrls.length > 0 || newFiles.length > 0}
+        >
+          <div className="space-y-4">
+            {keptUrls.length > 0 && (
+              <div>
+                <p className="mb-2 text-[12px] font-semibold text-foreground">
+                  Current reference files ({keptUrls.length})
+                </p>
+                <div className="space-y-2">
+                  {keptUrls.map((url, i) => (
+                    <div
+                      key={url + "-" + i}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-3"
+                    >
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex min-w-0 flex-1 items-center gap-2.5 hover:underline"
+                      >
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">
+                          <FileText className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[13px] font-medium text-foreground">
+                            {getFileName(url)}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">Click to view/download</p>
+                        </div>
+                        <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => removeKeptUrl(i)}
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive-soft hover:text-destructive"
+                        aria-label="Remove file"
+                        title="Remove file"
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <p className="mb-2 text-[12px] font-semibold text-foreground">
+                {keptUrls.length > 0 ? "Add more files" : "Upload files"}
+              </p>
+              <FileDropzone
+                onFilesSelected={setNewFiles}
+                multiple={true}
+                maxSizeMB={10}
+                accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar,.txt,.py,.java,.cpp,.c,.cs,.js,.ts,.png,.jpg,.jpeg"
+              />
+            </div>
+          </div>
         </FormSection>
 
       </form>

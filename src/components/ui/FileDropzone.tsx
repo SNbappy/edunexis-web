@@ -99,9 +99,23 @@ export default function FileDropzone({
             </div>
 
             {/* Errors */}
-            {errors.map((err, i) => (
-                <p key={i} className="text-xs text-destructive">{err}</p>
-            ))}
+            <AnimatePresence>
+                {errors.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 space-y-1.5"
+                    >
+                        {errors.map((err, i) => (
+                            <div key={i} className="flex items-center gap-2 text-xs font-semibold text-destructive">
+                                <span className="h-1.5 w-1.5 rounded-full bg-destructive shrink-0" />
+                                <span>{err}</span>
+                            </div>
+                        ))}
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Selected files */}
             <AnimatePresence>

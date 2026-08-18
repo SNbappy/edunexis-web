@@ -28,6 +28,11 @@ export const assignmentService = {
         if (data.instructions) form.append('instructions', data.instructions)
         if (data.rubricNotes) form.append('rubricNotes', data.rubricNotes)
         if (data.referenceFile) form.append('referenceFile', data.referenceFile)
+        if (data.referenceFiles) {
+            for (const f of data.referenceFiles) {
+                form.append('referenceFiles', f)
+            }
+        }
         return api
             .post<ApiResponse<AssignmentDto>>(courseBase(courseId), form, {
                 headers: { 'Content-Type': 'multipart/form-data' },
@@ -43,6 +48,18 @@ export const assignmentService = {
         form.append('maxMarks', String(data.maxMarks))
         if (data.instructions) form.append('instructions', data.instructions)
         if (data.rubricNotes) form.append('rubricNotes', data.rubricNotes)
+        if (data.manageReferenceFiles) {
+            form.append('manageReferenceFiles', 'true')
+            for (const url of data.keepReferenceFileUrls ?? []) {
+                form.append('keepReferenceFileUrls', url)
+            }
+        }
+        if (data.referenceFile) form.append('referenceFile', data.referenceFile)
+        if (data.referenceFiles) {
+            for (const f of data.referenceFiles) {
+                form.append('referenceFiles', f)
+            }
+        }
         return api
             .put<ApiResponse<AssignmentDto>>(
                 courseBase(courseId) + '/' + assignmentId, form,

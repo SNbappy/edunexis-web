@@ -3,6 +3,7 @@ export interface AnnouncementDto {
     courseId: string
     authorId: string
     authorName: string
+    authorPhotoUrl?: string | null
     content: string
     attachmentUrl?: string
     isPinned: boolean

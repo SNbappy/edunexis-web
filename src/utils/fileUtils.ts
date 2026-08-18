@@ -5,6 +5,26 @@ export function formatFileSize(bytes: number): string {
     return `${(bytes / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0)} ${units[i]}`
 }
 
+export function getFileName(url: string): string {
+    try {
+        const clean = url.split('?')[0].split('#')[0]
+        const raw = clean.split('/').pop() ?? 'File'
+        return decodeURIComponent(raw)
+    } catch {
+        return 'File'
+    }
+}
+
+export function parseReferenceFileUrls(url: string | null | undefined): string[] {
+    if (!url) return []
+    try {
+        const parsed = JSON.parse(url)
+        if (Array.isArray(parsed)) return parsed.filter(Boolean)
+    } catch {}
+    if (url.includes(';')) return url.split(';').map(s => s.trim()).filter(Boolean)
+    return [url]
+}
+
 export function getFileExtension(fileName: string): string {
     return fileName.split('.').pop()?.toLowerCase() ?? ''
 }

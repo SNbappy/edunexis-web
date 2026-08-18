@@ -25,6 +25,7 @@ import SubmissionAttachments from '../components/SubmissionAttachments'
 import { useAssignmentComments } from '../hooks/useAssignmentComments'
 import CommentThread from '@/features/announcements/components/CommentThread'
 import Linkify from "@/components/ui/Linkify"
+import { parseReferenceFileUrls, getFileName } from "@/utils/fileUtils"
 
 function Countdown({ deadline }: { deadline: string }) {
     const [timeLeft, setTimeLeft] = useState('')
@@ -246,29 +247,42 @@ export default function AssignmentDetailPage() {
                             </div>
                         )}
 
-                        {assignment.referenceFileUrl && (
-                            <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
-                                <div className="flex items-center gap-2">
-                                    <Paperclip className="w-4 h-4 text-primary" />
-                                    <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Reference File</h3>
+                        {(() => {
+                            const refUrls = parseReferenceFileUrls(assignment.referenceFileUrl)
+                            if (refUrls.length === 0) return null
+                            return (
+                                <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
+                                    <div className="flex items-center gap-2">
+                                        <Paperclip className="w-4 h-4 text-primary" />
+                                        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+                                            Reference Materials ({refUrls.length})
+                                        </h3>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {refUrls.map((url, i) => (
+                                            <a
+                                                key={url + '-' + i}
+                                                href={url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/40 hover:bg-muted transition-colors group"
+                                            >
+                                                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                                                    <FileText className="w-4 h-4 text-primary" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-medium text-foreground truncate">
+                                                        {getFileName(url)}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">Click to open or download</p>
+                                                </div>
+                                                <Download className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                                            </a>
+                                        ))}
+                                    </div>
                                 </div>
-                                <a
-                                    href={assignment.referenceFileUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/40 hover:bg-muted transition-colors group"
-                                >
-                                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                                        <FileText className="w-4 h-4 text-primary" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-foreground truncate">Download Reference File</p>
-                                        <p className="text-xs text-muted-foreground">Click to open or download</p>
-                                    </div>
-                                    <Download className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-                                </a>
-                            </div>
-                        )}
+                            )
+                        })()}
                     </div>
 
                     {/* Right - Sidebar */}
