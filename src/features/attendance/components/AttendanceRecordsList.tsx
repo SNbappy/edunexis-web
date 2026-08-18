@@ -115,7 +115,11 @@ export default function AttendanceRecordsList({
               <span
                 className={cn(
                   "shrink-0 font-display text-[14px] font-bold tabular-nums",
-                  low ? "text-warning" : "text-foreground",
+                  pct >= 75
+                    ? "text-emerald-700 dark:text-emerald-400"
+                    : pct >= 50
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-red-600 dark:text-red-400",
                 )}
               >
                 {pct}%

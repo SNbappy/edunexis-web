@@ -47,7 +47,8 @@ export default function AttendanceStatsCard({
     )
   }
 
-  const below = averageAttendance < ATTENDANCE_MIN_PERCENT
+  const tone: "success" | "warning" | "destructive" =
+    averageAttendance >= 75 ? "success" : averageAttendance >= 50 ? "warning" : "destructive"
 
   /* Oldest first, so the trend reads left-to-right like a timeline. The
      session list above is newest-first, which is right for "what did I
@@ -69,7 +70,7 @@ export default function AttendanceStatsCard({
     <div className={cn(SURFACE.card, "flex flex-wrap items-center gap-x-8 gap-y-5 p-4 sm:flex-nowrap")}>
       {/* Headline: the ring gives the number presence a bare figure lacked. */}
       <div className="flex shrink-0 items-center gap-3.5">
-        <StatRing value={averageAttendance} tone={below ? "warning" : "success"} />
+        <StatRing value={averageAttendance} tone={tone} />
         <div>
           <p className="text-[12.5px] font-semibold text-foreground">Average attendance</p>
           <p className={cn(TEXT.muted, "mt-1.5")}>
@@ -92,16 +93,19 @@ export default function AttendanceStatsCard({
         <div className="min-w-[260px] max-w-[560px] flex-1">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
             <p className={TEXT.eyebrow}>Across the term</p>
-            {/* Says what the two bar colours mean. Without it the amber bars
-                read as "highlighted" rather than "below the requirement". */}
+            {/* 3-tier colour legend matching student attendance & gradebook */}
             <div className="flex items-center gap-3">
               <span className="inline-flex items-center gap-1.5 text-[10.5px] text-muted-foreground">
-                <span className="h-2 w-2 rounded-full bg-primary/55" aria-hidden />
-                {ATTENDANCE_MIN_PERCENT}% or above
+                <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
+                &ge;75%
               </span>
               <span className="inline-flex items-center gap-1.5 text-[10.5px] text-muted-foreground">
-                <span className="h-2 w-2 rounded-full bg-warning" aria-hidden />
-                Below {ATTENDANCE_MIN_PERCENT}%
+                <span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden />
+                50–74%
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-[10.5px] text-muted-foreground">
+                <span className="h-2 w-2 rounded-full bg-red-500" aria-hidden />
+                &lt;50%
               </span>
             </div>
           </div>

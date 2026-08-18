@@ -88,7 +88,12 @@ export function TrendBars({
         )}
 
         {points.map((p, i) => {
-          const low = threshold !== undefined && p.value < threshold
+          const barColor =
+            p.value >= 75
+              ? "bg-emerald-500/80 group-hover:bg-emerald-500"
+              : p.value >= 50
+              ? "bg-amber-500 group-hover:bg-amber-600"
+              : "bg-red-500 group-hover:bg-red-600"
           return (
             <div
               key={i}
@@ -98,8 +103,7 @@ export function TrendBars({
               <div
                 className={cn(
                   "absolute bottom-0 w-full rounded-t-[3px] transition-[height] duration-500 ease-out",
-                  low ? "bg-warning" : "bg-primary/55",
-                  "group-hover:bg-primary",
+                  barColor,
                 )}
                 style={{ height: `${Math.max(3, toPct(p.value))}%` }}
               />
@@ -116,13 +120,18 @@ export function TrendBars({
            invisible on a touch screen and on a printed screenshot. */
         <div className="mt-1 flex gap-[3px]">
           {points.map((p, i) => {
-            const low = threshold !== undefined && p.value < threshold
+            const labelColor =
+              p.value >= 75
+                ? "text-foreground"
+                : p.value >= 50
+                ? "text-amber-600 dark:text-amber-400"
+                : "text-red-600 dark:text-red-400"
             return (
               <div key={i} className="min-w-[6px] flex-1 text-center leading-tight">
                 <div
                   className={cn(
                     "text-[10px] font-bold tabular-nums",
-                    low ? "text-warning" : "text-foreground",
+                    labelColor,
                   )}
                 >
                   {p.value}%
@@ -231,9 +240,16 @@ export function StatRing({
 
   const strokeColor = {
     primary: "stroke-primary",
-    success: "stroke-success",
-    warning: "stroke-warning",
-    destructive: "stroke-destructive",
+    success: "stroke-emerald-500",
+    warning: "stroke-amber-500",
+    destructive: "stroke-red-500",
+  }[tone]
+
+  const textColor = {
+    primary: "text-foreground",
+    success: "text-emerald-700 dark:text-emerald-300",
+    warning: "text-amber-700 dark:text-amber-300",
+    destructive: "text-red-700 dark:text-red-300",
   }[tone]
 
   return (
@@ -254,7 +270,7 @@ export function StatRing({
         />
       </svg>
       <span className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-display text-[15px] font-extrabold tabular-nums leading-none text-foreground">
+        <span className={cn("font-display text-[15px] font-extrabold tabular-nums leading-none", textColor)}>
           {Math.round(pct)}%
         </span>
       </span>
