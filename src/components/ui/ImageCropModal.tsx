@@ -15,7 +15,7 @@ interface ImageCropModalProps {
   title?: string
 }
 
-const VIEWPORT_SIZE = 280 // px square crop viewport
+const VIEWPORT_SIZE = 250 // px square crop viewport
 const OUTPUT_SIZE = 600 // px square exported image resolution
 
 export default function ImageCropModal({
@@ -245,11 +245,11 @@ export default function ImageCropModal({
       isOpen={isOpen}
       onClose={onClose}
       title={title}
-      description="Drag to frame your photo. Adjust zoom or rotate if needed."
-      size="md"
+      description="Drag to frame your photo · Slider to zoom"
+      size="sm"
       footer={footer}
     >
-      <div className="flex flex-col items-center py-2">
+      <div className="flex flex-col items-center">
         {/* Crop Viewport Box */}
         <div
           ref={viewportRef}
@@ -297,7 +297,7 @@ export default function ImageCropModal({
             <div className="border-b border-white/80" />
             <div className="border-b border-r border-white/80" />
             <div className="border-b border-r border-white/80" />
-            <div className="border-b border-white/80" />
+            <div className="border-b border-r border-white/80" />
             <div className="border-r border-white/80" />
             <div className="border-r border-white/80" />
             <div />
@@ -305,24 +305,26 @@ export default function ImageCropModal({
         </div>
 
         {isSquare && (
-          <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-teal-500/20 bg-teal-500/10 px-3 py-1 text-[11px] font-semibold text-teal-600 dark:text-teal-400">
+          <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-full border border-teal-500/20 bg-teal-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-teal-600 dark:text-teal-400">
             <Sparkles className="h-3 w-3" />
             Photo is square · framed automatically
           </div>
         )}
 
-        {/* Zoom & Rotation Controls Bar */}
-        <div className="mt-5 flex w-full max-w-xs items-center gap-2.5 rounded-2xl border border-border bg-muted/30 p-2.5">
+        {/* High-contrast Zoom & Rotation Controls Bar */}
+        <div className="mt-4 flex w-full items-center gap-2 rounded-xl border border-border bg-muted/50 p-2 shadow-xs">
+          {/* Zoom Out Button */}
           <button
             type="button"
             onClick={() => handleZoomChange(zoom - 0.15)}
             disabled={zoom <= 1.0}
-            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card text-foreground shadow-xs transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-35"
             title="Zoom out"
           >
-            <ZoomOut className="h-4 w-4" />
+            <ZoomOut className="h-4 w-4 stroke-[2.2]" />
           </button>
 
+          {/* Slider */}
           <input
             type="range"
             min="1.0"
@@ -330,39 +332,41 @@ export default function ImageCropModal({
             step="0.01"
             value={zoom}
             onChange={e => handleZoomChange(parseFloat(e.target.value))}
-            className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-muted-foreground/20 accent-primary"
+            className="h-2 flex-1 cursor-pointer appearance-none rounded-full bg-border accent-primary"
           />
 
+          {/* Zoom In Button */}
           <button
             type="button"
             onClick={() => handleZoomChange(zoom + 0.15)}
             disabled={zoom >= 3.0}
-            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card text-foreground shadow-xs transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-35"
             title="Zoom in"
           >
-            <ZoomIn className="h-4 w-4" />
+            <ZoomIn className="h-4 w-4 stroke-[2.2]" />
           </button>
 
-          <div className="h-4 w-px bg-border" />
+          <div className="mx-0.5 h-5 w-px bg-border" />
 
           {/* Rotate Button */}
           <button
             type="button"
             onClick={handleRotate}
-            className="flex items-center gap-1 rounded-lg border border-border bg-card px-2 py-1 text-xs font-semibold text-foreground shadow-sm transition-colors hover:bg-muted"
-            title="Rotate 90°"
+            className="flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 text-xs font-semibold text-foreground shadow-xs transition-colors hover:bg-muted"
+            title="Rotate 90° clockwise"
           >
-            <RotateCw className="h-3.5 w-3.5" />
+            <RotateCw className="h-3.5 w-3.5 stroke-[2.2]" />
+            <span>Rotate</span>
           </button>
 
           {/* Reset Button */}
           <button
             type="button"
             onClick={handleReset}
-            className="rounded-lg p-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            title="Reset"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card text-foreground shadow-xs transition-colors hover:bg-muted"
+            title="Reset zoom & rotation"
           >
-            <RefreshCw className="h-3.5 w-3.5" />
+            <RefreshCw className="h-3.5 w-3.5 stroke-[2.2]" />
           </button>
         </div>
       </div>
