@@ -148,7 +148,7 @@ export default function CommentThread({
       key={c.id}
       id={`comment-${c.id}`}
       className={cn(
-        "group flex gap-2.5 rounded-xl transition-colors duration-500",
+        "group flex items-start gap-2.5 rounded-xl transition-colors duration-500",
         highlightId === c.id && "bg-primary-soft ring-1 ring-primary/30 -mx-2 px-2 py-1.5",
       )}
     >
@@ -157,8 +157,9 @@ export default function CommentThread({
         name={c.authorName}
         photoUrl={c.authorPhotoUrl ?? null}
         avatarSize="xs"
-        avatarClassName={cn("mt-0.5 shrink-0", isReply ? "h-5 w-5" : "h-6 w-6")}
+        avatarClassName={cn("shrink-0", isReply ? "h-5 w-5" : "h-6 w-6")}
         avatarOnly
+        className="mt-0.5 shrink-0"
       />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2">
@@ -251,7 +252,7 @@ export default function CommentThread({
         {/* The reply box opens under the comment it answers, so the target is
             never in doubt — the whole reason for having replies at all. */}
         {replyToId === c.id && (
-          <div className="mt-2 flex gap-2">
+          <div className="mt-2 flex items-start gap-2">
             <Avatar
               src={user?.profile?.profilePhotoUrl ?? undefined}
               name={user?.profile?.fullName ?? "You"}

@@ -59,7 +59,7 @@ export default function UserLink({
 
   if (!userId) {
     return (
-      <span className={cn("inline-flex items-center gap-2", className)}>
+      <span className={cn(avatarOnly ? "inline-flex shrink-0" : "inline-flex items-center gap-2", className)}>
         {inner}
       </span>
     )
@@ -70,7 +70,8 @@ export default function UserLink({
       to={`/users/${userId}`}
       onClick={stopPropagation ? e => e.stopPropagation() : undefined}
       className={cn(
-        "inline-flex items-center gap-2 rounded-lg transition-opacity duration-120 hover:opacity-75",
+        avatarOnly ? "inline-flex shrink-0 rounded-full" : "inline-flex items-center gap-2 rounded-lg",
+        "transition-opacity duration-120 hover:opacity-75",
         FOCUS,
         className,
       )}
