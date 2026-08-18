@@ -57,7 +57,7 @@ export default function AttendanceRecordsList({
   }
 
   return (
-    <div className={cn(SURFACE.card, "overflow-hidden")}>
+    <div className={SURFACE.card}>
       <ul className="divide-y divide-border">
         {sessions.map((session, i) => {
           const { total, present, absent, unmarked, pct } = getStats(session)
@@ -84,7 +84,9 @@ export default function AttendanceRecordsList({
                   : undefined
               }
               className={cn(
-                "group flex items-center gap-3 px-3 py-2.5 transition-colors duration-120 hover:bg-muted/50 sm:gap-4 sm:px-4",
+                "group relative flex items-center gap-3 px-3 py-2.5 transition-colors duration-120 hover:bg-muted/50 sm:gap-4 sm:px-4",
+                i === 0 && "rounded-t-2xl",
+                i === sessions.length - 1 && "rounded-b-2xl",
                 onEdit && "cursor-pointer",
                 onEdit && FOCUS,
               )}
@@ -115,7 +117,6 @@ export default function AttendanceRecordsList({
                   "shrink-0 font-display text-[14px] font-bold tabular-nums",
                   low ? "text-warning" : "text-foreground",
                 )}
-                title={low ? `Below the ${ATTENDANCE_MIN_PERCENT}% requirement` : undefined}
               >
                 {pct}%
               </span>
@@ -124,7 +125,7 @@ export default function AttendanceRecordsList({
                   hover. stopPropagation so opening it does not also open the
                   register underneath. */}
               {(onEdit || onDelete) && (
-                <div onClick={e => e.stopPropagation()}>
+                <div className="relative z-10" onClick={e => e.stopPropagation()}>
                   <RowMenu
                     label={`Actions for the session on ${formatDate(session.date, "dd MMM")}`}
                     items={[

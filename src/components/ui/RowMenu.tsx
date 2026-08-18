@@ -60,7 +60,7 @@ export default function RowMenu({
   if (items.length === 0) return null
 
   return (
-    <div ref={ref} className={cn("relative shrink-0", open ? "z-30" : "z-0", className)}>
+    <div ref={ref} className={cn("relative shrink-0", open ? "z-50" : "z-0", className)}>
       <button
         type="button"
         onClick={() => { setOpen(o => !o); setConfirming(null) }}
@@ -82,7 +82,7 @@ export default function RowMenu({
             exit={{ opacity: 0, scale: 0.96, y: -4 }}
             transition={{ duration: 0.13 }}
             className={cn(
-              "absolute top-8 z-30 min-w-[152px] overflow-hidden rounded-xl border border-border bg-card p-1 shadow-lg",
+              "absolute top-8 z-50 min-w-[152px] rounded-xl border border-border bg-card p-1 shadow-xl",
               align === "right" ? "right-0" : "left-0",
             )}
             role="menu"

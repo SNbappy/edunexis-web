@@ -72,14 +72,6 @@ export default function AttendanceStatsCard({
         <StatRing value={averageAttendance} tone={below ? "warning" : "success"} />
         <div>
           <p className="text-[12.5px] font-semibold text-foreground">Average attendance</p>
-          {/* Only the failing case is called out. "Above the requirement" is
-              the expected state and restating it on every course added a line
-              of noise without telling the teacher anything actionable. */}
-          {below && (
-            <p className="mt-0.5 text-[12px] font-semibold text-warning">
-              Below the {ATTENDANCE_MIN_PERCENT}% requirement
-            </p>
-          )}
           <p className={cn(TEXT.muted, "mt-1.5")}>
             <span className="font-semibold text-foreground">{totalSessions}</span>{" "}
             {totalSessions === 1 ? "session" : "sessions"}
