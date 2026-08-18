@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react"
-import { RefreshCw, Send } from "lucide-react"
+import { RefreshCw, Send, Lock, EyeOff } from "lucide-react"
 import toast from "react-hot-toast"
 import { useMarks } from "../hooks/useMarks"
 import { useAttendance } from "@/features/attendance/hooks/useAttendance"
@@ -74,6 +74,7 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
     saveFormula, isSaving,
     calculate, isCalculating,
     publish, isPublishing,
+    unpublish, isUnpublishing,
   } = useMarks(courseId)
   const { members } = useAttendance(courseId)
 
@@ -206,6 +207,11 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
               Publish results
             </Button>
           )}
+          {hasMarks && isPublished && !readOnly && (
+            <Button variant="secondary" onClick={() => unpublish()} loading={isUnpublishing} leftIcon={<EyeOff strokeWidth={ICON_STROKE} />}>
+              Unpublish
+            </Button>
+          )}
           {/* Exporting is not the same act as publishing.
               This used to require publishing first, which forced a teacher to
               show every student their result before they could so much as print
@@ -240,6 +246,13 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
             </Badge>
           </div>
         </header>
+
+        {isPublished && (
+          <div className="mx-4 mt-3 rounded-xl border border-blue-500/30 bg-blue-500/10 px-3.5 py-2.5 text-xs text-blue-700 dark:text-blue-300 flex items-center gap-2">
+            <Lock className="w-4 h-4 shrink-0 text-blue-600 dark:text-blue-400" />
+            <span><strong>Final Marks Published:</strong> Grading formula is locked. Click <strong>Unpublish</strong> in the toolbar above if you need to modify the formula or recalculate marks.</span>
+          </div>
+        )}
 
         <ul className="divide-y divide-border">
           {COMPONENTS.map(comp => {
@@ -279,10 +292,11 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
                           <span className="text-[12px] text-muted-foreground">Count</span>
                           <select
                             value={cfg.selectionRule}
+                            disabled={readOnly || isPublished}
                             onChange={e => setComp(comp.key, { selectionRule: e.target.value as SelectionRule })}
                             aria-label={`How many ${comp.label.toLowerCase()} to count`}
                             style={{ colorScheme: "light dark" }}
-                            className={cn(FIELD_BASE, fieldState(false), "h-8 cursor-pointer px-2 text-[12.5px]")}
+                            className={cn(FIELD_BASE, fieldState(false), "h-8 cursor-pointer px-2 text-[12.5px] disabled:opacity-60 disabled:cursor-not-allowed")}
                           >
                             {RULES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                           </select>
@@ -295,9 +309,10 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
                           type="number"
                           min="1"
                           value={cfg.maxMarks}
+                          disabled={readOnly || isPublished}
                           onChange={e => setComp(comp.key, { maxMarks: e.target.value })}
                           aria-label={`Marks for ${comp.label.toLowerCase()}`}
-                          className={cn(FIELD_BASE, fieldState(false), "h-8 w-16 px-2 text-center text-[12.5px]")}
+                          className={cn(FIELD_BASE, fieldState(false), "h-8 w-16 px-2 text-center text-[12.5px] disabled:opacity-60 disabled:cursor-not-allowed")}
                         />
                         <span className="w-16 text-[12px] tabular-nums text-muted-foreground">
                           {weight > 0 ? `= ${weight}%` : "marks"}
@@ -309,7 +324,7 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
                   <Switch
                     checked={cfg.enabled}
                     onChange={next => setComp(comp.key, { enabled: next })}
-                    disabled={readOnly}
+                    disabled={readOnly || isPublished}
                     label={`${cfg.enabled ? "Disable" : "Enable"} ${comp.label}`}
                   />
                 </div>
@@ -330,7 +345,7 @@ export default function MarksTab({ courseId, courseTitle, courseCode, semester, 
                 when they were not. */}
             <Button
               onClick={handleSave}
-              disabled={enabled.length === 0 || (!isFormulaDirty && hasMarks) || isSaving}
+              disabled={isPublished || enabled.length === 0 || (!isFormulaDirty && hasMarks) || isSaving}
               loading={isSaving}
               leftIcon={<RefreshCw className={isSaving ? "animate-spin" : ""} strokeWidth={ICON_STROKE} />}
             >

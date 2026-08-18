@@ -85,6 +85,18 @@ export function useMarks(courseId: string) {
         onError: () => toast.error('Failed to publish marks.'),
     })
 
+    const unpublishMutation = useMutation({
+        mutationFn: () => marksService.unpublish(courseId),
+        onSuccess: (res) => {
+            if (res.success) {
+                qc.invalidateQueries({ queryKey: formulaKey })
+                qc.invalidateQueries({ queryKey: marksKey })
+                toast.success('Marks unpublished. Results hidden from students.')
+            } else toast.error(res.message)
+        },
+        onError: () => toast.error('Failed to unpublish marks.'),
+    })
+
     return {
         formula:          formulaQuery.data ?? null,
         isFormulaLoading: formulaQuery.isLoading,
@@ -96,6 +108,8 @@ export function useMarks(courseId: string) {
         isCalculating:    calculateMutation.isPending,
         publish:          publishMutation.mutate,
         isPublishing:     publishMutation.isPending,
+        unpublish:        unpublishMutation.mutate,
+        isUnpublishing:   unpublishMutation.isPending,
     }
 }
 

@@ -1,4 +1,4 @@
-﻿import api from '@/lib/axios'
+import api from '@/lib/axios'
 import type { ApiResponse } from '@/types/api.types'
 import type { GradingFormulaDto, GradingFormulaRequest, FinalMarkDto } from '@/types/marks.types'
 
@@ -16,6 +16,9 @@ export const marksService = {
 
     publish: (courseId: string) =>
         api.post<ApiResponse>(`${base(courseId)}/grading-formula/publish`).then(r => r.data),
+
+    unpublish: (courseId: string) =>
+        api.post<ApiResponse>(`${base(courseId)}/grading-formula/unpublish`).then(r => r.data),
 
     getMarks: (courseId: string) =>
         api.get<ApiResponse<FinalMarkDto[]>>(`${base(courseId)}/marks`).then(r => r.data),
