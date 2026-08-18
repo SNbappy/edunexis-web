@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   ClipboardList, MoreVertical, Pencil, Trash2,
-  CalendarClock, Award,
+  CalendarClock, Award, Send, EyeOff, CheckCircle2,
 } from "lucide-react"
 import { FOCUS } from "@/components/ui/appTokens"
 import { useAuthStore } from "@/store/authStore"
@@ -13,15 +13,17 @@ import {
 import type { AssignmentDto } from "@/types/assignment.types"
 
 interface AssignmentCardProps {
-  assignment: AssignmentDto
-  index?:     number
-  onView:     (a: AssignmentDto) => void
-  onEdit?:    (a: AssignmentDto) => void
-  onDelete?:  (id: string) => void
+  assignment:   AssignmentDto
+  index?:       number
+  onView:       (a: AssignmentDto) => void
+  onEdit?:      (a: AssignmentDto) => void
+  onDelete?:    (id: string) => void
+  onPublish?:   (a: AssignmentDto) => void
+  onUnpublish?: (a: AssignmentDto) => void
 }
 
 export default function AssignmentCard({
-  assignment, index = 0, onView, onEdit, onDelete,
+  assignment, index = 0, onView, onEdit, onDelete, onPublish, onUnpublish,
 }: AssignmentCardProps) {
   const { user } = useAuthStore()
   const teacher  = isTeacher(user?.role ?? "Student")
@@ -44,14 +46,9 @@ export default function AssignmentCard({
     return () => document.removeEventListener("mousedown", h)
   }, [menuOpen])
 
-  const showMenu = teacher && (onEdit || onDelete)
+  const showMenu = teacher && (onEdit || onDelete || onPublish || onUnpublish)
 
   return (
-    /* Keyboard-operable: opening an assignment was a bare onClick on a div, so
-       a student could tab to the teacher's actions menu inside the card but had
-       no way to open the assignment itself. Not a real <button> because the
-       card contains one (the menu), and nesting interactive elements is
-       invalid — hence role="button" plus explicit key handling. */
     <motion.div
       role="button"
       tabIndex={0}
@@ -122,9 +119,29 @@ export default function AssignmentCard({
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.96, y: -4 }}
                         transition={{ duration: 0.12 }}
-                        className="absolute right-0 top-9 z-50 w-40 overflow-hidden rounded-xl border border-border bg-card shadow-lg"
+                        className="absolute right-0 top-9 z-50 w-44 overflow-hidden rounded-xl border border-border bg-card shadow-lg"
                         onClick={e => e.stopPropagation()}
                       >
+                        {onPublish && !assignment.isPublished && (
+                          <button
+                            type="button"
+                            onClick={() => { setMenuOpen(false); onPublish(assignment) }}
+                            className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium text-emerald-600 dark:text-emerald-400 transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                          >
+                            <Send className="h-3.5 w-3.5" />
+                            Publish marks
+                          </button>
+                        )}
+                        {onUnpublish && assignment.isPublished && (
+                          <button
+                            type="button"
+                            onClick={() => { setMenuOpen(false); onUnpublish(assignment) }}
+                            className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium text-amber-600 dark:text-amber-400 transition-colors hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                          >
+                            <EyeOff className="h-3.5 w-3.5" />
+                            Unpublish
+                          </button>
+                        )}
                         {onEdit && (
                           <button
                             type="button"
@@ -175,10 +192,31 @@ export default function AssignmentCard({
               </span>
             )}
 
-            {/* No separate "N submitted" chip: for a teacher, display.detail
-                above already carries the submission count in every branch
-                ("0 submitted · Due in 7d", "2 / 5 graded", "No submissions"),
-                so the chip repeated the same number in the same row. */}
+            {/* Marks status chip for teacher */}
+            {teacher && (
+              <span className={"inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10.5px] font-medium " +
+                (assignment.isPublished
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                  : assignment.isMarksComplete
+                    ? "bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20"
+                    : (assignment.gradedCount ?? 0) > 0
+                      ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                      : "bg-muted text-muted-foreground border border-border"
+                )}>
+                {assignment.isPublished ? (
+                  <>
+                    <CheckCircle2 className="h-3 w-3" />
+                    Marks published
+                  </>
+                ) : assignment.isMarksComplete ? (
+                  "Marks complete"
+                ) : (assignment.gradedCount ?? 0) > 0 ? (
+                  `Marks: ${assignment.gradedCount}/${assignment.totalStudentsCount || assignment.submissionCount}`
+                ) : (
+                  "Marks pending"
+                )}
+              </span>
+            )}
 
             {assignment.allowLateSubmission && (
               <span className="inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">

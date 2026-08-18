@@ -77,6 +77,32 @@ export function useAssignments(courseId: string) {
         onError: () => toast.error('Grading failed.'),
     })
 
+    const publishMutation = useMutation({
+        mutationFn: (assignmentId: string) =>
+            assignmentService.publish(courseId, assignmentId),
+        onSuccess: (res) => {
+            if (res.success) {
+                invalidate()
+                qc.invalidateQueries({ queryKey: ['assignment', courseId] })
+                toast.success('Assignment marks published! Students can now view their marks.')
+            } else toast.error(res.message)
+        },
+        onError: () => toast.error('Failed to publish marks.'),
+    })
+
+    const unpublishMutation = useMutation({
+        mutationFn: (assignmentId: string) =>
+            assignmentService.unpublish(courseId, assignmentId),
+        onSuccess: (res) => {
+            if (res.success) {
+                invalidate()
+                qc.invalidateQueries({ queryKey: ['assignment', courseId] })
+                toast.success('Assignment marks unpublished. Results are now hidden from students.')
+            } else toast.error(res.message)
+        },
+        onError: () => toast.error('Failed to unpublish marks.'),
+    })
+
     return {
         assignments: query.data ?? [],
         isLoading: query.isLoading,
@@ -86,6 +112,10 @@ export function useAssignments(courseId: string) {
         isUpdating: updateMutation.isPending,
         deleteAssignment: deleteMutation.mutate,
         isDeleting: deleteMutation.isPending,
+        publishAssignment: publishMutation.mutate,
+        isPublishing: publishMutation.isPending,
+        unpublishAssignment: unpublishMutation.mutate,
+        isUnpublishing: unpublishMutation.isPending,
         submitAssignment: submitMutation.mutate,
         isSubmitting: submitMutation.isPending,
         gradeSubmission: gradeMutation.mutate,
@@ -169,6 +199,32 @@ export function useAssignment(courseId: string, assignmentId: string) {
         onError: () => toast.error('Could not take this back.'),
     })
 
+    const publishMutation = useMutation({
+        mutationFn: () => assignmentService.publish(courseId, assignmentId),
+        onSuccess: (res) => {
+            if (res.success) {
+                qc.invalidateQueries({ queryKey: key })
+                qc.invalidateQueries({ queryKey: ['assignments', courseId] })
+                qc.invalidateQueries({ queryKey: ['submissions', assignmentId] })
+                toast.success('Assignment marks published! Students can now view their marks.')
+            } else toast.error(res.message)
+        },
+        onError: () => toast.error('Failed to publish marks.'),
+    })
+
+    const unpublishMutation = useMutation({
+        mutationFn: () => assignmentService.unpublish(courseId, assignmentId),
+        onSuccess: (res) => {
+            if (res.success) {
+                qc.invalidateQueries({ queryKey: key })
+                qc.invalidateQueries({ queryKey: ['assignments', courseId] })
+                qc.invalidateQueries({ queryKey: ['submissions', assignmentId] })
+                toast.success('Assignment marks unpublished. Results are now hidden from students.')
+            } else toast.error(res.message)
+        },
+        onError: () => toast.error('Failed to unpublish marks.'),
+    })
+
     return {
         assignment: query.data ?? null,
         isLoading: query.isLoading,
@@ -177,10 +233,10 @@ export function useAssignment(courseId: string, assignmentId: string) {
         isTurningIn: turnInMutation.isPending,
         unsubmit: unsubmitMutation.mutate,
         isUnsubmitting: unsubmitMutation.isPending,
-        /* Callers guard "not found" with this. It was never returned, so
-           `isFetched && !assignment` read as `undefined && …` — always false —
-           which made every not-found branch dead code and let the pages walk
-           straight into dereferencing a null assignment. */
+        publishAssignment: publishMutation.mutate,
+        isPublishing: publishMutation.isPending,
+        unpublishAssignment: unpublishMutation.mutate,
+        isUnpublishing: unpublishMutation.isPending,
         isFetched: query.isFetched,
         mySubmission: mySubQuery.data ?? null,
         submitAssignment: submitMutation.mutate,

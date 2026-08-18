@@ -1,4 +1,4 @@
-﻿import type { AssignmentDto } from "@/types/assignment.types"
+import type { AssignmentDto } from "@/types/assignment.types"
 
 export type DisplayKind =
   | "overdue-not-submitted"
@@ -55,7 +55,7 @@ export function getStudentDisplay(a: AssignmentDto, now = Date.now()): Assignmen
     return {
       kind:  "graded",
       tone:  "emerald",
-      label: "Graded",
+      label: "Published",
       detail: typeof a.myMarks === "number"
         ? a.myMarks + " / " + a.maxMarks
         : "Graded",
@@ -68,7 +68,7 @@ export function getStudentDisplay(a: AssignmentDto, now = Date.now()): Assignmen
       kind:  a.myIsLate ? "submitted-late" : "submitted-pending",
       tone:  a.myIsLate ? "amber" : "violet",
       label: a.myIsLate ? "Submitted late" : "Submitted",
-      detail: "Awaiting grade",
+      detail: "Awaiting publication",
       urgencyRank: 80,
     }
   }
@@ -127,48 +127,50 @@ export function getTeacherDisplay(a: AssignmentDto, now = Date.now()): Assignmen
   const isPastDue = delta < 0
   const submissions = a.submissionCount ?? 0
   const graded      = a.gradedCount ?? 0
-  const ungraded    = Math.max(0, submissions - graded)
+  const totalStudents = a.totalStudentsCount ?? submissions
+
+  if (a.isPublished) {
+    return {
+      kind:  "fully-graded",
+      tone:  "emerald",
+      label: "Published",
+      detail: graded + " / " + totalStudents + " students",
+      urgencyRank: 90,
+    }
+  }
+
+  if (a.isMarksComplete) {
+    return {
+      kind:  "fully-graded",
+      tone:  "teal",
+      label: isPastDue ? "Ready to publish" : "Marks complete",
+      detail: isPastDue ? "All students graded · ready to publish" : "All graded · due " + formatDelta(delta, true),
+      urgencyRank: 20,
+    }
+  }
 
   if (isPastDue) {
     if (submissions === 0) {
       return {
         kind:  "closed",
-        tone:  "stone",
-        label: "Closed",
-        detail: "No submissions",
-        urgencyRank: 80,
-      }
-    }
-    if (ungraded > 0) {
-      return {
-        kind:  "closed-ungraded",
         tone:  "amber",
-        label: "Needs grading",
-        detail: graded + " / " + submissions + " graded",
-        urgencyRank: 5,
+        label: "Past deadline",
+        detail: "0 submitted · auto-zeros on publish",
+        urgencyRank: 10,
       }
     }
     return {
-      kind:  "fully-graded",
-      tone:  "emerald",
-      label: "Fully graded",
-      detail: submissions + " / " + submissions + " graded",
-      urgencyRank: 90,
+      kind:  "closed-ungraded",
+      tone:  "amber",
+      label: "Needs grading",
+      detail: graded + " / " + totalStudents + " graded",
+      urgencyRank: 5,
     }
   }
 
   /* Active */
-  if (ungraded > 0) {
-    return {
-      kind:  "needs-grading",
-      tone:  "amber",
-      label: "Active · grading",
-      detail: graded + " / " + submissions + " graded · " + formatDelta(delta, true),
-      urgencyRank: 10,
-    }
-  }
   return {
-    kind:  "active",
+    kind:  graded > 0 ? "needs-grading" : "active",
     tone:  "teal",
     label: "Active",
     detail: submissions + " submitted · " + formatDelta(delta, true),

@@ -26,6 +26,7 @@ export default function AssignmentsTab({ courseId }: AssignmentsTabProps) {
   const {
     assignments, isLoading,
     deleteAssignment, isDeleting,
+    publishAssignment, unpublishAssignment,
   } = useAssignments(courseId)
 
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -80,6 +81,8 @@ export default function AssignmentsTab({ courseId }: AssignmentsTabProps) {
           onView={handleView}
           onEdit={teacher ? handleEdit : undefined}
           onDelete={teacher ? id => setDeleteId(id) : undefined}
+          onPublish={teacher && !readOnly ? a => publishAssignment(a.id) : undefined}
+          onUnpublish={teacher && !readOnly ? a => unpublishAssignment(a.id) : undefined}
           emptyTitle="No assignments yet"
           emptyDescription={teacher
             ? "Create your first assignment so students can start submitting work."

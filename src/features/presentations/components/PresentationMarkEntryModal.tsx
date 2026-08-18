@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Save, XCircle, CheckCircle2 } from 'lucide-react'
+import { Save, XCircle, CheckCircle2, Lock } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
 import Avatar from '@/components/ui/Avatar'
@@ -50,11 +50,15 @@ export default function PresentationMarkEntryModal({ isOpen, onClose, presentati
 
     const totalMarks    = presentation?.totalMarks ?? 0
     const topicsAllowed = presentation?.topicsAllowed ?? false
+    const isPublished   = presentation?.isPublished ?? false
 
-    const setField = (userId: string, field: keyof typeof entries[string], value: string | boolean) =>
+    const setField = (userId: string, field: keyof typeof entries[string], value: string | boolean) => {
+        if (isPublished) return
         setEntries((prev) => ({ ...prev, [userId]: { ...prev[userId], [field]: value } }))
+    }
 
-    const setAllAbsent = (absent: boolean) =>
+    const setAllAbsent = (absent: boolean) => {
+        if (isPublished) return
         setEntries((prev) => {
             const next = { ...prev }
             members.forEach((m) => {
@@ -62,8 +66,10 @@ export default function PresentationMarkEntryModal({ isOpen, onClose, presentati
             })
             return next
         })
+    }
 
     const handleSave = () => {
+        if (isPublished) return
         const data: PresentationMarkEntry[] = members.map((m) => {
             const e = entries[m.userId] ?? { marks: '', absent: false, topic: '', feedback: '' }
             return {
@@ -91,6 +97,13 @@ export default function PresentationMarkEntryModal({ isOpen, onClose, presentati
             size="xl"
         >
             <div className="space-y-3">
+                {isPublished && (
+                    <div className="flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-[13px] text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">
+                        <Lock className="h-4 w-4 shrink-0" />
+                        <span>Marks are published and visible to students. Please unpublish this test first from the tests list to edit marks.</span>
+                    </div>
+                )}
+
                 <div className="flex items-center gap-4 flex-wrap text-sm">
                     <span className="flex items-center gap-1.5 text-success font-medium">
                         <CheckCircle2 className="w-4 h-4" /> {gradedCount} graded
@@ -102,10 +115,10 @@ export default function PresentationMarkEntryModal({ isOpen, onClose, presentati
                         {members.length - gradedCount - absentCount} pending
                     </span>
                     <div className="ml-auto flex gap-2">
-                        <Button type="button" size="sm" variant="secondary" onClick={() => setAllAbsent(false)}>
+                        <Button type="button" size="sm" variant="secondary" disabled={isPublished} onClick={() => setAllAbsent(false)}>
                             Clear absent
                         </Button>
-                        <Button type="button" size="sm" variant="secondary" onClick={() => setAllAbsent(true)}>
+                        <Button type="button" size="sm" variant="secondary" disabled={isPublished} onClick={() => setAllAbsent(true)}>
                             Mark all absent
                         </Button>
                     </div>
@@ -176,6 +189,7 @@ export default function PresentationMarkEntryModal({ isOpen, onClose, presentati
                                                     <input
                                                         type="number"
                                                         value={e.marks}
+                                                        disabled={isPublished}
                                                         onChange={(ev) => setField(member.userId, 'marks', ev.target.value)}
                                                         min={0} max={totalMarks} step={0.5}
                                                         placeholder="0"
@@ -185,6 +199,7 @@ export default function PresentationMarkEntryModal({ isOpen, onClose, presentati
                                                             'placeholder:font-normal placeholder:text-muted-foreground/50',
                                                             'focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30',
                                                             e.marks !== '' ? 'border-primary/40' : 'border-dashed border-border-strong',
+                                                            isPublished && 'opacity-60 cursor-not-allowed',
                                                         )}
                                                     />
                                                     <span className="text-[13px] font-semibold tabular-nums text-muted-foreground">
@@ -200,6 +215,7 @@ export default function PresentationMarkEntryModal({ isOpen, onClose, presentati
 
                                         <div className="flex w-[92px] shrink-0 justify-center">
                                             <button
+                                                disabled={isPublished}
                                                 onClick={() => setField(member.userId, 'absent', !e.absent)}
                                                 aria-pressed={e.absent}
                                                 aria-label={`Mark ${member.fullName} absent`}
@@ -207,19 +223,11 @@ export default function PresentationMarkEntryModal({ isOpen, onClose, presentati
                                                     'flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-all',
                                                     e.absent
                                                         ? 'border-destructive/30 bg-destructive/10 text-destructive'
-                                                        : 'border-border text-muted-foreground hover:border-destructive/30 hover:text-destructive'
+                                                        : 'border-border text-muted-foreground hover:border-destructive/30 hover:text-destructive',
+                                                    isPublished && 'opacity-60 cursor-not-allowed',
                                                 )}
                                             >
                                                 <XCircle className="h-3.5 w-3.5" />
-                                                {/* Always "Absent".
-                                                    It read "Mark" until pressed,
-                                                    under a column headed Absent
-                                                    and beside a marks box — so the
-                                                    one control that does not enter
-                                                    a mark was the one labelled
-                                                    "Mark". Same behaviour; the
-                                                    pressed state is carried by the
-                                                    red fill and aria-pressed. */}
                                                 Absent
                                             </button>
                                         </div>
@@ -235,15 +243,17 @@ export default function PresentationMarkEntryModal({ isOpen, onClose, presentati
                                             )}
                                             {topicsAllowed && (
                                                 <input type="text" value={e.topic}
+                                                    disabled={isPublished}
                                                     onChange={(ev) => setField(member.userId, 'topic', ev.target.value)}
                                                     placeholder="Topic…"
-                                                    className="w-full h-8 px-3 rounded-lg border border-border bg-muted text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+                                                    className="w-full h-8 px-3 rounded-lg border border-border bg-muted text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                                                 />
                                             )}
                                             <input type="text" value={e.feedback}
+                                                disabled={isPublished}
                                                 onChange={(ev) => setField(member.userId, 'feedback', ev.target.value)}
                                                 placeholder="Feedback (optional)…"
-                                                className="w-full h-8 px-3 rounded-lg border border-border bg-muted text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+                                                className="w-full h-8 px-3 rounded-lg border border-border bg-muted text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                                             />
                                         </div>
                                     )}
@@ -260,9 +270,9 @@ export default function PresentationMarkEntryModal({ isOpen, onClose, presentati
                 <div className="flex gap-3 pt-2 border-t border-border">
                     <Button variant="secondary" className="flex-1" onClick={onClose}>Cancel</Button>
                     <Button className="flex-1" loading={isSaving} onClick={handleSave}
-                        disabled={members.length === 0}
+                        disabled={members.length === 0 || isPublished}
                         leftIcon={!isSaving ? <Save className="w-4 h-4" /> : undefined}>
-                        Save marks
+                        {isPublished ? "Marks locked" : "Save marks"}
                     </Button>
                 </div>
             </div>

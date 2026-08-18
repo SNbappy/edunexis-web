@@ -5,8 +5,10 @@ import {
     ArrowLeft, Clock, BookOpen, Users, Download,
     Send, AlertCircle, CheckCircle2, FileText,
     CalendarClock, Award, Paperclip, Clock3, Undo2,
+    Pencil, EyeOff, Lock,
 } from 'lucide-react'
 import { isPast, parseISO, formatDistanceToNow, differenceInSeconds } from 'date-fns'
+import toast from 'react-hot-toast'
 import { useAssignment } from '../hooks/useAssignments'
 import { useSubmissions } from '../hooks/useSubmissions'
 import { useAuthStore } from '@/store/authStore'
@@ -68,6 +70,7 @@ export default function AssignmentDetailPage() {
     const {
         assignment, isLoading, isFetched, mySubmission, submitAssignment, isSubmitting,
         turnIn, isTurningIn, unsubmit, isUnsubmitting,
+        publishAssignment, isPublishing, unpublishAssignment, isUnpublishing,
     } = useAssignment(courseId, assignmentId)
 
     const { submissions, isLoading: subsLoading } = useSubmissions(courseId, assignmentId)
@@ -93,11 +96,6 @@ export default function AssignmentDetailPage() {
         )
     }
 
-    /* Guarded on `!assignment`, not `isFetched && !assignment`: the loading
-       branch above has already returned, so anything still null here really is
-       missing, and this narrows the type for the whole render below. The old
-       condition let a deleted or forbidden assignment crash the page on the
-       very next line. */
     if (!assignment) {
         return (
             <div className="max-w-5xl mx-auto px-4 py-16 flex flex-col items-center gap-4 text-center">
@@ -118,8 +116,11 @@ export default function AssignmentDetailPage() {
     return (
         <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
 
-            {/* Back Button */}
-            <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
+            {/* Back Button & Teacher Actions */}
+            <motion.div
+                initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                className="flex items-center justify-between gap-3 flex-wrap"
+            >
                 <button
                     onClick={() => navigate(`/courses/${courseId}/assignments`)}
                     className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
@@ -127,6 +128,46 @@ export default function AssignmentDetailPage() {
                     <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
                     Back to Assignments
                 </button>
+
+                {teacher && !readOnly && (
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            leftIcon={<Pencil className="w-3.5 h-3.5" />}
+                            onClick={() => navigate(`/courses/${courseId}/assignments/${assignmentId}/edit`)}
+                        >
+                            Edit
+                        </Button>
+                        {!assignment.isPublished ? (
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                leftIcon={<Send className="w-3.5 h-3.5" />}
+                                isLoading={isPublishing}
+                                onClick={() => {
+                                    if (!isPastDue) {
+                                        toast.error("Marks can only be published after the deadline has passed.")
+                                        return
+                                    }
+                                    publishAssignment()
+                                }}
+                            >
+                                Publish marks
+                            </Button>
+                        ) : (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                leftIcon={<EyeOff className="w-3.5 h-3.5" />}
+                                isLoading={isUnpublishing}
+                                onClick={() => unpublishAssignment()}
+                            >
+                                Unpublish
+                            </Button>
+                        )}
+                    </div>
+                )}
             </motion.div>
 
             {/* Header Card */}
@@ -140,6 +181,13 @@ export default function AssignmentDetailPage() {
                             <Badge variant={assignment.isOpen ? 'success' : 'muted'}>
                                 {assignment.isOpen ? 'Active' : 'Closed'}
                             </Badge>
+                            {assignment.isPublished ? (
+                                <Badge variant="success">
+                                    <CheckCircle2 className="w-3 h-3 inline mr-1" />Published
+                                </Badge>
+                            ) : (
+                                <Badge variant="muted">Unpublished</Badge>
+                            )}
                             {isPastDue && assignment.isOpen && (
                                 <Badge variant="destructive">Overdue</Badge>
                             )}
@@ -197,6 +245,14 @@ export default function AssignmentDetailPage() {
                     )}
                 </div>
             </motion.div>
+
+            {/* Published Lock Notice for Teacher */}
+            {teacher && assignment.isPublished && (
+                <div className="flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-[13px] text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">
+                    <Lock className="h-4 w-4 shrink-0" />
+                    <span>Assignment marks are published. Results are visible to students and editing is locked. Click <strong>Unpublish</strong> to make changes.</span>
+                </div>
+            )}
 
             {/* Teacher Tabs */}
             {teacher && (
@@ -480,6 +536,7 @@ export default function AssignmentDetailPage() {
                         courseId={courseId}
                         assignmentId={assignmentId}
                         maxMarks={assignment.maxMarks}
+                        isPublished={assignment.isPublished}
                     />
                 </motion.div>
             )}

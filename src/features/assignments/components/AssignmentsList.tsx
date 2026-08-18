@@ -1,4 +1,4 @@
-﻿import { useMemo } from "react"
+import { useMemo } from "react"
 import { motion } from "framer-motion"
 import { ClipboardList } from "lucide-react"
 import AssignmentCard from "./AssignmentCard"
@@ -14,6 +14,8 @@ interface AssignmentsListProps {
   onView:            (a: AssignmentDto) => void
   onEdit?:           (a: AssignmentDto) => void
   onDelete?:         (id: string) => void
+  onPublish?:        (a: AssignmentDto) => void
+  onUnpublish?:      (a: AssignmentDto) => void
   emptyTitle?:       string
   emptyDescription?: string
   emptyAction?:      React.ReactNode
@@ -45,7 +47,7 @@ function SectionLabel({ label, count }: SectionLabelProps) {
 }
 
 export default function AssignmentsList({
-  assignments, onView, onEdit, onDelete,
+  assignments, onView, onEdit, onDelete, onPublish, onUnpublish,
   emptyTitle, emptyDescription, emptyAction,
 }: AssignmentsListProps) {
   const { user } = useAuthStore()
@@ -55,23 +57,30 @@ export default function AssignmentsList({
     if (assignments.length === 0) return []
 
     if (teacher) {
+      const published:    AssignmentDto[] = []
+      const ready:        AssignmentDto[] = []
       const needsGrading: AssignmentDto[] = []
       const active:       AssignmentDto[] = []
-      const closed:       AssignmentDto[] = []
-      const fullyGraded:  AssignmentDto[] = []
 
       for (const a of assignments) {
-        const d = getTeacherDisplay(a)
-        if (d.kind === "needs-grading" || d.kind === "closed-ungraded") needsGrading.push(a)
-        else if (d.kind === "active") active.push(a)
-        else if (d.kind === "fully-graded") fullyGraded.push(a)
-        else closed.push(a)
+        if (a.isPublished) {
+          published.push(a)
+        } else if (a.isMarksComplete) {
+          ready.push(a)
+        } else {
+          const d = getTeacherDisplay(a)
+          if (d.kind === "needs-grading" || d.kind === "closed-ungraded" || d.kind === "closed") {
+            needsGrading.push(a)
+          } else {
+            active.push(a)
+          }
+        }
       }
       return [
+        { key: "published",     label: "Published",       items: published    },
+        { key: "ready",         label: "Ready to publish", items: ready        },
         { key: "needs-grading", label: "Needs grading",   items: needsGrading },
-        { key: "active",        label: "Active",          items: active       },
-        { key: "fully-graded",  label: "Fully graded",    items: fullyGraded  },
-        { key: "closed",        label: "Closed",          items: closed       },
+        { key: "active",        label: "Active / Open",   items: active       },
       ].filter(s => s.items.length > 0)
     }
 
@@ -90,8 +99,8 @@ export default function AssignmentsList({
     }
     return [
       { key: "action",    label: "Action needed",       items: actionNeeded },
-      { key: "submitted", label: "Awaiting grade",      items: submitted    },
-      { key: "graded",    label: "Graded",              items: graded       },
+      { key: "submitted", label: "Awaiting publication", items: submitted   },
+      { key: "graded",    label: "Published marks",     items: graded       },
       { key: "closed",    label: "Closed",              items: closed       },
     ].filter(s => s.items.length > 0)
   }, [assignments, teacher])
@@ -133,6 +142,8 @@ export default function AssignmentsList({
                 onView={onView}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                onPublish={onPublish}
+                onUnpublish={onUnpublish}
               />
             ))}
           </div>

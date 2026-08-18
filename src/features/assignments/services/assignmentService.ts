@@ -96,6 +96,16 @@ export const assignmentService = {
                 { params: { awardZeroToNonSubmitters } })
             .then((r) => r.data),
 
+    publish: (courseId: string, assignmentId: string) =>
+        api
+            .post<ApiResponse<null>>(courseBase(courseId) + '/' + assignmentId + '/publish')
+            .then((r) => r.data),
+
+    unpublish: (courseId: string, assignmentId: string) =>
+        api
+            .post<ApiResponse<null>>(courseBase(courseId) + '/' + assignmentId + '/unpublish')
+            .then((r) => r.data),
+
     submit: (assignmentId: string, data: SubmitAssignmentRequest) => {
         const form = new FormData()
         form.append('submissionType', data.submissionType)

@@ -18,6 +18,10 @@ export interface AssignmentDto {
     mySubmittedAt?: string | null
     myIsLate?: boolean | null
     createdAt: string
+    isPublished?: boolean
+    publishedAt?: string | null
+    totalStudentsCount?: number
+    isMarksComplete?: boolean
 }
 
 export interface SubmissionDto {

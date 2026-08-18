@@ -1,6 +1,6 @@
-﻿import { useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { motion } from "framer-motion"
-import { CheckCircle2, AlertCircle, Star, ShieldAlert, Clock, UserX } from "lucide-react"
+import { CheckCircle2, AlertCircle, Star, ShieldAlert, Clock, UserX, Lock } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import Avatar from "@/components/ui/Avatar"
 import Button from "@/components/ui/Button"
@@ -17,6 +17,7 @@ interface SubmissionsPanelProps {
   courseId: string
   assignmentId: string
   maxMarks: number
+  isPublished?: boolean
 }
 
 type SubStatus = "Graded" | "Late" | "Submitted"
@@ -50,7 +51,7 @@ function getStatusConfig(status: SubStatus): StatusConfig {
 }
 
 export default function SubmissionsPanel({
-  courseId, assignmentId, maxMarks,
+  courseId, assignmentId, maxMarks, isPublished,
 }: SubmissionsPanelProps) {
   const { submissions, isLoading, gradeSubmission, isGrading } = useSubmissions(courseId, assignmentId)
   const { members } = useCourseMembers(courseId)
@@ -130,6 +131,13 @@ export default function SubmissionsPanel({
         )}
       </div>
 
+      {isPublished && (
+        <div className="flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-[13px] text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">
+          <Lock className="h-4 w-4 shrink-0" />
+          <span>Marks are published and visible to students. Click <strong>Unpublish</strong> at the top if you need to modify grades.</span>
+        </div>
+      )}
+
       {/* Submissions list */}
       {submissions.length === 0 ? (
         <div className="flex flex-col items-center rounded-2xl border-2 border-dashed border-border bg-muted/30 px-6 py-12 text-center">
@@ -178,9 +186,10 @@ export default function SubmissionsPanel({
                     <Button
                       size="sm"
                       variant={sub.isGraded ? "secondary" : "primary"}
+                      disabled={isPublished}
                       onClick={() => setGrading(sub)}
                     >
-                      {sub.isGraded ? "Edit" : "Grade"}
+                      {isPublished ? "Locked" : sub.isGraded ? "Edit" : "Grade"}
                     </Button>
                   </div>
                 </div>

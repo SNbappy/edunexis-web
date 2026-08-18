@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
     MoreVertical, Trash2, ClipboardList, Star, XCircle, FileCheck2, Users, Award,
@@ -107,7 +107,7 @@ export default function PresentationCard({
                                 would read "Published" on every single card. */}
                             {teacher && (
                                 <span className={"inline-flex items-center rounded-full px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wider " + stateBadge}>
-                                    {published ? "Published" : "Draft"}
+                                    {published ? "Published" : "Unpublished"}
                                 </span>
                             )}
 
