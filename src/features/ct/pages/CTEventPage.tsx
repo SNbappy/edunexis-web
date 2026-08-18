@@ -188,7 +188,7 @@ export default function CTEventPage() {
             return
         }
         if (hasInvalidMarks) {
-            toast.error(`Cannot save marks: Some marks are invalid or exceed max marks (${ct?.maxMarks ?? ''}).`)
+            toast.error(`Cannot save marks: Some marks are invalid or exceed max marks (${Number(ct?.maxMarks) || 0}).`)
             return
         }
         const entries = students.map(m => {
@@ -572,7 +572,7 @@ export default function CTEventPage() {
                                     pendingCount > 0
                                         ? `All ${students.length} students must have marks entered or be marked absent before saving (${pendingCount} pending)`
                                         : hasInvalidMarks
-                                        ? `Some marks exceed max marks (${ct.maxMarks}) or are invalid`
+                                        ? `Some marks exceed max marks (${Number(ct.maxMarks)}) or are invalid`
                                         : undefined
                                 }
                             >
@@ -596,7 +596,7 @@ export default function CTEventPage() {
 
                     {hasInvalidMarks && (
                         <div className="rounded-xl border border-destructive/30 bg-destructive-soft px-3.5 py-2.5 text-xs font-semibold text-destructive">
-                            <strong>Validation Error:</strong> Some marks are invalid or exceed the maximum allowed marks ({ct.maxMarks}).
+                            <strong>Validation Error:</strong> Some marks are invalid or exceed the maximum allowed marks ({Number(ct.maxMarks)}).
                         </div>
                     )}
 
