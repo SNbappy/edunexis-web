@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Calendar, Upload, CheckCircle2, MoreVertical,
-  Eye, Edit2, Send, EyeOff, Trash2, ClipboardList,
+  Eye, Edit2, Send, EyeOff, Trash2, ClipboardList, Star,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import Badge from "@/components/ui/Badge"
@@ -124,7 +124,7 @@ export default function CTEventCard({
             <div className="flex shrink-0 items-center gap-1.5" onClick={e => e.stopPropagation()}>
               {/* Draft vs published is the one thing worth colouring: it decides
                   whether students can see their marks. */}
-              {teacher && (
+              {teacher ? (
                 <Badge
                   variant={isPublished ? "success" : "warning"}
                   size="sm"
@@ -134,7 +134,19 @@ export default function CTEventCard({
                 >
                   {isPublished ? "Published" : "Draft"}
                 </Badge>
-              )}
+              ) : ct.myIsAbsent ? (
+                <Badge variant="destructive" size="sm">
+                  Absent · 0 / {ct.maxMarks}
+                </Badge>
+              ) : ct.myObtainedMarks != null ? (
+                <Badge
+                  variant="success"
+                  size="sm"
+                  icon={<Star className="h-3 w-3 fill-emerald-600 text-emerald-600 dark:fill-emerald-400 dark:text-emerald-400" />}
+                >
+                  {ct.myObtainedMarks} / {ct.maxMarks}
+                </Badge>
+              ) : null}
 
               {hasMenu && (
                 <div className="relative" ref={menuRef}>
@@ -226,8 +238,7 @@ export default function CTEventCard({
             </div>
           </div>
 
-          {/* Meta row. Only the two states that need the teacher to act —
-              a missing date and pending scripts — carry colour. */}
+          {/* Meta row. */}
           <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px] text-muted-foreground">
             <span className={cn("inline-flex items-center gap-1.5", !ct.heldOn && "font-semibold text-warning")}>
               <Calendar className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} />
@@ -235,7 +246,15 @@ export default function CTEventCard({
             </span>
 
             <span className="tabular-nums">
-              <span className="font-semibold text-foreground">{ct.maxMarks}</span> marks
+              {teacher ? (
+                <>
+                  <span className="font-semibold text-foreground">{ct.maxMarks}</span> marks
+                </>
+              ) : (
+                <>
+                  Max: <span className="font-semibold text-foreground">{ct.maxMarks}</span> marks
+                </>
+              )}
             </span>
 
             {teacher && (

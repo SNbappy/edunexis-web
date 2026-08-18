@@ -16,6 +16,8 @@ export interface CTEventDto {
     averageScriptUrl: string | null
     averageStudentId: string | null
     createdAt: string
+    myObtainedMarks?: number | null
+    myIsAbsent?: boolean | null
 }
 
 export interface CTMarksResultDto {

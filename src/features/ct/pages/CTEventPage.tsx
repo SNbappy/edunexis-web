@@ -203,7 +203,7 @@ export default function CTEventPage() {
     if (!teacher) {
         const myMark = marksData?.marks?.find(m => m.studentId === user?.id)
         return (
-            <div className="max-w-3xl mx-auto space-y-6 pb-10">
+            <div className="max-w-3xl mx-auto space-y-6 pt-5 sm:pt-7 pb-10">
                 <div className="flex items-center gap-3">
                     <button onClick={() => navigate(backUrl)}
                         className="p-2 rounded-xl hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
@@ -212,7 +212,7 @@ export default function CTEventPage() {
                     <div>
                         <h1 className="text-xl font-bold text-foreground">{pageTitle}</h1>
                         <p className="text-sm text-muted-foreground">
-                            {ct.heldOn ? formatDate(ct.heldOn, 'dd MMM yyyy') : 'Date TBA'} · Total marks: {ct.maxMarks}
+                            {ct.heldOn ? formatDate(ct.heldOn, 'dd MMM yyyy') : 'Date not set'} · Max marks: {ct.maxMarks}
                         </p>
                     </div>
                     <Badge className="ml-auto" variant={isPublished ? 'success' : 'default'}>{ct.status}</Badge>
@@ -235,32 +235,46 @@ export default function CTEventPage() {
                     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                         className="p-6 rounded-2xl bg-card border border-border space-y-4">
                         <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Your Result</span>
+                            <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Your CT Score</span>
                             <Badge variant={myMark.isAbsent ? 'destructive' : 'success'}>
-                                {myMark.isAbsent ? 'Absent' : 'Present'}
+                                {myMark.isAbsent ? 'Absent' : 'Graded'}
                             </Badge>
                         </div>
                         {myMark.isAbsent ? (
-                            <div className="flex items-center gap-3 text-destructive">
-                                <XCircle className="w-8 h-8" />
+                            <div className="flex items-center gap-3.5 text-destructive">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-destructive-soft text-destructive shrink-0">
+                                    <XCircle className="w-7 h-7" />
+                                </div>
                                 <div>
-                                    <p className="text-3xl font-bold text-destructive">
-                                        0
-                                        <span className="text-base text-muted-foreground font-normal"> / {ct.maxMarks}</span>
+                                    <p className="text-3xl font-extrabold text-destructive tabular-nums">
+                                        0 <span className="text-base text-muted-foreground font-normal">/ {ct.maxMarks}</span>
                                     </p>
-                                    <p className="text-sm text-destructive/80 font-medium">Marked Absent (0 Marks)</p>
+                                    <p className="text-xs text-destructive/80 font-semibold">Marked Absent (0 Marks)</p>
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex items-center gap-3">
-                                <Star className="w-8 h-8 text-emerald-500" />
-                                <div>
-                                    <p className="text-3xl font-bold text-emerald-500">
-                                        {myMark.obtainedMarks}
-                                        <span className="text-base text-muted-foreground font-normal"> / {ct.maxMarks}</span>
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">Obtained marks</p>
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-3.5">
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 shrink-0 border border-emerald-200 dark:border-emerald-800">
+                                        <Star className="w-7 h-7 fill-emerald-500 text-emerald-500" />
+                                    </div>
+                                    <div>
+                                        <p className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                                            {myMark.obtainedMarks} <span className="text-base text-muted-foreground font-normal">/ {ct.maxMarks}</span>
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {ct.maxMarks > 0 ? `${Math.round(((myMark.obtainedMarks ?? 0) / ct.maxMarks) * 100)}% Score` : 'Obtained marks'}
+                                        </p>
+                                    </div>
                                 </div>
+                                {ct.maxMarks > 0 && (
+                                    <ProgressBar
+                                        value={((myMark.obtainedMarks ?? 0) / ct.maxMarks) * 100}
+                                        size="md"
+                                        color={((myMark.obtainedMarks ?? 0) / ct.maxMarks) >= 0.75 ? 'success' : ((myMark.obtainedMarks ?? 0) / ct.maxMarks) >= 0.5 ? 'warning' : 'danger'}
+                                        animated={false}
+                                    />
+                                )}
                             </div>
                         )}
                         {myMark.remarks && (
@@ -281,7 +295,7 @@ export default function CTEventPage() {
     const pendingCount = students.length - gradedCount - absentCount
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6 pb-10">
+        <div className="max-w-4xl mx-auto space-y-6 pt-5 sm:pt-7 pb-10">
 
             {/* Header */}
             <div className="flex items-center gap-3 flex-wrap">
