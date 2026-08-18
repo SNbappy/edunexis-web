@@ -116,6 +116,7 @@ export function useCTMarks(ctEventId: string) {
                         })),
                     }
                 })
+                qc.invalidateQueries({ queryKey: ['ct-events'], exact: false })
             } else {
                 toast.error(res.message)
             }
