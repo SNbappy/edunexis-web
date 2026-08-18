@@ -92,8 +92,7 @@ export default function CommentThread({
     const byTime = [...comments].sort(
       (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
     )
-    const ids = new Set(byTime.map(c => c.id))
-    const roots = byTime.filter(c => !c.parentCommentId || !ids.has(c.parentCommentId))
+    const roots = byTime.filter(c => !c.parentCommentId)
 
     return roots.map(root => ({
       root,
